@@ -1,21 +1,15 @@
 {
-  "name": "baeun-workspace-api",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "type": "module",
   "scripts": {
-    "dev": "node ./src/index.js"
+    "start": "node ./src/index.mjs"
   },
+  "type": "module",
   "dependencies": {
-    "express": "^5.2.1",
-    "jsonwebtoken": "^9.0.3",
     "bcrypt": "^6.0.0",
-    "pg": "^8.18.0",
-    "dotenv": "^17.2.3"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "packageManager": "pnpm@10.28.0"
+    "better-sqlite3": "^12.6.2",
+    "connect-pg-simple": "^10.0.0",
+    "cors": "^2.8.6",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
+    "express-session": "^1.19.0"
+  }
 }
