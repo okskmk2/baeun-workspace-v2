@@ -129,18 +129,18 @@ router.get("/:projectId/boards", isAuth, async (req, res) => {
   const userId = req.session.userId;
 
   try {
-    // 보안: 사용자가 해당 프로젝트의 멤버인지 확인
+    // 프로젝트 멤버 권한 확인
     const memberCheck = await pool.query(
       "SELECT id FROM project_member WHERE project_id = $1 AND member_id = $2",
       [projectId, userId]
     );
 
     if (memberCheck.rows.length === 0) {
-      return res.status(403).json({ success: false, message: "프로젝트 접근 권한이 없습니다." });
+      return res.status(403).json({ success: false, message: "접근 권한이 없습니다." });
     }
 
     const boards = await pool.query(
-      "SELECT * FROM board WHERE project_id = $1 ORDER BY sort_order ASC",
+      "SELECT * FROM board WHERE project_id = $1 AND is_active = 1 ORDER BY sort_order ASC, created_at DESC",
       [projectId]
     );
 

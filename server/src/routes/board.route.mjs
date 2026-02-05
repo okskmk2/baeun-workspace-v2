@@ -33,7 +33,7 @@ router.post("/", isAuth, async (req, res) => {
 
     await client.query("BEGIN");
 
-    // 2. 보드 테이블에 삽입
+    // 2. 보드 생성
     const boardQuery = `
         INSERT INTO board (name, project_id, type)
         VALUES ($1, $2, $3)
@@ -42,7 +42,7 @@ router.post("/", isAuth, async (req, res) => {
     const boardRes = await client.query(boardQuery, [name, project_id, type]);
     const newBoard = boardRes.rows[0];
 
-    // 3. 보드 멤버 테이블에 생성자를 'OWNER'로 등록
+    // 3. 보드 멤버 등록 (생성자를 OWNER로 등록)
     const memberQuery = `
         INSERT INTO board_member (board_id, member_id, role_name)
         VALUES ($1, $2, 'OWNER');
@@ -51,17 +51,65 @@ router.post("/", isAuth, async (req, res) => {
 
     await client.query("COMMIT");
 
-    res.status(201).json({
-      success: true,
-      message: "보드가 생성되었습니다.",
-      data: newBoard,
-    });
+    res.status(201).json({ success: true, data: newBoard });
   } catch (error) {
     await client.query("ROLLBACK");
     console.error("Board 생성 오류:", error);
-    res.status(500).json({ success: false, message: "서버 오류로 보드 생성에 실패했습니다." });
+    res.status(500).json({ success: false, message: error.message });
   } finally {
     client.release();
+  }
+});
+
+/**
+ * @route   DELETE /api/board/:boardId
+ * @desc    보드 삭제 (OWNER 전용)
+ */
+router.delete("/:boardId", isAuth, async (req, res) => {
+  const { boardId } = req.params;
+  const userId = req.session.userId;
+
+  try {
+    // 권한 확인: 보드의 OWNER인지 확인
+    const authCheck = await pool.query(
+      "SELECT role_name FROM board_member WHERE board_id = $1 AND member_id = $2",
+      [boardId, userId]
+    );
+
+    if (!authCheck.rows[0] || authCheck.rows[0].role_name !== "OWNER") {
+      return res.status(403).json({ success: false, message: "보드 삭제 권한이 없습니다." });
+    }
+
+    // ON DELETE CASCADE에 의해 관련 issue, board_member 자동 삭제됨
+    await pool.query("DELETE FROM board WHERE id = $1", [boardId]);
+
+    res.json({ success: true, message: "보드가 삭제되었습니다." });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * @route   GET /api/issue/board/:boardId
+ * @desc    특정 보드의 모든 이슈 조회
+ */
+router.get("/:boardId/issue", isAuth, async (req, res) => {
+  const { boardId } = req.params;
+  try {
+    const query = `
+      SELECT i.*, 
+             (SELECT json_agg(m.name) 
+              FROM issue_member im 
+              JOIN member m ON im.member_id = m.id 
+              WHERE im.issue_id = i.id) as assignees
+      FROM issue i
+      WHERE i.board_id = $1
+      ORDER BY i.created_at DESC;
+    `;
+    const result = await pool.query(query, [boardId]);
+    res.json({ success: true, data: result.rows });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
   }
 });
 
