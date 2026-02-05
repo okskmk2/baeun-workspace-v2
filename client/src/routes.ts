@@ -30,6 +30,14 @@ export const routes = [
     component: lazy(() => import("./pages/ProjectCreate")),
   },
   {
+    path: "/project/:projectId",
+    component: lazy(() => import("./pages/ProjectDetail")),
+  },
+  {
+    path: "/project/:projectId/board/new",
+    component: lazy(() => import("./pages/BoardCreate")),
+  },
+  {
     path: "*",
     component: lazy(() => import("./pages/NotFound")),
   },

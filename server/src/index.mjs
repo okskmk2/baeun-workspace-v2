@@ -3,9 +3,11 @@ import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
 import cors from "cors"; // CORS 모듈 추가
 import pool from "./db.mjs";
+// routes
 import memberRouter from "./routes/member.route.mjs";
 import workspaceRouter from "./routes/workspace.route.mjs";
 import projectRouter from "./routes/project.route.mjs";
+import boardRouter from "./routes/board.route.mjs";
 
 const app = express();
 const pgSession = connectPgSimple(session);
@@ -43,9 +45,11 @@ app.use(
   })
 );
 
+// routes
 app.use("/api/member", memberRouter);
 app.use("/api/workspace", workspaceRouter);
 app.use("/api/project", projectRouter);
+app.use("/api/board", boardRouter);
 
 const PORT = 3000;
 app.listen(PORT, () => console.log(`🚀 서버 가동 중: ${PORT}`));

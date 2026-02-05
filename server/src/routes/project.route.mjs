@@ -120,4 +120,34 @@ router.delete("/:projectId", isAuth, async (req, res) => {
   }
 });
 
+/**
+ * @route   GET /api/project/:projectId/boards
+ * @desc    특정 프로젝트 내의 보드 목록 조회
+ */
+router.get("/:projectId/boards", isAuth, async (req, res) => {
+  const { projectId } = req.params;
+  const userId = req.session.userId;
+
+  try {
+    // 보안: 사용자가 해당 프로젝트의 멤버인지 확인
+    const memberCheck = await pool.query(
+      "SELECT id FROM project_member WHERE project_id = $1 AND member_id = $2",
+      [projectId, userId]
+    );
+
+    if (memberCheck.rows.length === 0) {
+      return res.status(403).json({ success: false, message: "프로젝트 접근 권한이 없습니다." });
+    }
+
+    const boards = await pool.query(
+      "SELECT * FROM board WHERE project_id = $1 ORDER BY sort_order ASC",
+      [projectId]
+    );
+
+    res.json({ success: true, data: boards.rows });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 export default router;
