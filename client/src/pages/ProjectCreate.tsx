@@ -39,18 +39,14 @@ export default function ProjectCreate() {
       }}
     >
       <h3>🚀 새 프로젝트 생성</h3>
-      <p style={{ color: "#666" }}>
-        워크스페이스에 새로운 작업 공간을 추가합니다.
-      </p>
+      <p style={{ color: "#666" }}>워크스페이스에 새로운 작업 공간을 추가합니다.</p>
 
       <form
         onSubmit={handleSubmit}
         style={{ display: "flex", "flex-direction": "column", gap: "15px" }}
       >
         <div>
-          <label style={{ display: "block", "margin-bottom": "5px" }}>
-            프로젝트 이름
-          </label>
+          <label style={{ display: "block", "margin-bottom": "5px" }}>프로젝트 이름</label>
           <input
             type="text"
             value={name()}

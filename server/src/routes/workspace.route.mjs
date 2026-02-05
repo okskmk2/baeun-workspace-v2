@@ -24,12 +24,7 @@ router.post("/", isAuth, async (req, res) => {
             VALUES ($1, $2, $3, $4)
             RETURNING *;
         `;
-    const workspaceRes = await client.query(workspaceQuery, [
-      name,
-      userId,
-      img_url,
-      theme_json,
-    ]);
+    const workspaceRes = await client.query(workspaceQuery, [name, userId, img_url, theme_json]);
     const newWorkspace = workspaceRes.rows[0];
 
     // 2. 워크스페이스 멤버 테이블에 생성자를 'OWNER'로 등록
@@ -49,9 +44,7 @@ router.post("/", isAuth, async (req, res) => {
   } catch (error) {
     await client.query("ROLLBACK");
     console.error("Workspace 생성 오류:", error);
-    res
-      .status(500)
-      .json({ success: false, message: "서버 오류로 생성에 실패했습니다." });
+    res.status(500).json({ success: false, message: "서버 오류로 생성에 실패했습니다." });
   } finally {
     client.release();
   }
@@ -93,18 +86,16 @@ router.get("/:workspaceId", isAuth, async (req, res) => {
     // 💡 보안: 현재 사용자가 해당 워크스페이스의 멤버인지 먼저 확인
     const memberCheck = await pool.query(
       "SELECT id FROM workspace_member WHERE workspace_id = $1 AND member_id = $2",
-      [workspaceId, userId],
+      [workspaceId, userId]
     );
 
     if (memberCheck.rows.length === 0) {
-      return res
-        .status(403)
-        .json({ success: false, message: "접근 권한이 없습니다." });
+      return res.status(403).json({ success: false, message: "접근 권한이 없습니다." });
     }
 
     const projects = await pool.query(
       "SELECT * FROM project WHERE workspace_id = $1 ORDER BY sort_order ASC",
-      [workspaceId],
+      [workspaceId]
     );
 
     res.json({ success: true, data: projects.rows });
@@ -126,22 +117,15 @@ router.post("/:workspaceId/member", isAuth, async (req, res) => {
     // 1. 초대 권한 확인 (초대자가 해당 워크스페이스의 OWNER나 ADMIN인지)
     const adminCheck = await pool.query(
       "SELECT role_name FROM workspace_member WHERE workspace_id = $1 AND member_id = $2",
-      [workspaceId, inviterId],
+      [workspaceId, inviterId]
     );
 
-    if (
-      !adminCheck.rows[0] ||
-      !["OWNER", "ADMIN"].includes(adminCheck.rows[0].role_name)
-    ) {
-      return res
-        .status(403)
-        .json({ success: false, message: "멤버 초대 권한이 없습니다." });
+    if (!adminCheck.rows[0] || !["OWNER", "ADMIN"].includes(adminCheck.rows[0].role_name)) {
+      return res.status(403).json({ success: false, message: "멤버 초대 권한이 없습니다." });
     }
 
     // 2. 초대할 사용자가 존재하는지 확인
-    const userRes = await pool.query("SELECT id FROM member WHERE email = $1", [
-      email,
-    ]);
+    const userRes = await pool.query("SELECT id FROM member WHERE email = $1", [email]);
     if (userRes.rows.length === 0) {
       return res.status(404).json({
         success: false,
@@ -153,7 +137,7 @@ router.post("/:workspaceId/member", isAuth, async (req, res) => {
     // 3. 이미 멤버인지 확인
     const duplicateCheck = await pool.query(
       "SELECT id FROM workspace_member WHERE workspace_id = $1 AND member_id = $2",
-      [workspaceId, targetUserId],
+      [workspaceId, targetUserId]
     );
     if (duplicateCheck.rows.length > 0) {
       return res.status(400).json({
@@ -165,7 +149,7 @@ router.post("/:workspaceId/member", isAuth, async (req, res) => {
     // 4. 멤버 추가
     await pool.query(
       "INSERT INTO workspace_member (workspace_id, member_id, role_name) VALUES ($1, $2, $3)",
-      [workspaceId, targetUserId, role_name],
+      [workspaceId, targetUserId, role_name]
     );
 
     res.json({ success: true, message: "멤버가 성공적으로 추가되었습니다." });
@@ -191,6 +175,65 @@ router.get("/:workspaceId/members", isAuth, async (req, res) => {
     res.json({ success: true, data: result.rows });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * @route   DELETE /api/workspace/:workspaceId
+ * @desc    워크스페이스 삭제 (OWNER 전용)
+ */
+router.delete("/:workspaceId", isAuth, async (req, res) => {
+  const { workspaceId } = req.params;
+  const userId = req.session.userId;
+
+  try {
+    // 1. 워크스페이스 정보 및 권한 동시 확인
+    // role_name을 확인하여 소유자 여부를 판단하고, is_default를 확인하여 삭제 가능 여부를 판단합니다.
+    const workspaceCheck = await pool.query(
+      `SELECT wm.role_name, w.is_default 
+       FROM workspace w
+       JOIN workspace_member wm ON w.id = wm.workspace_id
+       WHERE w.id = $1 AND wm.member_id = $2`,
+      [workspaceId, userId]
+    );
+
+    const target = workspaceCheck.rows[0];
+
+    // 해당 워크스페이스의 멤버가 아니거나 결과가 없는 경우
+    if (!target) {
+      return res.status(404).json({
+        success: false,
+        message: "워크스페이스를 찾을 수 없거나 접근 권한이 없습니다.",
+      });
+    }
+
+    // 권한 확인: OWNER가 아닌 경우
+    if (target.role_name !== "OWNER") {
+      return res.status(403).json({
+        success: false,
+        message: "워크스페이스 삭제 권한이 없습니다. (소유자만 가능)",
+      });
+    }
+
+    // 💡 정책 확인: 기본(Personal) 워크스페이스인 경우 삭제 불가
+    if (target.is_default) {
+      return res.status(403).json({
+        success: false,
+        message: "기본으로 제공되는 개인 워크스페이스는 삭제할 수 없습니다.",
+      });
+    }
+
+    // 2. 워크스페이스 삭제
+    // ON DELETE CASCADE 설정에 의해 관련 프로젝트, 멤버, 보드 등이 자동 삭제됩니다.
+    await pool.query("DELETE FROM workspace WHERE id = $1", [workspaceId]);
+
+    res.json({
+      success: true,
+      message: "워크스페이스와 모든 관련 데이터가 성공적으로 삭제되었습니다.",
+    });
+  } catch (error) {
+    console.error("Workspace 삭제 오류:", error);
+    res.status(500).json({ success: false, message: "서버 오류로 삭제에 실패했습니다." });
   }
 });
 

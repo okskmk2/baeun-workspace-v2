@@ -24,11 +24,7 @@ export default function Login() {
   return (
     <form onSubmit={handleLogin}>
       <h2>로그인</h2>
-      <input
-        type="email"
-        placeholder="이메일"
-        onInput={(e) => setEmail(e.currentTarget.value)}
-      />
+      <input type="email" placeholder="이메일" onInput={(e) => setEmail(e.currentTarget.value)} />
       <input
         type="password"
         placeholder="비밀번호"

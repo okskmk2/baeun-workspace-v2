@@ -21,9 +21,7 @@ export default function NotFound() {
         "align-items": "center",
       }}
     >
-      <h1 style={{ "font-size": "5rem", margin: "0", color: "#ff4757" }}>
-        404
-      </h1>
+      <h1 style={{ "font-size": "5rem", margin: "0", color: "#ff4757" }}>404</h1>
       <h2>길을 잃으셨나요?</h2>
       <p style={{ color: "#666" }}>요청하신 페이지를 찾을 수 없습니다.</p>
 

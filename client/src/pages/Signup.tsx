@@ -24,24 +24,9 @@ export default function Signup() {
   return (
     <form onSubmit={handleSubmit}>
       <h2>회원가입</h2>
-      <input
-        type="text"
-        placeholder="이름"
-        onInput={updateField("name")}
-        required
-      />
-      <input
-        type="email"
-        placeholder="이메일"
-        onInput={updateField("email")}
-        required
-      />
-      <input
-        type="password"
-        placeholder="비밀번호"
-        onInput={updateField("password")}
-        required
-      />
+      <input type="text" placeholder="이름" onInput={updateField("name")} required />
+      <input type="email" placeholder="이메일" onInput={updateField("email")} required />
+      <input type="password" placeholder="비밀번호" onInput={updateField("password")} required />
       <button type="submit">가입하기</button>
     </form>
   );

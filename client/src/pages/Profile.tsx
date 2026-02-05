@@ -47,9 +47,7 @@ export default function Profile() {
         </Suspense>
 
         <A href="/workspace/create">
-          <button style={{ "margin-top": "20px" }}>
-            + 새 워크스페이스 만들기
-          </button>
+          <button style={{ "margin-top": "20px" }}>+ 새 워크스페이스 만들기</button>
         </A>
       </div>
     </div>

@@ -9,11 +9,7 @@ dotenv.config();
  * 매 요청마다 새로운 연결을 생성하지 않고, 미리 생성된 연결을 재사용하여 성능을 높입니다.
  */
 const pool = new pg.Pool({
-  user: process.env.DB_USER || "postgres",
-  host: process.env.DB_HOST || "localhost",
-  database: process.env.DB_NAME || "postgres",
-  password: process.env.DB_PASSWORD || "postgres",
-  port: process.env.DB_PORT || 5432,
+  connectionString: process.env.DATABASE_URL,
 
   // 최대 연결 수 (기본값 10)
   max: 20,

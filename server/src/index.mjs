@@ -18,7 +18,7 @@ app.use(
     // 쿠키를 주고받기 위해 필수 설정
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  }),
+  })
 );
 
 app.use(express.json());
@@ -40,7 +40,7 @@ app.use(
       sameSite: "lax", // 크로스 도메인 쿠키 전달 설정
       maxAge: 1000 * 60 * 60 * 24,
     },
-  }),
+  })
 );
 
 app.use("/api/member", memberRouter);

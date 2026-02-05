@@ -28,9 +28,7 @@ export default function WorkspaceMembers() {
   };
 
   return (
-    <div
-      style={{ padding: "20px", background: "white", "border-radius": "8px" }}
-    >
+    <div style={{ padding: "20px", background: "white", "border-radius": "8px" }}>
       <h3>👥 멤버 관리</h3>
 
       {/* 초대 폼 */}
