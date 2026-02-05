@@ -8,7 +8,7 @@ import WorkspaceMembers from "./WorkspaceMembers"; // 이전에 만든 멤버 �
  */
 const fetchProjects = async (workspaceId) => {
   if (!workspaceId) return [];
-  const res = await api.get(`/workspace/workspace/${workspaceId}`);
+  const res = await api.get(`/workspace/${workspaceId}`);
   return res.data.data;
 };
 

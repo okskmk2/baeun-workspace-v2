@@ -82,10 +82,10 @@ router.get("/my", isAuth, async (req, res) => {
 });
 
 /**
- * @route   GET /api/project/workspace/:workspaceId
+ * @route   GET /api/workspace/:workspaceId
  * @desc    특정 워크스페이스 내 프로젝트 목록 조회
  */
-router.get("/workspace/:workspaceId", isAuth, async (req, res) => {
+router.get("/:workspaceId", isAuth, async (req, res) => {
   const { workspaceId } = req.params;
   const userId = req.session.userId;
 
