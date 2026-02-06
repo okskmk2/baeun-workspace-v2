@@ -38,6 +38,10 @@ export const routes = [
     component: lazy(() => import("./pages/BoardCreate")),
   },
   {
+    path: "/board/:boardId",
+    component: lazy(() => import("./pages/BoardDetail")),
+  },
+  {
     path: "*",
     component: lazy(() => import("./pages/NotFound")),
   },

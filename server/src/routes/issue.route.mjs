@@ -12,9 +12,12 @@ router.post("/", isAuth, async (req, res) => {
   const { title, content, board_id, status = "백로그" } = req.body;
   const userId = req.session.userId;
 
+  // 트랜잭션을 위해 풀에서 클라이언트를 직접 가져옵니다.
+  const client = await pool.connect();
+
   try {
     // 1. 권한 확인: 사용자가 해당 보드가 속한 프로젝트의 멤버인지 확인
-    const authCheck = await pool.query(
+    const authCheck = await client.query(
       `SELECT pm.id FROM project_member pm
        JOIN board b ON b.project_id = pm.project_id
        WHERE b.id = $1 AND pm.member_id = $2`,
@@ -25,17 +28,42 @@ router.post("/", isAuth, async (req, res) => {
       return res.status(403).json({ success: false, message: "이슈를 생성할 권한이 없습니다." });
     }
 
+    // --- 트랜잭션 시작 ---
+    await client.query("BEGIN");
+
     // 2. 이슈 삽입
-    const query = `
+    const issueQuery = `
       INSERT INTO issue (title, content, board_id, status)
       VALUES ($1, $2, $3, $4)
       RETURNING *;
     `;
-    const result = await pool.query(query, [title, content, board_id, status]);
+    const issueResult = await client.query(issueQuery, [title, content, board_id, status]);
+    const newIssue = issueResult.rows[0];
 
-    res.status(201).json({ success: true, data: result.rows[0] });
+    // 3. 이슈 멤버 등록 (생성자를 REPORTER로 자동 추가)
+    const memberQuery = `
+      INSERT INTO issue_member (issue_id, member_id, role_name)
+      VALUES ($1, $2, 'REPORTER');
+    `;
+    await client.query(memberQuery, [newIssue.id, userId]);
+
+    // 모든 쿼리가 성공하면 확정
+    await client.query("COMMIT");
+    // --- 트랜잭션 종료 ---
+
+    res.status(201).json({
+      success: true,
+      message: "이슈와 멤버 정보가 등록되었습니다.",
+      data: newIssue,
+    });
   } catch (error) {
+    // 하나라도 실패하면 이전 상태로 되돌림
+    await client.query("ROLLBACK");
+    console.error("Issue creation error:", error);
     res.status(500).json({ success: false, message: error.message });
+  } finally {
+    // 연결 반환
+    client.release();
   }
 });
 

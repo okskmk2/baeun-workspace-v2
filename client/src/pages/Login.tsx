@@ -14,7 +14,7 @@ export default function Login() {
         email: email(),
         password: password(),
       });
-      alert(res.data.message);
+      alert("로그인에 성공했어요.");
       navigate("/profile");
     } catch (err) {
       alert(err.response?.data?.message || "로그인 실패");
