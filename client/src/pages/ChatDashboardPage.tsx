@@ -1,7 +1,4 @@
-import { useParams } from "@solidjs/router";
-
 function ChatDashboardPage() {
-  const params = useParams();
 
   return (
     <div class="page-container">

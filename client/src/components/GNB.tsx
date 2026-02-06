@@ -1,33 +1,31 @@
-import { A, useLocation, useParams, useNavigate } from "@solidjs/router";
+import { A, useLocation, useNavigate } from "@solidjs/router";
 import { createResource, createSignal, Show } from "solid-js";
 import api from "../lib/axios";
 import { HomeIcon, IssueIcon, ChatIcon, ProjectIcon, ProfileIcon } from "./icons";
+import { getCurrentProjectId, getCurrentWorkspaceId } from "../store/appStore";
+import type { Workspace, Project } from "../lib/types";
 
-const fetchWorkspace = async (id) => {
+const fetchWorkspace = async (id): Promise<Workspace | null> => {
   if (!id) return null;
   const res = await api.get(`/workspace/${id}`);
-  return res.data.data;
+  return res.data.data as Workspace;
 };
 
 export default function GNB() {
   const location = useLocation();
-  const params = useParams();
   const navigate = useNavigate();
 
-  // try to derive workspaceId from pathname if present
-  const workspaceMatch = () => {
-    const m = location.pathname.match(/\/workspace\/(\d+)/);
-    return m ? m[1] : null;
-  };
+  // prefer store workspace id; fallback to pathname match
+  const workspaceMatch = () => getCurrentWorkspaceId() || (location.pathname.match(/\/workspace\/(\d+)/) || [])[1] || null;
 
-  const [workspace] = createResource(workspaceMatch, fetchWorkspace);
+  const [workspace] = createResource<Workspace | null, string | undefined>(workspaceMatch, fetchWorkspace);
 
-  const [projects] = createResource(
-    () => (workspace() ? workspace().projects || [] : []),
-    async (projects) => projects
+  const [projects] = createResource<Project[], Workspace | null>(
+    () => workspace(),
+    (w) => (w ? w.projects || [] : []) as Project[]
   );
 
-  const projectId = () => params.projectId || null;
+  const projectId = () => getCurrentProjectId() || null;
 
   const handleProjectChange = (e) => {
     const id = e.target.value;
@@ -61,7 +59,7 @@ export default function GNB() {
         </A>
         <Show when={workspace()}>
           <div class="gnb-project-select">
-            <select onChange={handleProjectChange} value={projectId() || ""} aria-label="프로젝트 선택">
+            <select onChange={(e) => { handleProjectChange(e); /* also set project via navigation; ProjectLayout will pick it up */ }} value={projectId() || ""} aria-label="프로젝트 선택">
               <option value="">프로젝트 선택</option>
               <Show when={projects()}>
                 {projects().map((p) => (

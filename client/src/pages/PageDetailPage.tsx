@@ -1,22 +1,24 @@
 import { createResource, createSignal } from "solid-js";
-import { useParams, A } from "@solidjs/router";
+import { A, useParams } from "@solidjs/router";
 import api from "../lib/axios";
+import { getCurrentProjectId } from "../store/appStore";
+import type { Page } from "../lib/types";
 
-const fetchPage = async (params) => {
+const fetchPage = async (params: { projectId?: string; pageId?: string }): Promise<Page | null> => {
   const { projectId, pageId } = params;
   try {
     const res = await api.get(`/project/${projectId}/pages/${pageId}`);
-    return res.data.data;
+    return res.data.data as Page;
   } catch (err) {
     console.error("fetchPage error", err);
     return null;
   }
 };
 
-const fetchPages = async (projectId: string) => {
+const fetchPages = async (projectId: string): Promise<Page[]> => {
   try {
     const res = await api.get(`/project/${projectId}/pages`);
-    return res.data.data || [];
+    return (res.data.data || []) as Page[];
   } catch (err) {
     console.error("fetchPages error", err);
     return [];
@@ -33,8 +35,8 @@ function buildMap(nodes, map = {}) {
 
 export default function PageDetailPage() {
   const params = useParams();
-  const [page] = createResource(() => ({ projectId: params.projectId, pageId: params.pageId }), fetchPage);
-  const [pages] = createResource(() => params.projectId, fetchPages);
+  const [page] = createResource<Page | null, { projectId?: string; pageId?: string }>(() => ({ projectId: getCurrentProjectId(), pageId: params.pageId }), fetchPage);
+  const [pages] = createResource<Page[], string | undefined>(() => getCurrentProjectId(), fetchPages);
 
   const map = buildMap(pages() || []);
 
@@ -51,7 +53,7 @@ export default function PageDetailPage() {
     <div class="page-container">
       <header class="page-header">
         <div>
-          <A href={`/project/${params.projectId}`} class="back-link">← 프로젝트로 돌아가기</A>
+          <A href={`/project/${getCurrentProjectId()}`} class="back-link">← 프로젝트로 돌아가기</A>
           <h1 class="page-header-info">{page() ? page().title : "로딩..."}</h1>
         </div>
       </header>
@@ -60,7 +62,7 @@ export default function PageDetailPage() {
         <div class="breadcrumbs">
           {breadcrumb.length ? (
             breadcrumb.map((b) => (
-              <A href={`/project/${params.projectId}/wiki/${b.id}`} class="breadcrumb-link">{b.title}</A>
+              <A href={`/project/${getCurrentProjectId()}/wiki/${b.id}`} class="breadcrumb-link">{b.title}</A>
             ))
           ) : (
             <span>없음</span>

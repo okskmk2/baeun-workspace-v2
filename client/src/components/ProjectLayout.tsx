@@ -1,13 +1,17 @@
 import { useParams, useLocation } from "@solidjs/router";
-import { Show } from "solid-js";
+import { Show, createEffect } from "solid-js";
 import IssueLNB from "./IssueLNB";
 import WikiLNB from "./WikiLNB";
 import ChatLNB from "./ChatLNB";
 import ProjectGNB from "./ProjectGNB";
+import { setCurrentProjectId } from "../store/appStore";
 
 function ProjectLayout(props) {
   const params = useParams();
   const location = useLocation();
+  createEffect(() => {
+    setCurrentProjectId(params.projectId);
+  });
 
   const isIssuePage = () => location.pathname.includes("/issue") || location.pathname.includes("/board");
   const isWikiPage = () => location.pathname.includes("/wiki");
@@ -23,13 +27,13 @@ function ProjectLayout(props) {
         <Show when={isIssuePage() || isWikiPage() || isChatPage()}>
           <aside class="project-lnb">
             <Show when={isIssuePage()}>
-              <IssueLNB projectId={params.projectId} />
+              <IssueLNB />
             </Show>
             <Show when={isWikiPage()}>
-              <WikiLNB projectId={params.projectId} />
+              <WikiLNB />
             </Show>
             <Show when={isChatPage()}>
-              <ChatLNB projectId={params.projectId} />
+              <ChatLNB />
             </Show>
           </aside>
         </Show>

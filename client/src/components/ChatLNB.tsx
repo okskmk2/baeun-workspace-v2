@@ -3,16 +3,18 @@ import { A } from "@solidjs/router";
 import api from "../lib/axios";
 import ChatCreateModal from "./ChatCreateModal";
 import { ChatIcon } from "./icons";
+import { getCurrentProjectId } from "../store/appStore";
+import type { ChatRoom } from "../lib/types";
 
-const fetchChatRooms = async (projectId: string) => {
+const fetchChatRooms = async (projectId: string): Promise<ChatRoom[]> => {
   if (!projectId) return [];
   const res = await api.get(`/chatroom`, { params: { project_id: projectId } });
-  if (res.data && res.data.success) return res.data.data;
+  if (res.data && res.data.success) return res.data.data as ChatRoom[];
   return [];
 };
 
-function ChatLNB(props) {
-  const [rooms, { refetch }] = createResource(() => props.projectId, fetchChatRooms);
+function ChatLNB() {
+  const [rooms, { refetch }] = createResource<ChatRoom[], string | undefined>(() => getCurrentProjectId(), fetchChatRooms);
 
   const [showModal, setShowModal] = createSignal(false);
 
@@ -26,13 +28,10 @@ function ChatLNB(props) {
         <h3 class="lnb-section-title">대화방 목록</h3>
         <Suspense fallback={<p class="lnb-loading">로딩 중...</p>}>
           <div class="lnb-list">
-            <For
-              each={rooms()}
-              fallback={<p class="lnb-empty">대화방이 없습니다.</p>}
-            >
+            <For each={rooms()} fallback={<p class="lnb-empty">대화방이 없습니다.</p>}>
               {(room) => (
                 <A
-                  href={`/project/${props.projectId}/chat/${room.id}`}
+                  href={`/project/${getCurrentProjectId()}/chat/${room.id}`}
                   class="lnb-item"
                   activeClass="active"
                 >
@@ -46,10 +45,8 @@ function ChatLNB(props) {
 
       {showModal() && (
         <ChatCreateModal
-          projectId={props.projectId}
           onClose={() => setShowModal(false)}
           onCreated={() => {
-            // refresh list after creation
             try {
               refetch();
             } catch (e) {

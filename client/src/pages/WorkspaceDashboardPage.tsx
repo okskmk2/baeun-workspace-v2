@@ -1,7 +1,8 @@
 import { createSignal, createResource, For, Show, Suspense } from "solid-js";
-import { useParams, A, useNavigate } from "@solidjs/router";
+import { A, useNavigate } from "@solidjs/router";
 import api from "../lib/axios";
 import WorkspaceMembers from "../components/WorkspaceMembers";
+import { getCurrentWorkspaceId } from "../store/appStore";
 
 /**
  * 데이터 페칭 함수
@@ -13,12 +14,11 @@ const fetchProjects = async (workspaceId) => {
 };
 
 export default function WorkspaceDashboardPage() {
-  const params = useParams();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = createSignal("projects");
 
   // 프로젝트 목록 리소스
-  const [projects, { refetch }] = createResource(() => params.workspaceId, fetchProjects);
+  const [projects, { refetch }] = createResource(() => getCurrentWorkspaceId(), fetchProjects);
 
   /**
    * 워크스페이스 삭제 로직
@@ -30,7 +30,7 @@ export default function WorkspaceDashboardPage() {
 
     if (confirmDelete) {
       try {
-        await api.delete(`/workspace/${params.workspaceId}`);
+        await api.delete(`/workspace/${getCurrentWorkspaceId()}`);
         alert("워크스페이스가 삭제되었습니다.");
         navigate("/profile");
       } catch (err) {
@@ -44,7 +44,7 @@ export default function WorkspaceDashboardPage() {
       {/* 헤더 섹션 */}
       <header class="workspace-header">
         <h1>🚀 워크스페이스 관리</h1>
-        <p>Workspace ID: {params.workspaceId}</p>
+        <p>Workspace ID: {getCurrentWorkspaceId()}</p>
       </header>
 
       {/* 탭 메뉴 */}
@@ -74,7 +74,7 @@ export default function WorkspaceDashboardPage() {
         {/* 1. 프로젝트 탭 */}
         <Show when={activeTab() === "projects"}>
           <div class="flex-between mb-lg">
-            <A href={`/workspace/${params.workspaceId}/project/new`}>
+            <A href={`/workspace/${getCurrentWorkspaceId()}/project/new`}>
               <button class="btn btn-primary btn-large">
                 + 새 프로젝트 생성
               </button>

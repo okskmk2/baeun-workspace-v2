@@ -1,6 +1,7 @@
 import { createSignal, createResource, Suspense, For, Show } from "solid-js";
 import { useParams, useNavigate } from "@solidjs/router";
 import api from "../lib/axios";
+import type { Issue } from "../lib/types";
 
 export default function IssueDetailPage() {
   const params = useParams();
@@ -10,11 +11,11 @@ export default function IssueDetailPage() {
   const [editContent, setEditContent] = createSignal("");
 
   // 이슈 상세 정보 가져오기
-  const [issue, { refetch }] = createResource(
+  const [issue, { refetch }] = createResource<Issue | null, string | undefined>(
     () => params.issueId,
     async (id) => {
       const res = await api.get(`/issue/${id}`);
-      const data = res.data.data;
+      const data = res.data.data as Issue;
       setEditTitle(data.title);
       setEditContent(data.content || "");
       return data;

@@ -1,14 +1,13 @@
 import { createSignal, createResource, For, Suspense } from "solid-js";
-import { useParams } from "@solidjs/router";
 import api from "../lib/axios";
+import { getCurrentWorkspaceId } from "../store/appStore";
 
 export default function WorkspaceMembers() {
-  const params = useParams();
   const [email, setEmail] = createSignal("");
 
   // 현재 멤버 목록 가져오기
   const fetchMembers = async () => {
-    const res = await api.get(`/workspace/${params.workspaceId}/members`);
+    const res = await api.get(`/workspace/${getCurrentWorkspaceId()}/members`);
     return res.data.data;
   };
   const [members, { refetch }] = createResource(fetchMembers);
@@ -16,7 +15,7 @@ export default function WorkspaceMembers() {
   const inviteMember = async (e) => {
     e.preventDefault();
     try {
-      await api.post(`/workspace/${params.workspaceId}/member`, {
+      await api.post(`/workspace/${getCurrentWorkspaceId()}/member`, {
         email: email(),
       });
       alert("멤버를 초대했습니다!");

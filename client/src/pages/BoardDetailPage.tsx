@@ -2,6 +2,8 @@ import { createResource, For, Suspense, createSignal } from "solid-js";
 import { useParams } from "@solidjs/router";
 import { A } from "@solidjs/router";
 import api from "../lib/axios";
+import type { Issue } from "../lib/types";
+import { getCurrentProjectId } from "../store/appStore";
 
 const ISSUE_STATUSES = ["백로그", "진행중", "검토중", "완료"];
 
@@ -11,16 +13,16 @@ const fetchBoard = async (boardId: string) => {
   return res.data.data || null;
 };
 
-const fetchIssues = async (boardId: string) => {
+const fetchIssues = async (boardId: string): Promise<Issue[]> => {
   if (!boardId) return [];
   const res = await api.get(`/board/${boardId}/issue`);
-  return res.data.data || [];
+  return (res.data.data || []) as Issue[];
 };
 
 export default function BoardDetailPage() {
   const params = useParams();
   const [board] = createResource(() => params.boardId, fetchBoard);
-  const [issues, { refetch }] = createResource(() => params.boardId, fetchIssues);
+  const [issues, { refetch }] = createResource<Issue[], string | undefined>(() => params.boardId, fetchIssues);
   const [draggedIssueId, setDraggedIssueId] = createSignal<number | null>(null);
 
   const getIssuesByStatus = (status: string) => {
@@ -146,8 +148,7 @@ export default function BoardDetailPage() {
                           "is-dragged": draggedIssueId() === issue.id,
                         }}
                       >
-                        <A
-                          href={`/project/${params.projectId}/issue/${issue.id}`}
+                          <A href={`/project/${getCurrentProjectId()}/issue/${issue.id}`}
                           class="kanban-card-link"
                         >
                           <div class="kanban-card">

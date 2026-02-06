@@ -2,28 +2,30 @@ import { A, useNavigate } from "@solidjs/router";
 import { createResource, Show, For } from "solid-js";
 import api from "../lib/axios";
 import { IssueIcon, ChatIcon, ProjectIcon, ProfileIcon } from "./icons";
+import { getCurrentWorkspaceId } from "../store/appStore";
+import type { Workspace, User } from "../lib/types";
 
-const fetchWorkspace = async (id) => {
+const fetchWorkspace = async (id: any): Promise<Workspace | null> => {
   if (!id) return null;
   const res = await api.get(`/workspace/${id}`);
-  return res.data.data;
+  return res.data.data as Workspace;
 };
 
-const fetchCurrentUser = async () => {
+const fetchCurrentUser = async (): Promise<User | null> => {
   try {
     const res = await api.get("/member/me");
-    return res.data.data;
+    return res.data.data as User;
   } catch {
     return null;
   }
 };
 
-export default function WorkspaceGNB(props) {
+export default function WorkspaceGNB() {
   const navigate = useNavigate();
-  const [workspace] = createResource(() => props.workspaceId, fetchWorkspace);
-  const [user] = createResource(fetchCurrentUser);
+  const [workspace] = createResource<Workspace | null, string | undefined>(() => getCurrentWorkspaceId(), fetchWorkspace);
+  const [user] = createResource<User | null>(fetchCurrentUser);
 
-  const handleProjectChange = (e) => {
+  const handleProjectChange = (e: any) => {
     const id = e.target.value;
     if (id) navigate(`/project/${id}`);
   };
@@ -62,23 +64,27 @@ export default function WorkspaceGNB(props) {
 
       <div class="gnb-center">
         <A href={`/project/1/issue`} activeClass="active">
-          <IssueIcon size={16} class="nav-icon" /> 이슈
+          <IssueIcon size={16} className="nav-icon" /> 이슈
         </A>
         <A href={`/project/1/wiki`} activeClass="active">
-          <ProjectIcon size={16} class="nav-icon" /> 위키
+          <ProjectIcon size={16} className="nav-icon" /> 위키
         </A>
         <A href={`/project/1/chat`} activeClass="active">
-          <ChatIcon size={16} class="nav-icon" /> Chat
+          <ChatIcon size={16} className="nav-icon" /> Chat
         </A>
       </div>
 
       <div class="gnb-right">
         <Show when={!user()}>
-          <A href="/signup" activeClass="active">회원가입</A>
-          <A href="/login" activeClass="active">로그인</A>
+          <A href="/signup" activeClass="active">
+            회원가입
+          </A>
+          <A href="/login" activeClass="active">
+            로그인
+          </A>
         </Show>
         <A href="/profile" activeClass="active">
-          <ProfileIcon size={16} class="nav-icon" /> 마이페이지
+          <ProfileIcon size={16} className="nav-icon" /> 마이페이지
         </A>
       </div>
     </nav>

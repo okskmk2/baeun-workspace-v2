@@ -3,11 +3,15 @@ import Layout from "./components/Layout";
 import WorkspaceLayout from "./components/WorkspaceLayout";
 import ProjectLayout from "./components/ProjectLayout";
 
-export default function App(props) {
+interface AppProps {
+  children: any;
+}
+
+export default function App(props: AppProps) {
   const location = useLocation();
-  
-  const isProjectPage = () => location.pathname.startsWith("/project");
-  const isWorkspacePage = () => location.pathname.startsWith("/workspace");
+
+  const isProjectPage = (): boolean => location.pathname.startsWith("/project");
+  const isWorkspacePage = (): boolean => location.pathname.startsWith("/workspace");
 
   return (
     <>

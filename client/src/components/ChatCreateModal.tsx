@@ -1,11 +1,13 @@
 import { createSignal, Show } from "solid-js";
 import { useNavigate } from "@solidjs/router";
 import api from "../lib/axios";
+import { getCurrentProjectId } from "../store/appStore";
+import type { ChatRoom } from "../lib/types";
 
-function ChatCreateModal(props) {
+function ChatCreateModal(props: { onClose?: () => void; onCreated?: (room: ChatRoom) => void }) {
   const [name, setName] = createSignal("");
   const [loading, setLoading] = createSignal(false);
-  const [error, setError] = createSignal(null);
+  const [error, setError] = createSignal<string | null>(null);
   const navigate = useNavigate();
 
   const submit = async () => {
@@ -16,22 +18,24 @@ function ChatCreateModal(props) {
     }
     setLoading(true);
     try {
+      const projectId = getCurrentProjectId();
       const res = await api.post(`/chatroom`, {
         name: name().trim(),
-        project_id: props.projectId,
+        project_id: projectId,
       });
       if (res.data && res.data.success) {
-        const room = res.data.data;
+        const room = res.data.data as ChatRoom;
         // inform parent to refresh list
         props.onCreated && props.onCreated(room);
         props.onClose && props.onClose();
         // navigate to the new chatroom
-        navigate(`/project/${props.projectId}/chat/${room.id}`);
+        navigate(`/project/${projectId}/chat/${room.id}`);
       } else {
         setError(res.data?.message || "생성에 실패했습니다.");
       }
     } catch (e) {
-      setError(e.response?.data?.message || e.message || "서버 오류");
+      const errorMessage = e instanceof Error ? e.message : "서버 오류";
+      setError((e as any)?.response?.data?.message || errorMessage);
     } finally {
       setLoading(false);
     }

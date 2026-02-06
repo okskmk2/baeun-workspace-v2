@@ -1,9 +1,9 @@
 import { createSignal } from "solid-js";
-import { useNavigate, useParams } from "@solidjs/router";
+import { useNavigate } from "@solidjs/router";
 import api from "../lib/axios";
+import { getCurrentWorkspaceId } from "../store/appStore";
 
 export default function ProjectCreatePage() {
-  const params = useParams(); // URL에서 workspaceId 추출
   const navigate = useNavigate();
   const [name, setName] = createSignal("");
   const [loading, setLoading] = createSignal(false);
@@ -16,11 +16,11 @@ export default function ProjectCreatePage() {
     try {
       await api.post("/project", {
         name: name(),
-        workspace_id: params.workspaceId, // 현재 워크스페이스 ID 포함
+        workspace_id: getCurrentWorkspaceId(), // 현재 워크스페이스 ID 포함
         theme_json: { color: "#4A90E2" }, // 기본 테마 예시
       });
       alert("프로젝트가 생성되었습니다!");
-      navigate(`/workspace/${params.workspaceId}`); // 대시보드로 돌아가기
+      navigate(`/workspace/${getCurrentWorkspaceId()}`); // 대시보드로 돌아가기
     } catch (err) {
       alert(err.response?.data?.message || "생성 실패");
     } finally {

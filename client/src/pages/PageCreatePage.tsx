@@ -1,6 +1,8 @@
 import { createResource, createSignal, For } from "solid-js";
-import { useParams, useNavigate } from "@solidjs/router";
+import { useNavigate } from "@solidjs/router";
 import api from "../lib/axios";
+import { getCurrentProjectId } from "../store/appStore";
+import type { Page } from "../lib/types";
 
 const fetchPages = async (projectId: string) => {
   try {
@@ -23,9 +25,8 @@ function flattenPages(nodes, depth = 0, out = []) {
 }
 
 export default function PageCreatePage() {
-  const params = useParams();
   const navigate = useNavigate();
-  const [pages] = createResource(() => params.projectId, fetchPages);
+  const [pages] = createResource<Page[], string | undefined>(() => getCurrentProjectId(), fetchPages);
 
   const [title, setTitle] = createSignal("");
   const [content, setContent] = createSignal("");
@@ -40,8 +41,8 @@ export default function PageCreatePage() {
         parent_id: parentId() || null,
       };
 
-      await api.post(`/project/${params.projectId}/pages`, payload);
-      navigate(`/project/${params.projectId}/wiki`);
+      await api.post(`/project/${getCurrentProjectId()}/pages`, payload);
+      navigate(`/project/${getCurrentProjectId()}/wiki`);
     } catch (err) {
       console.error("create page error", err);
       alert("페이지 생성에 실패했습니다.");
@@ -52,7 +53,7 @@ export default function PageCreatePage() {
     <div class="page-container">
       <header class="page-header">
         <div>
-          <a href={"/project/" + params.projectId} class="back-link">← 프로젝트로 돌아가기</a>
+          <a href={"/project/" + getCurrentProjectId()} class="back-link">← 프로젝트로 돌아가기</a>
           <h1 class="page-header-info">+ 새 페이지 생성</h1>
         </div>
       </header>
@@ -83,7 +84,7 @@ export default function PageCreatePage() {
 
           <div class="form-actions">
             <button type="submit" class="btn btn-primary">생성</button>
-            <button type="button" class="btn" onClick={() => navigate(`/project/${params.projectId}/wiki`)}>취소</button>
+            <button type="button" class="btn" onClick={() => navigate(`/project/${getCurrentProjectId()}/wiki`)}>취소</button>
           </div>
         </form>
       </section>

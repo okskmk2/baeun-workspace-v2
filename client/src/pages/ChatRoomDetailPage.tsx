@@ -1,6 +1,7 @@
 import { createResource, For, Suspense, createSignal } from "solid-js";
 import { useParams } from "@solidjs/router";
 import api from "../lib/axios";
+import type { ChatRoom, Message } from "../lib/types";
 
 const fetchChatroom = async (chatroomId: string) => {
   if (!chatroomId) return null;
@@ -26,8 +27,8 @@ const fetchMessages = async (chatroomId: string) => {
 
 function ChatRoomDetailPage() {
   const params = useParams();
-  const [chatroom] = createResource(() => params.chatroomId, fetchChatroom);
-  const [messages] = createResource(() => params.chatroomId, fetchMessages);
+  const [chatroom] = createResource<ChatRoom | null, string | undefined>(() => params.chatroomId, fetchChatroom);
+  const [messages] = createResource<Message[], string | undefined>(() => params.chatroomId, fetchMessages);
   const [messageInput, setMessageInput] = createSignal("");
   const [sending, setSending] = createSignal(false);
 

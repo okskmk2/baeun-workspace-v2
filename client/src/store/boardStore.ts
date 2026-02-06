@@ -1,12 +1,5 @@
 import { createStore } from "solid-js/store";
-
-export interface Board {
-  id: number;
-  name: string;
-  type: string;
-  project_id: string;
-  created_at?: string;
-}
+import type { Board } from "../lib/types";
 
 interface BoardState {
   boards: { [projectId: string]: Board[] };

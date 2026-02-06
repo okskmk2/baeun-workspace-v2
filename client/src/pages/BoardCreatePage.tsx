@@ -1,10 +1,10 @@
 import { createSignal } from "solid-js";
-import { useNavigate, useParams } from "@solidjs/router";
+import { useNavigate } from "@solidjs/router";
 import api from "../lib/axios";
 import { addBoard } from "../store/boardStore";
+import { getCurrentProjectId } from "../store/appStore";
 
 export default function BoardCreatePage() {
-  const params = useParams(); // URL에서 projectId 추출 가능하도록 구성
   const navigate = useNavigate();
   const [name, setName] = createSignal("");
   const [loading, setLoading] = createSignal(false);
@@ -16,18 +16,19 @@ export default function BoardCreatePage() {
     setLoading(true);
     try {
       // 보드 생성 API 호출
+      const projectId = getCurrentProjectId();
       const res = await api.post("/board", {
         name: name(),
-        project_id: params.projectId, // URL 파라미터에서 가져온 ID
+        project_id: projectId, // URL 파라미터에서 가져온 ID
         type: "KANBAN",
       });
 
       // store에 새 보드 추가
       const newBoard = res.data.data;
-      addBoard(params.projectId, newBoard);
+      if (projectId) addBoard(projectId, newBoard);
 
       alert("보드가 생성되었습니다!");
-      navigate(`/project/${params.projectId}/issue`); // 이슈 메인 화면으로 이동
+      navigate(`/project/${projectId}/issue`); // 이슈 메인 화면으로 이동
     } catch (err: any) {
       alert(err.response?.data?.message || "보드 생성 실패");
     } finally {

@@ -3,6 +3,8 @@ import { A } from "@solidjs/router";
 import api from "../lib/axios";
 import { getBoardsForProject, setBoardsForProject, addBoard } from "../store/boardStore";
 import { ProjectIcon } from "./icons";
+import type { Board } from "../lib/types";
+import { getCurrentProjectId } from "../store/appStore";
 
 const fetchBoards = async (projectId: string) => {
   const res = await api.get(`/project/${projectId}/boards`);
@@ -12,36 +14,38 @@ const fetchBoards = async (projectId: string) => {
   return boards;
 };
 
-function IssueLNB(props) {
-  const [boardsResource] = createResource(() => props.projectId, fetchBoards);
-  const [showModal, setShowModal] = createSignal(false);
-  const [boardName, setBoardName] = createSignal("");
-  const [loading, setLoading] = createSignal(false);
+export default function IssueLNB() {
+  const [boardsResource] = createResource<Board[], string>(
+    () => getCurrentProjectId(),
+    fetchBoards
+  );
+  const [showModal, setShowModal] = createSignal<boolean>(false);
+  const [boardName, setBoardName] = createSignal<string>("");
+  const [loading, setLoading] = createSignal<boolean>(false);
 
   // Store의 보드 목록을 사용
-  const getBoards = () => {
-    // 처음에는 API에서 데이터가 로드될 때까지 대기, 이후 store에서 직접 읽기
-    const stored = getBoardsForProject(props.projectId);
+  const getBoards = (): Board[] | undefined => {
+    const projectId = getCurrentProjectId();
+    const stored = projectId ? getBoardsForProject(projectId) : [];
     const resource = boardsResource();
-    
-    // store에 데이터가 있으면 store 사용, 없으면 resource 사용
     return stored && stored.length > 0 ? stored : resource;
   };
 
-  const handleCreateBoard = async (e: Event) => {
+  const handleCreateBoard = async (e: SubmitEvent) => {
     e.preventDefault();
     if (!boardName().trim()) return;
 
     setLoading(true);
     try {
+      const projectId = getCurrentProjectId();
       const res = await api.post("/board", {
         name: boardName(),
-        project_id: props.projectId,
+        project_id: projectId,
         type: "KANBAN",
       });
 
-      const newBoard = res.data.data;
-      addBoard(props.projectId, newBoard);
+      const newBoard: Board = res.data.data;
+      if (projectId) addBoard(projectId, newBoard);
 
       setBoardName("");
       setShowModal(false);
@@ -54,23 +58,21 @@ function IssueLNB(props) {
 
   return (
     <div>
-      <button
-        onClick={() => setShowModal(true)}
-        class="lnb-create-button issue"
-      >
-        <ProjectIcon size={14} class="btn-icon" /> 보드 생성
+      <button onClick={() => setShowModal(true)} class="lnb-create-button issue">
+        <ProjectIcon size={14} className="btn-icon" /> 보드 생성
       </button>
 
       <div>
         <h3 class="lnb-section-title">보드 목록</h3>
         <Suspense fallback={<p class="lnb-loading">로딩 중...</p>}>
           <div class="lnb-list">
-            <For
-              each={getBoards()}
-              fallback={<p class="lnb-empty">보드가 없습니다.</p>}
-            >
-              {(board) => (
-                <A href={`/project/${props.projectId}/board/${board.id}`} class="lnb-item" activeClass="active">
+            <For each={getBoards()} fallback={<p class="lnb-empty">보드가 없습니다.</p>}>
+              {(board: Board) => (
+                <A
+                  href={`/project/${getCurrentProjectId()}/board/${board.id}`}
+                  class="lnb-item"
+                  activeClass="active"
+                >
                   {board.name}
                 </A>
               )}
@@ -95,7 +97,9 @@ function IssueLNB(props) {
                     class="form-control"
                     placeholder="예: 개발 백로그, 업무 자동화 보드"
                     value={boardName()}
-                    onInput={(e) => setBoardName(e.currentTarget.value)}
+                    onInput={(e: Event) =>
+                      setBoardName((e.currentTarget as HTMLInputElement).value)
+                    }
                     autofocus
                     required
                   />
@@ -110,11 +114,7 @@ function IssueLNB(props) {
                 >
                   취소
                 </button>
-                <button
-                  type="submit"
-                  class="btn btn-primary"
-                  disabled={loading()}
-                >
+                <button type="submit" class="btn btn-primary" disabled={loading()}>
                   {loading() ? "생성 중..." : "보드 생성"}
                 </button>
               </div>
@@ -125,5 +125,3 @@ function IssueLNB(props) {
     </div>
   );
 }
-
-export default IssueLNB;
