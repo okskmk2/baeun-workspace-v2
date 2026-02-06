@@ -94,6 +94,46 @@ router.post("/", isAuth, async (req, res) => {
 /**
  * @swagger
  * /api/project/{projectId}:
+ *   get:
+ *     summary: 프로젝트 상세 조회
+ *     description: 프로젝트의 상세 정보 조회
+ *     tags:
+ *       - Project
+ *     parameters:
+ *       - in: path
+ *         name: projectId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: 프로젝트 상세 조회 성공
+ *       404:
+ *         description: 프로젝트를 찾을 수 없음
+ *       500:
+ *         description: 서버 오류
+ */
+router.get("/:projectId", isAuth, async (req, res) => {
+  const { projectId } = req.params;
+  try {
+    const result = await pool.query(
+      "SELECT * FROM project WHERE id = $1",
+      [projectId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, message: "프로젝트를 찾을 수 없습니다." });
+    }
+
+    res.json({ success: true, data: result.rows[0] });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * @swagger
+ * /api/project/{projectId}:
  *   delete:
  *     summary: 프로젝트 삭제
  *     description: 프로젝트 삭제 (OWNER 전용, 기본 프로젝트 삭제 불가)
@@ -314,6 +354,120 @@ router.post("/:projectId/pages", isAuth, async (req, res) => {
     res.status(201).json({ success: true, data: insertRes.rows[0] });
   } catch (error) {
     console.error("create page error", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * @swagger
+ * /api/project/{projectId}/members:
+ *   get:
+ *     summary: 프로젝트 멤버 목록
+ *     description: 프로젝트에 속한 멤버 목록 조회
+ *     tags:
+ *       - Project
+ *     parameters:
+ *       - in: path
+ *         name: projectId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: 멤버 목록 조회 성공
+ *       500:
+ *         description: 서버 오류
+ */
+router.get("/:projectId/members", isAuth, async (req, res) => {
+  const { projectId } = req.params;
+  try {
+    const query = `
+      SELECT m.id, m.name, m.email, pm.role_name
+      FROM project_member pm
+      JOIN member m ON pm.member_id = m.id
+      WHERE pm.project_id = $1
+      ORDER BY m.name ASC
+    `;
+    const result = await pool.query(query, [projectId]);
+    res.json({ success: true, data: result.rows });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * @swagger
+ * /api/project/{projectId}/member:
+ *   post:
+ *     summary: 프로젝트 멤버 추가
+ *     description: 워크스페이스 멤버를 프로젝트 멤버로 추가
+ *     tags:
+ *       - Project
+ *     parameters:
+ *       - in: path
+ *         name: projectId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               member_id:
+ *                 type: integer
+ *               role_name:
+ *                 type: string
+ *                 default: MEMBER
+ *             required:
+ *               - member_id
+ *     responses:
+ *       201:
+ *         description: 멤버 추가 성공
+ *       403:
+ *         description: 권한이 없음
+ *       500:
+ *         description: 서버 오류
+ */
+router.post("/:projectId/member", isAuth, async (req, res) => {
+  const { projectId } = req.params;
+  const { member_id, role_name = "MEMBER" } = req.body;
+  const userId = req.session.userId;
+
+  try {
+    // 1. 권한 확인: 현재 사용자가 프로젝트 OWNER인지
+    const authCheck = await pool.query(
+      "SELECT role_name FROM project_member WHERE project_id = $1 AND member_id = $2",
+      [projectId, userId]
+    );
+
+    if (!authCheck.rows[0] || authCheck.rows[0].role_name !== "OWNER") {
+      return res.status(403).json({ success: false, message: "멤버 추가 권한이 없습니다." });
+    }
+
+    // 2. 이미 프로젝트 멤버인지 확인
+    const duplicateCheck = await pool.query(
+      "SELECT id FROM project_member WHERE project_id = $1 AND member_id = $2",
+      [projectId, member_id]
+    );
+
+    if (duplicateCheck.rows.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: "이미 프로젝트 멤버입니다.",
+      });
+    }
+
+    // 3. 멤버 추가
+    await pool.query(
+      "INSERT INTO project_member (project_id, member_id, role_name) VALUES ($1, $2, $3)",
+      [projectId, member_id, role_name]
+    );
+
+    res.status(201).json({ success: true, message: "멤버가 추가되었습니다." });
+  } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 });

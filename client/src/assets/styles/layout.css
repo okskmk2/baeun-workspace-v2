@@ -6,12 +6,48 @@
 
 /* Layout Components */
 .layout-nav {
-  padding: 1rem;
+  padding: 1rem 2rem;
   background: #333;
   color: white;
   display: flex;
+  justify-content: space-between;
+  align-items: center;
   gap: 15px;
   border-bottom: 1px solid var(--color-border);
+}
+
+.layout-nav-brand {
+  display: flex;
+  align-items: center;
+}
+
+.layout-nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: white;
+  text-decoration: none;
+  transition: opacity 0.2s;
+}
+
+.layout-nav-logo:hover {
+  opacity: 0.8;
+}
+
+.logo-img {
+  height: 24px;
+  width: 24px;
+}
+
+.logo-text {
+  font-size: 1.2rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.layout-nav-links {
+  display: flex;
+  gap: 15px;
 }
 
 .layout-nav a {
