@@ -1,0 +1,7 @@
+:root{--color-primary:#2563EB;--color-surface:#F9FAFB;--muted:#6B7280}
+html,body,#app{height:100%;margin:0}
+.page-container{padding:12px}
+.flex-between{display:flex;justify-content:space-between;align-items:center}
+.btn{padding:8px 12px;border-radius:6px;border:0;background:var(--color-primary);color:#fff}
+.text-light{color:var(--muted)}
+.empty-state{background:#fff;padding:24px;border-radius:8px}

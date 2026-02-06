@@ -1,26 +1,20 @@
 {
-  "name": "baeun-workspace-web",
-  "private": true,
+  "name": "workspace-baeun-vue3",
   "version": "0.0.0",
-  "type": "module",
+  "private": true,
   "scripts": {
     "start": "vite",
-    "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "vite build",
     "preview": "vite preview"
   },
   "dependencies": {
-    "@solidjs/router": "^0.15.4",
-    "axios": "^1.13.4",
-    "solid-js": "^1.9.10"
+    "vue": "^3.4.0",
+    "vue-router": "^4.1.6",
+    "pinia": "^2.0.30",
+    "axios": "^1.4.0"
   },
   "devDependencies": {
-    "@types/node": "^24.10.1",
-    "eslint-config-prettier": "^10.1.8",
-    "prettier": "^3.8.1",
-    "sass-embedded": "^1.97.3",
-    "typescript": "~5.9.3",
-    "vite": "^7.2.4",
-    "vite-plugin-solid": "^2.11.10"
+    "vite": "^5.0.0",
+    "@vitejs/plugin-vue": "^4.2.0"
   }
 }
