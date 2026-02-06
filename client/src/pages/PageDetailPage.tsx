@@ -31,7 +31,7 @@ function buildMap(nodes, map = {}) {
   return map;
 }
 
-export default function PageDetail() {
+export default function PageDetailPage() {
   const params = useParams();
   const [page] = createResource(() => ({ projectId: params.projectId, pageId: params.pageId }), fetchPage);
   const [pages] = createResource(() => params.projectId, fetchPages);
@@ -58,11 +58,13 @@ export default function PageDetail() {
 
       <section>
         <div class="breadcrumbs">
-          <For each={breadcrumb} fallback={<span>없음</span>}>
-            {(b) => (
+          {breadcrumb.length ? (
+            breadcrumb.map((b) => (
               <A href={`/project/${params.projectId}/wiki/${b.id}`} class="breadcrumb-link">{b.title}</A>
-            )}
-          </For>
+            ))
+          ) : (
+            <span>없음</span>
+          )}
         </div>
 
         <div class="page-content">

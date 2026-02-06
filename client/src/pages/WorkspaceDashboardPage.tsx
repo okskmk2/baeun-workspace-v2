@@ -1,7 +1,7 @@
 import { createSignal, createResource, For, Show, Suspense } from "solid-js";
 import { useParams, A, useNavigate } from "@solidjs/router";
 import api from "../lib/axios";
-import WorkspaceMembers from "./WorkspaceMembers";
+import WorkspaceMembers from "../components/WorkspaceMembers";
 
 /**
  * 데이터 페칭 함수
@@ -12,7 +12,7 @@ const fetchProjects = async (workspaceId) => {
   return res.data.data;
 };
 
-export default function WorkspaceDashboard() {
+export default function WorkspaceDashboardPage() {
   const params = useParams();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = createSignal("projects");

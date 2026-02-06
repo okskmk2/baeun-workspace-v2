@@ -2,7 +2,7 @@ import { createSignal } from "solid-js";
 import { useNavigate, useParams } from "@solidjs/router";
 import api from "../lib/axios";
 
-export default function ProjectCreate() {
+export default function ProjectCreatePage() {
   const params = useParams(); // URL에서 workspaceId 추출
   const navigate = useNavigate();
   const [name, setName] = createSignal("");

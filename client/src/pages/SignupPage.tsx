@@ -2,7 +2,7 @@ import { createSignal } from "solid-js";
 import { useNavigate } from "@solidjs/router";
 import api from "../lib/axios";
 
-export default function Signup() {
+export default function SignupPage() {
   const [form, setForm] = createSignal({ name: "", email: "", password: "" });
   const navigate = useNavigate();
 

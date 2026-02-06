@@ -3,6 +3,7 @@ import { Show } from "solid-js";
 import IssueLNB from "./IssueLNB";
 import WikiLNB from "./WikiLNB";
 import ChatLNB from "./ChatLNB";
+import { ProjectIcon, IssueIcon, ChatIcon } from "./icons";
 
 function ProjectLayout(props) {
   const params = useParams();
@@ -16,15 +17,17 @@ function ProjectLayout(props) {
     <div class="project-layout">
       {/* GNB */}
       <nav class="project-gnb">
-        <A href={`/project/${params.projectId}`}>프로젝트</A>
+        <A href={`/project/${params.projectId}`}>
+          <ProjectIcon size={16} class="nav-icon" /> 프로젝트
+        </A>
         <A href={`/project/${params.projectId}/issue`} activeClass="active">
-          이슈
+          <IssueIcon size={16} class="nav-icon" /> 이슈
         </A>
         <A href={`/project/${params.projectId}/wiki`} activeClass="active">
-          위키
+          <ProjectIcon size={16} class="nav-icon" /> 위키
         </A>
         <A href={`/project/${params.projectId}/chat`} activeClass="active">
-          Chat
+          <ChatIcon size={16} class="nav-icon" /> Chat
         </A>
       </nav>
 

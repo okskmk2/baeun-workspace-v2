@@ -24,7 +24,7 @@ const fetchMessages = async (chatroomId: string) => {
   return [];
 };
 
-function ChatRoomDetail() {
+function ChatRoomDetailPage() {
   const params = useParams();
   const [chatroom] = createResource(() => params.chatroomId, fetchChatroom);
   const [messages] = createResource(() => params.chatroomId, fetchMessages);
@@ -104,4 +104,4 @@ function ChatRoomDetail() {
   );
 }
 
-export default ChatRoomDetail;
+export default ChatRoomDetailPage;

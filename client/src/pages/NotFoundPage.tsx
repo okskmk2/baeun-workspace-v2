@@ -1,7 +1,7 @@
 import { useNavigate } from "@solidjs/router";
 import { onCleanup } from "solid-js";
 
-export default function NotFound() {
+export default function NotFoundPage() {
   // const navigate = useNavigate();
 
   // // (선택 사항) 5초 뒤에 자동으로 홈으로 리다이렉트

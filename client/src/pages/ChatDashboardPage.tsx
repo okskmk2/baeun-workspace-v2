@@ -1,6 +1,6 @@
 import { useParams } from "@solidjs/router";
 
-function ChatDashboard() {
+function ChatDashboardPage() {
   const params = useParams();
 
   return (
@@ -22,4 +22,4 @@ function ChatDashboard() {
   );
 }
 
-export default ChatDashboard;
+export default ChatDashboardPage;

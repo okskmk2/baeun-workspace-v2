@@ -22,7 +22,7 @@ function flattenPages(nodes, depth = 0, out = []) {
   return out;
 }
 
-export default function PageCreate() {
+export default function PageCreatePage() {
   const params = useParams();
   const navigate = useNavigate();
   const [pages] = createResource(() => params.projectId, fetchPages);

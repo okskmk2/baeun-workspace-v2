@@ -2,7 +2,7 @@ import { createSignal, createResource, Suspense, For, Show } from "solid-js";
 import { useParams, useNavigate } from "@solidjs/router";
 import api from "../lib/axios";
 
-export default function IssueDetail() {
+export default function IssueDetailPage() {
   const params = useParams();
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = createSignal(false);

@@ -2,7 +2,7 @@ import { createSignal } from "solid-js";
 import { useNavigate } from "@solidjs/router";
 import api from "../lib/axios";
 
-export default function WorkspaceCreate() {
+export default function WorkspaceCreatePage() {
   const [name, setName] = createSignal("");
   const navigate = useNavigate();
 

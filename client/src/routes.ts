@@ -4,31 +4,31 @@ import ProjectLayout from "./components/ProjectLayout";
 export const routes = [
   {
     path: "/",
-    component: lazy(() => import("./pages/Home")),
+    component: lazy(() => import("./pages/HomePage")),
   },
   {
     path: "/signup",
-    component: lazy(() => import("./pages/Signup")),
+    component: lazy(() => import("./pages/SignupPage")),
   },
   {
     path: "/login",
-    component: lazy(() => import("./pages/Login")),
+    component: lazy(() => import("./pages/LoginPage")),
   },
   {
     path: "/profile",
-    component: lazy(() => import("./pages/Profile")),
+    component: lazy(() => import("./pages/ProfilePage")),
   },
   {
     path: "/workspace/create",
-    component: lazy(() => import("./pages/WorkspaceCreate")),
+    component: lazy(() => import("./pages/WorkspaceCreatePage")),
   },
   {
     path: "/workspace/:workspaceId",
-    component: lazy(() => import("./pages/WorkspaceDashboard")),
+    component: lazy(() => import("./pages/WorkspaceDashboardPage")),
   },
   {
     path: "/workspace/:workspaceId/project/new",
-    component: lazy(() => import("./pages/ProjectCreate")),
+    component: lazy(() => import("./pages/ProjectCreatePage")),
   },
   {
     path: "/project/:projectId",
@@ -36,48 +36,48 @@ export const routes = [
     children: [
       {
         path: "/",
-        component: lazy(() => import("./pages/ProjectDetail")),
+        component: lazy(() => import("./pages/ProjectDetailPage")),
       },
       {
         path: "/board/new",
-        component: lazy(() => import("./pages/BoardCreate")),
+        component: lazy(() => import("./pages/BoardCreatePage")),
       },
       {
         path: "/wiki/new",
-        component: lazy(() => import("./pages/PageCreate")),
+        component: lazy(() => import("./pages/PageCreatePage")),
       },
       {
         path: "/wiki/:pageId",
-        component: lazy(() => import("./pages/PageDetail")),
+        component: lazy(() => import("./pages/PageDetailPage")),
       },
       {
         path: "/board/:boardId",
-        component: lazy(() => import("./pages/BoardDetail")),
+        component: lazy(() => import("./pages/BoardDetailPage")),
       },
       {
         path: "/issue/:issueId",
-        component: lazy(() => import("./pages/IssueDetail")),
+        component: lazy(() => import("./pages/IssueDetailPage")),
       },
       {
         path: "/issue",
-        component: lazy(() => import("./pages/ProjectDetail")),
+        component: lazy(() => import("./pages/ProjectDetailPage")),
       },
       {
         path: "/wiki",
-        component: lazy(() => import("./pages/ProjectDetail")),
+        component: lazy(() => import("./pages/ProjectDetailPage")),
       },
       {
         path: "/chat",
-        component: lazy(() => import("./pages/ChatDashboard")),
+        component: lazy(() => import("./pages/ChatDashboardPage")),
       },
       {
         path: "/chat/:chatroomId",
-        component: lazy(() => import("./pages/ChatRoomDetail")),
+        component: lazy(() => import("./pages/ChatRoomDetailPage")),
       },
     ],
   },
   {
     path: "*",
-    component: lazy(() => import("./pages/NotFound")),
+    component: lazy(() => import("./pages/NotFoundPage")),
   },
 ];

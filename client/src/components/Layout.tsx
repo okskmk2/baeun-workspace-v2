@@ -1,4 +1,5 @@
 import { A } from "@solidjs/router";
+import { HomeIcon, ProfileIcon } from "./icons";
 
 function Layout(props) {
   return (
@@ -12,7 +13,7 @@ function Layout(props) {
         </div>
         <div class="layout-nav-links">
           <A href="/" activeClass="active">
-            홈
+            <HomeIcon size={18} class="nav-icon" /> 홈
           </A>
           <A href="/signup" activeClass="active">
             회원가입
@@ -21,7 +22,7 @@ function Layout(props) {
             로그인
           </A>
           <A href="/profile" activeClass="active">
-            내 프로필
+            <ProfileIcon size={18} class="nav-icon" /> 내 프로필
           </A>
         </div>
       </nav>

@@ -17,7 +17,7 @@ const fetchIssues = async (boardId: string) => {
   return res.data.data || [];
 };
 
-export default function BoardDetail() {
+export default function BoardDetailPage() {
   const params = useParams();
   const [board] = createResource(() => params.boardId, fetchBoard);
   const [issues, { refetch }] = createResource(() => params.boardId, fetchIssues);

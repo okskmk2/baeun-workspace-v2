@@ -2,6 +2,7 @@ import { createResource, For, Suspense, createSignal } from "solid-js";
 import { A } from "@solidjs/router";
 import api from "../lib/axios";
 import ChatCreateModal from "./ChatCreateModal";
+import { ChatIcon } from "./icons";
 
 const fetchChatRooms = async (projectId: string) => {
   if (!projectId) return [];
@@ -18,7 +19,7 @@ function ChatLNB(props) {
   return (
     <div>
       <button class="lnb-create-button chat" onClick={() => setShowModal(true)}>
-        + 대화방 생성
+        <ChatIcon size={14} class="btn-icon" /> 대화방 생성
       </button>
 
       <div>

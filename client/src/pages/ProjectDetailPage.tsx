@@ -23,7 +23,7 @@ const fetchWorkspaceMembers = async (workspaceId: string) => {
   return res.data.data || [];
 };
 
-export default function ProjectDetail() {
+export default function ProjectDetailPage() {
   const params = useParams();
   const [project, { refetch: refetchProject }] = createResource(() => params.projectId, fetchProject);
   const [projectMembers, { refetch: refetchMembers }] = createResource(

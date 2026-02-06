@@ -13,7 +13,7 @@ const fetchUser = async () => {
   }
 };
 
-export default function Home() {
+export default function HomePage() {
   const [user] = createResource(fetchUser);
 
   return (

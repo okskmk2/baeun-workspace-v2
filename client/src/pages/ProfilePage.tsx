@@ -7,7 +7,7 @@ const fetchMyWorkspaces = async () => {
   return res.data.data;
 };
 
-export default function Profile() {
+export default function ProfilePage() {
   const [workspaces] = createResource(fetchMyWorkspaces);
 
   return (

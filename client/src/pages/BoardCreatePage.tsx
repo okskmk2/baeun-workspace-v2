@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "@solidjs/router";
 import api from "../lib/axios";
 import { addBoard } from "../store/boardStore";
 
-export default function BoardCreate() {
+export default function BoardCreatePage() {
   const params = useParams(); // URL에서 projectId 추출 가능하도록 구성
   const navigate = useNavigate();
   const [name, setName] = createSignal("");

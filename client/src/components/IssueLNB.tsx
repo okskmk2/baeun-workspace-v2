@@ -2,6 +2,7 @@ import { createResource, For, Suspense, createSignal } from "solid-js";
 import { A } from "@solidjs/router";
 import api from "../lib/axios";
 import { getBoardsForProject, setBoardsForProject, addBoard } from "../store/boardStore";
+import { ProjectIcon } from "./icons";
 
 const fetchBoards = async (projectId: string) => {
   const res = await api.get(`/project/${projectId}/boards`);
@@ -57,7 +58,7 @@ function IssueLNB(props) {
         onClick={() => setShowModal(true)}
         class="lnb-create-button issue"
       >
-        + 보드 생성
+        <ProjectIcon size={14} class="btn-icon" /> 보드 생성
       </button>
 
       <div>
