@@ -1,54 +1,45 @@
 import { createResource, For, Suspense } from "solid-js";
+import { A } from "@solidjs/router"; // 링크 컴포넌트 추가
 import api from "../lib/axios";
 
 export default function IssueList(props: { boardId: number }) {
   const [issues, { refetch }] = createResource(
     () => props.boardId,
     async (id) => {
-      const res = await api.get(`/issue/board/${id}`);
+      const res = await api.get(`/board/${id}/issue`);
       return res.data.data;
     }
   );
 
-  const updateStatus = async (issueId: number, newStatus: string) => {
-    try {
-      await api.patch(`/issue/${issueId}`, { status: newStatus });
-      refetch(); // 목록 새로고침
-    } catch (err) {
-      alert("상태 변경 실패");
-    }
-  };
-
   return (
     <div style={{ background: "#f4f4f4", padding: "10px", "border-radius": "8px" }}>
       <h4>Task List</h4>
-      <Suspense fallback={<li>Loading...</li>}>
-        <For each={issues()}>
-          {(issue) => (
-            <div
-              style={{
-                background: "white",
-                margin: "5px 0",
-                padding: "10px",
-                "border-radius": "4px",
-                "box-shadow": "0 2px 4px rgba(0,0,0,0.1)",
-              }}
-            >
-              <div style={{ "font-weight": "bold" }}>{issue.title}</div>
-              <div style={{ "font-size": "0.8rem", color: "#666" }}>상태: {issue.status}</div>
-
-              <select
-                value={issue.status}
-                onChange={(e) => updateStatus(issue.id, e.currentTarget.value)}
-                style={{ "margin-top": "5px" }}
+      <Suspense fallback={<p>Loading...</p>}>
+        <div style={{ display: "flex", "flex-direction": "column", gap: "10px" }}>
+          <For each={issues()}>
+            {(issue) => (
+              <A
+                href={`/issue/${issue.id}`} // 클릭 시 상세 페이지 이동
+                style={{ "text-decoration": "none", color: "inherit" }}
               >
-                <option value="백로그">백로그</option>
-                <option value="진행중">진행중</option>
-                <option value="완료">완료</option>
-              </select>
-            </div>
-          )}
-        </For>
+                <div
+                  style={{
+                    background: "white",
+                    padding: "15px",
+                    "border-radius": "4px",
+                    "box-shadow": "0 2px 4px rgba(0,0,0,0.1)",
+                    cursor: "pointer",
+                  }}
+                >
+                  <div style={{ "font-weight": "bold", "margin-bottom": "5px" }}>{issue.title}</div>
+                  <div style={{ "font-size": "0.8rem", color: "#666" }}>
+                    상태: <span style={{ color: "#4A90E2" }}>{issue.status}</span>
+                  </div>
+                </div>
+              </A>
+            )}
+          </For>
+        </div>
       </Suspense>
     </div>
   );

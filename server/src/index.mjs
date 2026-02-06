@@ -20,7 +20,7 @@ app.use(
     origin: "http://localhost:8080",
     // 쿠키를 주고받기 위해 필수 설정
     credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   })
 );
 

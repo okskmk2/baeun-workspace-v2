@@ -1,20 +1,17 @@
-import { createSignal, createResource, For, Suspense } from "solid-js";
-import { useParams } from "@solidjs/router";
+import { createSignal, Show } from "solid-js";
+import { useParams, useNavigate } from "@solidjs/router";
 import api from "../lib/axios";
+import IssueList from "../components/IssueList"; // IssueList 컴포넌트 임포트
 
 export default function BoardDetail() {
   const params = useParams();
+  const navigate = useNavigate();
   const [title, setTitle] = createSignal("");
   const [content, setContent] = createSignal("");
   const [showForm, setShowForm] = createSignal(false);
 
-  // 이슈 목록 가져오기
-  const fetchIssues = async (boardId: string) => {
-    const res = await api.get(`/board/${boardId}/issue`);
-    return res.data.data;
-  };
-
-  const [issues, { refetch }] = createResource(() => params.boardId, fetchIssues);
+  // IssueList의 refetch를 트리거하기 위한 변수 (필요 시)
+  let issueListRef: any;
 
   // 이슈 생성 핸들러
   const handleCreateIssue = async (e: Event) => {
@@ -29,7 +26,10 @@ export default function BoardDetail() {
       setTitle("");
       setContent("");
       setShowForm(false);
-      refetch(); // 목록 새로고침
+
+      // 생성 후 목록을 새로고침하기 위해 페이지를 재로드하거나
+      // IssueList 내부의 refetch를 호출하는 로직이 필요할 수 있습니다.
+      window.location.reload();
     } catch (err: any) {
       alert(err.response?.data?.message || "생성 실패");
     }
@@ -40,12 +40,26 @@ export default function BoardDetail() {
       <header
         style={{
           display: "flex",
-          "justify-content": "between",
+          "justify-content": "space-between",
           "align-items": "center",
           "margin-bottom": "30px",
         }}
       >
-        <h1>📋 보드 상세</h1>
+        <div>
+          <button
+            onClick={() => navigate(-1)}
+            style={{
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              color: "#666",
+              "margin-bottom": "10px",
+            }}
+          >
+            ← 뒤로 가기
+          </button>
+          <h1>📋 보드 상세</h1>
+        </div>
         <button
           onClick={() => setShowForm(!showForm())}
           style={{
@@ -57,7 +71,7 @@ export default function BoardDetail() {
             cursor: "pointer",
           }}
         >
-          {showForm() ? "취소" : "+ 새 이슈"}
+          {showForm() ? "취oc" : "+ 새 이슈"}
         </button>
       </header>
 
@@ -111,44 +125,10 @@ export default function BoardDetail() {
         </form>
       )}
 
-      {/* 이슈 목록 */}
-      <Suspense fallback={<p>이슈를 불러오는 중...</p>}>
-        <div style={{ display: "flex", "flex-direction": "column", gap: "15px" }}>
-          <For each={issues()} fallback={<p style={{ color: "#999" }}>등록된 이슈가 없습니다.</p>}>
-            {(issue) => (
-              <div
-                style={{
-                  padding: "15px",
-                  border: "1px solid #ddd",
-                  "border-radius": "8px",
-                  background: "white",
-                }}
-              >
-                <div style={{ display: "flex", "justify-content": "space-between" }}>
-                  <h3 style={{ margin: "0 0 10px 0" }}>{issue.title}</h3>
-                  <span
-                    style={{
-                      "font-size": "0.8rem",
-                      background: "#eee",
-                      padding: "2px 8px",
-                      "border-radius": "10px",
-                      height: "fit-content",
-                    }}
-                  >
-                    {issue.status}
-                  </span>
-                </div>
-                <p style={{ margin: "0", color: "#666", "white-space": "pre-wrap" }}>
-                  {issue.content}
-                </p>
-                <small style={{ color: "#aaa", display: "block", "margin-top": "10px" }}>
-                  생성일: {new Date(issue.created_at).toLocaleString()}
-                </small>
-              </div>
-            )}
-          </For>
-        </div>
-      </Suspense>
+      {/* 통합된 이슈 리스트 컴포넌트 */}
+      <section>
+        <IssueList boardId={Number(params.boardId)} />
+      </section>
     </div>
   );
 }

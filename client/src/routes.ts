@@ -42,6 +42,10 @@ export const routes = [
     component: lazy(() => import("./pages/BoardDetail")),
   },
   {
+    path: "/issue/:issueId", // 추가된 경로
+    component: lazy(() => import("./pages/IssueDetail")),
+  },
+  {
     path: "*",
     component: lazy(() => import("./pages/NotFound")),
   },
