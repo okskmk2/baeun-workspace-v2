@@ -1,146 +1,170 @@
-import { createSignal, Show } from "solid-js";
-import { useParams, useNavigate } from "@solidjs/router";
+import { createResource, For, Suspense, createSignal } from "solid-js";
+import { useParams } from "@solidjs/router";
+import { A } from "@solidjs/router";
 import api from "../lib/axios";
-import IssueList from "../components/IssueList"; // IssueList 컴포넌트 임포트
+
+const ISSUE_STATUSES = ["백로그", "진행중", "검토중", "완료"];
+
+const fetchBoard = async (boardId: string) => {
+  if (!boardId) return null;
+  const res = await api.get(`/board/${boardId}`);
+  return res.data.data || null;
+};
+
+const fetchIssues = async (boardId: string) => {
+  if (!boardId) return [];
+  const res = await api.get(`/board/${boardId}/issue`);
+  return res.data.data || [];
+};
 
 export default function BoardDetail() {
   const params = useParams();
-  const navigate = useNavigate();
-  const [title, setTitle] = createSignal("");
-  const [content, setContent] = createSignal("");
-  const [showForm, setShowForm] = createSignal(false);
-  const [filterTab, setFilterTab] = createSignal("all"); // "all", "mine", "created"
+  const [board] = createResource(() => params.boardId, fetchBoard);
+  const [issues, { refetch }] = createResource(() => params.boardId, fetchIssues);
+  const [draggedIssueId, setDraggedIssueId] = createSignal<number | null>(null);
 
-  // IssueList의 refetch를 트리거하기 위한 변수 (필요 시)
-  let issueListRef: any;
+  const getIssuesByStatus = (status: string) => {
+    const allIssues = issues() || [];
+    return allIssues.filter((issue) => issue.status === status);
+  };
 
-  // 이슈 생성 핸들러
-  const handleCreateIssue = async (e: Event) => {
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "백로그":
+        return "#f0f0f0";
+      case "진행중":
+        return "#fff3cd";
+      case "검토중":
+        return "#d1ecf1";
+      case "완료":
+        return "#d4edda";
+      default:
+        return "#f5f5f5";
+    }
+  };
+
+  const handleDragStart = (issueId: number, e: DragEvent) => {
+    setDraggedIssueId(issueId);
+    const target = e.currentTarget as HTMLElement;
+    if (e.dataTransfer) {
+      e.dataTransfer.effectAllowed = "move";
+      e.dataTransfer.setData("issueId", String(issueId));
+    }
+    target.classList.add("dragging");
+  };
+
+  const handleDragEnd = (e: DragEvent) => {
+    const target = e.currentTarget as HTMLElement;
+    target.classList.remove("dragging");
+  };
+
+  const handleDragOver = (e: DragEvent) => {
     e.preventDefault();
-    try {
-      await api.post("/issue", {
-        title: title(),
-        content: content(),
-        board_id: params.boardId,
-      });
-      alert("이슈가 생성되었습니다.");
-      setTitle("");
-      setContent("");
-      setShowForm(false);
+    if (e.dataTransfer) {
+      e.dataTransfer.dropEffect = "move";
+    }
+    const columnElement = (e.currentTarget as HTMLElement).closest(".kanban-column");
+    if (columnElement) {
+      columnElement.classList.add("drag-over");
+    }
+  };
 
-      // 생성 후 목록을 새로고침하기 위해 페이지를 재로드하거나
-      // IssueList 내부의 refetch를 호출하는 로직이 필요할 수 있습니다.
-      window.location.reload();
-    } catch (err: any) {
-      alert(err.response?.data?.message || "생성 실패");
+  const handleDragLeave = (e: DragEvent) => {
+    const columnElement = (e.currentTarget as HTMLElement).closest(".kanban-column");
+    if (columnElement && e.relatedTarget) {
+      const relatedTarget = e.relatedTarget as HTMLElement;
+      if (!columnElement.contains(relatedTarget)) {
+        columnElement.classList.remove("drag-over");
+      }
+    }
+  };
+
+  const handleDrop = async (newStatus: string, e: DragEvent) => {
+    e.preventDefault();
+    const columnElement = (e.currentTarget as HTMLElement).closest(".kanban-column");
+    if (columnElement) {
+      columnElement.classList.remove("drag-over");
+    }
+
+    const issueId = e.dataTransfer?.getData("issueId");
+
+    if (!issueId) return;
+
+    try {
+      await api.patch(`/issue/${issueId}`, { status: newStatus });
+      setDraggedIssueId(null);
+      // 목록 새로고침
+      refetch();
+    } catch (error) {
+      console.error("Failed to update issue status:", error);
+      alert("상태 변경에 실패했습니다.");
     }
   };
 
   return (
     <div style={{ height: "100%", display: "flex", "flex-direction": "column" }}>
-      {/* 상단 필터 및 액션 바 */}
-      <div class="flex-between p-lg" style={{ "border-bottom": "1px solid var(--color-border-light)" }}>
+      {/* 상단 액션 바 */}
+      <div
+        class="flex-between p-lg"
+        style={{ "border-bottom": "1px solid var(--color-border-light)" }}
+      >
+        <h2 style={{ margin: 0 }}>{board()?.name || "칸반보드"}</h2>
         <div class="flex-row gap-md">
-          <button
-            onClick={() => setFilterTab("all")}
-            classList={{
-              "filter-button": true,
-              active: filterTab() === "all",
-            }}
-          >
-            모두 이슈
-          </button>
-          <button
-            onClick={() => setFilterTab("mine")}
-            classList={{
-              "filter-button": true,
-              active: filterTab() === "mine",
-            }}
-          >
-            나의 이슈
-          </button>
-          <button
-            onClick={() => setFilterTab("created")}
-            classList={{
-              "filter-button": true,
-              active: filterTab() === "created",
-            }}
-          >
-            내가 만든 이슈
-          </button>
-        </div>
-        <div class="flex-row gap-md">
-          <button
-            onClick={() => setShowForm(true)}
-            class="btn btn-primary btn-small"
-          >
-            이슈 생성
-          </button>
-          <button class="btn btn-secondary btn-small">
-            보드 설정
-          </button>
+          <button class="btn btn-primary btn-small">+ 이슈 생성</button>
+          <button class="btn btn-secondary btn-small">보드 설정</button>
         </div>
       </div>
 
-      {/* 이슈 생성 모달 */}
-      {showForm() && (
-        <div class="modal-overlay" onClick={() => setShowForm(false)}>
-          <div class="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div class="modal-header">
-              <h2>🎯 새 이슈 생성</h2>
-            </div>
-            <form onSubmit={handleCreateIssue}>
-              <div class="modal-body">
-                <div class="form-group">
-                  <label>이슈 제목</label>
-                  <input
-                    type="text"
-                    placeholder="예: 로그인 기능 개발"
-                    value={title()}
-                    onInput={(e) => setTitle(e.currentTarget.value)}
-                    required
-                    class="form-control"
-                    autofocus
-                  />
+      {/* 칸반보드 */}
+      <div class="kanban-board">
+        <Suspense fallback={<p>로딩 중...</p>}>
+          <For each={ISSUE_STATUSES}>
+            {(status) => (
+              <div
+                class="kanban-column"
+                style={{ "background-color": getStatusColor(status) }}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={(e) => handleDrop(status, e)}
+              >
+                <div class="kanban-column-header">
+                  <h3 class="kanban-column-title">{status}</h3>
+                  <span class="kanban-column-count">{getIssuesByStatus(status).length}</span>
                 </div>
-                <div class="form-group">
-                  <label>상세 내용</label>
-                  <textarea
-                    placeholder="이슈에 대한 상세 설명을 입력하세요"
-                    value={content()}
-                    onInput={(e) => setContent(e.currentTarget.value)}
-                    class="form-control"
-                    style={{ height: "120px" }}
-                  />
+                <div class="kanban-column-content">
+                  <For
+                    each={getIssuesByStatus(status)}
+                    fallback={<p class="kanban-empty">이슈 없음</p>}
+                  >
+                    {(issue) => (
+                      <div
+                        draggable
+                        onDragStart={(e) => handleDragStart(issue.id, e)}
+                        onDragEnd={handleDragEnd}
+                        classList={{
+                          "kanban-card-wrapper": true,
+                          "is-dragged": draggedIssueId() === issue.id,
+                        }}
+                      >
+                        <A
+                          href={`/project/${params.projectId}/issue/${issue.id}`}
+                          class="kanban-card-link"
+                        >
+                          <div class="kanban-card">
+                            <div class="kanban-card-title">{issue.title}</div>
+                            <div class="kanban-card-meta">
+                              <span class="kanban-card-status">{issue.status}</span>
+                            </div>
+                          </div>
+                        </A>
+                      </div>
+                    )}
+                  </For>
                 </div>
               </div>
-              <div class="modal-footer">
-                <button
-                  type="button"
-                  onClick={() => setShowForm(false)}
-                  class="btn"
-                >
-                  취소
-                </button>
-                <button
-                  type="submit"
-                  class="btn btn-success"
-                >
-                  이슈 등록
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* 이슈 리스트 */}
-      <div style={{ flex: 1, overflow: "auto", padding: "20px" }}>
-        <IssueList 
-          boardId={Number(params.boardId)} 
-          projectId={params.projectId}
-          filter={filterTab()} 
-        />
+            )}
+          </For>
+        </Suspense>
       </div>
     </div>
   );

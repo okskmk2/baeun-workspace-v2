@@ -177,24 +177,27 @@ html, body, #root {
 }
 
 .lnb-item {
-  padding: 8px 12px;
-  background: var(--bg-tertiary);
-  border: 1px solid var(--color-border);
-  border-radius: var(--border-radius-sm);
+  display: block;
+  padding: 4px 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
   text-decoration: none;
-  color: var(--color-text-primary);
+  color: var(--color-text-secondary);
   font-size: 14px;
-  transition: background 0.2s;
+  transition: color 0.15s, background 0.15s;
 }
 
 .lnb-item:hover {
-  background: #e8e8e8;
+  color: var(--color-text-primary);
+  text-decoration: underline;
+  background: transparent;
 }
 
 .lnb-item.active {
-  background: var(--color-primary);
-  color: white;
-  border-color: var(--color-primary);
+  color: var(--color-primary);
+  font-weight: 600;
+  background: transparent;
 }
 
 .lnb-loading,
@@ -208,29 +211,63 @@ html, body, #root {
    ======================================== */
 
 .wiki-page-item {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
+  display: block;
+  margin: 6px 0;
+  padding-left: 8px;
+  position: relative;
 }
 
 .wiki-page-header {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 8px;
 }
 
 .wiki-page-toggle {
-  background: none;
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
   border: none;
   cursor: pointer;
   padding: 0;
   font-size: 12px;
   color: var(--color-text-secondary);
+  border-radius: 4px;
+}
+
+.wiki-page-toggle:hover {
+  background: var(--bg-tertiary);
+  color: var(--color-text-primary);
+}
+
+.wiki-page-header .lnb-item {
+  padding: 2px 0;
+  border-radius: 0;
+  display: inline-block;
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}
+
+.wiki-page-header .lnb-item:hover {
+  color: var(--color-text-primary);
+  text-decoration: underline;
+  background: transparent;
 }
 
 .wiki-page-children {
-  margin-left: 20px;
-  margin-top: 5px;
+  margin-left: 18px;
+  margin-top: 6px;
+  padding-left: 12px;
+  border-left: 1px dashed var(--color-border-light);
+}
+
+.wiki-page-item .child-empty {
+  color: var(--color-text-light);
+  font-size: 13px;
+  padding-left: 6px;
 }
 
 /* ========================================
@@ -475,6 +512,85 @@ html, body, #root {
 /* ========================================
    Cards and Content Boxes
    ======================================== */
+
+/* ========================================
+   Page Form & Detail Styles
+   ======================================== */
+.form {
+  max-width: 900px;
+  margin: 0 auto;
+  background: var(--bg-secondary);
+  padding: 24px;
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--border-radius-lg);
+}
+
+.form .form-group {
+  margin-bottom: 18px;
+}
+
+.form input[type="text"],
+.form textarea,
+.form select {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-sm);
+  font-size: 14px;
+  box-sizing: border-box;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.form textarea {
+  min-height: 200px;
+  resize: vertical;
+}
+
+.form input:focus,
+.form textarea:focus,
+.form select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 4px 18px rgba(74,144,226,0.08);
+}
+
+.form-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 10px;
+}
+
+.breadcrumbs {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.breadcrumb-link {
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  font-size: 0.95rem;
+  padding: 6px 10px;
+  border-radius: 6px;
+}
+
+.breadcrumb-link:hover {
+  background: var(--bg-tertiary);
+  color: var(--color-text-primary);
+}
+
+.page-content {
+  background: var(--bg-tertiary);
+  padding: 20px;
+  border-radius: var(--border-radius-md);
+  border: 1px solid var(--color-border-light);
+  color: var(--color-text-primary);
+  line-height: 1.7;
+}
+
 
 .card-grid {
   display: grid;
@@ -993,13 +1109,67 @@ html, body, #root {
   justify-content: flex-end;
 }
 
+.modal-input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-md);
+  font-size: 14px;
+  margin-bottom: 15px;
+  box-sizing: border-box;
+  font-family: inherit;
+  transition: border-color 0.2s;
+}
+
+.modal-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+}
+
+.modal-error {
+  color: var(--color-danger);
+  font-size: 14px;
+  margin-top: -10px;
+  margin-bottom: 15px;
+}
+
 /* ========================================
    Button Variants
    ======================================== */
 
+.btn {
+  padding: 10px 16px;
+  border: none;
+  border-radius: var(--border-radius-md);
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  transition: opacity 0.2s, box-shadow 0.2s;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: var(--color-primary);
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  opacity: 0.9;
+  box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
+}
+
 .btn-secondary {
   background: var(--color-border);
   color: var(--color-text-primary);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #ccc;
 }
 
 .text-primary {
@@ -1016,6 +1186,322 @@ html, body, #root {
 
 .text-light {
   color: var(--color-text-light);
+}
+
+/* ========================================
+   Kanban Board Components
+   ======================================== */
+
+.kanban-board {
+  display: flex;
+  gap: 20px;
+  padding: 20px;
+  overflow-x: auto;
+  background: #fafafa;
+  flex: 1;
+  height: 100%;
+}
+
+.kanban-column {
+  flex: 0 0 320px;
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--border-radius-lg);
+  background: var(--bg-secondary);
+  border: 1px solid var(--color-border-light);
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s;
+}
+
+.kanban-column.drag-over {
+  box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
+  border-color: var(--color-primary);
+  background: rgba(74, 144, 226, 0.02);
+}
+
+.kanban-column-header {
+  padding: 16px;
+  border-bottom: 2px solid var(--color-border-light);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.kanban-column-title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.kanban-column-count {
+  background: var(--color-border);
+  color: var(--color-text-secondary);
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.kanban-column-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.kanban-empty {
+  text-align: center;
+  color: var(--color-text-light);
+  font-size: 13px;
+  padding: 20px 10px;
+}
+
+.kanban-card-wrapper {
+  cursor: grab;
+}
+
+.kanban-card-wrapper:active {
+  cursor: grabbing;
+}
+
+.kanban-card-wrapper.dragging {
+  opacity: 0.5;
+}
+
+.kanban-card-link {
+  text-decoration: none;
+  color: inherit;
+}
+
+.kanban-card {
+  background: white;
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--border-radius-md);
+  padding: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.kanban-card:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+  border-color: var(--color-primary);
+}
+
+.kanban-card-title {
+  font-weight: 500;
+  color: var(--color-text-primary);
+  font-size: 14px;
+  margin-bottom: 8px;
+  word-break: break-word;
+  line-height: 1.4;
+}
+
+.kanban-card-meta {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.kanban-card-status {
+  background: var(--color-border);
+  color: var(--color-text-secondary);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+/* ========================================
+   Chatroom Components
+   ======================================== */
+
+.chatroom-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--bg-secondary);
+  border-radius: var(--border-radius-lg);
+  border: 1px solid var(--color-border-light);
+  overflow: hidden;
+}
+
+.chatroom-header {
+  padding: 20px;
+  border-bottom: 1px solid var(--color-border-light);
+  background: var(--bg-tertiary);
+  flex-shrink: 0;
+}
+
+.chatroom-header h2 {
+  margin: 0;
+  font-size: 1.3rem;
+  color: var(--color-text-primary);
+}
+
+.chatroom-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.message-item {
+  display: flex;
+  gap: 12px;
+  animation: slideIn 0.2s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.message-avatar {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.message-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.message-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.message-header {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  margin-bottom: 4px;
+}
+
+.message-author {
+  font-weight: 600;
+  color: var(--color-text-primary);
+  font-size: 14px;
+}
+
+.message-time {
+  font-size: 12px;
+  color: var(--color-text-light);
+}
+
+.message-content {
+  color: var(--color-text-primary);
+  font-size: 14px;
+  line-height: 1.5;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+}
+
+.empty-state {
+  text-align: center;
+  color: var(--color-text-light);
+  font-size: 14px;
+  padding: 40px 20px;
+}
+
+.empty-state-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  min-height: 300px;
+}
+
+.loading {
+  text-align: center;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+}
+
+.chatroom-input-form {
+  display: flex;
+  gap: 10px;
+  padding: 20px;
+  border-top: 1px solid var(--color-border-light);
+  background: var(--bg-tertiary);
+  flex-shrink: 0;
+}
+
+.message-input {
+  flex: 1;
+  padding: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-md);
+  font-size: 14px;
+  font-family: inherit;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+
+.message-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+}
+
+.message-input:disabled {
+  background: var(--bg-primary);
+  cursor: not-allowed;
+}
+
+.message-send-btn {
+  padding: 12px 20px;
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: var(--border-radius-md);
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  transition: opacity 0.2s;
+}
+
+.message-send-btn:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.message-send-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 /* ========================================

@@ -146,7 +146,7 @@ create table issue
     board_id   integer references board on delete cascade,
     status     varchar(50) default '백로그' not null,
     created_at timestamp with time zone default CURRENT_TIMESTAMP,
-
+    updated_at timestamp with time zone default CURRENT_TIMESTAMP,
     constraint check_issue_status check (status in ('백로그', '진행중', '검토중', '완료'))
 );
 create index idx_issue_board_id on issue (board_id);

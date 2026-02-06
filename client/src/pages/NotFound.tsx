@@ -2,14 +2,14 @@ import { useNavigate } from "@solidjs/router";
 import { onCleanup } from "solid-js";
 
 export default function NotFound() {
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
 
-  // (선택 사항) 5초 뒤에 자동으로 홈으로 리다이렉트
-  const timer = setTimeout(() => {
-    navigate("/", { replace: true });
-  }, 5000);
+  // // (선택 사항) 5초 뒤에 자동으로 홈으로 리다이렉트
+  // const timer = setTimeout(() => {
+  //   navigate("/", { replace: true });
+  // }, 5000);
 
-  onCleanup(() => clearTimeout(timer));
+  // onCleanup(() => clearTimeout(timer));
 
   return (
     <div class="flex-col" style={{ "text-align": "center", padding: "100px 20px", "align-items": "center" }}>

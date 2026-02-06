@@ -1,22 +1,25 @@
-import { createResource, For, Suspense } from "solid-js";
+import { createResource, For, Suspense, createSignal } from "solid-js";
 import { A } from "@solidjs/router";
 import api from "../lib/axios";
+import ChatCreateModal from "./ChatCreateModal";
 
 const fetchChatRooms = async (projectId: string) => {
-  // TODO: API 엔드포인트 구현 필요
-  // const res = await api.get(`/project/${projectId}/chat/rooms`);
-  // return res.data.data;
+  if (!projectId) return [];
+  const res = await api.get(`/chatroom`, { params: { project_id: projectId } });
+  if (res.data && res.data.success) return res.data.data;
   return [];
 };
 
 function ChatLNB(props) {
-  const [rooms] = createResource(() => props.projectId, fetchChatRooms);
+  const [rooms, { refetch }] = createResource(() => props.projectId, fetchChatRooms);
+
+  const [showModal, setShowModal] = createSignal(false);
 
   return (
     <div>
-      <A href={`/project/${props.projectId}/chat/new`}>
-        <button class="lnb-create-button chat">+ 대화방 생성</button>
-      </A>
+      <button class="lnb-create-button chat" onClick={() => setShowModal(true)}>
+        + 대화방 생성
+      </button>
 
       <div>
         <h3 class="lnb-section-title">대화방 목록</h3>
@@ -39,6 +42,21 @@ function ChatLNB(props) {
           </div>
         </Suspense>
       </div>
+
+      {showModal() && (
+        <ChatCreateModal
+          projectId={props.projectId}
+          onClose={() => setShowModal(false)}
+          onCreated={() => {
+            // refresh list after creation
+            try {
+              refetch();
+            } catch (e) {
+              // ignore
+            }
+          }}
+        />
+      )}
     </div>
   );
 }

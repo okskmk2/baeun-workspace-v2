@@ -1,0 +1,44 @@
+/* LNB and Wiki (menu) styles */
+
+.lnb-create-button {
+  width: 100%;
+  padding: 10px;
+  color: white;
+  border: none;
+  border-radius: var(--border-radius-md);
+  cursor: pointer;
+  font-weight: bold;
+  margin-bottom: 20px;
+  transition: opacity 0.2s;
+}
+
+.lnb-create-button.issue { background: var(--color-primary); }
+.lnb-create-button.wiki { background: var(--color-success); }
+.lnb-create-button.chat { background: #9b59b6; }
+.lnb-create-button:hover { opacity: 0.9; }
+
+.lnb-section-title { margin-bottom: 15px; font-size: 14px; color: var(--color-text-secondary); font-weight: 600; }
+.lnb-list { display: flex; flex-direction: column; gap: 8px; }
+
+.lnb-item {
+  padding: 8px 12px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-sm);
+  text-decoration: none;
+  color: var(--color-text-primary);
+  font-size: 14px;
+  transition: background 0.2s;
+}
+.lnb-item:hover { background: #e8e8e8; }
+.lnb-item.active { background: var(--color-primary); color: white; border-color: var(--color-primary); }
+
+/* Wiki tree */
+.wiki-page-item { display: block; margin: 6px 0; padding-left: 8px; position: relative; }
+.wiki-page-header { display: flex; align-items: center; gap: 8px; }
+.wiki-page-toggle { width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; background: transparent; border: none; cursor: pointer; padding: 0; font-size: 12px; color: var(--color-text-secondary); border-radius: 4px; }
+.wiki-page-toggle:hover { background: var(--bg-tertiary); color: var(--color-text-primary); }
+.wiki-page-header .lnb-item { padding: 6px 10px; border-radius: 6px; display: inline-block; font-size: 14px; }
+.wiki-page-header .lnb-item:hover { background: #f3f7ff; }
+.wiki-page-children { margin-left: 18px; margin-top: 6px; padding-left: 12px; border-left: 1px dashed var(--color-border-light); }
+.wiki-page-item .child-empty { color: var(--color-text-light); font-size: 13px; padding-left: 6px; }

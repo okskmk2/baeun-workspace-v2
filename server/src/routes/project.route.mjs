@@ -200,4 +200,122 @@ router.get("/:projectId/boards", isAuth, async (req, res) => {
   }
 });
 
+/**
+ * @route   GET /api/project/:projectId/pages
+ * @desc    특정 프로젝트의 페이지(위키) 트리 조회
+ */
+router.get("/:projectId/pages", isAuth, async (req, res) => {
+  const { projectId } = req.params;
+  const userId = req.session.userId;
+
+  try {
+    // 프로젝트 멤버 검증
+    const memberCheck = await pool.query(
+      "SELECT id FROM project_member WHERE project_id = $1 AND member_id = $2",
+      [projectId, userId]
+    );
+
+    if (memberCheck.rows.length === 0) {
+      return res.status(403).json({ success: false, message: "접근 권한이 없습니다." });
+    }
+
+    const pagesRes = await pool.query(
+      "SELECT * FROM page WHERE project_id = $1 ORDER BY sort_order ASC, created_at ASC",
+      [projectId]
+    );
+
+    const rows = pagesRes.rows;
+    const map = {};
+    rows.forEach((r) => (map[r.id] = { ...r, children: [] }));
+    const roots = [];
+    rows.forEach((r) => {
+      if (r.parent_id) {
+        if (map[r.parent_id]) map[r.parent_id].children.push(map[r.id]);
+      } else {
+        roots.push(map[r.id]);
+      }
+    });
+
+    res.json({ success: true, data: roots });
+  } catch (error) {
+    console.error("pages error", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * @route   GET /api/project/:projectId/pages/:pageId
+ * @desc    특정 페이지 상세 조회
+ */
+router.get("/:projectId/pages/:pageId", isAuth, async (req, res) => {
+  const { projectId, pageId } = req.params;
+  const userId = req.session.userId;
+
+  try {
+    // 권한 확인
+    const memberCheck = await pool.query(
+      "SELECT id FROM project_member WHERE project_id = $1 AND member_id = $2",
+      [projectId, userId]
+    );
+
+    if (memberCheck.rows.length === 0) {
+      return res.status(403).json({ success: false, message: "접근 권한이 없습니다." });
+    }
+
+    const pageRes = await pool.query(
+      "SELECT * FROM page WHERE id = $1 AND project_id = $2",
+      [pageId, projectId]
+    );
+
+    if (pageRes.rows.length === 0) {
+      return res.status(404).json({ success: false, message: "페이지를 찾을 수 없습니다." });
+    }
+
+    const page = pageRes.rows[0];
+    const childrenRes = await pool.query(
+      "SELECT * FROM page WHERE parent_id = $1 ORDER BY sort_order ASC, created_at ASC",
+      [page.id]
+    );
+
+    page.children = childrenRes.rows;
+
+    res.json({ success: true, data: page });
+  } catch (error) {
+    console.error("page detail error", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * @route   POST /api/project/:projectId/pages
+ * @desc    특정 프로젝트에 페이지 생성
+ */
+router.post("/:projectId/pages", isAuth, async (req, res) => {
+  const { projectId } = req.params;
+  const userId = req.session.userId;
+  const { title, content, parent_id } = req.body;
+
+  try {
+    // 프로젝트 멤버 검증
+    const memberCheck = await pool.query(
+      "SELECT id FROM project_member WHERE project_id = $1 AND member_id = $2",
+      [projectId, userId]
+    );
+
+    if (memberCheck.rows.length === 0) {
+      return res.status(403).json({ success: false, message: "접근 권한이 없습니다." });
+    }
+
+    const insertRes = await pool.query(
+      `INSERT INTO page (title, content, project_id, parent_id) VALUES ($1, $2, $3, $4) RETURNING *`,
+      [title, content || null, projectId, parent_id || null]
+    );
+
+    res.status(201).json({ success: true, data: insertRes.rows[0] });
+  } catch (error) {
+    console.error("create page error", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 export default router;

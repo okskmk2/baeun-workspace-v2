@@ -2,6 +2,9 @@ import { render } from "solid-js/web";
 import { Router } from "@solidjs/router";
 import { routes } from "./routes";
 import App from "./App";
+import "./assets/styles/layout.css";
+import "./assets/styles/lnb.css";
+import "./assets/styles/forms.css";
 import "./assets/styles/globals.css";
 
 const root = document.getElementById("root");

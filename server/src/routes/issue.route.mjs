@@ -169,7 +169,7 @@ router.patch("/:issueId", isAuth, async (req, res) => {
   try {
     const result = await pool.query(
       `UPDATE issue 
-       SET title = COALESCE($1, title), content = COALESCE($2, content), status = COALESCE($3, status)
+       SET title = COALESCE($1, title), content = COALESCE($2, content), status = COALESCE($3, status), updated_at = CURRENT_TIMESTAMP
        WHERE id = $4 RETURNING *`,
       [title, content, status, issueId]
     );

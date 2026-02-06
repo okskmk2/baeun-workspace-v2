@@ -95,6 +95,46 @@ router.post("/", isAuth, async (req, res) => {
 /**
  * @swagger
  * /api/board/{boardId}:
+ *   get:
+ *     summary: 보드 상세 조회
+ *     description: 보드의 상세 정보 조회
+ *     tags:
+ *       - Board
+ *     parameters:
+ *       - in: path
+ *         name: boardId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: 보드 상세 조회 성공
+ *       404:
+ *         description: 보드를 찾을 수 없음
+ *       500:
+ *         description: 서버 오류
+ */
+router.get("/:boardId", isAuth, async (req, res) => {
+  const { boardId } = req.params;
+  try {
+    const result = await pool.query(
+      "SELECT * FROM board WHERE id = $1",
+      [boardId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, message: "보드를 찾을 수 없습니다." });
+    }
+
+    res.json({ success: true, data: result.rows[0] });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * @swagger
+ * /api/board/{boardId}:
  *   delete:
  *     summary: 보드 삭제
  *     description: 보드 삭제 (OWNER 전용)
@@ -139,7 +179,7 @@ router.delete("/:boardId", isAuth, async (req, res) => {
 });
 
 /**
- * @route   GET /api/issue/board/:boardId
+ * @route   GET /api/board/:boardId/issue
  * @desc    특정 보드의 모든 이슈 조회
  */
 router.get("/:boardId/issue", isAuth, async (req, res) => {
@@ -153,7 +193,7 @@ router.get("/:boardId/issue", isAuth, async (req, res) => {
               WHERE im.issue_id = i.id) as assignees
       FROM issue i
       WHERE i.board_id = $1
-      ORDER BY i.created_at DESC;
+      ORDER BY i.updated_at ASC;
     `;
     const result = await pool.query(query, [boardId]);
     res.json({ success: true, data: result.rows });

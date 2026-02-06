@@ -3,10 +3,13 @@ import { A } from "@solidjs/router";
 import api from "../lib/axios";
 
 const fetchWikiPages = async (projectId: string) => {
-  // TODO: API 엔드포인트 구현 필요
-  // const res = await api.get(`/project/${projectId}/wiki/pages`);
-  // return res.data.data;
-  return [];
+  try {
+    const res = await api.get(`/project/${projectId}/pages`);
+    return res.data.data;
+  } catch (err) {
+    console.error("fetchWikiPages error", err);
+    return [];
+  }
 };
 
 function WikiPageItem(props) {

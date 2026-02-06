@@ -1,0 +1,87 @@
+/* Layout and Project layout styles (split from globals.css) */
+
+:root {
+  /* fallback variables (kept minimal; primary variables remain in globals.css) */
+}
+
+/* Layout Components */
+.layout-nav {
+  padding: 1rem;
+  background: #333;
+  color: white;
+  display: flex;
+  gap: 15px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.layout-nav a {
+  color: white;
+  text-decoration: none;
+  transition: opacity 0.2s;
+}
+
+.layout-nav a:hover,
+.layout-nav a.active {
+  opacity: 0.8;
+}
+
+.layout-main {
+  padding: 20px;
+  background: var(--bg-secondary);
+  min-height: calc(100vh - 60px);
+}
+
+/* Project Layout */
+.project-layout {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.project-gnb {
+  padding: 1rem;
+  background: var(--bg-secondary);
+  color: var(--color-text-primary);
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.project-gnb a {
+  color: var(--color-text-primary);
+  text-decoration: none;
+  padding: 8px 16px;
+  border-radius: var(--border-radius-sm);
+  transition: background 0.2s;
+}
+
+.project-gnb a:hover {
+  background: #f0f0f0;
+}
+
+.project-gnb a.active {
+  background: var(--color-primary);
+  color: white;
+}
+
+.project-content-wrapper {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.project-lnb {
+  width: 250px;
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--color-border);
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.project-main {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+  background: var(--bg-secondary);
+}

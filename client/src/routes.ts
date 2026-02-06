@@ -43,6 +43,14 @@ export const routes = [
         component: lazy(() => import("./pages/BoardCreate")),
       },
       {
+        path: "/wiki/new",
+        component: lazy(() => import("./pages/PageCreate")),
+      },
+      {
+        path: "/wiki/:pageId",
+        component: lazy(() => import("./pages/PageDetail")),
+      },
+      {
         path: "/board/:boardId",
         component: lazy(() => import("./pages/BoardDetail")),
       },
@@ -60,7 +68,11 @@ export const routes = [
       },
       {
         path: "/chat",
-        component: lazy(() => import("./pages/ProjectDetail")),
+        component: lazy(() => import("./pages/ChatDashboard")),
+      },
+      {
+        path: "/chat/:chatroomId",
+        component: lazy(() => import("./pages/ChatRoomDetail")),
       },
     ],
   },
