@@ -5,7 +5,39 @@ import { isAuth } from "../middlewares/auth.middleware.mjs";
 const router = express.Router();
 
 /**
- * 1. 이슈 생성 (작성자를 REPORTER로 자동 등록)
+ * @swagger
+ * /api/issue:
+ *   post:
+ *     summary: 이슈 생성
+ *     description: 새 이슈를 생성하고 작성자를 REPORTER로 등록
+ *     tags:
+ *       - Issue
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *               content:
+ *                 type: string
+ *               board_id:
+ *                 type: integer
+ *               status:
+ *                 type: string
+ *                 default: 백로그
+ *             required:
+ *               - title
+ *               - board_id
+ *     responses:
+ *       201:
+ *         description: 이슈 생성 성공
+ *       403:
+ *         description: 이슈 생성 권한이 없음
+ *       500:
+ *         description: 서버 오류
  */
 router.post("/", isAuth, async (req, res) => {
   const { title, content, board_id, status = "백로그" } = req.body;
@@ -51,7 +83,26 @@ router.post("/", isAuth, async (req, res) => {
 });
 
 /**
- * 2. 이슈 상세 조회 (이슈 내용 + 멤버 목록)
+ * @swagger
+ * /api/issue/{issueId}:
+ *   get:
+ *     summary: 이슈 상세 조회
+ *     description: 이슈의 상세 정보와 멤버 목록 조회
+ *     tags:
+ *       - Issue
+ *     parameters:
+ *       - in: path
+ *         name: issueId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: 이슈 상세 조회 성공
+ *       404:
+ *         description: 이슈를 찾을 수 없음
+ *       500:
+ *         description: 서버 오류
  */
 router.get("/:issueId", isAuth, async (req, res) => {
   const { issueId } = req.params;
@@ -79,7 +130,38 @@ router.get("/:issueId", isAuth, async (req, res) => {
 });
 
 /**
- * 3. 이슈 정보 및 상태 수정
+ * @swagger
+ * /api/issue/{issueId}:
+ *   patch:
+ *     summary: 이슈 수정
+ *     description: 이슈의 정보와 상태 수정
+ *     tags:
+ *       - Issue
+ *     parameters:
+ *       - in: path
+ *         name: issueId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *               content:
+ *                 type: string
+ *               status:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: 이슈 수정 성공
+ *       404:
+ *         description: 이슈를 찾을 수 없음
+ *       500:
+ *         description: 서버 오류
  */
 router.patch("/:issueId", isAuth, async (req, res) => {
   const { issueId } = req.params;

@@ -5,8 +5,39 @@ import { isAuth } from "../middlewares/auth.middleware.mjs";
 const router = express.Router();
 
 /**
- * @route   POST /api/board
- * @desc    새 보드 생성 및 생성자를 OWNER로 등록
+ * @swagger
+ * /api/board:
+ *   post:
+ *     summary: 보드 생성
+ *     description: 새 보드를 생성하고 생성자를 OWNER로 등록
+ *     tags:
+ *       - Board
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               project_id:
+ *                 type: integer
+ *               type:
+ *                 type: string
+ *                 default: KANBAN
+ *             required:
+ *               - name
+ *               - project_id
+ *     responses:
+ *       201:
+ *         description: 보드 생성 성공
+ *       400:
+ *         description: 필수 항목 누락
+ *       403:
+ *         description: 프로젝트 멤버가 아님
+ *       500:
+ *         description: 서버 오류
  */
 router.post("/", isAuth, async (req, res) => {
   const { name, project_id, type = "KANBAN" } = req.body;
@@ -62,8 +93,26 @@ router.post("/", isAuth, async (req, res) => {
 });
 
 /**
- * @route   DELETE /api/board/:boardId
- * @desc    보드 삭제 (OWNER 전용)
+ * @swagger
+ * /api/board/{boardId}:
+ *   delete:
+ *     summary: 보드 삭제
+ *     description: 보드 삭제 (OWNER 전용)
+ *     tags:
+ *       - Board
+ *     parameters:
+ *       - in: path
+ *         name: boardId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: 보드 삭제 성공
+ *       403:
+ *         description: 삭제 권한이 없음
+ *       500:
+ *         description: 서버 오류
  */
 router.delete("/:boardId", isAuth, async (req, res) => {
   const { boardId } = req.params;

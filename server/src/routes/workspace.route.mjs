@@ -5,8 +5,33 @@ import { isAuth } from "../middlewares/auth.middleware.mjs";
 const router = express.Router();
 
 /**
- * @route   POST /api/workspace
- * @desc    새 워크스페이스 생성 및 생성자를 OWNER로 등록
+ * @swagger
+ * /api/workspace:
+ *   post:
+ *     summary: 워크스페이스 생성
+ *     description: 새 워크스페이스를 생성하고 생성자를 OWNER로 등록
+ *     tags:
+ *       - Workspace
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               img_url:
+ *                 type: string
+ *               theme_json:
+ *                 type: object
+ *             required:
+ *               - name
+ *     responses:
+ *       201:
+ *         description: 워크스페이스 생성 성공
+ *       500:
+ *         description: 서버 오류
  */
 router.post("/", isAuth, async (req, res) => {
   const { name, img_url, theme_json } = req.body;
@@ -51,8 +76,29 @@ router.post("/", isAuth, async (req, res) => {
 });
 
 /**
- * @route   GET /api/workspace/my
- * @desc    내가 참여 중인 워크스페이스 목록 조회
+ * @swagger
+ * /api/workspace/my:
+ *   get:
+ *     summary: 내 워크스페이스 목록
+ *     description: 현재 사용자가 참여 중인 워크스페이스 목록 조회
+ *     tags:
+ *       - Workspace
+ *     responses:
+ *       200:
+ *         description: 워크스페이스 목록 조회 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Workspace'
+ *       500:
+ *         description: 서버 오류
  */
 router.get("/my", isAuth, async (req, res) => {
   try {
@@ -75,8 +121,26 @@ router.get("/my", isAuth, async (req, res) => {
 });
 
 /**
- * @route   GET /api/workspace/:workspaceId
- * @desc    특정 워크스페이스 내 프로젝트 목록 조회
+ * @swagger
+ * /api/workspace/{workspaceId}:
+ *   get:
+ *     summary: 워크스페이스의 프로젝트 목록
+ *     description: 특정 워크스페이스 내 프로젝트 목록 조회
+ *     tags:
+ *       - Workspace
+ *     parameters:
+ *       - in: path
+ *         name: workspaceId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: 프로젝트 목록 조회 성공
+ *       403:
+ *         description: 접근 권한이 없음
+ *       500:
+ *         description: 서버 오류
  */
 router.get("/:workspaceId", isAuth, async (req, res) => {
   const { workspaceId } = req.params;

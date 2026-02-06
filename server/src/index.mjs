@@ -2,6 +2,8 @@ import express from "express";
 import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
 import cors from "cors"; // CORS 모듈 추가
+import swaggerUi from "swagger-ui-express";
+import { swaggerSpec } from "./swagger.mjs";
 import pool from "./db.mjs";
 // routes
 import memberRouter from "./routes/member.route.mjs";
@@ -26,6 +28,13 @@ app.use(
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Swagger 설정
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec, { swaggerUrl: "/api-docs.json" }));
+app.get("/api-docs.json", (req, res) => {
+  res.setHeader("Content-Type", "application/json");
+  res.send(swaggerSpec);
+});
 
 // 2. 세션 설정 (이전과 동일)
 app.use(

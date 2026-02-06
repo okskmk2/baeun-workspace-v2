@@ -6,6 +6,50 @@ import pool from "../db.mjs"; // 설정하신 DB 연결 풀
 const router = express.Router();
 const SALT_ROUNDS = 10; // 해싱 복잡도 (높을수록 보안 강화, 속도 저하)
 
+/**
+ * @swagger
+ * /api/member/signup:
+ *   post:
+ *     summary: 회원가입
+ *     description: 새 사용자 회원가입 및 기본 워크스페이스 생성
+ *     tags:
+ *       - Member
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *             required:
+ *               - name
+ *               - email
+ *               - password
+ *     responses:
+ *       201:
+ *         description: 회원가입 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *       400:
+ *         description: 이미 존재하는 이메일
+ *       500:
+ *         description: 서버 오류
+ */
 router.post("/signup", isGuest, async (req, res) => {
   const { name, email, password } = req.body;
   const client = await pool.connect(); // 트랜잭션을 위해 클라이언트 직접 사용
@@ -70,8 +114,34 @@ router.post("/signup", isGuest, async (req, res) => {
 });
 
 /**
- * @route   POST /api/member/login
- * @desc    로그인 (비밀번호 비교 로직 적용)
+ * @swagger
+ * /api/member/login:
+ *   post:
+ *     summary: 로그인
+ *     description: 이메일과 비밀번호로 로그인
+ *     tags:
+ *       - Member
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *             required:
+ *               - email
+ *               - password
+ *     responses:
+ *       200:
+ *         description: 로그인 성공
+ *       401:
+ *         description: 이메일 또는 비밀번호가 틀림
+ *       500:
+ *         description: 서버 오류
  */
 router.post("/login", isGuest, async (req, res) => {
   const { email, password } = req.body;
@@ -108,8 +178,18 @@ router.post("/login", isGuest, async (req, res) => {
 });
 
 /**
- * @route   POST /api/member/logout
- * @desc    로그아웃 (세션 파괴 및 쿠키 삭제)
+ * @swagger
+ * /api/member/logout:
+ *   post:
+ *     summary: 로그아웃
+ *     description: 세션을 파괴하고 로그아웃
+ *     tags:
+ *       - Member
+ *     responses:
+ *       200:
+ *         description: 로그아웃 성공
+ *       500:
+ *         description: 서버 오류
  */
 router.post("/logout", isAuth, (req, res) => {
   req.session.destroy((err) => {
@@ -122,8 +202,27 @@ router.post("/logout", isAuth, (req, res) => {
 });
 
 /**
- * @route   GET /api/member/me
- * @desc    현재 로그인된 내 정보 조회
+ * @swagger
+ * /api/member/me:
+ *   get:
+ *     summary: 현재 사용자 정보 조회
+ *     description: 로그인된 사용자의 정보 조회
+ *     tags:
+ *       - Member
+ *     responses:
+ *       200:
+ *         description: 사용자 정보 조회 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   $ref: '#/components/schemas/User'
+ *       500:
+ *         description: 서버 오류
  */
 router.get("/me", isAuth, async (req, res) => {
   try {

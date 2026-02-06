@@ -4,6 +4,36 @@ import { isAuth } from "../middlewares/auth.middleware.mjs";
 
 const router = express.Router();
 
+/**
+ * @swagger
+ * /api/project:
+ *   post:
+ *     summary: 프로젝트 생성
+ *     description: 새 프로젝트를 생성하고 생성자를 OWNER로 등록
+ *     tags:
+ *       - Project
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               workspace_id:
+ *                 type: integer
+ *             required:
+ *               - name
+ *               - workspace_id
+ *     responses:
+ *       201:
+ *         description: 프로젝트 생성 성공
+ *       403:
+ *         description: 워크스페이스 멤버가 아님
+ *       500:
+ *         description: 서버 오류
+ */
 router.post("/", isAuth, async (req, res) => {
   const { name, workspace_id } = req.body;
   const userId = req.session.userId;
@@ -62,8 +92,28 @@ router.post("/", isAuth, async (req, res) => {
 });
 
 /**
- * @route   DELETE /api/project/:projectId
- * @desc    프로젝트 삭제 (OWNER 전용 & 기본 프로젝트 삭제 불가)
+ * @swagger
+ * /api/project/{projectId}:
+ *   delete:
+ *     summary: 프로젝트 삭제
+ *     description: 프로젝트 삭제 (OWNER 전용, 기본 프로젝트 삭제 불가)
+ *     tags:
+ *       - Project
+ *     parameters:
+ *       - in: path
+ *         name: projectId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: 프로젝트 삭제 성공
+ *       403:
+ *         description: 삭제 권한이 없음
+ *       404:
+ *         description: 프로젝트를 찾을 수 없음
+ *       500:
+ *         description: 서버 오류
  */
 router.delete("/:projectId", isAuth, async (req, res) => {
   const { projectId } = req.params;
