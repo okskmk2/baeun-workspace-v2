@@ -9,13 +9,6 @@ const fetchProject = async (projectId: string) => {
   return res.data.data;
 };
 
-// 보드 목록 페칭 함수
-const fetchBoards = async (projectId: string) => {
-  if (!projectId) return [];
-  const res = await api.get(`/project/${projectId}/boards`);
-  return res.data.data || [];
-};
-
 // 프로젝트 멤버 목록 페칭 함수
 const fetchProjectMembers = async (projectId: string) => {
   if (!projectId) return [];
@@ -32,18 +25,20 @@ const fetchWorkspaceMembers = async (workspaceId: string) => {
 
 export default function ProjectDetail() {
   const params = useParams();
-  const [project] = createResource(() => params.projectId, fetchProject);
-  const [boards] = createResource(() => params.projectId, fetchBoards);
+  const [project, { refetch: refetchProject }] = createResource(() => params.projectId, fetchProject);
   const [projectMembers, { refetch: refetchMembers }] = createResource(
     () => params.projectId,
     fetchProjectMembers
   );
+  const [activeTab, setActiveTab] = createSignal("info");
   const [showAddMemberModal, setShowAddMemberModal] = createSignal(false);
   const [workspaceMembers] = createResource(
     () => showAddMemberModal() ? project()?.workspace_id?.toString() : undefined,
     fetchWorkspaceMembers
   );
   const [selectedMemberId, setSelectedMemberId] = createSignal<number | null>(null);
+  const [editImgUrl, setEditImgUrl] = createSignal("");
+  const [isSaving, setIsSaving] = createSignal(false);
 
   // 프로젝트에 아직 추가되지 않은 워크스페이스 멤버들만 필터링
   const availableMembers = () => {
@@ -69,6 +64,25 @@ export default function ProjectDetail() {
     }
   };
 
+  const handleSaveImgUrl = async () => {
+    if (!editImgUrl() || !params.projectId) return;
+
+    setIsSaving(true);
+    try {
+      await api.patch(`/project/${params.projectId}`, {
+        img_url: editImgUrl(),
+      });
+      setEditImgUrl("");
+      refetchProject();
+      alert("프로젝트 이미지가 업데이트되었습니다.");
+    } catch (error) {
+      console.error("Failed to update project:", error);
+      alert("이미지 업데이트에 실패했습니다.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
     <div class="page-container">
       <header class="page-header">
@@ -79,46 +93,105 @@ export default function ProjectDetail() {
           <h1 class="page-header-info">📂 {project()?.name || "프로젝트 상세"}</h1>
           <p>Project ID: {params.projectId}</p>
         </div>
-
-        {/* 보드 생성 화면으로 이동하는 버튼 */}
-        <A href={`/project/${params.projectId}/board/new`}>
-          <button class="btn btn-primary btn-large">
-            + 새 보드 만들기
-          </button>
-        </A>
       </header>
 
-      {/* 프로젝트 멤버 섹션 */}
-      <section>
-        <div class="flex-between">
-          <h3 class="section-title">👥 프로젝트 멤버</h3>
-          <button
-            class="btn btn-secondary btn-small"
-            onClick={() => setShowAddMemberModal(true)}
-          >
-            + 멤버 추가
-          </button>
-        </div>
+      <nav class="tabs-nav">
+        <button
+          class={activeTab() === "info" ? "tab-button active" : "tab-button"}
+          onClick={() => setActiveTab("info")}
+        >
+          ℹ️ 기본 정보
+        </button>
+        <button
+          class={activeTab() === "members" ? "tab-button active" : "tab-button"}
+          onClick={() => setActiveTab("members")}
+        >
+          👥 멤버
+        </button>
+      </nav>
 
-        <Suspense fallback={<p>멤버를 불러오는 중...</p>}>
-          <div class="member-list">
-            <For
-              each={projectMembers()}
-              fallback={<p class="text-light">아직 멤버가 없습니다.</p>}
-            >
-              {(member) => (
-                <div class="member-item">
-                  <div>
-                    <strong>{member.name}</strong>
-                    <span class="member-role">{member.role_name}</span>
-                  </div>
-                  <span class="member-email">{member.email}</span>
+      {/* 기본 정보 탭 */}
+      {activeTab() === "info" && (
+        <section class="tab-content">
+          <h3 class="section-title">프로젝트 기본 정보</h3>
+          <div class="info-section">
+            <div class="info-item">
+              <label class="info-label">프로젝트명</label>
+              <p class="info-value">{project()?.name || "-"}</p>
+            </div>
+            <div class="info-item">
+              <label class="info-label">Created Date</label>
+              <p class="info-value">
+                {project()?.created_at
+                  ? new Date(project()?.created_at).toLocaleDateString()
+                  : "-"}
+              </p>
+            </div>
+            <div class="info-item">
+              <label class="info-label">프로젝트 이미지 URL</label>
+              <div class="info-edit">
+                <input
+                  type="text"
+                  placeholder="이미지 URL을 입력하세요"
+                  value={editImgUrl()}
+                  onInput={(e) => setEditImgUrl(e.currentTarget.value)}
+                  class="form-input"
+                />
+                <button
+                  class="btn btn-primary btn-small"
+                  onClick={handleSaveImgUrl}
+                  disabled={!editImgUrl() || isSaving()}
+                >
+                  {isSaving() ? "저장 중..." : "저장"}
+                </button>
+              </div>
+              {project()?.img_url && (
+                <div class="preview-image">
+                  <img
+                    src={project()?.img_url}
+                    alt="프로젝트 이미지"
+                    class="project-thumbnail"
+                  />
                 </div>
               )}
-            </For>
+            </div>
           </div>
-        </Suspense>
-      </section>
+        </section>
+      )}
+
+      {/* 멤버 탭 */}
+      {activeTab() === "members" && (
+        <section class="tab-content">
+          <div class="flex-between">
+            <h3 class="section-title">프로젝트 멤버</h3>
+            <button
+              class="btn btn-secondary btn-small"
+              onClick={() => setShowAddMemberModal(true)}
+            >
+              + 멤버 추가
+            </button>
+          </div>
+
+          <Suspense fallback={<p>멤버를 불러오는 중...</p>}>
+            <div class="member-list">
+              <For
+                each={projectMembers()}
+                fallback={<p class="text-light">아직 멤버가 없습니다.</p>}
+              >
+                {(member) => (
+                  <div class="member-item">
+                    <div>
+                      <strong>{member.name}</strong>
+                      <span class="member-role">{member.role_name}</span>
+                    </div>
+                    <span class="member-email">{member.email}</span>
+                  </div>
+                )}
+              </For>
+            </div>
+          </Suspense>
+        </section>
+      )}
 
       {/* 멤버 추가 모달 */}
       {showAddMemberModal() && (
@@ -159,35 +232,6 @@ export default function ProjectDetail() {
           </div>
         </div>
       )}
-
-      {/* 보드 목록 섹션 */}
-      <section>
-        <h3 class="section-title">
-          📋 보드 목록
-        </h3>
-        <Suspense fallback={<p>보드를 불러오는 중...</p>}>
-          <div class="card-grid">
-            <For
-              each={boards()}
-              fallback={<p class="text-light">아직 생성된 보드가 없습니다.</p>}
-            >
-              {(board) => (
-                <A
-                  href={`/project/${params.projectId}/board/${board.id}`}
-                  class="card-link"
-                >
-                  <div class="card">
-                    <h4>{board.name}</h4>
-                    <span class="card-badge">
-                      {board.type}
-                    </span>
-                  </div>
-                </A>
-              )}
-            </For>
-          </div>
-        </Suspense>
-      </section>
     </div>
   );
 }

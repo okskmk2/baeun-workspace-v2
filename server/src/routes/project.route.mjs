@@ -134,6 +134,76 @@ router.get("/:projectId", isAuth, async (req, res) => {
 /**
  * @swagger
  * /api/project/{projectId}:
+ *   patch:
+ *     summary: 프로젝트 수정
+ *     description: 프로젝트의 정보 수정 (OWNER 전용)
+ *     tags:
+ *       - Project
+ *     parameters:
+ *       - in: path
+ *         name: projectId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               img_url:
+ *                 type: string
+ *               theme_json:
+ *                 type: object
+ *     responses:
+ *       200:
+ *         description: 프로젝트 수정 성공
+ *       403:
+ *         description: 수정 권한이 없음
+ *       404:
+ *         description: 프로젝트를 찾을 수 없음
+ *       500:
+ *         description: 서버 오류
+ */
+router.patch("/:projectId", isAuth, async (req, res) => {
+  const { projectId } = req.params;
+  const { name, img_url, theme_json } = req.body;
+  const userId = req.session.userId;
+
+  try {
+    // 권한 확인: 프로젝트 OWNER인지
+    const authCheck = await pool.query(
+      "SELECT role_name FROM project_member WHERE project_id = $1 AND member_id = $2",
+      [projectId, userId]
+    );
+
+    if (!authCheck.rows[0] || authCheck.rows[0].role_name !== "OWNER") {
+      return res.status(403).json({ success: false, message: "프로젝트 수정 권한이 없습니다." });
+    }
+
+    // 프로젝트 정보 수정
+    const result = await pool.query(
+      `UPDATE project 
+       SET name = COALESCE($1, name), img_url = COALESCE($2, img_url), theme_json = COALESCE($3, theme_json)
+       WHERE id = $4 RETURNING *`,
+      [name, img_url, theme_json, projectId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, message: "프로젝트를 찾을 수 없습니다." });
+    }
+
+    res.json({ success: true, data: result.rows[0] });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * @swagger
+ * /api/project/{projectId}:
  *   delete:
  *     summary: 프로젝트 삭제
  *     description: 프로젝트 삭제 (OWNER 전용, 기본 프로젝트 삭제 불가)
