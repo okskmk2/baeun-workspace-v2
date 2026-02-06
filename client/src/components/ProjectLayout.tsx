@@ -1,9 +1,9 @@
-import { useParams, useLocation, A } from "@solidjs/router";
+import { useParams, useLocation } from "@solidjs/router";
 import { Show } from "solid-js";
 import IssueLNB from "./IssueLNB";
 import WikiLNB from "./WikiLNB";
 import ChatLNB from "./ChatLNB";
-import { ProjectIcon, IssueIcon, ChatIcon } from "./icons";
+import ProjectGNB from "./ProjectGNB";
 
 function ProjectLayout(props) {
   const params = useParams();
@@ -15,21 +15,7 @@ function ProjectLayout(props) {
 
   return (
     <div class="project-layout">
-      {/* GNB */}
-      <nav class="project-gnb">
-        <A href={`/project/${params.projectId}`}>
-          <ProjectIcon size={16} class="nav-icon" /> 프로젝트
-        </A>
-        <A href={`/project/${params.projectId}/issue`} activeClass="active">
-          <IssueIcon size={16} class="nav-icon" /> 이슈
-        </A>
-        <A href={`/project/${params.projectId}/wiki`} activeClass="active">
-          <ProjectIcon size={16} class="nav-icon" /> 위키
-        </A>
-        <A href={`/project/${params.projectId}/chat`} activeClass="active">
-          <ChatIcon size={16} class="nav-icon" /> Chat
-        </A>
-      </nav>
+      <ProjectGNB />
 
       {/* LNB + Main Content */}
       <div class="project-content-wrapper">

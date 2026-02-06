@@ -1,5 +1,4 @@
 import { lazy } from "solid-js";
-import ProjectLayout from "./components/ProjectLayout";
 
 export const routes = [
   {
@@ -32,49 +31,43 @@ export const routes = [
   },
   {
     path: "/project/:projectId",
-    component: ProjectLayout,
-    children: [
-      {
-        path: "/",
-        component: lazy(() => import("./pages/ProjectDetailPage")),
-      },
-      {
-        path: "/board/new",
-        component: lazy(() => import("./pages/BoardCreatePage")),
-      },
-      {
-        path: "/wiki/new",
-        component: lazy(() => import("./pages/PageCreatePage")),
-      },
-      {
-        path: "/wiki/:pageId",
-        component: lazy(() => import("./pages/PageDetailPage")),
-      },
-      {
-        path: "/board/:boardId",
-        component: lazy(() => import("./pages/BoardDetailPage")),
-      },
-      {
-        path: "/issue/:issueId",
-        component: lazy(() => import("./pages/IssueDetailPage")),
-      },
-      {
-        path: "/issue",
-        component: lazy(() => import("./pages/ProjectDetailPage")),
-      },
-      {
-        path: "/wiki",
-        component: lazy(() => import("./pages/ProjectDetailPage")),
-      },
-      {
-        path: "/chat",
-        component: lazy(() => import("./pages/ChatDashboardPage")),
-      },
-      {
-        path: "/chat/:chatroomId",
-        component: lazy(() => import("./pages/ChatRoomDetailPage")),
-      },
-    ],
+    component: lazy(() => import("./pages/ProjectDetailPage")),
+  },
+  {
+    path: "/project/:projectId/board/new",
+    component: lazy(() => import("./pages/BoardCreatePage")),
+  },
+  {
+    path: "/project/:projectId/wiki/new",
+    component: lazy(() => import("./pages/PageCreatePage")),
+  },
+  {
+    path: "/project/:projectId/wiki/:pageId",
+    component: lazy(() => import("./pages/PageDetailPage")),
+  },
+  {
+    path: "/project/:projectId/board/:boardId",
+    component: lazy(() => import("./pages/BoardDetailPage")),
+  },
+  {
+    path: "/project/:projectId/issue/:issueId",
+    component: lazy(() => import("./pages/IssueDetailPage")),
+  },
+  {
+    path: "/project/:projectId/issue",
+    component: lazy(() => import("./pages/ProjectDetailPage")),
+  },
+  {
+    path: "/project/:projectId/wiki",
+    component: lazy(() => import("./pages/ProjectDetailPage")),
+  },
+  {
+    path: "/project/:projectId/chat",
+    component: lazy(() => import("./pages/ChatDashboardPage")),
+  },
+  {
+    path: "/project/:projectId/chat/:chatroomId",
+    component: lazy(() => import("./pages/ChatRoomDetailPage")),
   },
   {
     path: "*",
