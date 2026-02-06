@@ -11,12 +11,12 @@ export default function Profile() {
   const [workspaces] = createResource(fetchMyWorkspaces);
 
   return (
-    <div>
+    <div class="page-container">
       <h2>내 프로필</h2>
-      <div style={{ "margin-top": "30px" }}>
+      <div class="mt-xl">
         <h3>내가 참여 중인 워크스페이스</h3>
         <Suspense fallback={<p>불러오는 중...</p>}>
-          <div style={{ display: "grid", gap: "10px" }}>
+          <div style={{ display: "flex", "flex-direction": "column", gap: "10px" }}>
             <For each={workspaces()}>
               {(ws) => (
                 <A
@@ -47,7 +47,7 @@ export default function Profile() {
         </Suspense>
 
         <A href="/workspace/create">
-          <button style={{ "margin-top": "20px" }}>+ 새 워크스페이스 만들기</button>
+          <button class="btn btn-primary mt-lg">+ 새 워크스페이스 만들기</button>
         </A>
       </div>
     </div>

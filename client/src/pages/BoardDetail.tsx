@@ -9,6 +9,7 @@ export default function BoardDetail() {
   const [title, setTitle] = createSignal("");
   const [content, setContent] = createSignal("");
   const [showForm, setShowForm] = createSignal(false);
+  const [filterTab, setFilterTab] = createSignal("all"); // "all", "mine", "created"
 
   // IssueList의 refetch를 트리거하기 위한 변수 (필요 시)
   let issueListRef: any;
@@ -36,99 +37,111 @@ export default function BoardDetail() {
   };
 
   return (
-    <div style={{ "max-width": "800px", margin: "0 auto", padding: "20px" }}>
-      <header
-        style={{
-          display: "flex",
-          "justify-content": "space-between",
-          "align-items": "center",
-          "margin-bottom": "30px",
-        }}
-      >
-        <div>
+    <div style={{ height: "100%", display: "flex", "flex-direction": "column" }}>
+      {/* 상단 필터 및 액션 바 */}
+      <div class="flex-between p-lg" style={{ "border-bottom": "1px solid var(--color-border-light)" }}>
+        <div class="flex-row gap-md">
           <button
-            onClick={() => navigate(-1)}
-            style={{
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              color: "#666",
-              "margin-bottom": "10px",
+            onClick={() => setFilterTab("all")}
+            classList={{
+              "filter-button": true,
+              active: filterTab() === "all",
             }}
           >
-            ← 뒤로 가기
+            모두 이슈
           </button>
-          <h1>📋 보드 상세</h1>
+          <button
+            onClick={() => setFilterTab("mine")}
+            classList={{
+              "filter-button": true,
+              active: filterTab() === "mine",
+            }}
+          >
+            나의 이슈
+          </button>
+          <button
+            onClick={() => setFilterTab("created")}
+            classList={{
+              "filter-button": true,
+              active: filterTab() === "created",
+            }}
+          >
+            내가 만든 이슈
+          </button>
         </div>
-        <button
-          onClick={() => setShowForm(!showForm())}
-          style={{
-            padding: "10px 15px",
-            background: "#4A90E2",
-            color: "white",
-            border: "none",
-            "border-radius": "5px",
-            cursor: "pointer",
-          }}
-        >
-          {showForm() ? "취oc" : "+ 새 이슈"}
-        </button>
-      </header>
-
-      {/* 이슈 생성 폼 */}
-      {showForm() && (
-        <form
-          onSubmit={handleCreateIssue}
-          style={{
-            background: "#f9f9f9",
-            padding: "20px",
-            "border-radius": "8px",
-            "margin-bottom": "30px",
-          }}
-        >
-          <div style={{ "margin-bottom": "10px" }}>
-            <input
-              type="text"
-              placeholder="이슈 제목"
-              value={title()}
-              onInput={(e) => setTitle(e.currentTarget.value)}
-              required
-              style={{ width: "100%", padding: "10px", "box-sizing": "border-box" }}
-            />
-          </div>
-          <div style={{ "margin-bottom": "10px" }}>
-            <textarea
-              placeholder="상세 내용"
-              value={content()}
-              onInput={(e) => setContent(e.currentTarget.value)}
-              style={{
-                width: "100%",
-                padding: "10px",
-                height: "100px",
-                "box-sizing": "border-box",
-              }}
-            />
-          </div>
+        <div class="flex-row gap-md">
           <button
-            type="submit"
-            style={{
-              width: "100%",
-              padding: "10px",
-              background: "#2ecc71",
-              color: "white",
-              border: "none",
-              "border-radius": "5px",
-            }}
+            onClick={() => setShowForm(true)}
+            class="btn btn-primary btn-small"
           >
-            이슈 등록
+            이슈 생성
           </button>
-        </form>
+          <button class="btn btn-secondary btn-small">
+            보드 설정
+          </button>
+        </div>
+      </div>
+
+      {/* 이슈 생성 모달 */}
+      {showForm() && (
+        <div class="modal-overlay" onClick={() => setShowForm(false)}>
+          <div class="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div class="modal-header">
+              <h2>🎯 새 이슈 생성</h2>
+            </div>
+            <form onSubmit={handleCreateIssue}>
+              <div class="modal-body">
+                <div class="form-group">
+                  <label>이슈 제목</label>
+                  <input
+                    type="text"
+                    placeholder="예: 로그인 기능 개발"
+                    value={title()}
+                    onInput={(e) => setTitle(e.currentTarget.value)}
+                    required
+                    class="form-control"
+                    autofocus
+                  />
+                </div>
+                <div class="form-group">
+                  <label>상세 내용</label>
+                  <textarea
+                    placeholder="이슈에 대한 상세 설명을 입력하세요"
+                    value={content()}
+                    onInput={(e) => setContent(e.currentTarget.value)}
+                    class="form-control"
+                    style={{ height: "120px" }}
+                  />
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button
+                  type="button"
+                  onClick={() => setShowForm(false)}
+                  class="btn"
+                >
+                  취소
+                </button>
+                <button
+                  type="submit"
+                  class="btn btn-success"
+                >
+                  이슈 등록
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
 
-      {/* 통합된 이슈 리스트 컴포넌트 */}
-      <section>
-        <IssueList boardId={Number(params.boardId)} />
-      </section>
+      {/* 이슈 리스트 */}
+      <div style={{ flex: 1, overflow: "auto", padding: "20px" }}>
+        <IssueList 
+          boardId={Number(params.boardId)} 
+          projectId={params.projectId}
+          filter={filterTab()} 
+        />
+      </div>
     </div>
   );
 }

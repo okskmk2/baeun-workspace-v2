@@ -1,4 +1,5 @@
 import { lazy } from "solid-js";
+import ProjectLayout from "./components/ProjectLayout";
 
 export const routes = [
   {
@@ -31,19 +32,37 @@ export const routes = [
   },
   {
     path: "/project/:projectId",
-    component: lazy(() => import("./pages/ProjectDetail")),
-  },
-  {
-    path: "/project/:projectId/board/new",
-    component: lazy(() => import("./pages/BoardCreate")),
-  },
-  {
-    path: "/board/:boardId",
-    component: lazy(() => import("./pages/BoardDetail")),
-  },
-  {
-    path: "/issue/:issueId", // 추가된 경로
-    component: lazy(() => import("./pages/IssueDetail")),
+    component: ProjectLayout,
+    children: [
+      {
+        path: "/",
+        component: lazy(() => import("./pages/ProjectDetail")),
+      },
+      {
+        path: "/board/new",
+        component: lazy(() => import("./pages/BoardCreate")),
+      },
+      {
+        path: "/board/:boardId",
+        component: lazy(() => import("./pages/BoardDetail")),
+      },
+      {
+        path: "/issue/:issueId",
+        component: lazy(() => import("./pages/IssueDetail")),
+      },
+      {
+        path: "/issue",
+        component: lazy(() => import("./pages/ProjectDetail")),
+      },
+      {
+        path: "/wiki",
+        component: lazy(() => import("./pages/ProjectDetail")),
+      },
+      {
+        path: "/chat",
+        component: lazy(() => import("./pages/ProjectDetail")),
+      },
+    ],
   },
   {
     path: "*",

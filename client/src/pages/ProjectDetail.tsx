@@ -13,88 +13,42 @@ export default function ProjectDetail() {
   const [boards] = createResource(() => params.projectId, fetchBoards);
 
   return (
-    <div style={{ "max-width": "1000px", margin: "0 auto", padding: "30px" }}>
-      <header
-        style={{
-          display: "flex",
-          "justify-content": "space-between",
-          "align-items": "center",
-          "margin-bottom": "30px",
-        }}
-      >
+    <div class="page-container">
+      <header class="page-header">
         <div>
-          <A
-            href="/profile"
-            style={{ color: "#666", "text-decoration": "none", "font-size": "0.9rem" }}
-          >
+          <A href="/profile" class="back-link">
             ← 내 워크스페이스
           </A>
-          <h1 style={{ margin: "10px 0 0 0" }}>📂 프로젝트 상세</h1>
-          <p style={{ color: "#888", margin: "5px 0" }}>Project ID: {params.projectId}</p>
+          <h1 class="page-header-info">📂 프로젝트 상세</h1>
+          <p>Project ID: {params.projectId}</p>
         </div>
 
         {/* 보드 생성 화면으로 이동하는 버튼 */}
         <A href={`/project/${params.projectId}/board/new`}>
-          <button
-            style={{
-              padding: "10px 20px",
-              background: "#4A90E2",
-              color: "white",
-              border: "none",
-              "border-radius": "6px",
-              cursor: "pointer",
-              "font-weight": "bold",
-            }}
-          >
+          <button class="btn btn-primary btn-large">
             + 새 보드 만들기
           </button>
         </A>
       </header>
 
       <section>
-        <h3 style={{ "border-bottom": "1px solid #eee", "padding-bottom": "10px" }}>
+        <h3 class="section-title">
           📋 보드 목록
         </h3>
         <Suspense fallback={<p>보드를 불러오는 중...</p>}>
-          <div
-            style={{
-              display: "grid",
-              "grid-template-columns": "repeat(auto-fill, minmax(250px, 1fr))",
-              gap: "20px",
-              "margin-top": "20px",
-            }}
-          >
+          <div class="card-grid">
             <For
               each={boards()}
-              fallback={<p style={{ color: "#999" }}>아직 생성된 보드가 없습니다.</p>}
+              fallback={<p class="text-light">아직 생성된 보드가 없습니다.</p>}
             >
               {(board) => (
                 <A
-                  href={`/board/${board.id}`}
-                  style={{ "text-decoration": "none", color: "inherit" }}
+                  href={`/project/${params.projectId}/board/${board.id}`}
+                  class="card-link"
                 >
-                  <div
-                    style={{
-                      padding: "20px",
-                      border: "1px solid #ddd",
-                      "border-radius": "10px",
-                      background: "#f9f9f9",
-                      transition: "box-shadow 0.2s",
-                    }}
-                    onMouseEnter={(e) =>
-                      (e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.1)")
-                    }
-                    onMouseLeave={(e) => (e.currentTarget.style.boxShadow = "none")}
-                  >
-                    <h4 style={{ margin: "0 0 10px 0" }}>{board.name}</h4>
-                    <span
-                      style={{
-                        "font-size": "0.75rem",
-                        background: "#eee",
-                        padding: "2px 6px",
-                        "border-radius": "4px",
-                      }}
-                    >
+                  <div class="card">
+                    <h4>{board.name}</h4>
+                    <span class="card-badge">
                       {board.type}
                     </span>
                   </div>

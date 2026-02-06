@@ -12,30 +12,15 @@ export default function NotFound() {
   onCleanup(() => clearTimeout(timer));
 
   return (
-    <div
-      style={{
-        "text-align": "center",
-        padding: "100px 20px",
-        display: "flex",
-        "flex-direction": "column",
-        "align-items": "center",
-      }}
-    >
+    <div class="flex-col" style={{ "text-align": "center", padding: "100px 20px", "align-items": "center" }}>
       <h1 style={{ "font-size": "5rem", margin: "0", color: "#ff4757" }}>404</h1>
       <h2>길을 잃으셨나요?</h2>
-      <p style={{ color: "#666" }}>요청하신 페이지를 찾을 수 없습니다.</p>
+      <p class="text-secondary">요청하신 페이지를 찾을 수 없습니다.</p>
 
-      <div style={{ "margin-top": "20px" }}>
+      <div class="mt-lg">
         <button
           onClick={() => navigate("/")}
-          style={{
-            padding: "10px 20px",
-            background: "#333",
-            color: "white",
-            border: "none",
-            "border-radius": "5px",
-            cursor: "pointer",
-          }}
+          class="btn btn-primary"
         >
           홈으로 돌아가기
         </button>

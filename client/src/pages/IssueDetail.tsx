@@ -58,112 +58,86 @@ export default function IssueDetail() {
   };
 
   return (
-    <div style={{ "max-width": "800px", margin: "40px auto", padding: "20px" }}>
+    <div class="issue-container">
       <Suspense fallback={<p>이슈 정보를 불러오는 중...</p>}>
         <Show when={issue()}>
-          <header
-            style={{ "margin-bottom": "20px", display: "flex", "justify-content": "space-between" }}
-          >
+          <header class="flex-between mb-lg">
             <button
               onClick={() => navigate(-1)}
-              style={{ background: "none", border: "none", cursor: "pointer", color: "#666" }}
+              class="btn-link"
             >
               ← 뒤로 가기
             </button>
-            <div>
-              <button onClick={() => setIsEditing(!isEditing())} style={{ "margin-right": "10px" }}>
+            <div class="flex-row gap-md">
+              <button 
+                onClick={() => setIsEditing(!isEditing())} 
+                class="btn btn-primary"
+              >
                 {isEditing() ? "취소" : "수정"}
               </button>
               <button
                 onClick={handleDelete}
-                style={{
-                  background: "#e74c3c",
-                  color: "white",
-                  border: "none",
-                  padding: "5px 10px",
-                  "border-radius": "4px",
-                }}
+                class="btn btn-danger btn-small"
               >
                 삭제
               </button>
             </div>
           </header>
 
-          <div
-            style={{
-              border: "1px solid #ddd",
-              padding: "30px",
-              "border-radius": "12px",
-              background: "white",
-            }}
-          >
+          <div class="card-content-box">
             <Show
               when={isEditing()}
               fallback={
                 <>
-                  <div
-                    style={{
-                      display: "flex",
-                      "align-items": "center",
-                      gap: "10px",
-                      "margin-bottom": "10px",
-                    }}
-                  >
-                    <span
-                      style={{
-                        background: "#eee",
-                        padding: "4px 12px",
-                        "border-radius": "20px",
-                        "font-size": "0.85rem",
-                      }}
-                    >
+                  <div class="flex-row gap-sm mb-md">
+                    <span class="status-badge">
                       {issue().status}
                     </span>
-                    <h1 style={{ margin: 0 }}>{issue().title}</h1>
+                    <h1 class="mt-0">{issue().title}</h1>
                   </div>
-                  <p style={{ "white-space": "pre-wrap", color: "#333", "line-height": "1.6" }}>
+                  <p class="issue-content">
                     {issue().content || "내용이 없습니다."}
                   </p>
                 </>
               }
             >
-              <div style={{ display: "flex", "flex-direction": "column", gap: "10px" }}>
+              <div class="flex-col gap-sm">
                 <input
                   type="text"
                   value={editTitle()}
                   onInput={(e) => setEditTitle(e.currentTarget.value)}
-                  style={{ "font-size": "1.5rem", padding: "10px" }}
+                  class="form-control"
+                  style={{ "font-size": "1.5rem" }}
                 />
                 <textarea
                   value={editContent()}
                   onInput={(e) => setEditContent(e.currentTarget.value)}
-                  style={{ height: "200px", padding: "10px" }}
+                  class="form-control"
+                  style={{ height: "200px" }}
                 />
                 <button
                   onClick={handleSave}
-                  style={{ background: "#2ecc71", color: "white", padding: "10px", border: "none" }}
+                  class="btn btn-success"
                 >
                   저장하기
                 </button>
               </div>
             </Show>
 
-            <hr style={{ margin: "30px 0", border: "0", "border-top": "1px solid #eee" }} />
+            <hr class="divider" />
 
-            <section>
+            <section class="issue-section">
               <h3>상태 변경</h3>
-              <div style={{ display: "flex", gap: "10px" }}>
+              <div class="flex-row gap-sm">
                 <For each={["백로그", "진행중", "완료"]}>
                   {(s) => (
                     <button
                       onClick={() => handleUpdateStatus(s)}
                       disabled={issue().status === s}
-                      style={{
-                        padding: "8px 16px",
-                        background: issue().status === s ? "#4A90E2" : "white",
-                        color: issue().status === s ? "white" : "#333",
-                        border: "1px solid #ddd",
-                        cursor: "pointer",
+                      classList={{
+                        "btn": true,
+                        "btn-primary": issue().status === s,
+                        "btn-default": issue().status !== s,
                       }}
                     >
                       {s}
@@ -173,24 +147,17 @@ export default function IssueDetail() {
               </div>
             </section>
 
-            <section style={{ "margin-top": "30px" }}>
+            <section class="issue-section">
               <h3>담당자</h3>
-              <div style={{ display: "flex", gap: "10px", "flex-wrap": "wrap" }}>
+              <div class="flex-row gap-md flex-wrap">
                 <For
                   each={issue().members}
-                  fallback={<p style={{ color: "#999" }}>지정된 담당자가 없습니다.</p>}
+                  fallback={<p class="text-light">지정된 담당자가 없습니다.</p>}
                 >
                   {(m) => (
-                    <div
-                      style={{
-                        padding: "5px 12px",
-                        background: "#f0f0f0",
-                        "border-radius": "4px",
-                        "font-size": "0.9rem",
-                      }}
-                    >
+                    <div class="card-badge">
                       {m.name}{" "}
-                      <span style={{ color: "#888", "font-size": "0.8rem" }}>({m.role_name})</span>
+                      <span style={{ "font-size": "0.8rem" }}>({m.role_name})</span>
                     </div>
                   )}
                 </For>

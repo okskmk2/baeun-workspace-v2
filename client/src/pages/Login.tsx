@@ -22,15 +22,25 @@ export default function Login() {
   };
 
   return (
-    <form onSubmit={handleLogin}>
+    <form onSubmit={handleLogin} class="auth-container">
       <h2>로그인</h2>
-      <input type="email" placeholder="이메일" onInput={(e) => setEmail(e.currentTarget.value)} />
-      <input
-        type="password"
-        placeholder="비밀번호"
-        onInput={(e) => setPassword(e.currentTarget.value)}
-      />
-      <button type="submit">로그인</button>
+      <div class="form-group">
+        <input 
+          type="email" 
+          class="form-control"
+          placeholder="이메일" 
+          onInput={(e) => setEmail(e.currentTarget.value)} 
+        />
+      </div>
+      <div class="form-group">
+        <input
+          type="password"
+          class="form-control"
+          placeholder="비밀번호"
+          onInput={(e) => setPassword(e.currentTarget.value)}
+        />
+      </div>
+      <button type="submit" class="btn btn-primary" style={{ width: "100%" }}>로그인</button>
     </form>
   );
 }
