@@ -25,7 +25,9 @@
           draggable="true"
           @dragstart="onDragStart(issue)"
         >
-          <h3>{{ issue.title }}</h3>
+          <h3>
+            <router-link :to="issueDetailPath(issue.id)">{{ issue.title }}</router-link>
+          </h3>
           <p v-if="issue.assignee_members?.length">
             {{ formatAssignees(issue.assignee_members) }}
           </p>
@@ -88,6 +90,8 @@ const form = ref({
 
 const statuses = ["백로그", "진행중", "검토중", "완료"];
 
+const workspaceId = computed(() => route.params.workspaceId);
+const projectId = computed(() => route.params.projectId);
 const boardId = computed(() => route.params.boardId);
 
 const fetchBoard = async () => {
@@ -104,6 +108,9 @@ const fetchIssues = async () => {
 
 const issuesByStatus = (status) =>
   issues.value.filter((issue) => (issue.status || "백로그") === status);
+const issueDetailPath = (issueId) =>
+  `/workspace/${workspaceId.value}/project/${projectId.value}/board/${boardId.value}/issue/${issueId}`;
+
 
 const formatAssignees = (assignees = []) =>
   assignees

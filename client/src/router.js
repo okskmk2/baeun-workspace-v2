@@ -12,7 +12,7 @@ import BillingPage from "./views/BillingPage.vue";
 import WorkspaceListPage from "./views/WorkspaceListPage.vue";
 import WorkspaceLayout from "./views/WorkspaceLayout.vue";
 import WorkspaceHomePage from "./views/WorkspaceHomePage.vue";
-import IssueLayout from "./views/IssueLayout.vue";
+import IssueDetailPage from "./views/IssueDetailPage.vue";
 import BoardHomePage from "./views/BoardHomePage.vue";
 import BoardLayout from "./views/BoardLayout.vue";
 import WikiLayout from "./views/WikiLayout.vue";
@@ -87,6 +87,10 @@ const routes = [
               {
                 path: ":boardId",
                 component: BoardPage,
+              },
+              {
+                path: ":boardId/issue/:issueId",
+                component: IssueDetailPage,
               },
             ],
           },
