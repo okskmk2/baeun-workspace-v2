@@ -44,6 +44,9 @@
 <script setup>
 import { ref, computed } from "vue";
 
+const sharedDragId = ref("");
+const sharedParentId = ref(null);
+
 const props = defineProps({
   nodes: { type: Array, default: () => [] },
   level: { type: Number, default: 0 },
@@ -54,19 +57,18 @@ const props = defineProps({
 
 const emit = defineEmits(["reorder"]);
 
-const dragId = ref("");
+const dragId = sharedDragId;
 const dropTargetId = ref("");
 const dropPosition = ref("before");
-const draggingParentId = ref(null); // 드래그 시작 시점의 부모 ID 저장
 
 // 현재 타겟이 드래그 중인 요소와 같은 부모를 가졌는지 확인
 const isTargetValid = computed(() => {
-  return String(draggingParentId.value) === String(props.parentId);
+  return String(sharedParentId.value) === String(props.parentId);
 });
 
 const onDragStart = (id, event) => {
-  dragId.value = String(id);
-  draggingParentId.value = props.parentId; // 현재 레벨의 parentId 저장
+  sharedDragId.value = String(id);
+  sharedParentId.value = props.parentId; // 현재 레벨의 parentId 저장
 
   event.dataTransfer.effectAllowed = "move";
   // 다른 컴포넌트 인스턴스(다른 레벨)에서도 알 수 있도록 데이터 저장
@@ -75,14 +77,14 @@ const onDragStart = (id, event) => {
 };
 
 const onDragEnd = () => {
-  dragId.value = "";
+  sharedDragId.value = "";
   dropTargetId.value = "";
-  draggingParentId.value = null;
+  sharedParentId.value = null;
 };
 
 const onDragOverItem = (targetId, event) => {
   // 1. 자기 자신 제외
-  if (String(targetId) === dragId.value) return;
+  if (String(targetId) === sharedDragId.value) return;
 
   // 2. DataTransfer에서 부모 ID 가져오기 (HTML5 표준 방식 보완)
   // dragover에서는 보안상 getData를 쓸 수 없으므로, 내부 ref(draggingParentId)를 활용하거나
@@ -91,7 +93,10 @@ const onDragOverItem = (targetId, event) => {
 
   // 가이드라인을 그릴지 결정 (현재 컴포넌트의 parentId와 드래그 시작 parentId 비교)
   // *주의: 이 로직이 작동하려면 드래그 시작 시 전역 변수나 싱글톤을 활용하는 것이 가장 확실합니다.
-  if (!isTargetValid.value) return;
+  if (!isTargetValid.value) {
+    dropTargetId.value = "";
+    return;
+  }
 
   const rect = event.currentTarget.getBoundingClientRect();
   const offset = event.clientY - rect.top;
@@ -154,6 +159,7 @@ const emitReorder = (payload) => emit("reorder", payload);
   list-style: none;
   padding-left: 1rem;
   margin: 0;
+  user-select: none;
 }
 
 .page-list--nested {
@@ -164,6 +170,7 @@ const emitReorder = (payload) => emit("reorder", payload);
   position: relative;
   padding: 4px 0;
   cursor: grab;
+  user-select: none;
 }
 
 .page-item:active {
