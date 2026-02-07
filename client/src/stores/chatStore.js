@@ -20,7 +20,7 @@ export const useChatStore = defineStore('chat', {
     async fetchMessages(roomId){
       if(!roomId) return
       try{
-        const res = await api.get(`/chat/rooms/${roomId}/messages`)
+        const res = await api.get(`/chatroom/${roomId}/messages`)
         this.messagesByRoom[roomId] = res.data?.data || []
       }catch(e){
         this.messagesByRoom[roomId] = []

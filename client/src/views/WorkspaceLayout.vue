@@ -1,8 +1,8 @@
 <template>
-  <div class="DefaultLayout">
+  <div class="WorkspaceLayout">
     <header>
-      <div>
-        <router-link class="brand" :to="`/workspace/${workspaceId}`">{{
+      <div class="left">
+        <router-link class="workspaceName" :to="`/workspace/${workspaceId}`">{{
           workspaceName || "Workspace"
         }}</router-link>
         <select v-model="selectedProjectId" @change="handleProjectChange" class="projectselect">
@@ -11,22 +11,24 @@
             {{ project.name }}
           </option>
         </select>
-      </div>
-      <nav class="mainnav">
         <template v-if="projectId">
-          <router-link :to="`/workspace/${workspaceId}/project/${projectId}/board`"
-            >보드</router-link
-          >
-          <router-link :to="`/workspace/${workspaceId}/project/${projectId}/wiki`"
-            >위키</router-link
-          >
-          <router-link :to="`/workspace/${workspaceId}/project/${projectId}/messenger`"
-            >메신저</router-link
-          >
+          <nav class="mainnav">
+            <router-link :to="`/workspace/${workspaceId}/project/${projectId}/board`"
+              >보드</router-link
+            >
+            <router-link :to="`/workspace/${workspaceId}/project/${projectId}/wiki`"
+              >위키</router-link
+            >
+            <router-link :to="`/workspace/${workspaceId}/project/${projectId}/messenger`"
+              >메신저</router-link
+            >
+          </nav>
         </template>
-      </nav>
+      </div>
       <nav class="utilnav">
-        <router-link to="/login">관리</router-link>
+        <router-link :to="`/workspace/${workspaceId}/project/${projectId}/settings`"
+          >관리</router-link
+        >
         <router-link to="/account">계정</router-link>
       </nav>
     </header>

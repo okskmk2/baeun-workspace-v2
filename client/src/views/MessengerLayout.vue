@@ -1,11 +1,162 @@
 <template>
   <div class="AcountLayout">
     <aside>
-      <button class="btn">채팅방 만들기</button>
-      <nav>채팅 목록</nav>
+      <button class="btn btn--sm" type="button" @click="openModal">채팅방 만들기</button>
+      <nav class="chat-nav">
+        <h3>채팅 목록</h3>
+        <p v-if="isLoading">불러오는 중...</p>
+        <p v-else-if="errorMessage">{{ errorMessage }}</p>
+        <p v-else-if="rooms.length === 0">채팅방이 없습니다.</p>
+        <ul v-else class="chat-list">
+          <li v-for="room in rooms" :key="room.id">
+            <router-link
+              class="chat-link"
+              :to="`/workspace/${workspaceId}/project/${projectId}/messenger/${room.id}`"
+            >
+              {{ room.name || "이름 없는 채팅방" }}
+            </router-link>
+          </li>
+        </ul>
+      </nav>
     </aside>
     <main>
       <router-view />
     </main>
   </div>
+
+  <BaseModal :open="isModalOpen" title="채팅방 만들기" @close="closeModal">
+    <form class="modal-form" @submit.prevent="createChatroom">
+      <label for="chatroom-name">채팅방 이름</label>
+      <input
+        id="chatroom-name"
+        v-model.trim="form.name"
+        type="text"
+        placeholder="채팅방 이름"
+      />
+      <p v-if="formError" class="form-error">{{ formError }}</p>
+      <div class="modal-actions">
+        <button type="button" class="btn btn--secondary" @click="closeModal">취소</button>
+        <button type="submit" class="btn" :disabled="isCreating">
+          {{ isCreating ? "저장 중..." : "저장" }}
+        </button>
+      </div>
+    </form>
+  </BaseModal>
 </template>
+
+<script setup>
+import { computed, onMounted, ref, watch } from "vue";
+import { useRoute } from "vue-router";
+import api from "../lib/axios";
+import BaseModal from "../components/BaseModal.vue";
+
+const route = useRoute();
+const workspaceId = computed(() => route.params.workspaceId);
+const projectId = computed(() => route.params.projectId);
+
+const isModalOpen = ref(false);
+const isCreating = ref(false);
+const formError = ref("");
+const form = ref({ name: "" });
+const rooms = ref([]);
+const isLoading = ref(false);
+const errorMessage = ref("");
+
+const fetchRooms = async () => {
+  if (!projectId.value) {
+    rooms.value = [];
+    return;
+  }
+
+  isLoading.value = true;
+  errorMessage.value = "";
+
+  try {
+    const res = await api.get("/chatroom", { params: { project_id: projectId.value } });
+    rooms.value = res.data?.data || [];
+  } catch (error) {
+    rooms.value = [];
+    errorMessage.value = "채팅방 목록을 불러오지 못했습니다.";
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+const openModal = () => {
+  if (!projectId.value) {
+    formError.value = "프로젝트가 선택되지 않았습니다.";
+    return;
+  }
+  form.value = { name: "" };
+  formError.value = "";
+  isModalOpen.value = true;
+};
+
+const closeModal = () => {
+  isModalOpen.value = false;
+};
+
+const createChatroom = async () => {
+  if (!form.value.name) {
+    formError.value = "채팅방 이름을 입력해주세요.";
+    return;
+  }
+
+  if (!projectId.value) {
+    formError.value = "프로젝트가 선택되지 않았습니다.";
+    return;
+  }
+
+  isCreating.value = true;
+  formError.value = "";
+
+  try {
+    await api.post("/chatroom", {
+      name: form.value.name,
+      project_id: projectId.value,
+      type: "PROJECT",
+    });
+    await fetchRooms();
+    closeModal();
+  } catch (error) {
+    formError.value = error?.response?.data?.message || "채팅방 생성에 실패했습니다.";
+  } finally {
+    isCreating.value = false;
+  }
+};
+
+onMounted(fetchRooms);
+watch(projectId, fetchRooms);
+</script>
+
+<style scoped>
+.chat-nav h3 {
+  margin: 12px 0 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.chat-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.chat-link {
+  display: block;
+  padding: 6px 8px;
+  border-radius: 8px;
+  color: #374151;
+  text-decoration: none;
+  border: 1px solid transparent;
+}
+
+.chat-link:hover {
+  background: #f9fafb;
+  border-color: #e5e7eb;
+}
+</style>

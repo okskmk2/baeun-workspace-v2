@@ -44,7 +44,10 @@ nav a:hover {
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.12s ease;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    transform 0.12s ease;
 }
 
 .btn:hover {
@@ -142,6 +145,58 @@ nav a:hover {
   padding: 4px;
 }
 
+.WorkspaceLayout {
+  display: flex;
+  flex-direction: column;
+}
+
+.WorkspaceLayout .workspaceName {
+  text-decoration: none;
+  color: inherit;
+}
+
+.WorkspaceLayout > header {
+  display: flex;
+  justify-content: space-between;
+  padding: 24px 40px;
+  background-color: white;
+}
+.WorkspaceLayout > header > nav {
+  display: flex;
+  align-items: center;
+}
+
+.WorkspaceLayout .left {
+  display: flex;
+  gap: 1rem;
+}
+
+.WorkspaceLayout .mainnav {
+  font-size: 18px;
+  gap: 2rem;
+  display: flex;
+  margin-left: 2rem;
+}
+.WorkspaceLayout .utilnav {
+  font-size: 15px;
+  gap: 20px;
+  display: flex;
+}
+
+.WorkspaceLayout main {
+  background-color: white;
+  padding: 2rem 3rem;
+  margin: 1rem;
+}
+
+.WorkspaceLayout > header .projectselect {
+  padding: 4px;
+  border: 1px solid #ddd;
+  border-radius: 2px;
+  font-size: 15px;
+  background-color: #f7f7f7;
+}
+
 .AcountLayout {
   display: flex;
   gap: 1rem;
@@ -163,7 +218,7 @@ nav a:hover {
 .AcountLayout > main {
   flex-grow: 1;
   background-color: white;
-  padding: 2rem 3rem;
+  padding: 2rem 3rem 4rem;
   margin: 0;
 }
 

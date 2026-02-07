@@ -11,17 +11,17 @@
       <div class="feed-group">
         <div class="feed-date">오늘</div>
         <article class="feed-item">
-          <div class="feed-icon">S</div>
+          <div class="feed-icon">U</div>
           <div class="feed-body">
-            <div class="feed-title">"로그인 오류" 상태가 진행중으로 변경됨</div>
-            <div class="feed-meta">이은성 · 10:32</div>
+            <div class="feed-title">"온보딩 가이드" 내용이 수정됨</div>
+            <div class="feed-meta">이은성 · 11:40</div>
           </div>
         </article>
         <article class="feed-item">
           <div class="feed-icon">C</div>
           <div class="feed-body">
-            <div class="feed-title">"권한 정책"에 새 코멘트</div>
-            <div class="feed-meta">jojo · 09:10</div>
+            <div class="feed-title">"서버 배포" 문서에 새 코멘트</div>
+            <div class="feed-meta">mira · 09:22</div>
           </div>
         </article>
       </div>
@@ -29,17 +29,17 @@
       <div class="feed-group">
         <div class="feed-date">어제</div>
         <article class="feed-item">
-          <div class="feed-icon">S</div>
+          <div class="feed-icon">U</div>
           <div class="feed-body">
-            <div class="feed-title">"알림 배치" 상태가 검토중으로 변경됨</div>
-            <div class="feed-meta">mira · 18:42</div>
+            <div class="feed-title">"권한 정책" 목차가 정리됨</div>
+            <div class="feed-meta">sojin · 17:05</div>
           </div>
         </article>
         <article class="feed-item">
           <div class="feed-icon">C</div>
           <div class="feed-body">
-            <div class="feed-title">"빌드 파이프라인"에 새 코멘트</div>
-            <div class="feed-meta">sojin · 15:20</div>
+            <div class="feed-title">"릴리즈 노트" 문서에 새 코멘트</div>
+            <div class="feed-meta">jojo · 15:10</div>
           </div>
         </article>
       </div>
@@ -101,7 +101,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #111827;
+  background: #0f172a;
   color: #fff;
   font-size: 12px;
   font-weight: 700;

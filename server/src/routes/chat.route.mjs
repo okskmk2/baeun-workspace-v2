@@ -5,6 +5,52 @@ import { isAuth } from "../middlewares/auth.middleware.mjs";
 const router = express.Router();
 
 /**
+ * GET /api/chatroom/recent
+ * Get recent messages in project chatrooms (last 24 hours)
+ */
+router.get("/recent", isAuth, async (req, res) => {
+  const projectId = req.query.project_id;
+  const userId = req.session.userId;
+
+  if (!projectId) {
+    return res.status(400).json({ success: false, message: "project_id is required" });
+  }
+
+  try {
+    const memberCheck = await pool.query(
+      "SELECT id FROM project_member WHERE project_id = $1 AND member_id = $2",
+      [projectId, userId]
+    );
+    if (memberCheck.rows.length === 0) {
+      return res.status(403).json({ success: false, message: "접근 권한이 없습니다." });
+    }
+
+    const recentRes = await pool.query(
+      `SELECT 
+        c.id as message_id,
+        c.content,
+        c.created_at,
+        c.created_by,
+        m.name as creator_name,
+        cr.id as chatroom_id,
+        cr.name as chatroom_name
+      FROM chat c
+      JOIN chatroom cr ON c.chatroom_id = cr.id
+      LEFT JOIN member m ON c.created_by = m.id
+      WHERE cr.project_id = $1
+        AND c.created_at >= NOW() - INTERVAL '24 hours'
+      ORDER BY c.created_at DESC`,
+      [projectId]
+    );
+
+    res.json({ success: true, data: recentRes.rows });
+  } catch (error) {
+    console.error("recent chat messages error:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
  * POST /api/chatroom
  * Create a new chatroom and add the creator as OWNER in chatroom_member
  */
@@ -21,7 +67,11 @@ router.post("/", isAuth, async (req, res) => {
       VALUES ($1, $2, $3)
       RETURNING *;
     `;
-    const chatRes = await client.query(insertChatroom, [name || null, project_id || null, type || null]);
+    const chatRes = await client.query(insertChatroom, [
+      name || null,
+      project_id || null,
+      type || null,
+    ]);
     const newRoom = chatRes.rows[0];
 
     const insertMember = `
@@ -50,8 +100,12 @@ router.get("/:chatroomId", isAuth, async (req, res) => {
   const { chatroomId } = req.params;
   const userId = req.session.userId;
 
+  // 추가 보안: chatroomId가 숫자인지 확인 (필요한 경우)
+  if (isNaN(parseInt(chatroomId))) {
+    return res.status(400).json({ success: false, message: "유효하지 않은 대화방 ID입니다." });
+  }
+
   try {
-    // Verify user is a member of the chatroom
     const memberCheck = await pool.query(
       "SELECT * FROM chatroom_member WHERE chatroom_id = $1 AND member_id = $2",
       [chatroomId, userId]
@@ -60,10 +114,7 @@ router.get("/:chatroomId", isAuth, async (req, res) => {
       return res.status(403).json({ success: false, message: "접근 권한이 없습니다." });
     }
 
-    const chatRes = await pool.query(
-      "SELECT * FROM chatroom WHERE id = $1",
-      [chatroomId]
-    );
+    const chatRes = await pool.query("SELECT * FROM chatroom WHERE id = $1", [chatroomId]);
 
     if (chatRes.rows.length === 0) {
       return res.status(404).json({ success: false, message: "대화방을 찾을 수 없습니다." });
@@ -85,7 +136,6 @@ router.get("/:chatroomId/messages", isAuth, async (req, res) => {
   const userId = req.session.userId;
 
   try {
-    // Verify user is a member of the chatroom
     const memberCheck = await pool.query(
       "SELECT * FROM chatroom_member WHERE chatroom_id = $1 AND member_id = $2",
       [chatroomId, userId]
@@ -112,7 +162,58 @@ router.get("/:chatroomId/messages", isAuth, async (req, res) => {
   }
 });
 
-export default router;
+/**
+ * POST /api/chatroom/:chatroomId/invite
+ * Invite a project member to a chatroom
+ */
+router.post("/:chatroomId/invite", isAuth, async (req, res) => {
+  const { chatroomId } = req.params;
+  const { member_id } = req.body;
+  const userId = req.session.userId;
+
+  if (!member_id) {
+    return res.status(400).json({ success: false, message: "member_id is required" });
+  }
+
+  try {
+    const chatRes = await pool.query(
+      "SELECT id, project_id FROM chatroom WHERE id = $1",
+      [chatroomId]
+    );
+    if (chatRes.rows.length === 0) {
+      return res.status(404).json({ success: false, message: "대화방을 찾을 수 없습니다." });
+    }
+
+    const projectId = chatRes.rows[0].project_id;
+
+    const memberCheck = await pool.query(
+      "SELECT id FROM chatroom_member WHERE chatroom_id = $1 AND member_id = $2",
+      [chatroomId, userId]
+    );
+    if (memberCheck.rows.length === 0) {
+      return res.status(403).json({ success: false, message: "접근 권한이 없습니다." });
+    }
+
+    const projectMemberCheck = await pool.query(
+      "SELECT id FROM project_member WHERE project_id = $1 AND member_id = $2",
+      [projectId, member_id]
+    );
+    if (projectMemberCheck.rows.length === 0) {
+      return res.status(400).json({ success: false, message: "프로젝트 멤버가 아닙니다." });
+    }
+
+    await pool.query(
+      "INSERT INTO chatroom_member (chatroom_id, member_id, role_name) VALUES ($1, $2, 'MEMBER') ON CONFLICT DO NOTHING",
+      [chatroomId, member_id]
+    );
+
+    res.status(201).json({ success: true, message: "초대되었습니다." });
+  } catch (error) {
+    console.error("chatroom invite error:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 router.get("/", isAuth, async (req, res) => {
   const projectId = req.query.project_id;
   const userId = req.session.userId;
@@ -122,7 +223,6 @@ router.get("/", isAuth, async (req, res) => {
   }
 
   try {
-    // verify project membership
     const memberCheck = await pool.query(
       "SELECT id FROM project_member WHERE project_id = $1 AND member_id = $2",
       [projectId, userId]
@@ -142,3 +242,5 @@ router.get("/", isAuth, async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 });
+
+export default router;

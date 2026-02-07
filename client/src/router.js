@@ -18,8 +18,13 @@ import BoardLayout from "./views/BoardLayout.vue";
 import WikiLayout from "./views/WikiLayout.vue";
 import MessengerLayout from "./views/MessengerLayout.vue";
 import ProjectLayout from "./views/ProjectLayout.vue";
-import ProjectHomePage from "./views/ProjectHomePage.vue";
 import BoardPage from "./views/BoardPage.vue";
+import WikiHomePage from "./views/WikiHomePage.vue";
+import MessengerHomePage from "./views/MessengerHomePage.vue";
+import MessengerRoomPage from "./views/MessengerRoomPage.vue";
+import SettingsLayout from "./views/SettingsLayout.vue";
+import SettingsMemberPage from "./views/SettingsMemberPage.vue";
+import BlankPage from "./views/BlankPage.vue";
 
 const routes = [
   {
@@ -74,7 +79,7 @@ const routes = [
               const { workspaceId, projectId } = to.params;
               return `/workspace/${workspaceId}/project/${projectId}/board`;
             },
-            component: ProjectHomePage,
+            component: BlankPage,
           },
           {
             path: "board",
@@ -100,7 +105,7 @@ const routes = [
             children: [
               {
                 path: "",
-                component: BoardHomePage,
+                component: WikiHomePage,
               },
             ],
           },
@@ -110,7 +115,29 @@ const routes = [
             children: [
               {
                 path: "",
-                component: BoardHomePage,
+                component: MessengerHomePage,
+              },
+              {
+                path: ":roomId",
+                component: MessengerRoomPage,
+              },
+            ],
+          },
+          {
+            path: "settings",
+            component: SettingsLayout,
+            children: [
+              {
+                path: "",
+                component: BlankPage,
+                beforeEnter: async (to, from) => {
+                  const { workspaceId, projectId } = to.params;
+                  return `/workspace/${workspaceId}/project/${projectId}/settings/member`;
+                },
+              },
+              {
+                path: "member",
+                component: SettingsMemberPage,
               },
             ],
           },

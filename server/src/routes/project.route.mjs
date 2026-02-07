@@ -92,6 +92,56 @@ router.post("/", isAuth, async (req, res) => {
 });
 
 /**
+ * /api/project/{projectId}/member/{memberId}:
+ *   delete:
+ *     summary: 프로젝트 멤버 제거
+ *     description: 프로젝트 멤버를 제거 (OWNER 전용)
+ *     tags:
+ *       - Project
+ *     parameters:
+ *       - in: path
+ *         name: projectId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *       - in: path
+ *         name: memberId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: 멤버 제거 성공
+ *       403:
+ *         description: 권한이 없음
+ *       500:
+ *         description: 서버 오류
+ */
+router.delete("/:projectId/member/:memberId", isAuth, async (req, res) => {
+  const { projectId, memberId } = req.params;
+  const userId = req.session.userId;
+
+  try {
+    const authCheck = await pool.query(
+      "SELECT role_name FROM project_member WHERE project_id = $1 AND member_id = $2",
+      [projectId, userId]
+    );
+
+    if (!authCheck.rows[0] || authCheck.rows[0].role_name !== "OWNER") {
+      return res.status(403).json({ success: false, message: "멤버 제거 권한이 없습니다." });
+    }
+
+    await pool.query(
+      "DELETE FROM project_member WHERE project_id = $1 AND member_id = $2",
+      [projectId, memberId]
+    );
+
+    res.json({ success: true, message: "멤버가 제거되었습니다." });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+/**
  * @swagger
  * /api/project/{projectId}:
  *   get:
