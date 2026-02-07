@@ -28,9 +28,20 @@
           <h3>
             <router-link :to="issueDetailPath(issue.id)">{{ issue.title }}</router-link>
           </h3>
-          <p v-if="issue.assignee_members?.length">
-            {{ formatAssignees(issue.assignee_members) }}
-          </p>
+          <div v-if="issue.assignee_members?.length" class="assignee-list">
+            <div
+              v-for="assignee in issue.assignee_members"
+              :key="`${issue.id}-${assignee.id}-${assignee.role_name}`"
+              class="assignee-item"
+            >
+              <span>{{ assignee.name }}</span>
+              <Tag
+                v-if="assignee.role_name"
+                :label="assignee.role_name"
+                :variant="roleVariant(assignee.role_name)"
+              />
+            </div>
+          </div>
           <p v-else>담당자 없음</p>
         </article>
       </div>
@@ -73,6 +84,7 @@ import { computed, onMounted, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import api from "../lib/axios";
 import BaseModal from "../components/BaseModal.vue";
+import Tag from "../components/Tag.vue";
 
 const route = useRoute();
 
@@ -111,13 +123,15 @@ const issuesByStatus = (status) =>
 const issueDetailPath = (issueId) =>
   `/workspace/${workspaceId.value}/project/${projectId.value}/board/${boardId.value}/issue/${issueId}`;
 
+const roleVariant = (role) => {
+  const key = (role || "").toUpperCase();
+  if (key === "REPORTER") return "info";
+  if (key === "ASSIGNEE") return "success";
+  if (key === "REVIEWER") return "warning";
+  if (key === "WATCHER") return "default";
+  return "default";
+};
 
-const formatAssignees = (assignees = []) =>
-  assignees
-    .map((assignee) =>
-      assignee.role_name ? `${assignee.name} (${assignee.role_name})` : assignee.name
-    )
-    .join(", ");
 
 const onDragStart = (issue) => {
   draggingIssueId.value = issue.id;
@@ -257,6 +271,19 @@ watch(boardId, async (nextId, prevId) => {
   margin: 0;
   margin-top: 1rem;
   font-size: 15px;
+}
+
+.assignee-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.assignee-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .kanban-card:active {

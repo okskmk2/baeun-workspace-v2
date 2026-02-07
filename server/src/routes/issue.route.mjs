@@ -201,7 +201,34 @@ router.post("/:issueId/member", isAuth, async (req, res) => {
 });
 
 /**
- * 5. 이슈 담당자 제거
+ * 5. 이슈 담당자 역할 수정
+ */
+router.patch("/member/:issueMemberId", isAuth, async (req, res) => {
+  const { issueMemberId } = req.params;
+  const { role_name } = req.body;
+
+  if (!role_name) {
+    return res.status(400).json({ success: false, message: "역할이 필요합니다." });
+  }
+
+  try {
+    const result = await pool.query(
+      `UPDATE issue_member SET role_name = $1 WHERE id = $2 RETURNING *`,
+      [role_name, issueMemberId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, message: "관련자를 찾을 수 없습니다." });
+    }
+
+    res.json({ success: true, data: result.rows[0] });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * 6. 이슈 담당자 제거
  */
 router.delete("/member/:issueMemberId", isAuth, async (req, res) => {
   try {

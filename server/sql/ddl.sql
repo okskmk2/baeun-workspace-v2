@@ -159,7 +159,7 @@ create table issue_member
     member_id  integer references member on delete cascade,
     role_name  varchar(50) not null, -- REPORTER, ASSIGNEE 등
     created_at timestamp with time zone default CURRENT_TIMESTAMP,
-    constraint check_issue_role check (role_name in ('REPORTER', 'ASSIGNEE', 'COLLABORATOR'))
+    constraint check_issue_role check (role_name in ('REPORTER', 'ASSIGNEE', 'REVIEWER', 'WATCHER'))
 );
 
 -- 13. Page (위키/문서)

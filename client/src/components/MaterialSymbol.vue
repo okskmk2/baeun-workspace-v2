@@ -32,7 +32,7 @@ const weightSegment = computed(() =>
 );
 
 const iconUrl = computed(() =>
-  `https://fonts.gstatic.com/s/i/short-term/release/${styleKey.value}/${props.name}/${weightSegment.value}/${props.size}px.svg`
+  `https://fonts.gstatic.com/s/i/short-term/release/${styleKey.value}/${props.name}/${weightSegment.value}/24px.svg`
 );
 
 const isDecorative = computed(() => props.alt.length === 0);
