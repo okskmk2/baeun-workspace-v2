@@ -37,45 +37,31 @@
 <script setup>
 import { computed, onMounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import api from "../lib/axios";
+import { useWorkspaceStore } from "../stores/workspaceStore";
 
 const route = useRoute();
 const router = useRouter();
-const workspaceName = ref("");
-const projects = ref([]);
 const selectedProjectId = ref("");
+const workspaceStore = useWorkspaceStore();
 
-const workspaceId = route.params.workspaceId;
-const projectId = route.params.projectId;
+const workspaceId = computed(() => route.params.workspaceId);
+const projectId = computed(() => route.params.projectId);
 
-const fetchWorkspaceName = async () => {
-  if (!workspaceId.value) {
-    workspaceName.value = "";
-    return;
-  }
+const workspaceName = computed(() => workspaceStore.getWorkspaceName(workspaceId.value));
+const projects = computed(() => workspaceStore.getProjects(workspaceId.value));
 
-  try {
-    const res = await api.get(`/workspace/${workspaceId.value}`);
-    workspaceName.value = res.data?.data?.name;
-  } catch (error) {
-    workspaceName.value = "";
-  }
+const fetchWorkspace = async () => {
+  if (!workspaceId.value) return;
+  await workspaceStore.fetchWorkspace(workspaceId.value);
 };
 
 const fetchProjects = async () => {
   if (!workspaceId.value) {
-    projects.value = [];
     selectedProjectId.value = "";
     return;
   }
 
-  try {
-    const res = await api.get(`/workspace/${workspaceId.value}/projects`);
-    projects.value = res.data?.data || [];
-  } catch (error) {
-    projects.value = [];
-  }
-
+  await workspaceStore.fetchProjects(workspaceId.value);
   selectedProjectId.value = projectId.value ? String(projectId.value) : "";
 };
 
@@ -88,14 +74,14 @@ const handleProjectChange = () => {
 };
 
 onMounted(() => {
-  fetchWorkspaceName();
+  fetchWorkspace();
   fetchProjects();
 });
 
 watch(
   () => route.params.workspaceId,
   () => {
-    fetchWorkspaceName();
+    fetchWorkspace();
     fetchProjects();
   }
 );
