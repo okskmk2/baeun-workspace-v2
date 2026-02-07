@@ -1,56 +1,45 @@
 <template>
-  <div class="page-container">
-    <header class="page-header">
-      <div>
-        <h1 class="page-header-info">🗂️ 워크스페이스</h1>
-        <p>계정에 속한 워크스페이스 목록입니다.</p>
-      </div>
-    </header>
-
-    <section class="page-body">
-      <div v-if="loading">로딩 중...</div>
-      <div v-else>
-        <ul v-if="workspaces.length">
-          <li v-for="ws in workspaces" :key="ws.id">
-            <router-link :to="`/workspace/${ws.id}`">{{ ws.name }}</router-link>
-          </li>
-        </ul>
-        <div v-else class="empty-state">
-          <p>참여 중인 워크스페이스가 없습니다.</p>
-          <router-link to="/workspace/create" class="btn btn-primary">워크스페이스 생성</router-link>
-        </div>
-      </div>
-    </section>
-  </div>
+  <hgroup>
+    <h1>워크스페이스 목록</h1>
+    <div>
+      <button>워크스페이스 추가</button>
+    </div>
+  </hgroup>
+  <p v-if="isLoading">불러오는 중...</p>
+  <p v-else-if="errorMessage">{{ errorMessage }}</p>
+  <p v-else-if="workspaces.length === 0">워크스페이스가 없습니다.</p>
+  <ul v-else>
+    <li v-for="workspace in workspaces" :key="workspace.id">
+      <router-link :to="`/workspace/${workspace.id}`">
+        <strong>{{ workspace.name }}</strong>
+        <span v-if="workspace.role_name"> ({{ workspace.role_name }})</span>
+      </router-link>
+    </li>
+  </ul>
 </template>
 
-<script>
-import { ref, onMounted } from 'vue'
-import api from '../lib/axios'
+<script setup>
+import { onMounted, ref } from "vue";
+import api from "../lib/axios";
 
-export default {
-  name: 'WorkspaceListPage',
-  setup(){
-    const workspaces = ref([])
-    const loading = ref(true)
+const workspaces = ref([]);
+const isLoading = ref(false);
+const errorMessage = ref("");
 
-    const load = async ()=>{
-      loading.value = true
-      try{
-        const res = await api.get('/workspace/my')
-        workspaces.value = res.data?.data || []
-      }catch(e){
-        workspaces.value = []
-      }finally{ loading.value = false }
-    }
+const fetchWorkspaces = async () => {
+  isLoading.value = true;
+  errorMessage.value = "";
 
-    onMounted(load)
-    return { workspaces, loading }
+  try {
+    const res = await api.get("/workspace/my");
+    workspaces.value = res.data?.data || [];
+  } catch (error) {
+    workspaces.value = [];
+    errorMessage.value = "워크스페이스 목록을 불러오지 못했습니다.";
+  } finally {
+    isLoading.value = false;
   }
-}
-</script>
+};
 
-<style scoped>
-.page-body{padding:12px}
-.empty-state{padding:16px;background:#fff;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,0.04)}
-</style>
+onMounted(fetchWorkspaces);
+</script>

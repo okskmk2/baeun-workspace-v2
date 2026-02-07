@@ -1,7 +1,116 @@
-:root{--color-primary:#2563EB;--color-surface:#F9FAFB;--muted:#6B7280}
-html,body,#app{height:100%;margin:0}
-.page-container{padding:12px}
-.flex-between{display:flex;justify-content:space-between;align-items:center}
-.btn{padding:8px 12px;border-radius:6px;border:0;background:var(--color-primary);color:#fff}
-.text-light{color:var(--muted)}
-.empty-state{background:#fff;padding:24px;border-radius:8px}
+:root {
+  --color-primary: #2563eb;
+  --color-surface: #f9fafb;
+  --muted: #6b7280;
+}
+
+body {
+  background-color: #f5f5f5;
+  font-family: sans-serif;
+  margin: 0;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+}
+
+nav a {
+  text-decoration: none;
+  color: inherit;
+}
+
+nav a:hover {
+  text-decoration: underline;
+}
+
+.flex-between {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.btn {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 0;
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.DefaultLayout {
+  display: flex;
+  flex-direction: column;
+}
+
+.DefaultLayout .brand {
+  text-decoration: none;
+  color: inherit;
+}
+
+.DefaultLayout > header {
+  display: flex;
+  justify-content: space-between;
+  padding: 24px 40px;
+  background-color: white;
+}
+.DefaultLayout > header > nav {
+  display: flex;
+  align-items: center;
+}
+.DefaultLayout .mainnav {
+  font-size: 20px;
+  gap: 60px;
+}
+.DefaultLayout .utilnav {
+  font-size: 15px;
+  gap: 20px;
+}
+
+.DefaultLayout main {
+  background-color: white;
+  padding: 2rem 3rem;
+  margin: 1rem;
+}
+
+.DefaultLayout > header .projectselect {
+  margin-left: 2rem;
+  padding: 4px;
+}
+
+.AcountLayout {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.AcountLayout > aside {
+  background-color: white;
+  padding: 2rem;
+  width: 10rem;
+}
+
+.AcountLayout > aside > nav {
+  gap: 1rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.AcountLayout > main {
+  flex-grow: 1;
+  background-color: white;
+  padding: 2rem 3rem;
+  margin: 0;
+}
+
+main > hgroup {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+main > hgroup > h1 {
+  font-size: 24px;
+  margin: 0;
+  font-weight: 600;
+}

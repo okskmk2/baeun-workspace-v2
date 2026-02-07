@@ -124,8 +124,8 @@ router.get("/my", isAuth, async (req, res) => {
  * @swagger
  * /api/workspace/{workspaceId}:
  *   get:
- *     summary: 워크스페이스의 프로젝트 목록
- *     description: 특정 워크스페이스 내 프로젝트 목록 조회
+ *     summary: 워크스페이스 상세 조회
+ *     description: 특정 워크스페이스 상세 정보 조회
  *     tags:
  *       - Workspace
  *     parameters:
@@ -136,9 +136,11 @@ router.get("/my", isAuth, async (req, res) => {
  *           type: integer
  *     responses:
  *       200:
- *         description: 프로젝트 목록 조회 성공
+ *         description: 워크스페이스 상세 조회 성공
  *       403:
  *         description: 접근 권한이 없음
+ *       404:
+ *         description: 워크스페이스를 찾을 수 없음
  *       500:
  *         description: 서버 오류
  */
@@ -157,12 +159,67 @@ router.get("/:workspaceId", isAuth, async (req, res) => {
       return res.status(403).json({ success: false, message: "접근 권한이 없습니다." });
     }
 
-    const projects = await pool.query(
-      "SELECT * FROM project WHERE workspace_id = $1 ORDER BY sort_order ASC",
+    const workspaceRes = await pool.query(
+      `SELECT w.*, wm.role_name
+       FROM workspace w
+       JOIN workspace_member wm ON w.id = wm.workspace_id
+       WHERE w.id = $1 AND wm.member_id = $2`,
+      [workspaceId, userId]
+    );
+
+    const workspace = workspaceRes.rows[0];
+    if (!workspace) {
+      return res.status(404).json({ success: false, message: "워크스페이스를 찾을 수 없습니다." });
+    }
+
+    res.json({ success: true, data: workspace });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * @swagger
+ * /api/workspace/{workspaceId}/projects:
+ *   get:
+ *     summary: 워크스페이스 프로젝트 목록
+ *     description: 특정 워크스페이스의 프로젝트 목록 조회
+ *     tags:
+ *       - Workspace
+ *     parameters:
+ *       - in: path
+ *         name: workspaceId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: 프로젝트 목록 조회 성공
+ *       403:
+ *         description: 접근 권한이 없음
+ *       500:
+ *         description: 서버 오류
+ */
+router.get("/:workspaceId/projects", isAuth, async (req, res) => {
+  const { workspaceId } = req.params;
+  const userId = req.session.userId;
+
+  try {
+    const memberCheck = await pool.query(
+      "SELECT id FROM workspace_member WHERE workspace_id = $1 AND member_id = $2",
+      [workspaceId, userId]
+    );
+
+    if (memberCheck.rows.length === 0) {
+      return res.status(403).json({ success: false, message: "접근 권한이 없습니다." });
+    }
+
+    const projectsRes = await pool.query(
+      "SELECT * FROM project WHERE workspace_id = $1 ORDER BY sort_order ASC, id DESC",
       [workspaceId]
     );
 
-    res.json({ success: true, data: projects.rows });
+    res.json({ success: true, data: projectsRes.rows });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
