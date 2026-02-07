@@ -87,7 +87,7 @@ router.post("/", isAuth, async (req, res) => {
  * /api/issue/{issueId}:
  *   get:
  *     summary: 이슈 상세 조회
- *     description: 이슈의 상세 정보와 멤버 목록 조회
+ *     description: 이슈의 상세 정보 조회
  *     tags:
  *       - Issue
  *     parameters:
@@ -112,8 +112,40 @@ router.get("/:issueId", isAuth, async (req, res) => {
       return res.status(404).json({ success: false, message: "이슈를 찾을 수 없습니다." });
     }
 
+    res.json({
+      success: true,
+      data: issueRes.rows[0],
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * @swagger
+ * /api/issue/{issueId}/member:
+ *   get:
+ *     summary: 이슈 관련자 목록 조회
+ *     description: 이슈에 연결된 멤버 목록 조회
+ *     tags:
+ *       - Issue
+ *     parameters:
+ *       - in: path
+ *         name: issueId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: 이슈 관련자 목록 조회 성공
+ *       500:
+ *         description: 서버 오류
+ */
+router.get("/:issueId/member", isAuth, async (req, res) => {
+  const { issueId } = req.params;
+  try {
     const membersRes = await pool.query(
-      `SELECT im.id as issue_member_id, m.id as member_id, m.name, m.email, im.role_name 
+      `SELECT im.id as issue_member_id, m.id as member_id, m.name, m.email, im.role_name
        FROM issue_member im
        JOIN member m ON im.member_id = m.id
        WHERE im.issue_id = $1`,
@@ -122,7 +154,7 @@ router.get("/:issueId", isAuth, async (req, res) => {
 
     res.json({
       success: true,
-      data: { ...issueRes.rows[0], members: membersRes.rows },
+      data: membersRes.rows,
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

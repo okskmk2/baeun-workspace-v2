@@ -84,6 +84,13 @@ const findIssueMemberByMemberId = (memberId) =>
     (member) => String(member.member_id) === String(memberId)
   );
 
+const updateIssueMembers = (members) => {
+  issue.value = {
+    ...issue.value,
+    members,
+  };
+};
+
 const fetchIssue = async (options = {}) => {
   const { silent = false } = options;
   if (!issueId.value) {
@@ -111,6 +118,33 @@ const fetchIssue = async (options = {}) => {
 onMounted(fetchIssue);
 watch(issueId, fetchIssue);
 
+const fetchIssueMembers = async (options = {}) => {
+  const { silent = false } = options;
+  if (!issueId.value) {
+    updateIssueMembers([]);
+    return;
+  }
+
+  if (!silent) {
+    isUpdatingRelated.value = true;
+  }
+  relatedError.value = "";
+
+  try {
+    const res = await api.get(`/issue/${issueId.value}/member`);
+    updateIssueMembers(res.data?.data || []);
+  } catch (error) {
+    relatedError.value = "관련자 정보를 불러오지 못했습니다.";
+  } finally {
+    if (!silent) {
+      isUpdatingRelated.value = false;
+    }
+  }
+};
+
+onMounted(fetchIssueMembers);
+watch(issueId, fetchIssueMembers);
+
 const fetchProjectMembers = async () => {
   if (!projectId.value) {
     projectMembers.value = [];
@@ -137,7 +171,7 @@ const removeRelatedMember = async (issueMemberId) => {
 
   try {
     await api.delete(`/issue/member/${issueMemberId}`);
-    await fetchIssue({ silent: true });
+    await fetchIssueMembers({ silent: true });
   } catch (error) {
     relatedError.value = error?.response?.data?.message || "관련자 삭제에 실패했습니다.";
   } finally {
@@ -172,7 +206,7 @@ const addRelatedMemberByRole = async (role, memberId) => {
       member_id: resolvedMemberId,
       role_name: role || "ASSIGNEE",
     });
-    await fetchIssue({ silent: true });
+    await fetchIssueMembers({ silent: true });
   } catch (error) {
     relatedError.value = error?.response?.data?.message || "관련자 수정에 실패했습니다.";
   } finally {
