@@ -187,10 +187,18 @@ router.get("/:boardId/issue", isAuth, async (req, res) => {
   try {
     const query = `
       SELECT i.*, 
-             (SELECT json_agg(m.name) 
+             COALESCE((
+              SELECT json_agg(
+                json_build_object(
+                  'id', m.id,
+                  'name', m.name,
+                  'role_name', im.role_name
+                )
+              )
               FROM issue_member im 
               JOIN member m ON im.member_id = m.id 
-              WHERE im.issue_id = i.id) as assignees
+              WHERE im.issue_id = i.id
+             ), '[]'::json) as assignee_members
       FROM issue i
       WHERE i.board_id = $1
       ORDER BY i.updated_at ASC;

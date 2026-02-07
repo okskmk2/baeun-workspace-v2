@@ -25,8 +25,11 @@
           draggable="true"
           @dragstart="onDragStart(issue)"
         >
-          <strong>{{ issue.title }}</strong>
-          <p v-if="issue.content">{{ issue.content }}</p>
+          <h3>{{ issue.title }}</h3>
+          <p v-if="issue.assignee_members?.length">
+            {{ formatAssignees(issue.assignee_members) }}
+          </p>
+          <p v-else>담당자 없음</p>
         </article>
       </div>
     </section>
@@ -101,6 +104,13 @@ const fetchIssues = async () => {
 
 const issuesByStatus = (status) =>
   issues.value.filter((issue) => (issue.status || "백로그") === status);
+
+const formatAssignees = (assignees = []) =>
+  assignees
+    .map((assignee) =>
+      assignee.role_name ? `${assignee.name} (${assignee.role_name})` : assignee.name
+    )
+    .join(", ");
 
 const onDragStart = (issue) => {
   draggingIssueId.value = issue.id;
@@ -209,8 +219,13 @@ watch(boardId, async (nextId, prevId) => {
 .kanban-column header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.kanban-column header h2 {
+  font-size: 15px;
+  margin: 0;
 }
 
 .kanban-cards {
@@ -224,6 +239,17 @@ watch(boardId, async (nextId, prevId) => {
   background: #fff;
   padding: 8px 10px;
   cursor: grab;
+}
+
+.kanban-card h3 {
+  font-size: 14px;
+  margin: 0;
+}
+
+.kanban-card p {
+  margin: 0;
+  margin-top: 1rem;
+  font-size: 15px;
 }
 
 .kanban-card:active {
