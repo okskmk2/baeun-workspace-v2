@@ -2,7 +2,7 @@
   <main>
     <hgroup>
       <h1>프로젝트 목록</h1>
-      <button type="button" @click="openModal">프로젝트 만들기</button>
+      <button type="button" class="btn" @click="openModal">프로젝트 만들기</button>
     </hgroup>
     <p v-if="isLoading">Loading...</p>
     <p v-else-if="errorMessage">{{ errorMessage }}</p>
@@ -14,6 +14,7 @@
         </router-link>
         <button
           type="button"
+          class="btn btn--danger btn--sm"
           @click="deleteProject(project.id)"
           :disabled="deletingProjectId === project.id"
         >
@@ -34,8 +35,8 @@
       />
       <p v-if="formError" class="form-error">{{ formError }}</p>
       <div class="modal-actions">
-        <button type="button" @click="closeModal">취소</button>
-        <button type="submit" :disabled="isCreating">
+        <button type="button" class="btn btn--secondary" @click="closeModal">취소</button>
+        <button type="submit" class="btn" :disabled="isCreating">
           {{ isCreating ? "저장 중..." : "저장" }}
         </button>
       </div>

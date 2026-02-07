@@ -2,7 +2,7 @@
   <hgroup>
     <h1>워크스페이스 목록</h1>
     <div>
-      <button type="button" @click="openModal">워크스페이스 추가</button>
+      <button type="button" class="btn" @click="openModal">워크스페이스 추가</button>
     </div>
   </hgroup>
   <p v-if="isLoading">불러오는 중...</p>
@@ -16,6 +16,7 @@
       </router-link>
       <button
         type="button"
+        class="btn btn--danger btn--sm"
         @click="deleteWorkspace(workspace.id)"
         :disabled="deletingWorkspaceId === workspace.id"
       >
@@ -35,8 +36,8 @@
       />
       <p v-if="formError" class="form-error">{{ formError }}</p>
       <div class="modal-actions">
-        <button type="button" @click="closeModal">취소</button>
-        <button type="submit" :disabled="isCreating">
+        <button type="button" class="btn btn--secondary" @click="closeModal">취소</button>
+        <button type="submit" class="btn" :disabled="isCreating">
           {{ isCreating ? "저장 중..." : "저장" }}
         </button>
       </div>

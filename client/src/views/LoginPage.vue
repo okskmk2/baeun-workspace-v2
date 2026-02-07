@@ -33,7 +33,7 @@
         <span>Keep me signed in</span>
       </label>
 
-      <button type="submit" :disabled="loading">
+      <button type="submit" class="btn" :disabled="loading">
         {{ loading ? "Signing in..." : "Sign in" }}
       </button>
 

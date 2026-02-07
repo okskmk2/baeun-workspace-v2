@@ -1,7 +1,7 @@
 <template>
   <div class="AcountLayout">
     <aside>
-      <button type="button" @click="openModal">보드 만들기</button>
+      <button type="button" class="btn" @click="openModal">보드 만들기</button>
       <div>
         보드 목록
         <nav>
@@ -34,8 +34,8 @@
       />
       <p v-if="formError" class="form-error">{{ formError }}</p>
       <div class="modal-actions">
-        <button type="button" @click="closeModal">취소</button>
-        <button type="submit" :disabled="isCreating">
+        <button type="button" class="btn btn--secondary" @click="closeModal">취소</button>
+        <button type="submit" class="btn" :disabled="isCreating">
           {{ isCreating ? "저장 중..." : "저장" }}
         </button>
       </div>
