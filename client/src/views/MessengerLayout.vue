@@ -3,20 +3,18 @@
     <aside>
       <button class="btn btn--sm" type="button" @click="openModal">채팅방 만들기</button>
       <nav class="chat-nav">
-        <h3>채팅 목록</h3>
         <p v-if="isLoading">불러오는 중...</p>
         <p v-else-if="errorMessage">{{ errorMessage }}</p>
         <p v-else-if="rooms.length === 0">채팅방이 없습니다.</p>
-        <ul v-else class="chat-list">
-          <li v-for="room in rooms" :key="room.id">
-            <router-link
-              class="chat-link"
-              :to="`/workspace/${workspaceId}/project/${projectId}/messenger/${room.id}`"
-            >
-              {{ room.name || "이름 없는 채팅방" }}
-            </router-link>
-          </li>
-        </ul>
+        <template v-else>
+          <router-link
+            v-for="room in rooms"
+            :key="room.id"
+            :to="`/workspace/${workspaceId}/project/${projectId}/messenger/${room.id}`"
+          >
+            {{ room.name || "이름 없는 채팅방" }}
+          </router-link>
+        </template>
       </nav>
     </aside>
     <main>
@@ -27,12 +25,7 @@
   <BaseModal :open="isModalOpen" title="채팅방 만들기" @close="closeModal">
     <form class="modal-form" @submit.prevent="createChatroom">
       <label for="chatroom-name">채팅방 이름</label>
-      <input
-        id="chatroom-name"
-        v-model.trim="form.name"
-        type="text"
-        placeholder="채팅방 이름"
-      />
+      <input id="chatroom-name" v-model.trim="form.name" type="text" placeholder="채팅방 이름" />
       <p v-if="formError" class="form-error">{{ formError }}</p>
       <div class="modal-actions">
         <button type="button" class="btn btn--secondary" @click="closeModal">취소</button>
@@ -128,35 +121,3 @@ const createChatroom = async () => {
 onMounted(fetchRooms);
 watch(projectId, fetchRooms);
 </script>
-
-<style scoped>
-.chat-nav h3 {
-  margin: 12px 0 8px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #111827;
-}
-
-.chat-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.chat-link {
-  display: block;
-  padding: 6px 8px;
-  border-radius: 8px;
-  color: #374151;
-  text-decoration: none;
-  border: 1px solid transparent;
-}
-
-.chat-link:hover {
-  background: #f9fafb;
-  border-color: #e5e7eb;
-}
-</style>

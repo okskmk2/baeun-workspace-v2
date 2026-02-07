@@ -2,21 +2,20 @@
   <div class="AcountLayout">
     <aside>
       <button type="button" class="btn" @click="openModal">보드 만들기</button>
-      <div>
-        보드 목록
-        <nav>
-          <p v-if="isLoading">불러오는 중...</p>
-          <p v-else-if="errorMessage">{{ errorMessage }}</p>
-          <p v-else-if="boards.length === 0">보드가 없습니다.</p>
-          <ul v-else>
-            <li v-for="board in boards" :key="board.id">
-              <router-link :to="`/workspace/${workspaceId}/project/${projectId}/board/${board.id}`">
-                {{ board.name }}
-              </router-link>
-            </li>
-          </ul>
-        </nav>
-      </div>
+      <nav>
+        <p v-if="isLoading">불러오는 중...</p>
+        <p v-else-if="errorMessage">{{ errorMessage }}</p>
+        <p v-else-if="boards.length === 0">보드가 없습니다.</p>
+        <template v-else>
+          <router-link
+            v-for="board in boards"
+            :key="board.id"
+            :to="`/workspace/${workspaceId}/project/${projectId}/board/${board.id}`"
+          >
+            {{ board.name }}
+          </router-link>
+        </template>
+      </nav>
     </aside>
     <main>
       <router-view />
@@ -26,12 +25,7 @@
   <BaseModal :open="isModalOpen" title="보드 만들기" @close="closeModal">
     <form class="modal-form" @submit.prevent="createBoard">
       <label for="board-name">보드 이름</label>
-      <input
-        id="board-name"
-        v-model.trim="form.name"
-        type="text"
-        placeholder="보드 이름"
-      />
+      <input id="board-name" v-model.trim="form.name" type="text" placeholder="보드 이름" />
       <p v-if="formError" class="form-error">{{ formError }}</p>
       <div class="modal-actions">
         <button type="button" class="btn btn--secondary" @click="closeModal">취소</button>
@@ -122,5 +116,3 @@ const createBoard = async () => {
 onMounted(fetchBoards);
 watch(projectId, fetchBoards);
 </script>
-
-<style scoped></style>

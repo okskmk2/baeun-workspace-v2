@@ -215,6 +215,11 @@ nav a:hover {
   flex-direction: column;
 }
 
+.AcountLayout > aside > button + nav {
+  margin-top: 1rem;
+  gap: 12px;
+}
+
 .AcountLayout > main {
   flex-grow: 1;
   background-color: white;

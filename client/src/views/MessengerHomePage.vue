@@ -1,40 +1,36 @@
 <template>
-  <main class="messenger-home">
-    <section class="activity">
-      <header class="section-header">
-        <h2>최근 대화</h2>
-      </header>
+  <header class="section-header">
+    <h2>최근 대화</h2>
+  </header>
 
-      <p v-if="isLoading" class="status">최근 대화를 불러오는 중...</p>
-      <p v-else-if="errorMessage" class="status error">{{ errorMessage }}</p>
+  <p v-if="isLoading" class="status">최근 대화를 불러오는 중...</p>
+  <p v-else-if="errorMessage" class="status error">{{ errorMessage }}</p>
 
-      <div v-else-if="groupedMessages.length" class="feed">
-        <div v-for="group in groupedMessages" :key="group.label" class="feed-group">
-          <div class="feed-date">{{ group.label }}</div>
-          <article v-for="item in group.items" :key="item.message_id" class="feed-item">
-            <div class="feed-icon">M</div>
-            <div class="feed-body">
-              <div class="feed-title">
-                {{ item.chatroom_name || "채팅방" }} · {{ item.content || "메시지" }}
-              </div>
-              <div class="feed-meta">
-                {{ item.creator_name || "알수없음" }} · {{ formatTime(item.created_at) }}
-              </div>
-            </div>
-          </article>
+  <div v-else-if="groupedMessages.length" class="feed">
+    <div v-for="group in groupedMessages" :key="group.label" class="feed-group">
+      <div class="feed-date">{{ group.label }}</div>
+      <article v-for="item in group.items" :key="item.message_id" class="feed-item">
+        <div class="feed-icon">M</div>
+        <div class="feed-body">
+          <div class="feed-title">
+            {{ item.chatroom_name || "채팅방" }} · {{ item.content || "메시지" }}
+          </div>
+          <div class="feed-meta">
+            {{ item.creator_name || "알수없음" }} · {{ formatTime(item.created_at) }}
+          </div>
         </div>
-      </div>
+      </article>
+    </div>
+  </div>
 
-      <div v-else class="empty" aria-live="polite">
-        <div class="empty-card">
-          <div class="empty-badge">Chat</div>
-          <h1>최근 24시간 대화가 없습니다</h1>
-          <p class="empty-desc">왼쪽 메뉴에서 새로운 채팅방을 만들고 대화를 시작하세요.</p>
-          <button type="button" class="btn">채팅방 만들기</button>
-        </div>
-      </div>
-    </section>
-  </main>
+  <div v-else class="empty" aria-live="polite">
+    <div class="empty-card">
+      <div class="empty-badge">Chat</div>
+      <h1>최근 24시간 대화가 없습니다</h1>
+      <p class="empty-desc">왼쪽 메뉴에서 새로운 채팅방을 만들고 대화를 시작하세요.</p>
+      <button type="button" class="btn">채팅방 만들기</button>
+    </div>
+  </div>
 </template>
 
 <script setup>
@@ -115,13 +111,6 @@ watch(projectId, fetchRecentMessages);
 </script>
 
 <style scoped>
-.messenger-home {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  padding: 4px 0;
-}
-
 .status {
   color: #6b7280;
   font-size: 14px;
@@ -129,13 +118,6 @@ watch(projectId, fetchRecentMessages);
 
 .status.error {
   color: #b91c1c;
-}
-
-.activity {
-  border-radius: 16px;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  padding: 18px 20px;
 }
 
 .section-header {

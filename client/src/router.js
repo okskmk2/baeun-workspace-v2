@@ -20,6 +20,7 @@ import MessengerLayout from "./views/MessengerLayout.vue";
 import ProjectLayout from "./views/ProjectLayout.vue";
 import BoardPage from "./views/BoardPage.vue";
 import WikiHomePage from "./views/WikiHomePage.vue";
+import WikiPage from "./views/WikiPage.vue";
 import MessengerHomePage from "./views/MessengerHomePage.vue";
 import MessengerRoomPage from "./views/MessengerRoomPage.vue";
 import SettingsLayout from "./views/SettingsLayout.vue";
@@ -106,6 +107,10 @@ const routes = [
               {
                 path: "",
                 component: WikiHomePage,
+              },
+              {
+                path: ":pageId",
+                component: WikiPage,
               },
             ],
           },

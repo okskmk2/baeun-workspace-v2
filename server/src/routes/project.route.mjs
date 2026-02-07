@@ -447,6 +447,148 @@ router.get("/:projectId/pages/:pageId", isAuth, async (req, res) => {
 });
 
 /**
+ * @route   PATCH /api/project/:projectId/pages/:pageId
+ * @desc    특정 페이지 수정
+ */
+router.patch("/:projectId/pages/:pageId", isAuth, async (req, res) => {
+  const { projectId, pageId } = req.params;
+  const userId = req.session.userId;
+  const { title, content } = req.body;
+
+  try {
+    const memberCheck = await pool.query(
+      "SELECT id FROM project_member WHERE project_id = $1 AND member_id = $2",
+      [projectId, userId]
+    );
+
+    if (memberCheck.rows.length === 0) {
+      return res.status(403).json({ success: false, message: "접근 권한이 없습니다." });
+    }
+
+    const updateRes = await pool.query(
+      `UPDATE page
+       SET title = COALESCE($1, title), content = COALESCE($2, content)
+       WHERE id = $3 AND project_id = $4
+       RETURNING *`,
+      [title, content, pageId, projectId]
+    );
+
+    if (updateRes.rows.length === 0) {
+      return res.status(404).json({ success: false, message: "페이지를 찾을 수 없습니다." });
+    }
+
+    res.json({ success: true, data: updateRes.rows[0] });
+  } catch (error) {
+    console.error("update page error", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * @route   DELETE /api/project/:projectId/pages/:pageId
+ * @desc    특정 페이지 삭제 (페이지 OWNER 전용)
+ */
+router.delete("/:projectId/pages/:pageId", isAuth, async (req, res) => {
+  const { projectId, pageId } = req.params;
+  const userId = req.session.userId;
+
+  try {
+    const memberCheck = await pool.query(
+      "SELECT role_name FROM page_member WHERE page_id = $1 AND member_id = $2",
+      [pageId, userId]
+    );
+
+    if (!memberCheck.rows[0] || memberCheck.rows[0].role_name !== "OWNER") {
+      return res.status(403).json({ success: false, message: "페이지 삭제 권한이 없습니다." });
+    }
+
+    await pool.query(
+      "DELETE FROM page WHERE id = $1 AND project_id = $2",
+      [pageId, projectId]
+    );
+
+    res.json({ success: true, message: "페이지가 삭제되었습니다." });
+  } catch (error) {
+    console.error("delete page error", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * @route   GET /api/project/:projectId/pages/:pageId/members
+ * @desc    페이지 권한 목록 조회
+ */
+router.get("/:projectId/pages/:pageId/members", isAuth, async (req, res) => {
+  const { projectId, pageId } = req.params;
+  const userId = req.session.userId;
+
+  try {
+    const memberCheck = await pool.query(
+      "SELECT id FROM project_member WHERE project_id = $1 AND member_id = $2",
+      [projectId, userId]
+    );
+
+    if (memberCheck.rows.length === 0) {
+      return res.status(403).json({ success: false, message: "접근 권한이 없습니다." });
+    }
+
+    const result = await pool.query(
+      `SELECT pm.id, m.id as member_id, m.name, m.email, pm.role_name
+       FROM page_member pm
+       JOIN member m ON pm.member_id = m.id
+       WHERE pm.page_id = $1
+       ORDER BY m.name ASC`,
+      [pageId]
+    );
+
+    res.json({ success: true, data: result.rows });
+  } catch (error) {
+    console.error("page members error", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * @route   POST /api/project/:projectId/pages/:pageId/member
+ * @desc    페이지 권한 부여 (OWNER 전용)
+ */
+router.post("/:projectId/pages/:pageId/member", isAuth, async (req, res) => {
+  const { projectId, pageId } = req.params;
+  const { member_id, role_name } = req.body;
+  const userId = req.session.userId;
+
+  if (!member_id || !role_name) {
+    return res.status(400).json({ success: false, message: "member_id와 role_name이 필요합니다." });
+  }
+
+  try {
+    const authCheck = await pool.query(
+      "SELECT role_name FROM project_member WHERE project_id = $1 AND member_id = $2",
+      [projectId, userId]
+    );
+
+    if (!authCheck.rows[0] || authCheck.rows[0].role_name !== "OWNER") {
+      return res.status(403).json({ success: false, message: "권한이 없습니다." });
+    }
+
+    await pool.query(
+      "DELETE FROM page_member WHERE page_id = $1 AND member_id = $2",
+      [pageId, member_id]
+    );
+
+    await pool.query(
+      "INSERT INTO page_member (page_id, member_id, role_name) VALUES ($1, $2, $3)",
+      [pageId, member_id, role_name]
+    );
+
+    res.status(201).json({ success: true, message: "권한이 저장되었습니다." });
+  } catch (error) {
+    console.error("page member add error", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
  * @route   POST /api/project/:projectId/pages
  * @desc    특정 프로젝트에 페이지 생성
  */
@@ -471,10 +613,75 @@ router.post("/:projectId/pages", isAuth, async (req, res) => {
       [title, content || null, projectId, parent_id || null]
     );
 
+    await pool.query(
+      "INSERT INTO page_member (page_id, member_id, role_name) VALUES ($1, $2, 'OWNER')",
+      [insertRes.rows[0].id, userId]
+    );
+
     res.status(201).json({ success: true, data: insertRes.rows[0] });
   } catch (error) {
     console.error("create page error", error);
     res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * @route   POST /api/project/:projectId/pages/reorder
+ * @desc    페이지 정렬 순서 변경 (동일 부모 내)
+ */
+router.post("/:projectId/pages/reorder", isAuth, async (req, res) => {
+  const { projectId } = req.params;
+  const userId = req.session.userId;
+  const { parent_id = null, ordered_ids } = req.body;
+
+  if (!Array.isArray(ordered_ids) || ordered_ids.length === 0) {
+    return res.status(400).json({ success: false, message: "ordered_ids is required" });
+  }
+
+  const ids = ordered_ids.map((id) => Number(id)).filter((id) => Number.isFinite(id));
+  if (ids.length !== ordered_ids.length) {
+    return res.status(400).json({ success: false, message: "ordered_ids must be numbers" });
+  }
+
+  const client = await pool.connect();
+  try {
+    const memberCheck = await client.query(
+      "SELECT id FROM project_member WHERE project_id = $1 AND member_id = $2",
+      [projectId, userId]
+    );
+
+    if (memberCheck.rows.length === 0) {
+      return res.status(403).json({ success: false, message: "접근 권한이 없습니다." });
+    }
+
+    const parentFilter = parent_id ? "parent_id = $2" : "parent_id IS NULL";
+    const params = parent_id ? [projectId, parent_id, ids] : [projectId, ids];
+
+    const checkRes = await client.query(
+      `SELECT id FROM page WHERE project_id = $1 AND ${parentFilter} AND id = ANY($${parent_id ? 3 : 2})`,
+      params
+    );
+
+    if (checkRes.rows.length !== ids.length) {
+      return res.status(400).json({ success: false, message: "정렬 대상이 올바르지 않습니다." });
+    }
+
+    await client.query("BEGIN");
+    for (let index = 0; index < ids.length; index += 1) {
+      await client.query(
+        "UPDATE page SET sort_order = $1 WHERE id = $2 AND project_id = $3",
+        [index, ids[index], projectId]
+      );
+    }
+    await client.query("COMMIT");
+
+    res.json({ success: true });
+  } catch (error) {
+    await client.query("ROLLBACK");
+    console.error("page reorder error", error);
+    res.status(500).json({ success: false, message: error.message });
+  } finally {
+    client.release();
   }
 });
 

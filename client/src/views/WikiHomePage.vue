@@ -1,58 +1,51 @@
 <template>
-  <section class="activity">
-    <header class="section-header">
-      <h2>활동 피드</h2>
-      <div class="section-actions">
-        <button type="button" class="btn btn--ghost btn--sm">필터</button>
-      </div>
-    </header>
-
-    <div class="feed">
-      <div class="feed-group">
-        <div class="feed-date">오늘</div>
-        <article class="feed-item">
-          <div class="feed-icon">U</div>
-          <div class="feed-body">
-            <div class="feed-title">"온보딩 가이드" 내용이 수정됨</div>
-            <div class="feed-meta">이은성 · 11:40</div>
-          </div>
-        </article>
-        <article class="feed-item">
-          <div class="feed-icon">C</div>
-          <div class="feed-body">
-            <div class="feed-title">"서버 배포" 문서에 새 코멘트</div>
-            <div class="feed-meta">mira · 09:22</div>
-          </div>
-        </article>
-      </div>
-
-      <div class="feed-group">
-        <div class="feed-date">어제</div>
-        <article class="feed-item">
-          <div class="feed-icon">U</div>
-          <div class="feed-body">
-            <div class="feed-title">"권한 정책" 목차가 정리됨</div>
-            <div class="feed-meta">sojin · 17:05</div>
-          </div>
-        </article>
-        <article class="feed-item">
-          <div class="feed-icon">C</div>
-          <div class="feed-body">
-            <div class="feed-title">"릴리즈 노트" 문서에 새 코멘트</div>
-            <div class="feed-meta">jojo · 15:10</div>
-          </div>
-        </article>
-      </div>
+  <header class="section-header">
+    <h2>활동 피드</h2>
+    <div class="section-actions">
+      <button type="button" class="btn btn--ghost btn--sm">필터</button>
     </div>
-  </section>
+  </header>
+
+  <div class="feed">
+    <div class="feed-group">
+      <div class="feed-date">오늘</div>
+      <article class="feed-item">
+        <div class="feed-icon">U</div>
+        <div class="feed-body">
+          <div class="feed-title">"온보딩 가이드" 내용이 수정됨</div>
+          <div class="feed-meta">이은성 · 11:40</div>
+        </div>
+      </article>
+      <article class="feed-item">
+        <div class="feed-icon">C</div>
+        <div class="feed-body">
+          <div class="feed-title">"서버 배포" 문서에 새 코멘트</div>
+          <div class="feed-meta">mira · 09:22</div>
+        </div>
+      </article>
+    </div>
+
+    <div class="feed-group">
+      <div class="feed-date">어제</div>
+      <article class="feed-item">
+        <div class="feed-icon">U</div>
+        <div class="feed-body">
+          <div class="feed-title">"권한 정책" 목차가 정리됨</div>
+          <div class="feed-meta">sojin · 17:05</div>
+        </div>
+      </article>
+      <article class="feed-item">
+        <div class="feed-icon">C</div>
+        <div class="feed-body">
+          <div class="feed-title">"릴리즈 노트" 문서에 새 코멘트</div>
+          <div class="feed-meta">jojo · 15:10</div>
+        </div>
+      </article>
+    </div>
+  </div>
 </template>
 
 <style scoped>
-.activity {
-  background: #ffffff;
-  padding: 18px 20px;
-}
-
 .section-header {
   display: flex;
   align-items: center;
