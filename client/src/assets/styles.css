@@ -16,6 +16,10 @@ body,
   height: 100%;
 }
 
+input {
+  box-sizing: border-box;
+}
+
 nav a {
   text-decoration: none;
   color: inherit;
@@ -148,6 +152,8 @@ nav a:hover {
 .WorkspaceLayout {
   display: flex;
   flex-direction: column;
+  --gnb-bg: #ffffff;
+  --gnb-fg: #111827;
 }
 
 .WorkspaceLayout .workspaceName {
@@ -159,7 +165,8 @@ nav a:hover {
   display: flex;
   justify-content: space-between;
   padding: 24px 40px;
-  background-color: white;
+  background-color: var(--gnb-bg);
+  color: var(--gnb-fg);
 }
 .WorkspaceLayout > header > nav {
   display: flex;
@@ -176,6 +183,13 @@ nav a:hover {
   gap: 2rem;
   display: flex;
   margin-left: 2rem;
+}
+.WorkspaceLayout > header a {
+  color: var(--gnb-fg);
+}
+
+.WorkspaceLayout > header .utilnav a {
+  color: var(--gnb-fg);
 }
 .WorkspaceLayout .utilnav {
   font-size: 15px;
@@ -234,10 +248,21 @@ main > hgroup {
   margin-bottom: 1rem;
 }
 
-main > hgroup > h1 {
-  font-size: 24px;
+main > hgroup h1 {
+  font-size: 20px;
   margin: 0;
   font-weight: 600;
+}
+
+main > hgroup div:has(h1) {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+main > hgroup .actions {
+  display: flex;
+  gap: 4px;
 }
 
 .modal-form {

@@ -1,16 +1,8 @@
 <template>
   <div class="WorkspaceLayout">
-    <header>
+    <header :style="gnbStyle">
       <div class="left">
-        <router-link class="workspaceName" :to="`/workspace/${workspaceId}`">{{
-          workspaceName || "Workspace"
-        }}</router-link>
-        <select v-model="selectedProjectId" @change="handleProjectChange" class="projectselect">
-          <option disabled value="">프로젝트를 선택하세요.</option>
-          <option v-for="project in projects" :key="project.id" :value="String(project.id)">
-            {{ project.name }}
-          </option>
-        </select>
+        <span class="projectName">{{ projectName || "프로젝트" }}</span>
         <template v-if="projectId">
           <nav class="mainnav">
             <router-link :to="`/workspace/${workspaceId}/project/${projectId}/board`"
@@ -39,18 +31,37 @@
 <script setup>
 import { computed, onMounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import { storeToRefs } from "pinia";
 import { useWorkspaceStore } from "../stores/workspaceStore";
+import { useAppStore } from "../stores/appStore";
 
 const route = useRoute();
 const router = useRouter();
 const selectedProjectId = ref("");
 const workspaceStore = useWorkspaceStore();
+const appStore = useAppStore();
+const { gnbPreviewTheme } = storeToRefs(appStore);
 
 const workspaceId = computed(() => route.params.workspaceId);
 const projectId = computed(() => route.params.projectId);
 
-const workspaceName = computed(() => workspaceStore.getWorkspaceName(workspaceId.value));
 const projects = computed(() => workspaceStore.getProjects(workspaceId.value));
+const currentProject = computed(() => {
+  if (!projectId.value) return "";
+  const list = projects.value || [];
+  return list.find((project) => String(project.id) === String(projectId.value)) || null;
+});
+const projectName = computed(() => currentProject.value?.name || "");
+const gnbStyle = computed(() => {
+  const preview = gnbPreviewTheme.value;
+  const theme = currentProject.value?.theme_json?.gnb;
+  const background = preview?.background || theme?.background || "#ffffff";
+  const foreground = preview?.foreground || theme?.foreground || "#111827";
+  return {
+    "--gnb-bg": background,
+    "--gnb-fg": foreground,
+  };
+});
 
 const fetchWorkspace = async () => {
   if (!workspaceId.value) return;
@@ -95,3 +106,11 @@ watch(
   }
 );
 </script>
+
+<style scoped>
+.projectName {
+  font-weight: 600;
+  font-size: 20px;
+  text-transform: capitalize;
+}
+</style>

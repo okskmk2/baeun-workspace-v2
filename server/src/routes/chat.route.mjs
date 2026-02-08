@@ -1,6 +1,7 @@
 import express from "express";
 import pool from "../db.mjs";
 import { isAuth } from "../middlewares/auth.middleware.mjs";
+import { broadcastToRoom } from "../ws.mjs";
 
 const router = express.Router();
 
@@ -147,7 +148,11 @@ router.get("/:chatroomId/messages", isAuth, async (req, res) => {
     const msgsRes = await pool.query(
       `SELECT 
         c.id, c.content, c.created_at, c.created_by,
-        m.name as creator_name, m.img_url as creator_img
+        m.name as creator_name, m.img_url as creator_img,
+        CASE
+          WHEN c.content LIKE '%님이 %님을 초대했습니다.%' THEN 'SYSTEM'
+          ELSE NULL
+        END as message_type
       FROM chat c
       LEFT JOIN member m ON c.created_by = m.id
       WHERE c.chatroom_id = $1
@@ -158,6 +163,44 @@ router.get("/:chatroomId/messages", isAuth, async (req, res) => {
     res.json({ success: true, data: msgsRes.rows });
   } catch (error) {
     console.error("chatroom messages error:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * GET /api/chatroom/:chatroomId/members
+ * Get chatroom members
+ */
+router.get("/:chatroomId/members", isAuth, async (req, res) => {
+  const { chatroomId } = req.params;
+  const userId = req.session.userId;
+
+  try {
+    const memberCheck = await pool.query(
+      "SELECT id FROM chatroom_member WHERE chatroom_id = $1 AND member_id = $2",
+      [chatroomId, userId]
+    );
+    if (memberCheck.rows.length === 0) {
+      return res.status(403).json({ success: false, message: "접근 권한이 없습니다." });
+    }
+
+    const membersRes = await pool.query(
+      `SELECT
+        m.id,
+        m.name,
+        m.email,
+        m.img_url,
+        cm.role_name
+      FROM chatroom_member cm
+      JOIN member m ON cm.member_id = m.id
+      WHERE cm.chatroom_id = $1
+      ORDER BY cm.role_name DESC, m.name ASC`,
+      [chatroomId]
+    );
+
+    res.json({ success: true, data: membersRes.rows });
+  } catch (error) {
+    console.error("chatroom members error:", error);
     res.status(500).json({ success: false, message: error.message });
   }
 });
@@ -202,12 +245,57 @@ router.post("/:chatroomId/invite", isAuth, async (req, res) => {
       return res.status(400).json({ success: false, message: "프로젝트 멤버가 아닙니다." });
     }
 
+    const alreadyMember = await pool.query(
+      "SELECT id FROM chatroom_member WHERE chatroom_id = $1 AND member_id = $2",
+      [chatroomId, member_id]
+    );
+    if (alreadyMember.rows.length > 0) {
+      return res.status(200).json({ success: true, message: "이미 참여 중입니다." });
+    }
+
     await pool.query(
       "INSERT INTO chatroom_member (chatroom_id, member_id, role_name) VALUES ($1, $2, 'MEMBER') ON CONFLICT DO NOTHING",
       [chatroomId, member_id]
     );
 
-    res.status(201).json({ success: true, message: "초대되었습니다." });
+    const inviterRes = await pool.query("SELECT name FROM member WHERE id = $1", [userId]);
+    const inviteeRes = await pool.query("SELECT name FROM member WHERE id = $1", [member_id]);
+    const inviterName = inviterRes.rows[0]?.name || "알수없음";
+    const inviteeName = inviteeRes.rows[0]?.name || "알수없음";
+    const systemContent = `${inviterName}님이 ${inviteeName}님을 초대했습니다.`;
+
+    const chatInsertRes = await pool.query(
+      "INSERT INTO chat (chatroom_id, content, created_by) VALUES ($1, $2, $3) RETURNING id, content, created_at, created_by",
+      [chatroomId, systemContent, userId]
+    );
+    const newMessage = chatInsertRes.rows[0];
+
+    const broadcastPayload = {
+      type: "message",
+      data: {
+        id: newMessage.id,
+        content: newMessage.content,
+        created_at: newMessage.created_at,
+        created_by: newMessage.created_by,
+        creator_name: inviterName,
+        chatroom_id: chatroomId,
+        message_type: "SYSTEM",
+      },
+    };
+    broadcastToRoom(chatroomId, broadcastPayload);
+
+    res.status(201).json({
+      success: true,
+      message: "초대되었습니다.",
+      data: {
+        chat: {
+          ...newMessage,
+          creator_name: inviterName,
+          chatroom_id: chatroomId,
+          message_type: "SYSTEM",
+        },
+      },
+    });
   } catch (error) {
     console.error("chatroom invite error:", error);
     res.status(500).json({ success: false, message: error.message });
@@ -239,6 +327,33 @@ router.get("/", isAuth, async (req, res) => {
     res.json({ success: true, data: roomsRes.rows });
   } catch (error) {
     console.error("chatroom list error:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * DELETE /api/chatroom/:chatroomId
+ * Delete a chatroom (OWNER only)
+ */
+router.delete("/:chatroomId", isAuth, async (req, res) => {
+  const { chatroomId } = req.params;
+  const userId = req.session.userId;
+
+  try {
+    const authCheck = await pool.query(
+      "SELECT role_name FROM chatroom_member WHERE chatroom_id = $1 AND member_id = $2",
+      [chatroomId, userId]
+    );
+
+    if (!authCheck.rows[0] || authCheck.rows[0].role_name !== "OWNER") {
+      return res.status(403).json({ success: false, message: "채팅방 삭제 권한이 없습니다." });
+    }
+
+    await pool.query("DELETE FROM chatroom WHERE id = $1", [chatroomId]);
+
+    res.json({ success: true, message: "채팅방이 삭제되었습니다." });
+  } catch (error) {
+    console.error("chatroom delete error:", error);
     res.status(500).json({ success: false, message: error.message });
   }
 });

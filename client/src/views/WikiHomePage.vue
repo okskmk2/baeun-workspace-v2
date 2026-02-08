@@ -1,10 +1,10 @@
 <template>
-  <header class="section-header">
-    <h2>활동 피드</h2>
-    <div class="section-actions">
+  <hgroup>
+    <h1>활동 피드</h1>
+    <div class="actions">
       <button type="button" class="btn btn--ghost btn--sm">필터</button>
     </div>
-  </header>
+  </hgroup>
 
   <div class="feed">
     <div class="feed-group">

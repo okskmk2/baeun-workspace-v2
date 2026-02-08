@@ -24,8 +24,13 @@ import WikiPage from "./views/WikiPage.vue";
 import MessengerHomePage from "./views/MessengerHomePage.vue";
 import MessengerRoomPage from "./views/MessengerRoomPage.vue";
 import SettingsLayout from "./views/SettingsLayout.vue";
+import SettingsHomePage from "./views/SettingsHomePage.vue";
 import SettingsMemberPage from "./views/SettingsMemberPage.vue";
 import BlankPage from "./views/BlankPage.vue";
+import api from "./lib/axios";
+
+let authChecked = false;
+let isAuthenticated = false;
 
 const routes = [
   {
@@ -50,6 +55,7 @@ const routes = [
       },
       {
         path: "account",
+        meta: { requiresAuth: true },
         component: AccountLayout,
         children: [
           { path: "", redirect: "/account/profile" },
@@ -64,6 +70,7 @@ const routes = [
   },
   {
     path: "/workspace/:workspaceId",
+    meta: { requiresAuth: true },
     component: WorkspaceLayout,
     children: [
       {
@@ -134,11 +141,7 @@ const routes = [
             children: [
               {
                 path: "",
-                component: BlankPage,
-                beforeEnter: async (to, from) => {
-                  const { workspaceId, projectId } = to.params;
-                  return `/workspace/${workspaceId}/project/${projectId}/settings/member`;
-                },
+                component: SettingsHomePage,
               },
               {
                 path: "member",
@@ -155,4 +158,25 @@ const routes = [
 export const router = createRouter({
   routes,
   history: createWebHistory(),
+});
+
+router.beforeEach(async (to, from, next) => {
+  if (!to.matched.some((record) => record.meta?.requiresAuth)) {
+    return next();
+  }
+
+  if (authChecked && isAuthenticated) {
+    return next();
+  }
+
+  try {
+    await api.get("/member/me");
+    authChecked = true;
+    isAuthenticated = true;
+    return next();
+  } catch (error) {
+    authChecked = true;
+    isAuthenticated = false;
+    return next({ path: "/login", query: { redirect: to.fullPath } });
+  }
 });

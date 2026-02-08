@@ -1,7 +1,7 @@
 <template>
-  <header class="section-header">
-    <h2>최근 대화</h2>
-  </header>
+  <hgroup>
+    <h1>최근 대화</h1>
+  </hgroup>
 
   <p v-if="isLoading" class="status">최근 대화를 불러오는 중...</p>
   <p v-else-if="errorMessage" class="status error">{{ errorMessage }}</p>

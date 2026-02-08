@@ -7,6 +7,7 @@ import { swaggerSpec } from "./swagger.mjs";
 import pool from "./db.mjs";
 import http from "http";
 import { WebSocketServer } from "ws";
+import { broadcastToRoom, joinRoom, removeSocket } from "./ws.mjs";
 // routes
 import memberRouter from "./routes/member.route.mjs";
 import workspaceRouter from "./routes/workspace.route.mjs";
@@ -69,36 +70,6 @@ app.use("/api/chatroom", chatRouter);
 const PORT = 3000;
 const server = http.createServer(app);
 const wss = new WebSocketServer({ noServer: true });
-const roomSockets = new Map();
-
-const joinRoom = (ws, chatroomId) => {
-  const key = String(chatroomId);
-  if (ws.chatroomId) {
-    const prev = roomSockets.get(ws.chatroomId);
-    if (prev) {
-      prev.delete(ws);
-      if (prev.size === 0) {
-        roomSockets.delete(ws.chatroomId);
-      }
-    }
-  }
-  ws.chatroomId = key;
-  if (!roomSockets.has(key)) {
-    roomSockets.set(key, new Set());
-  }
-  roomSockets.get(key).add(ws);
-};
-
-const broadcastToRoom = (chatroomId, payload) => {
-  const sockets = roomSockets.get(String(chatroomId));
-  if (!sockets) return;
-  const message = JSON.stringify(payload);
-  sockets.forEach((client) => {
-    if (client.readyState === 1) {
-      client.send(message);
-    }
-  });
-};
 
 server.on("upgrade", (request, socket, head) => {
   if (!request.url?.startsWith("/ws")) {
@@ -172,13 +143,7 @@ wss.on("connection", (ws, request) => {
   });
 
   ws.on("close", () => {
-    if (!ws.chatroomId) return;
-    const sockets = roomSockets.get(ws.chatroomId);
-    if (!sockets) return;
-    sockets.delete(ws);
-    if (sockets.size === 0) {
-      roomSockets.delete(ws.chatroomId);
-    }
+    removeSocket(ws);
   });
 });
 

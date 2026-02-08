@@ -39,11 +39,13 @@
 
 <script setup>
 import { computed, onMounted, ref, watch } from "vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import api from "../lib/axios";
+import { addToast } from "../lib/toast";
 import BaseModal from "../components/BaseModal.vue";
 
 const route = useRoute();
+const router = useRouter();
 const workspaceId = computed(() => route.params.workspaceId);
 const projectId = computed(() => route.params.projectId);
 
@@ -104,15 +106,24 @@ const createChatroom = async () => {
   formError.value = "";
 
   try {
-    await api.post("/chatroom", {
+    const res = await api.post("/chatroom", {
       name: form.value.name,
       project_id: projectId.value,
       type: "PROJECT",
     });
     await fetchRooms();
     closeModal();
+    addToast({ message: "채팅방이 생성되었습니다.", type: "success" });
+    const newRoomId = res.data?.data?.id;
+    if (newRoomId) {
+      await router.push(
+        `/workspace/${workspaceId.value}/project/${projectId.value}/messenger/${newRoomId}`
+      );
+    }
   } catch (error) {
-    formError.value = error?.response?.data?.message || "채팅방 생성에 실패했습니다.";
+    const message = error?.response?.data?.message || "채팅방 생성에 실패했습니다.";
+    formError.value = message;
+    addToast({ message, type: "error" });
   } finally {
     isCreating.value = false;
   }
@@ -120,4 +131,10 @@ const createChatroom = async () => {
 
 onMounted(fetchRooms);
 watch(projectId, fetchRooms);
+watch(
+  () => route.params.roomId,
+  () => {
+    fetchRooms();
+  }
+);
 </script>
