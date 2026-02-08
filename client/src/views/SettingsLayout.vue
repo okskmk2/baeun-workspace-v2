@@ -2,8 +2,11 @@
   <div class="AcountLayout">
     <aside>
       <nav>
+        <router-link :to="`/workspace/${workspaceId}/project/${projectId}/settings`"
+          >기본 설정</router-link
+        >
         <router-link :to="`/workspace/${workspaceId}/project/${projectId}/settings/member`"
-          >프로젝트 맴버 관리</router-link
+          >구성원 관리</router-link
         >
       </nav>
     </aside>

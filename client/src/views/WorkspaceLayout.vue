@@ -5,15 +5,27 @@
         <span class="projectName">{{ projectName || "프로젝트" }}</span>
         <template v-if="projectId">
           <nav class="mainnav">
-            <router-link :to="`/workspace/${workspaceId}/project/${projectId}/board`"
-              >보드</router-link
+            <router-link
+              class="mainnav-link"
+              :to="`/workspace/${workspaceId}/project/${projectId}/board`"
             >
-            <router-link :to="`/workspace/${workspaceId}/project/${projectId}/wiki`"
-              >위키</router-link
+              <MaterialSymbol name="view_kanban" :size="20" alt="" />
+              <span>보드</span>
+            </router-link>
+            <router-link
+              class="mainnav-link"
+              :to="`/workspace/${workspaceId}/project/${projectId}/wiki`"
             >
-            <router-link :to="`/workspace/${workspaceId}/project/${projectId}/messenger`"
-              >메신저</router-link
+              <MaterialSymbol name="menu_book" :size="20" alt="" />
+              <span>위키</span>
+            </router-link>
+            <router-link
+              class="mainnav-link"
+              :to="`/workspace/${workspaceId}/project/${projectId}/messenger`"
             >
+              <MaterialSymbol name="chat_bubble" :size="20" alt="" />
+              <span>메신저</span>
+            </router-link>
           </nav>
         </template>
       </div>
@@ -34,6 +46,7 @@ import { useRoute, useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
 import { useWorkspaceStore } from "../stores/workspaceStore";
 import { useAppStore } from "../stores/appStore";
+import MaterialSymbol from "../components/MaterialSymbol.vue";
 
 const route = useRoute();
 const router = useRouter();
@@ -112,5 +125,25 @@ watch(
   font-weight: 600;
   font-size: 20px;
   text-transform: capitalize;
+}
+
+.mainnav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 12px;
+  border-radius: 4px;
+  color: var(--gnb-fg);
+  text-decoration: none;
+  font-size: 16px;
+}
+
+.mainnav-link:hover {
+  background: color-mix(in srgb, var(--gnb-fg) 10%, transparent);
+}
+
+.mainnav-link.router-link-active {
+  background: color-mix(in srgb, var(--gnb-fg) 18%, transparent);
+  font-weight: 600;
 }
 </style>

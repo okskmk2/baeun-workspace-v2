@@ -3,7 +3,6 @@
     <aside>
       <button class="btn" type="button" @click="openModal">페이지 만들기</button>
       <nav class="page-nav">
-        <h3>페이지 목록</h3>
         <p v-if="isLoading">불러오는 중...</p>
         <p v-else-if="errorMessage">{{ errorMessage }}</p>
         <p v-else-if="pages.length === 0">페이지가 없습니다.</p>
@@ -24,12 +23,7 @@
   <BaseModal :open="isModalOpen" title="페이지 만들기" @close="closeModal">
     <form class="modal-form" @submit.prevent="createPage">
       <label for="page-title">페이지 제목</label>
-      <input
-        id="page-title"
-        v-model.trim="form.title"
-        type="text"
-        placeholder="페이지 제목"
-      />
+      <input id="page-title" v-model.trim="form.title" type="text" placeholder="페이지 제목" />
       <p v-if="formError" class="form-error">{{ formError }}</p>
       <div class="modal-actions">
         <button type="button" class="btn btn--secondary" @click="closeModal">취소</button>
@@ -61,7 +55,6 @@ const isModalOpen = ref(false);
 const isCreating = ref(false);
 const formError = ref("");
 const form = ref({ title: "" });
-
 
 const fetchPages = async () => {
   if (!projectId.value) {

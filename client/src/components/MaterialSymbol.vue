@@ -1,11 +1,16 @@
 <template>
-  <img
+  <span
     class="material-symbol"
-    :src="iconUrl"
-    :alt="alt"
     :aria-hidden="isDecorative"
-    :style="{ width: `${size}px`, height: `${size}px` }"
-  />
+    :aria-label="isDecorative ? undefined : alt"
+    role="img"
+    :style="{
+      width: `${size}px`,
+      height: `${size}px`,
+      WebkitMaskImage: `url(${iconUrl})`,
+      maskImage: `url(${iconUrl})`,
+    }"
+  ></span>
 </template>
 
 <script setup>
@@ -41,5 +46,12 @@ const isDecorative = computed(() => props.alt.length === 0);
 <style scoped>
 .material-symbol {
   display: inline-block;
+  background-color: currentColor;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  mask-size: contain;
 }
 </style>
