@@ -11,7 +11,9 @@
     "vue": "^3.4.0",
     "vue-router": "^4.1.6",
     "pinia": "^2.0.30",
-    "axios": "^1.4.0"
+    "axios": "^1.4.0",
+    "markdown-it": "^14.1.0",
+    "highlight.js": "^11.10.0"
   },
   "devDependencies": {
     "vite": "^5.0.0",

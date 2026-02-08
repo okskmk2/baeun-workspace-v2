@@ -131,10 +131,4 @@ const createChatroom = async () => {
 
 onMounted(fetchRooms);
 watch(projectId, fetchRooms);
-watch(
-  () => route.params.roomId,
-  () => {
-    fetchRooms();
-  }
-);
 </script>

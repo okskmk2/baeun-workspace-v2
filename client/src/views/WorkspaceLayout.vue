@@ -19,7 +19,7 @@
       </div>
       <nav class="utilnav">
         <router-link :to="`/workspace/${workspaceId}/project/${projectId}/settings`"
-          >관리</router-link
+          >설정</router-link
         >
         <router-link to="/account">계정</router-link>
       </nav>

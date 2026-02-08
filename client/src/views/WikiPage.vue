@@ -1,7 +1,7 @@
 <template>
   <hgroup>
     <h1>{{ page.title || "페이지" }}</h1>
-    <div>
+    <div class="actions">
       <button
         type="button"
         class="btn btn--secondary btn--sm"
@@ -29,20 +29,23 @@
   <article v-else class="wiki-content">
     <template v-if="isEditing">
       <label class="edit-label" for="page-title">제목</label>
-      <input
-        id="page-title"
-        v-model.trim="editForm.title"
-        type="text"
-        class="edit-input"
-      />
-      <label class="edit-label" for="page-content">내용</label>
-      <textarea
-        id="page-content"
-        v-model="editForm.content"
-        class="edit-textarea"
-        rows="10"
-        placeholder="Markdown을 입력하세요"
-      ></textarea>
+      <input id="page-title" v-model.trim="editForm.title" type="text" class="edit-input" />
+      <div class="edit-split">
+        <section class="edit-pane">
+          <label class="edit-label" for="page-content">내용</label>
+          <textarea
+            id="page-content"
+            v-model="editForm.content"
+            class="edit-textarea"
+            rows="14"
+            placeholder="Markdown을 입력하세요"
+          ></textarea>
+        </section>
+        <section class="preview-pane">
+          <label class="edit-label">미리보기</label>
+          <div class="markdown-body preview" v-html="renderedPreview"></div>
+        </section>
+      </div>
       <div class="edit-actions">
         <button type="button" class="btn btn--secondary" @click="cancelEdit">취소</button>
         <button type="button" class="btn" :disabled="isSaving" @click="savePage">
@@ -51,7 +54,7 @@
       </div>
     </template>
     <template v-else>
-      <p v-if="page.content">{{ page.content }}</p>
+      <div v-if="page.content" class="markdown-body" v-html="renderedContent"></div>
       <p v-else class="empty">내용이 없습니다.</p>
     </template>
   </article>
@@ -73,9 +76,7 @@
       </select>
       <p v-if="permissionError" class="form-error">{{ permissionError }}</p>
       <div class="modal-actions">
-        <button type="button" class="btn btn--secondary" @click="closePermissionModal">
-          취소
-        </button>
+        <button type="button" class="btn btn--secondary" @click="closePermissionModal">취소</button>
         <button type="submit" class="btn" :disabled="isPermissionSaving">
           {{ isPermissionSaving ? "저장 중..." : "저장" }}
         </button>
@@ -92,9 +93,7 @@
   <BaseModal :open="isCancelOpen" title="편집 취소" @close="closeCancelModal">
     <p>변경사항을 저장하지 않고 나가시겠습니까?</p>
     <div class="modal-actions">
-      <button type="button" class="btn btn--secondary" @click="closeCancelModal">
-        계속 편집
-      </button>
+      <button type="button" class="btn btn--secondary" @click="closeCancelModal">계속 편집</button>
       <button type="button" class="btn" @click="confirmCancelEdit">변경사항 버리기</button>
     </div>
   </BaseModal>
@@ -106,6 +105,9 @@ import { useRoute, useRouter } from "vue-router";
 import api from "../lib/axios";
 import BaseModal from "../components/BaseModal.vue";
 import { useAppStore } from "../stores/appStore";
+import MarkdownIt from "markdown-it";
+import hljs from "highlight.js";
+import "highlight.js/styles/github.css";
 
 const route = useRoute();
 const projectId = computed(() => route.params.projectId);
@@ -132,6 +134,26 @@ const appStore = useAppStore();
 const currentUserId = computed(() => appStore.currentUser?.id);
 const router = useRouter();
 
+const markdown = new MarkdownIt({
+  html: false,
+  linkify: true,
+  breaks: true,
+  highlight: (code, language) => {
+    if (language && hljs.getLanguage(language)) {
+      return hljs.highlight(code, { language }).value;
+    }
+    return hljs.highlightAuto(code).value;
+  },
+});
+
+const renderedContent = computed(() =>
+  page.value.content ? markdown.render(page.value.content) : ""
+);
+
+const renderedPreview = computed(() =>
+  editForm.value.content ? markdown.render(editForm.value.content) : ""
+);
+
 const userPageRole = computed(() => {
   if (!currentUserId.value) return "";
   const found = pageMembers.value.find(
@@ -143,9 +165,10 @@ const userPageRole = computed(() => {
 const canEdit = computed(() => ["OWNER", "EDITOR"].includes(userPageRole.value));
 const isOwner = computed(() => userPageRole.value === "OWNER");
 
-const isDirty = computed(() =>
-  editForm.value.title !== originalForm.value.title ||
-  editForm.value.content !== originalForm.value.content
+const isDirty = computed(
+  () =>
+    editForm.value.title !== originalForm.value.title ||
+    editForm.value.content !== originalForm.value.content
 );
 
 const fetchPage = async () => {
@@ -224,9 +247,7 @@ const fetchPageMembers = async () => {
     pageMembers.value = [];
     return;
   }
-  const res = await api.get(
-    `/project/${projectId.value}/pages/${pageId.value}/members`
-  );
+  const res = await api.get(`/project/${projectId.value}/pages/${pageId.value}/members`);
   pageMembers.value = res.data?.data || [];
 };
 
@@ -305,6 +326,35 @@ watch(projectId, fetchPageMembers);
   background: #ffffff;
 }
 
+.edit-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.edit-pane,
+.preview-pane {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.preview {
+  min-height: 320px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 10px 12px;
+  background: #f9fafb;
+  overflow: auto;
+}
+
+@media (max-width: 900px) {
+  .edit-split {
+    grid-template-columns: 1fr;
+  }
+}
+
 .edit-label {
   display: block;
   font-size: 13px;
@@ -324,6 +374,7 @@ watch(projectId, fetchPageMembers);
 
 .edit-textarea {
   font-family: monospace;
+  height: 100%;
 }
 
 .edit-actions {

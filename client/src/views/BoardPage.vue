@@ -132,7 +132,6 @@ const roleVariant = (role) => {
   return "default";
 };
 
-
 const onDragStart = (issue) => {
   draggingIssueId.value = issue.id;
 };
@@ -232,7 +231,7 @@ watch(boardId, async (nextId, prevId) => {
 
 .kanban-column {
   border: 1px solid #e5e7eb;
-  padding: 10px;
+  padding: 10px 10px 24px;
   min-height: 240px;
   background: #fafafa;
 }
