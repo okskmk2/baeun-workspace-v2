@@ -37,7 +37,7 @@
   },
   "layout": {
     "default": {
-      "brand": "베운 워크스페이스",
+      "brand": "바은 워크스페이스",
       "nav": {
         "overview": "개요",
         "store": "스토어"
@@ -587,7 +587,12 @@
     },
     "status": {
       "loading": "불러오는 중...",
-      "error": "프로필을 불러오지 못했습니다."
+      "error": "프로필을 불러오지 못했습니다.",
+      "logoutError": "로그아웃에 실패했습니다."
+    },
+    "actions": {
+      "logout": "로그아웃",
+      "loggingOut": "로그아웃 중..."
     },
     "fields": {
       "name": "이름",

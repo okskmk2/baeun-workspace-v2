@@ -6,24 +6,25 @@
   <p v-if="isLoading" class="status">{{ t("messenger.home.status.loading") }}</p>
   <p v-else-if="errorMessage" class="status error">{{ errorMessage }}</p>
 
-  <div v-else-if="groupedMessages.length" class="feed">
-    <div v-for="group in groupedMessages" :key="group.label" class="feed-group">
-      <div class="feed-date">{{ group.label }}</div>
-      <article v-for="item in group.items" :key="item.message_id" class="feed-item">
-        <div class="feed-icon">M</div>
-        <div class="feed-body">
-          <div class="feed-title">
-            {{ item.channel_name || t("messenger.home.feed.channelFallback") }} ·
-            {{ item.content || t("messenger.home.feed.messageFallback") }}
-          </div>
-          <div class="feed-meta">
-            {{ item.creator_name || t("messenger.home.feed.creatorFallback") }} ·
-            {{ formatTime(item.created_at) }}
-          </div>
-        </div>
-      </article>
-    </div>
-  </div>
+  <FeedList
+    v-else-if="groupedMessages.length"
+    :groups="groupedMessages"
+    item-key="message_id"
+  >
+    <template #icon>
+      <div class="feed-icon">M</div>
+    </template>
+    <template #item="{ item }">
+      <div class="feed-title">
+        {{ item.channel_name || t("messenger.home.feed.channelFallback") }} ·
+        {{ item.content || t("messenger.home.feed.messageFallback") }}
+      </div>
+      <div class="feed-meta">
+        {{ item.creator_name || t("messenger.home.feed.creatorFallback") }} ·
+        {{ formatTime(item.created_at) }}
+      </div>
+    </template>
+  </FeedList>
 
   <div v-else class="empty" aria-live="polite">
     <div class="empty-card">
@@ -40,6 +41,7 @@ import { computed, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 import api from "../lib/axios";
+import FeedList from "../components/FeedList.vue";
 
 const { t, locale } = useI18n();
 const route = useRoute();
@@ -150,34 +152,6 @@ watch(projectId, fetchRecentMessages);
   font-size: 18px;
 }
 
-.feed {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.feed-group {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.feed-date {
-  font-size: 12px;
-  color: var(--color-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.feed-item {
-  display: grid;
-  grid-template-columns: 28px 1fr;
-  gap: 12px;
-  padding: 12px;
-  border-radius: 12px;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-}
 
 .feed-icon {
   width: 28px;
@@ -192,17 +166,6 @@ watch(projectId, fetchRecentMessages);
   font-weight: 700;
 }
 
-.feed-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--color-text);
-}
-
-.feed-meta {
-  font-size: 12px;
-  color: var(--color-text-muted);
-  margin-top: 4px;
-}
 
 .empty {
   display: flex;

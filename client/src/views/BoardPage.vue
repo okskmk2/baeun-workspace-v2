@@ -1,7 +1,7 @@
 <template>
   <hgroup>
     <h1>{{ board.name || t("board.page.header.fallbackTitle") }}</h1>
-    <button type="button" class="btn" @click="openModal">
+    <button type="button" class="btn btn--sm" @click="openModal">
       {{ t("board.page.actions.createIssue") }}
     </button>
   </hgroup>

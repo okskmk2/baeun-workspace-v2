@@ -9,9 +9,7 @@
 		<p v-else-if="errorMessage" class="status error">{{ errorMessage }}</p>
 
 		<div v-else class="profile-card">
-			<div class="avatar" aria-hidden="true">
-				{{ initials }}
-			</div>
+			<Avatar :text="initials" :label="profile.name" :size="72" />
 			<div class="details">
 				<div class="detail">
 					<span class="label">{{ t("profile.fields.name") }}</span>
@@ -26,6 +24,18 @@
 					<span class="value">{{ formatDate(profile.created_at) || "-" }}</span>
 				</div>
 			</div>
+		</div>
+
+		<div class="profile-actions">
+			<button
+				class="btn btn--danger"
+				type="button"
+				:disabled="isLoggingOut"
+				@click="logout"
+			>
+				{{ isLoggingOut ? t("profile.actions.loggingOut") : t("profile.actions.logout") }}
+			</button>
+			<p v-if="logoutError" class="status error">{{ logoutError }}</p>
 		</div>
 
 		<div class="locale-card" aria-label="Locale settings">
@@ -58,15 +68,22 @@
 <script setup>
 import { computed, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
+import { useRouter } from "vue-router";
 import api from "../lib/axios";
 import { persistLocale, supportedLocales } from "../i18n";
+import { useAppStore } from "../stores/appStore";
+import Avatar from "../components/Avatar.vue";
 
 const { t, locale } = useI18n();
+const router = useRouter();
+const appStore = useAppStore();
 
 const isLoading = ref(false);
 const errorMessage = ref("");
 const profile = ref({});
 const region = ref("kr");
+const isLoggingOut = ref(false);
+const logoutError = ref("");
 
 const fetchProfile = async () => {
 	isLoading.value = true;
@@ -111,6 +128,23 @@ watch(locale, (value) => {
 	persistLocale(value);
 });
 
+const logout = async () => {
+	if (isLoggingOut.value) return;
+	isLoggingOut.value = true;
+	logoutError.value = "";
+
+	try {
+		await api.post("/members/logout");
+		appStore.setCurrentUser(null);
+		await router.push("/login");
+	} catch (error) {
+		logoutError.value =
+			error?.response?.data?.message || t("profile.status.logoutError");
+	} finally {
+		isLoggingOut.value = false;
+	}
+};
+
 onMounted(fetchProfile);
 </script>
 
@@ -151,6 +185,12 @@ hgroup p {
 	border-radius: 12px;
 	background: #ffffff;
 	align-items: center;
+}
+
+.profile-actions {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
 }
 
 .locale-card {
@@ -216,19 +256,6 @@ hgroup p {
 .save-button:disabled {
 	opacity: 0.6;
 	cursor: not-allowed;
-}
-
-.avatar {
-	width: 72px;
-	height: 72px;
-	border-radius: 24px;
-	background: #111827;
-	color: #ffffff;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	font-weight: 700;
-	font-size: 18px;
 }
 
 .details {

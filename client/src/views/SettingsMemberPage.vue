@@ -1,7 +1,7 @@
 <template>
   <hgroup>
     <h1>{{ t("settings.member.header.title") }}</h1>
-    <button type="button" class="btn btn--sm" @click="openInviteModal">
+    <button type="button" class="btn" @click="openInviteModal">
       {{ t("settings.member.actions.invite") }}
     </button>
   </hgroup>

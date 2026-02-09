@@ -180,8 +180,8 @@ router.beforeEach(async (to, from, next) => {
     } finally {
       authChecked = true;
     }
-  } else if (appStore.currentUser) {
-    isAuthenticated = true;
+  } else {
+    isAuthenticated = Boolean(appStore.currentUser);
   }
 
   const requiresAuth = to.matched.some((record) => record.meta?.requiresAuth);

@@ -35,7 +35,9 @@
         <router-link :to="`/workspace/${workspaceId}/project/${projectId}/settings`">{{
           t("layout.project.util.settings")
         }}</router-link>
-        <router-link to="/account">{{ t("layout.project.util.account") }}</router-link>
+        <router-link to="/account">
+          <Avatar :text="accountInitials" :label="accountLabel" :size="32" />
+        </router-link>
       </nav>
     </header>
     <router-view />
@@ -51,13 +53,14 @@ import { useProjectMemberStore } from "../stores/projectMemberStore";
 import { useWorkspaceStore } from "../stores/workspaceStore";
 import { useAppStore } from "../stores/appStore";
 import MaterialSymbol from "../components/MaterialSymbol.vue";
+import Avatar from "../components/Avatar.vue";
 
 const { t } = useI18n();
 const route = useRoute();
 const projectMemberStore = useProjectMemberStore();
 const workspaceStore = useWorkspaceStore();
 const appStore = useAppStore();
-const { gnbPreviewTheme } = storeToRefs(appStore);
+const { gnbPreviewTheme, currentUser } = storeToRefs(appStore);
 
 const workspaceId = computed(() => route.params.workspaceId);
 const projectId = computed(() => route.params.projectId);
@@ -68,6 +71,12 @@ const currentProject = computed(() => {
   return list.find((project) => String(project.id) === String(projectId.value)) || null;
 });
 const projectName = computed(() => currentProject.value?.name || "");
+const accountInitials = computed(() => {
+  const name = currentUser.value?.name || "";
+  if (!name) return "?";
+  return name.slice(0, 2).toUpperCase();
+});
+const accountLabel = computed(() => currentUser.value?.name || t("layout.project.util.account"));
 const projectThemeMode = computed(() => {
   const theme = currentProject.value?.theme_json || {};
   return theme.mode || theme.theme?.mode || theme.colorScheme || "";
@@ -156,15 +165,10 @@ onBeforeUnmount(() => {
   border-radius: 4px;
   color: var(--gnb-fg);
   text-decoration: none;
-  font-size: 16px;
+  font-size: 18px;
 }
 
 .mainnav-link:hover {
   background-color: color-mix(in srgb, var(--gnb-bg) 95%, var(--gnb-fg) 5%);
 }
-
-.mainnav-link.router-link-active {
-  background-color: color-mix(in srgb, var(--gnb-bg) 90%, var(--gnb-fg) 10%);
-}
 </style>
-

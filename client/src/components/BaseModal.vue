@@ -3,7 +3,12 @@
     <div class="modal" @click.stop>
       <div class="modal-header">
         <h2>{{ title }}</h2>
-        <button type="button" class="icon-button" @click="onClose" :aria-label="t('common.actions.close')">
+        <button
+          type="button"
+          class="icon-button"
+          @click="onClose"
+          :aria-label="t('common.actions.close')"
+        >
           <MaterialSymbol name="close" :size="20" />
         </button>
       </div>
@@ -44,11 +49,12 @@ const onClose = () => {
 }
 
 .modal {
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  padding: 16px;
+  background-color: var(--color-page-bg);
+  border: 1px solid var(--color-border);
+  padding: 8px 24px 18px;
   max-width: 420px;
   width: 100%;
+  border-radius: 8px;
 }
 
 .modal-header {
@@ -66,6 +72,7 @@ const onClose = () => {
 }
 
 .icon-button {
+  color: var(--text-color);
   border: none;
   background: transparent;
   padding: 0;

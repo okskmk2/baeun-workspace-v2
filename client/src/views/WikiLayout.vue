@@ -1,7 +1,7 @@
 <template>
   <div class="AcountLayout">
     <aside>
-      <button class="btn btn--sm" type="button" @click="openModal">
+      <button class="btn" type="button" @click="openModal">
         {{ t("wiki.layout.actions.create") }}
       </button>
       <nav class="page-nav">

@@ -587,7 +587,12 @@
     },
     "status": {
       "loading": "Loading...",
-      "error": "Failed to load profile."
+      "error": "Failed to load profile.",
+      "logoutError": "Failed to log out."
+    },
+    "actions": {
+      "logout": "Log out",
+      "loggingOut": "Logging out..."
     },
     "fields": {
       "name": "Name",

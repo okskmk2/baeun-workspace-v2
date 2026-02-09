@@ -12,15 +12,15 @@
       <Tag>{{ issueStatusLabel }}</Tag>
     </div>
     <div class="actions">
-      <button v-if="!isEditing" class="btn btn--secondary btn--sm" @click="startEditing">
+      <button v-if="!isEditing" class="btn btn--sm btn--secondary" @click="startEditing">
         {{ t("issue.detail.actions.edit") }}
       </button>
-      <button v-else class="btn btn--sm" @click="saveIssue" :disabled="isSaving">
+      <button v-else class="btn" @click="saveIssue" :disabled="isSaving">
         {{ isSaving ? t("issue.detail.actions.saving") : t("issue.detail.actions.save") }}
       </button>
       <button
         v-if="isEditing"
-        class="btn btn--ghost btn--sm"
+        class="btn btn--sm btn--ghost"
         @click="cancelEditing"
         :disabled="isSaving"
       >
@@ -28,7 +28,7 @@
       </button>
       <button
         v-if="canDeleteIssue"
-        class="btn btn--danger btn--sm"
+        class="btn btn--sm btn--danger"
         @click="deleteIssue"
         :disabled="isSaving || isDeleting"
       >
@@ -235,8 +235,7 @@ const saveIssue = async () => {
     isEditing.value = false;
     addToast({ message: t("issue.detail.toast.updated"), type: "success" });
   } catch (error) {
-    const message =
-      error?.response?.data?.message || t("issue.detail.status.errorUpdate");
+    const message = error?.response?.data?.message || t("issue.detail.status.errorUpdate");
     errorMessage.value = message;
     addToast({ message, type: "error" });
   } finally {
@@ -264,8 +263,7 @@ const deleteIssue = async () => {
     }
     router.back();
   } catch (error) {
-    const message =
-      error?.response?.data?.message || t("issue.detail.status.errorDelete");
+    const message = error?.response?.data?.message || t("issue.detail.status.errorDelete");
     errorMessage.value = message;
     addToast({ message, type: "error" });
   } finally {
@@ -311,8 +309,7 @@ const removeRelatedMember = async (issueMemberId) => {
     await api.delete(`/issues/members/${issueMemberId}`);
     await fetchIssueMembers({ silent: true });
   } catch (error) {
-    relatedError.value =
-      error?.response?.data?.message || t("issue.detail.related.errorRemove");
+    relatedError.value = error?.response?.data?.message || t("issue.detail.related.errorRemove");
   } finally {
     updatingMemberId.value = null;
   }
@@ -347,8 +344,7 @@ const addRelatedMemberByRole = async (role, memberId) => {
     });
     await fetchIssueMembers({ silent: true });
   } catch (error) {
-    relatedError.value =
-      error?.response?.data?.message || t("issue.detail.related.errorUpdate");
+    relatedError.value = error?.response?.data?.message || t("issue.detail.related.errorUpdate");
   } finally {
     isUpdatingRelated.value = false;
   }

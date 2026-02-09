@@ -3,7 +3,11 @@
     <div>
       <h1>{{ displayRoomTitle }}</h1>
       <span class="room-status" :class="{ offline: !isConnected }">
-        {{ isConnected ? t("messenger.room.status.connected") : t("messenger.room.status.disconnected") }}
+        {{
+          isConnected
+            ? t("messenger.room.status.connected")
+            : t("messenger.room.status.disconnected")
+        }}
       </span>
     </div>
     <div class="actions">
@@ -12,13 +16,13 @@
       </button>
       <button
         type="button"
-        class="btn btn--danger btn--sm"
+        class="btn btn--sm btn--danger"
         :disabled="isDeleting"
         @click="deletechannel"
       >
         {{ isDeleting ? t("messenger.room.actions.deleting") : t("messenger.room.actions.delete") }}
       </button>
-      <button type="button" class="btn btn--secondary btn--sm" @click="openMembersModal">
+      <button type="button" class="btn btn--sm btn--secondary" @click="openMembersModal">
         {{ t("messenger.room.actions.members") }}
       </button>
     </div>
@@ -49,12 +53,16 @@
       :placeholder="t('messenger.room.composer.placeholder')"
       :disabled="isSending"
     />
-    <button type="submit" class="btn btn--sm" :disabled="isSending || !draft">
+    <button type="submit" class="btn" :disabled="isSending || !draft">
       {{ t("messenger.room.composer.send") }}
     </button>
   </form>
 
-  <BaseModal :open="isInviteOpen" :title="t('messenger.room.invite.modal.title')" @close="closeInviteModal">
+  <BaseModal
+    :open="isInviteOpen"
+    :title="t('messenger.room.invite.modal.title')"
+    @close="closeInviteModal"
+  >
     <form class="modal-form" @submit.prevent="inviteMember">
       <label for="invite-member">{{ t("messenger.room.invite.modal.membersLabel") }}</label>
       <select id="invite-member" v-model="selectedMemberId">
@@ -69,7 +77,11 @@
           {{ t("messenger.room.actions.cancel") }}
         </button>
         <button type="submit" class="btn" :disabled="isInviting">
-          {{ isInviting ? t("messenger.room.actions.inviting") : t("messenger.room.actions.inviteSubmit") }}
+          {{
+            isInviting
+              ? t("messenger.room.actions.inviting")
+              : t("messenger.room.actions.inviteSubmit")
+          }}
         </button>
       </div>
     </form>
@@ -129,9 +141,7 @@ let socket = null;
 const isInviteOpen = ref(false);
 const isInviting = ref(false);
 const inviteError = ref("");
-const projectMembers = computed(() =>
-  projectMemberStore.getProjectMembers(projectId.value)
-);
+const projectMembers = computed(() => projectMemberStore.getProjectMembers(projectId.value));
 const selectedMemberId = ref("");
 const isDeleting = ref(false);
 const deleteError = ref("");
