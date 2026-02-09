@@ -601,7 +601,8 @@
 			"save": "로케일 저장",
 			"languageOptions": {
 				"ko": "한국어",
-				"en": "영어"
+				"en": "영어",
+				"id": "인도네시아어"
 			},
 			"regionOptions": {
 				"kr": "대한민국",

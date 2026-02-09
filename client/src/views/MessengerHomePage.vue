@@ -80,6 +80,7 @@ const formatDateLabel = (value) => {
   const localeMap = {
     ko: "ko-KR",
     en: "en-US",
+    id: "id-ID",
   };
   const dateLocale = localeMap[locale.value] || "en-US";
   return date.toLocaleDateString(dateLocale, { month: "2-digit", day: "2-digit" });
@@ -91,6 +92,7 @@ const formatTime = (value) => {
   const localeMap = {
     ko: "ko-KR",
     en: "en-US",
+    id: "id-ID",
   };
   const timeLocale = localeMap[locale.value] || "en-US";
   return date.toLocaleTimeString(timeLocale, {

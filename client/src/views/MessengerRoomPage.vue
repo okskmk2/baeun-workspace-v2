@@ -230,6 +230,7 @@ const formatTime = (value) => {
   const localeMap = {
     ko: "ko-KR",
     en: "en-US",
+    id: "id-ID",
   };
   const timeLocale = localeMap[locale.value] || "en-US";
   return date.toLocaleTimeString(timeLocale, {

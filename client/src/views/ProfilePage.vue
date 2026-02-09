@@ -39,6 +39,7 @@
 					<select v-model="locale" class="control-input" aria-label="Language">
 						<option value="ko">{{ t("profile.locale.languageOptions.ko") }}</option>
 						<option value="en">{{ t("profile.locale.languageOptions.en") }}</option>
+						<option value="id">{{ t("profile.locale.languageOptions.id") }}</option>
 					</select>
 				</label>
 				<label class="control">
@@ -95,6 +96,7 @@ const formatDate = (value) => {
 	const localeMap = {
 		ko: "ko-KR",
 		en: "en-US",
+		id: "id-ID",
 	};
 	const dateLocale = localeMap[locale.value] || "en-US";
 	return date.toLocaleDateString(dateLocale, {

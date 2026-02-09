@@ -1,39 +1,37 @@
 <template>
-  <div class="settings-member">
-    <hgroup>
-      <h1>{{ t("settings.member.header.title") }}</h1>
-      <button type="button" class="btn" @click="openInviteModal">
-        {{ t("settings.member.actions.invite") }}
-      </button>
-    </hgroup>
+  <hgroup>
+    <h1>{{ t("settings.member.header.title") }}</h1>
+    <button type="button" class="btn btn--sm" @click="openInviteModal">
+      {{ t("settings.member.actions.invite") }}
+    </button>
+  </hgroup>
 
-    <p v-if="isLoading">{{ t("settings.member.status.loading") }}</p>
-    <p v-else-if="errorMessage">{{ errorMessage }}</p>
+  <p v-if="isLoading">{{ t("settings.member.status.loading") }}</p>
+  <p v-else-if="errorMessage">{{ errorMessage }}</p>
 
-    <ul v-else class="member-list">
-      <li v-for="member in projectMembers" :key="member.id" class="member-row">
-        <div class="member-info">
-          <strong>{{ member.name }}</strong>
-          <span>{{ member.email }}</span>
-        </div>
-        <div class="member-actions">
-          <span class="role">{{ getRoleLabel("project_member", member.role_name) }}</span>
-          <button
-            type="button"
-            class="btn btn--danger btn--sm"
-            :disabled="isRemoveDisabled(member)"
-            @click="removeMember(member.id)"
-          >
-            {{
-              removingMemberId === member.id
-                ? t("settings.member.actions.removing")
-                : t("settings.member.actions.remove")
-            }}
-          </button>
-        </div>
-      </li>
-    </ul>
-  </div>
+  <ul v-else class="member-list">
+    <li v-for="member in projectMembers" :key="member.id" class="member-row">
+      <div class="member-info">
+        <strong>{{ member.name }}</strong>
+        <span>{{ member.email }}</span>
+      </div>
+      <div class="member-actions">
+        <span class="role">{{ getRoleLabel("project_member", member.role_name) }}</span>
+        <button
+          type="button"
+          class="btn btn--danger btn--sm"
+          :disabled="isRemoveDisabled(member)"
+          @click="removeMember(member.id)"
+        >
+          {{
+            removingMemberId === member.id
+              ? t("settings.member.actions.removing")
+              : t("settings.member.actions.remove")
+          }}
+        </button>
+      </div>
+    </li>
+  </ul>
 
   <BaseModal
     :open="isInviteOpen"
@@ -59,7 +57,11 @@
           {{ t("settings.member.actions.cancel") }}
         </button>
         <button type="submit" class="btn" :disabled="isInviting">
-          {{ isInviting ? t("settings.member.actions.inviting") : t("settings.member.actions.submitInvite") }}
+          {{
+            isInviting
+              ? t("settings.member.actions.inviting")
+              : t("settings.member.actions.submitInvite")
+          }}
         </button>
       </div>
     </form>
@@ -82,9 +84,7 @@ const workspaceId = computed(() => route.params.workspaceId);
 const projectId = computed(() => route.params.projectId);
 const projectMemberStore = useProjectMemberStore();
 
-const projectMembers = computed(() =>
-  projectMemberStore.getProjectMembers(projectId.value)
-);
+const projectMembers = computed(() => projectMemberStore.getProjectMembers(projectId.value));
 const workspaceMembers = ref([]);
 const isLoading = ref(false);
 const errorMessage = ref("");
@@ -180,8 +180,7 @@ const removeMember = async (memberId) => {
       current.filter((member) => String(member.id) !== String(memberId))
     );
   } catch (error) {
-    errorMessage.value =
-      error?.response?.data?.message || t("settings.member.status.errorRemove");
+    errorMessage.value = error?.response?.data?.message || t("settings.member.status.errorRemove");
   } finally {
     removingMemberId.value = null;
   }
