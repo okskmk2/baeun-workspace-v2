@@ -54,9 +54,11 @@ import { reactive, ref } from "vue";
 import { useRouter } from "vue-router";
 import api from "../lib/axios";
 import { useAppStore } from "../stores/appStore";
+import { useWorkspaceStore } from "../stores/workspaceStore";
 
 const router = useRouter();
 const appStore = useAppStore();
+const workspaceStore = useWorkspaceStore();
 
 const email = ref("");
 const password = ref("");
@@ -109,6 +111,7 @@ const onSubmit = async () => {
 
     appStore.setCurrentUser(response.data.data);
 
+    const workspaces = await workspaceStore.fetchWorkspaces();
     if (workspaces.length > 0) {
       router.push("/account/workspaces");
     } else {

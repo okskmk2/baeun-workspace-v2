@@ -22,23 +22,21 @@
           <h2>{{ t("settings.home.theme.title") }}</h2>
           <span class="theme-desc">{{ t("settings.home.theme.subtitle") }}</span>
         </div>
-        <div class="palette">
+        <div class="theme-grid">
           <label
-            v-for="item in themePalette"
+            v-for="item in themeOptions"
             :key="item.id"
-            class="palette-item"
+            class="theme-item"
             :class="{ selected: form.themeId === item.id }"
+            :data-theme="item.id"
+            :style="{
+              '--swatch-bg': `var(--theme-${item.id}-bg)`,
+              '--swatch-fg': `var(--theme-${item.id}-fg)`,
+            }"
           >
-            <input
-              type="radio"
-              name="theme"
-              :value="item.id"
-              v-model="form.themeId"
-            />
-            <div class="swatch" :style="{ background: item.bg, color: item.fg }">
-              Aa
-            </div>
-            <span class="palette-name">{{ item.label }}</span>
+            <input type="radio" name="theme" :value="item.id" v-model="form.themeId" />
+            <div class="swatch">Aa</div>
+            <span class="theme-name">{{ item.label }}</span>
           </label>
         </div>
       </div>
@@ -79,37 +77,29 @@ const form = ref({
   themeId: "",
 });
 
-const themePaletteBase = [
-  { id: "classic", bg: "#ffffff", fg: "#111827" },
-  { id: "indigo", bg: "#312e81", fg: "#e0e7ff" },
-  { id: "rose", bg: "#9f1239", fg: "#fff1f2" },
-  { id: "emerald", bg: "#065f46", fg: "#ecfdf5" },
-  { id: "amber", bg: "#92400e", fg: "#fffbeb" },
-  { id: "sky", bg: "#0c4a6e", fg: "#e0f2fe" },
-  { id: "stone", bg: "#292524", fg: "#fafaf9" },
-  { id: "violet", bg: "#4c1d95", fg: "#ede9fe" },
-  { id: "teal", bg: "#0f766e", fg: "#f0fdfa" },
+const themeOptionsBase = [
+  "light",
+  "dark",
+  "indigo",
+  "rose",
+  "emerald",
+  "amber",
+  "sky",
+  "stone",
+  "violet",
+  "teal",
 ];
 
-const themePalette = computed(() =>
-  themePaletteBase.map((item) => ({
-    ...item,
-    label: t(`settings.home.theme.palette.${item.id}`),
+const themeOptions = computed(() =>
+  themeOptionsBase.map((id) => ({
+    id,
+    label: t(`settings.home.theme.themes.${id}`),
   }))
 );
 
 const resolveThemeId = (theme) => {
-  if (
-    theme?.paletteId &&
-    themePaletteBase.some((item) => item.id === theme.paletteId)
-  ) {
-    return theme.paletteId;
-  }
-  if (theme?.background && theme?.foreground) {
-    const match = themePaletteBase.find(
-      (item) => item.bg === theme.background && item.fg === theme.foreground
-    );
-    if (match) return match.id;
+  if (theme?.themeId && themeOptionsBase.some((id) => id === theme.themeId)) {
+    return theme.themeId;
   }
   return "classic";
 };
@@ -137,7 +127,7 @@ const saveSettings = async () => {
     return;
   }
 
-  const selected = themePaletteBase.find((item) => item.id === form.value.themeId);
+  const selected = themeOptionsBase.find((id) => id === form.value.themeId);
   if (!selected) {
     formError.value = t("settings.home.validation.themeRequired");
     return;
@@ -151,9 +141,7 @@ const saveSettings = async () => {
       name: form.value.name,
       theme_json: {
         gnb: {
-          paletteId: selected.id,
-          background: selected.bg,
-          foreground: selected.fg,
+          themeId: selected,
         },
       },
     });
@@ -167,9 +155,7 @@ const saveSettings = async () => {
           theme_json: {
             ...(project.theme_json || {}),
             gnb: {
-              paletteId: selected.id,
-              background: selected.bg,
-              foreground: selected.fg,
+              themeId: selected,
             },
           },
         };
@@ -178,8 +164,7 @@ const saveSettings = async () => {
     }
     addToast({ message: t("settings.home.toast.updated"), type: "success" });
   } catch (error) {
-    const message =
-      error?.response?.data?.message || t("settings.home.status.errorUpdate");
+    const message = error?.response?.data?.message || t("settings.home.status.errorUpdate");
     formError.value = message;
     addToast({ message, type: "error" });
   } finally {
@@ -192,15 +177,12 @@ onMounted(fetchProject);
 watch(
   () => form.value.themeId,
   (value) => {
-    const selected = themePalette.value.find((item) => item.id === value);
+    const selected = themeOptions.value.find((item) => item.id === value);
     if (!selected) {
       appStore.clearGnbPreviewTheme();
       return;
     }
-    appStore.setGnbPreviewTheme({
-      background: selected.bg,
-      foreground: selected.fg,
-    });
+    appStore.setGnbPreviewTheme({ themeId: selected.id });
   }
 );
 
@@ -219,13 +201,13 @@ onBeforeUnmount(() => {
 hgroup h1 {
   margin: 0 0 4px;
   font-size: 20px;
-  color: #111827;
+  color: var(--color-text);
 }
 
 hgroup p {
   margin: 0;
   font-size: 14px;
-  color: #6b7280;
+  color: var(--color-text-muted);
 }
 
 .settings-form {
@@ -238,8 +220,10 @@ hgroup p {
   max-width: 360px;
   padding: 8px 10px;
   border-radius: 8px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-input-border);
   font-size: 14px;
+  background-color: var(--color-input-bg);
+  color: var(--color-text);
 }
 
 .theme-section {
@@ -257,36 +241,36 @@ hgroup p {
 .theme-header h2 {
   margin: 0;
   font-size: 16px;
-  color: #111827;
+  color: var(--color-text);
 }
 
 .theme-desc {
   font-size: 12px;
-  color: #6b7280;
+  color: var(--color-text-muted);
 }
 
-.palette {
+.theme-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
   gap: 12px;
 }
 
-.palette-item {
+.theme-item {
   display: grid;
   gap: 6px;
   padding: 10px;
   border-radius: 12px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-border);
   cursor: pointer;
 }
 
-.palette-item input {
+.theme-item input {
   display: none;
 }
 
-.palette-item.selected {
-  border-color: #111827;
-  box-shadow: 0 0 0 2px rgba(17, 24, 39, 0.1);
+.theme-item.selected {
+  border-color: var(--color-text);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-text) 15%, transparent);
 }
 
 .swatch {
@@ -296,21 +280,23 @@ hgroup p {
   align-items: center;
   justify-content: center;
   font-weight: 700;
+  background: var(--swatch-bg, var(--color-surface));
+  color: var(--swatch-fg, var(--color-text));
 }
 
-.palette-name {
+.theme-name {
   font-size: 12px;
-  color: #374151;
+  color: var(--color-text);
 }
 
 .status {
   margin: 0;
-  color: #6b7280;
+  color: var(--color-text-muted);
   font-size: 14px;
 }
 
 .status.error {
-  color: #b91c1c;
+  color: var(--color-danger);
 }
 
 .form-actions {

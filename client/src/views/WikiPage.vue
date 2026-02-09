@@ -373,7 +373,7 @@ watch(projectId, fetchPageMembers);
 <style scoped>
 .wiki-content {
   padding: 12px;
-  background: #ffffff;
+  background: var(--color-card-bg);
 }
 
 .edit-split {
@@ -392,10 +392,10 @@ watch(projectId, fetchPageMembers);
 
 .preview {
   min-height: 320px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-border);
   border-radius: 6px;
   padding: 10px 12px;
-  background: #f9fafb;
+  background: var(--color-surface);
   overflow: auto;
 }
 
@@ -409,17 +409,19 @@ watch(projectId, fetchPageMembers);
   display: block;
   font-size: 13px;
   margin: 0 0 6px;
-  color: #374151;
+  color: var(--color-text);
 }
 
 .edit-input,
 .edit-textarea {
   width: 100%;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-input-border);
   border-radius: 6px;
   padding: 8px 10px;
   font-size: 14px;
   margin-bottom: 12px;
+  background-color: var(--color-input-bg);
+  color: var(--color-text);
 }
 
 .edit-textarea {
@@ -444,15 +446,15 @@ watch(projectId, fetchPageMembers);
   display: flex;
   justify-content: space-between;
   font-size: 13px;
-  color: #374151;
+  color: var(--color-text);
 }
 
 .permission-row .role {
-  color: #6b7280;
+  color: var(--color-text-muted);
 }
 
 .empty {
   margin: 0;
-  color: #9ca3af;
+  color: var(--color-text-muted);
 }
 </style>

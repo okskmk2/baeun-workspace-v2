@@ -1,15 +1,10 @@
+@import url(./variables.css);
+@import url(./theme.css);
 @import url(./button.css);
 @import url(./markdown.css);
 
-:root {
-  --color-primary: #2563eb;
-  --color-surface: #f9fafb;
-  --muted: #6b7280;
-  overflow-y: scroll;
-}
-
 body {
-  background-color: #f5f5f5;
+  background-color: var(--color-bg);
   font-family: sans-serif;
   margin: 0;
 }
@@ -59,7 +54,8 @@ nav a:hover {
   display: flex;
   justify-content: space-between;
   padding: 24px 40px;
-  background-color: white;
+  background-color: var(--color-gnb-bg);
+  color: var(--color-gnb-text);
 }
 .DefaultLayout > header > nav {
   display: flex;
@@ -75,7 +71,7 @@ nav a:hover {
 }
 
 .DefaultLayout main {
-  background-color: white;
+  background-color: var(--color-page-bg);
   padding: 2rem 3rem;
   margin: 1rem;
 }
@@ -88,8 +84,9 @@ nav a:hover {
 .ProjectLayout {
   display: flex;
   flex-direction: column;
-  --gnb-bg: #ffffff;
-  --gnb-fg: #111827;
+  --gnb-bg: var(--color-gnb-bg);
+  --gnb-fg: var(--color-gnb-text);
+  color: var(--color-text);
 }
 
 .ProjectLayout .workspaceName {
@@ -133,17 +130,18 @@ nav a:hover {
 }
 
 .ProjectLayout main {
-  background-color: white;
+  background-color: var(--color-page-bg);
   padding: 2rem 3rem;
   margin: 1rem;
 }
 
 .ProjectLayout > header .projectselect {
   padding: 4px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--color-border);
   border-radius: 2px;
   font-size: 15px;
-  background-color: #f7f7f7;
+  background-color: var(--color-surface);
+  color: var(--color-text);
 }
 
 .AcountLayout {
@@ -153,10 +151,20 @@ nav a:hover {
 }
 
 .AcountLayout > aside {
-  background-color: white;
+  background-color: var(--color-page-bg);
+  color: var(--color-text);
   padding: 2rem;
   width: 10rem;
   flex-shrink: 0;
+}
+
+.AcountLayout > aside .btn {
+  background: var(--color-accent-lnb);
+  color: var(--color-text-inverse);
+}
+
+.AcountLayout > aside .btn:hover {
+  background: var(--color-accent-lnb-hover);
 }
 
 .AcountLayout > aside > nav {
@@ -172,7 +180,7 @@ nav a:hover {
 
 .AcountLayout > main {
   flex-grow: 1;
-  background-color: white;
+  background-color: var(--color-page-bg);
   padding: 2rem 3rem 4rem;
   margin: 0;
 }
@@ -188,6 +196,7 @@ main > hgroup h1 {
   font-size: 20px;
   margin: 0;
   font-weight: 600;
+  color: var(--color-text);
 }
 
 main > hgroup div:has(h1) {
@@ -209,16 +218,18 @@ main > hgroup .actions {
 
 .modal-form label {
   font-size: 14px;
-  color: #111827;
+  color: var(--color-text);
 }
 
 .modal-form input,
 .modal-form textarea,
 .modal-form select {
   padding: 8px 10px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-input-border);
   border-radius: 6px;
   font-size: 14px;
+  background-color: var(--color-input-bg);
+  color: var(--color-text);
 }
 
 .modal-actions {
@@ -229,7 +240,7 @@ main > hgroup .actions {
 }
 
 .form-error {
-  color: #b91c1c;
+  color: var(--color-danger);
   font-size: 13px;
   margin: 0;
 }

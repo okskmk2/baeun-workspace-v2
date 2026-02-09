@@ -5,6 +5,34 @@ import logger from "../logger.mjs";
 
 const router = express.Router();
 
+const normalizeThemeJsonInput = (themeJson) => {
+  if (!themeJson || typeof themeJson !== "object") return themeJson;
+  const gnb = themeJson.gnb || {};
+  const themeId = gnb.themeId;
+  if (!themeId) return themeJson;
+  return {
+    ...themeJson,
+    gnb: {
+      ...gnb,
+      themeId,
+    },
+  };
+};
+
+const normalizeThemeJsonOutput = (themeJson) => {
+  if (!themeJson || typeof themeJson !== "object") return themeJson;
+  const gnb = themeJson.gnb || {};
+  const themeId = gnb.themeId;
+  if (!themeId) return themeJson;
+  return {
+    ...themeJson,
+    gnb: {
+      ...gnb,
+      themeId,
+    },
+  };
+};
+
 /**
  * @swagger
  * /api/projects:
@@ -63,7 +91,12 @@ router.get("/", isAuth, async (req, res) => {
       [workspaceId]
     );
 
-    res.json({ success: true, data: projectsRes.rows });
+    const data = projectsRes.rows.map((project) => ({
+      ...project,
+      theme_json: normalizeThemeJsonOutput(project.theme_json),
+    }));
+
+    res.json({ success: true, data });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -250,7 +283,14 @@ router.get("/:projectId", isAuth, async (req, res) => {
       return res.status(404).json({ success: false, message: "Project not found." });
     }
 
-    res.json({ success: true, data: result.rows[0] });
+    const project = result.rows[0];
+    res.json({
+      success: true,
+      data: {
+        ...project,
+        theme_json: normalizeThemeJsonOutput(project.theme_json),
+      },
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -304,6 +344,7 @@ router.get("/:projectId", isAuth, async (req, res) => {
 router.patch("/:projectId", isAuth, async (req, res) => {
   const { projectId } = req.params;
   const { name, img_url, theme_json } = req.body;
+  const normalizedThemeJson = normalizeThemeJsonInput(theme_json);
   const userId = req.session.userId;
 
   try {
@@ -320,14 +361,21 @@ router.patch("/:projectId", isAuth, async (req, res) => {
       `UPDATE project 
        SET name = COALESCE($1, name), img_url = COALESCE($2, img_url), theme_json = COALESCE($3, theme_json)
        WHERE id = $4 RETURNING *`,
-      [name, img_url, theme_json, projectId]
+      [name, img_url, normalizedThemeJson, projectId]
     );
 
     if (result.rows.length === 0) {
       return res.status(404).json({ success: false, message: "Project not found." });
     }
 
-    res.json({ success: true, data: result.rows[0] });
+    const project = result.rows[0];
+    res.json({
+      success: true,
+      data: {
+        ...project,
+        theme_json: normalizeThemeJsonOutput(project.theme_json),
+      },
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

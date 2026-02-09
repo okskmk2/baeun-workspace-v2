@@ -244,10 +244,10 @@ watch(boardId, async (nextId, prevId) => {
 }
 
 .kanban-column {
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-border);
   padding: 10px 10px 24px;
   min-height: 240px;
-  background: #fafafa;
+  background: var(--color-surface);
 }
 
 .kanban-column header {
@@ -269,8 +269,8 @@ watch(boardId, async (nextId, prevId) => {
 }
 
 .kanban-card {
-  border: 1px solid #e5e7eb;
-  background: #fff;
+  border: 1px solid var(--color-border);
+  background: var(--color-card-bg);
   padding: 8px 10px;
   cursor: grab;
 }

@@ -11,8 +11,8 @@ button {
   padding: 8px 14px;
   border-radius: 8px;
   border: 1px solid transparent;
-  background: var(--color-primary);
-  color: #fff;
+  background: var(--color-accent);
+  color: var(--color-text-inverse);
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
@@ -23,7 +23,7 @@ button {
 }
 
 .btn:hover {
-  background: #1d4ed8;
+  background: var(--color-accent-hover);
 }
 
 .btn:active {
@@ -38,31 +38,31 @@ button {
 }
 
 .btn--secondary {
-  background: #ffffff;
-  color: #111827;
-  border-color: #e5e7eb;
+  background: var(--color-surface);
+  color: var(--color-text);
+  border-color: var(--color-border);
 }
 
 .btn--secondary:hover {
-  background: #f3f4f6;
+  background: var(--color-surface-alt);
 }
 
 .btn--ghost {
   background: transparent;
-  color: #374151;
+  color: var(--color-text-muted);
   border-color: transparent;
 }
 
 .btn--ghost:hover {
-  background: #f3f4f6;
+  background: var(--color-surface-alt);
 }
 
 .btn--danger {
-  background: #dc2626;
+  background: var(--color-danger);
 }
 
 .btn--danger:hover {
-  background: #b91c1c;
+  background: color-mix(in srgb, var(--color-danger) 85%, black 15%);
 }
 
 .btn--sm {

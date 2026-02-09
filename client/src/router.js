@@ -62,7 +62,7 @@ const routes = [
           { path: "", redirect: "/account/profile" },
           { path: "profile", component: ProfilePage },
           { path: "security", component: SecurityPage },
-          { path: "plan", component: PlanLicensePage }, // 구독+?�이?�스 ?�합
+          { path: "plan", component: PlanLicensePage }, // 구독+?�이?�스 ?�합
           { path: "billing", component: BillingPage },
           { path: "workspaces", component: WorkspaceListPage },
         ],
@@ -162,34 +162,36 @@ export const router = createRouter({
 });
 
 router.beforeEach(async (to, from, next) => {
-  if (!to.matched.some((record) => record.meta?.requiresAuth)) {
-    return next();
-  }
-
   const appStore = useAppStore();
-  if (appStore.currentUser) {
-    authChecked = true;
-    isAuthenticated = true;
-    return next();
-  }
 
-  if (authChecked) {
-    if (isAuthenticated) return next();
-    return next({ path: "/login", query: { redirect: to.fullPath } });
-  }
-
-  try {
-    const res = await api.get("/members/me");
-    if (res.data?.success && res.data?.data) {
-      appStore.setCurrentUser(res.data.data);
+  if (!authChecked) {
+    try {
+      const res = await api.get("/members/me");
+      if (res.data?.success && res.data?.data) {
+        appStore.setCurrentUser(res.data.data);
+        isAuthenticated = true;
+      } else {
+        isAuthenticated = false;
+        appStore.setCurrentUser(null);
+      }
+    } catch (error) {
+      isAuthenticated = false;
+      appStore.setCurrentUser(null);
+    } finally {
+      authChecked = true;
     }
-    authChecked = true;
+  } else if (appStore.currentUser) {
     isAuthenticated = true;
-    return next();
-  } catch (error) {
-    authChecked = true;
-    isAuthenticated = false;
-    appStore.setCurrentUser(null);
+  }
+
+  const requiresAuth = to.matched.some((record) => record.meta?.requiresAuth);
+  if (requiresAuth && !isAuthenticated) {
     return next({ path: "/login", query: { redirect: to.fullPath } });
   }
+
+  if (to.path === "/login" && isAuthenticated) {
+    return next({ path: "/account" });
+  }
+
+  return next();
 });

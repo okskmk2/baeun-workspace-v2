@@ -201,35 +201,7 @@ watch(workspaceId, fetchPages);
   margin: 12px 0 8px;
   font-size: 14px;
   font-weight: 600;
-  color: #111827;
+  color: var(--color-text);
 }
 
-.page-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.page-list--nested {
-  margin-top: 6px;
-  margin-left: 10px;
-  padding-left: 8px;
-  border-left: 1px solid #e5e7eb;
-}
-
-.page-link {
-  display: block;
-  padding: 6px 8px;
-  border-radius: 8px;
-  background: #f9fafb;
-  color: #374151;
-  text-decoration: none;
-}
-
-.page-link:hover {
-  background: #f3f4f6;
-}
 </style>

@@ -76,7 +76,7 @@ const { t } = useI18n();
 
 .feed-date {
   font-size: 12px;
-  color: #6b7280;
+  color: var(--color-text-muted);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -87,19 +87,19 @@ const { t } = useI18n();
   gap: 12px;
   padding: 12px;
   border-radius: 12px;
-  background: #f9fafb;
-  border: 1px solid #f3f4f6;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
 }
 
 .feed-title {
   font-size: 14px;
   font-weight: 600;
-  color: #111827;
+  color: var(--color-text);
 }
 
 .feed-meta {
   font-size: 12px;
-  color: #6b7280;
+  color: var(--color-text-muted);
   margin-top: 4px;
 }
 </style>

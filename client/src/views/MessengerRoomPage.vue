@@ -346,22 +346,22 @@ onBeforeUnmount(() => {
 
 .room-status {
   font-size: 12px;
-  color: #16a34a;
+  color: var(--color-success);
 }
 
 .room-status.offline {
-  color: #b91c1c;
+  color: var(--color-danger);
 }
 
 .messages {
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-border);
   border-radius: 8px;
   padding: 12px;
   min-height: 240px;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  background: #ffffff;
+  background: var(--color-card-bg);
 }
 
 .message {
@@ -375,7 +375,7 @@ onBeforeUnmount(() => {
   text-align: center;
   padding: 6px 10px;
   border-radius: 999px;
-  background: #f3f4f6;
+  background: var(--color-surface-alt);
 }
 
 .message.system .message-meta {
@@ -384,17 +384,17 @@ onBeforeUnmount(() => {
 
 .message-content {
   font-size: 14px;
-  color: #111827;
+  color: var(--color-text);
 }
 
 .message-meta {
   font-size: 12px;
-  color: #6b7280;
+  color: var(--color-text-muted);
 }
 
 .empty {
   margin: 0;
-  color: #9ca3af;
+  color: var(--color-text-muted);
 }
 
 .composer {
@@ -406,9 +406,11 @@ onBeforeUnmount(() => {
 .composer input {
   flex: 1;
   padding: 8px 10px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-input-border);
   border-radius: 6px;
   font-size: 14px;
+  background-color: var(--color-input-bg);
+  color: var(--color-text);
 }
 
 .member-list {
@@ -431,35 +433,35 @@ onBeforeUnmount(() => {
   grid-template-columns: 1fr auto;
   gap: 4px 12px;
   padding: 10px 12px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-border);
   border-radius: 10px;
-  background: #ffffff;
+  background: var(--color-card-bg);
 }
 
 .member-name {
   font-weight: 600;
-  color: #111827;
+  color: var(--color-text);
 }
 
 .member-meta {
   font-size: 12px;
-  color: #6b7280;
+  color: var(--color-text-muted);
 }
 
 .member-role {
   font-size: 12px;
   font-weight: 600;
-  color: #374151;
+  color: var(--color-text);
   justify-self: end;
 }
 
 .status {
   margin: 0;
   font-size: 13px;
-  color: #6b7280;
+  color: var(--color-text-muted);
 }
 
 .status.error {
-  color: #b91c1c;
+  color: var(--color-danger);
 }
 </style>

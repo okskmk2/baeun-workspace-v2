@@ -130,12 +130,12 @@ watch(projectId, fetchRecentMessages);
 
 <style scoped>
 .status {
-  color: #6b7280;
+  color: var(--color-text-muted);
   font-size: 14px;
 }
 
 .status.error {
-  color: #b91c1c;
+  color: var(--color-danger);
 }
 
 .section-header {
@@ -164,7 +164,7 @@ watch(projectId, fetchRecentMessages);
 
 .feed-date {
   font-size: 12px;
-  color: #6b7280;
+  color: var(--color-text-muted);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -175,8 +175,8 @@ watch(projectId, fetchRecentMessages);
   gap: 12px;
   padding: 12px;
   border-radius: 12px;
-  background: #f9fafb;
-  border: 1px solid #f3f4f6;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
 }
 
 .feed-icon {
@@ -186,8 +186,8 @@ watch(projectId, fetchRecentMessages);
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #111827;
-  color: #fff;
+  background: var(--color-text);
+  color: var(--color-text-inverse);
   font-size: 12px;
   font-weight: 700;
 }
@@ -195,12 +195,12 @@ watch(projectId, fetchRecentMessages);
 .feed-title {
   font-size: 14px;
   font-weight: 600;
-  color: #111827;
+  color: var(--color-text);
 }
 
 .feed-meta {
   font-size: 12px;
-  color: #6b7280;
+  color: var(--color-text-muted);
   margin-top: 4px;
 }
 
@@ -214,7 +214,7 @@ watch(projectId, fetchRecentMessages);
   width: 100%;
   padding: 20px 24px;
   border-radius: 12px;
-  border: 1px dashed #e5e7eb;
+  border: 1px dashed var(--color-border);
   text-align: center;
 }
 
@@ -224,8 +224,8 @@ watch(projectId, fetchRecentMessages);
   justify-content: center;
   padding: 4px 10px;
   border-radius: 999px;
-  background: #111827;
-  color: #fff;
+  background: var(--color-text);
+  color: var(--color-text-inverse);
   font-size: 12px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -235,12 +235,12 @@ watch(projectId, fetchRecentMessages);
 .empty-card h1 {
   margin: 0 0 8px;
   font-size: 18px;
-  color: #111827;
+  color: var(--color-text);
 }
 
 .empty-desc {
   margin: 0 0 16px;
-  color: #4b5563;
+  color: var(--color-text-muted);
   font-size: 14px;
 }
 </style>

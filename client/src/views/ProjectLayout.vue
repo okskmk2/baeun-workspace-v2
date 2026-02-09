@@ -43,7 +43,7 @@
 </template>
 
 <script setup>
-import { computed, watch } from "vue";
+import { computed, onBeforeUnmount, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 import { storeToRefs } from "pinia";
@@ -68,16 +68,64 @@ const currentProject = computed(() => {
   return list.find((project) => String(project.id) === String(projectId.value)) || null;
 });
 const projectName = computed(() => currentProject.value?.name || "");
-const gnbStyle = computed(() => {
+const projectThemeMode = computed(() => {
+  const theme = currentProject.value?.theme_json || {};
+  return theme.mode || theme.theme?.mode || theme.colorScheme || "";
+});
+const themeTokenId = computed(() => {
   const preview = gnbPreviewTheme.value;
   const theme = currentProject.value?.theme_json?.gnb;
-  const background = preview?.background || theme?.background || "#ffffff";
-  const foreground = preview?.foreground || theme?.foreground || "#111827";
+  return preview?.themeId || theme?.themeId || "";
+});
+const gnbStyle = computed(() => {
+  if (themeTokenId.value) {
+    return {
+      "--gnb-bg": `var(--theme-${themeTokenId.value}-bg)`,
+      "--gnb-fg": `var(--theme-${themeTokenId.value}-fg)`,
+    };
+  }
+  const theme = currentProject.value?.theme_json?.gnb;
+  const background = theme?.background || "#ffffff";
+  const foreground = theme?.foreground || "#111827";
   return {
     "--gnb-bg": background,
     "--gnb-fg": foreground,
   };
 });
+
+const themeId = computed(() => {
+  const mode = projectThemeMode.value;
+  if (themeTokenId.value) return themeTokenId.value;
+  if (mode === "dark" || mode === "light") return mode;
+  return "";
+});
+
+const applySystemTheme = () => {
+  if (typeof window === "undefined" || !window.matchMedia) return;
+  const query = window.matchMedia("(prefers-color-scheme: dark)");
+  const nextTheme = query.matches ? "dark" : "light";
+  document.documentElement.setAttribute("data-theme", nextTheme);
+};
+
+const applyTheme = (value) => {
+  if (typeof document === "undefined") return;
+  const root = document.documentElement;
+  if (!value) {
+    root.removeAttribute("data-theme-source");
+    applySystemTheme();
+    return;
+  }
+  root.setAttribute("data-theme", value);
+  root.setAttribute("data-theme-source", "project");
+};
+
+watch(
+  themeId,
+  (value) => {
+    applyTheme(value);
+  },
+  { immediate: true }
+);
 
 watch(
   projectId,
@@ -87,6 +135,10 @@ watch(
   },
   { immediate: true }
 );
+
+onBeforeUnmount(() => {
+  applyTheme("");
+});
 </script>
 
 <style scoped>
@@ -115,3 +167,4 @@ watch(
   background-color: color-mix(in srgb, var(--gnb-bg) 90%, var(--gnb-fg) 10%);
 }
 </style>
+

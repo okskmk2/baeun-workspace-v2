@@ -151,13 +151,18 @@ const emitReorder = (payload) => emit("reorder", payload);
 <style scoped>
 .page-list {
   list-style: none;
-  padding-left: 1rem;
+  padding: 0;
   margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
   user-select: none;
 }
 
 .page-list--nested {
-  border-left: 1px solid #e5e7eb;
+  margin-top: 6px;
+  margin-left: 10px;
+  padding-left: 8px;
 }
 
 .page-item {
@@ -173,14 +178,14 @@ const emitReorder = (payload) => emit("reorder", payload);
 
 .page-link {
   display: block;
-  padding: 4px 8px;
+  padding: 6px 8px;
   text-decoration: none;
-  color: #374151;
-  border-radius: 4px;
+  border-radius: 8px;
+  color: var(--color-text);
 }
 
 .page-link:hover {
-  background-color: #f3f4f6;
+  background-color: var(--color-surface-alt);
 }
 
 /* Drop indicator line */
@@ -191,7 +196,7 @@ const emitReorder = (payload) => emit("reorder", payload);
   left: 0;
   right: 0;
   height: 2px;
-  background: #3b82f6;
+  background: var(--color-accent);
   z-index: 10;
 }
 

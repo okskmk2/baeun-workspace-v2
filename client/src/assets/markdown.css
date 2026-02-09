@@ -1,5 +1,5 @@
 .markdown-body {
-  color: #111827;
+  color: var(--color-text);
   line-height: 1.7;
   word-break: break-word;
 }
@@ -23,7 +23,7 @@
 
 .markdown-body code {
   font-family: "Courier New", Courier, monospace;
-  background-color: #f3f4f6;
+  background-color: var(--color-surface-alt);
   padding: 2px 4px;
   border-radius: 4px;
 }
