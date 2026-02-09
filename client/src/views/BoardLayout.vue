@@ -1,11 +1,13 @@
 <template>
   <div class="AcountLayout">
     <aside>
-      <button type="button" class="btn" @click="openModal">Create Board</button>
+      <button type="button" class="btn btn--sm" @click="openModal">
+        {{ t("board.layout.actions.create") }}
+      </button>
       <nav>
-        <p v-if="isLoading">Loading...</p>
+        <p v-if="isLoading">{{ t("board.layout.status.loading") }}</p>
         <p v-else-if="errorMessage">{{ errorMessage }}</p>
-        <p v-else-if="boards.length === 0">No boards yet.</p>
+        <p v-else-if="boards.length === 0">{{ t("board.layout.empty.boards") }}</p>
         <template v-else>
           <router-link
             v-for="board in boards"
@@ -22,15 +24,22 @@
     </main>
   </div>
 
-  <BaseModal :open="isModalOpen" title="Create Board" @close="closeModal">
+  <BaseModal :open="isModalOpen" :title="t('board.layout.modal.title')" @close="closeModal">
     <form class="modal-form" @submit.prevent="createBoard">
-      <label for="board-name">Board Name</label>
-      <input id="board-name" v-model.trim="form.name" type="text" placeholder="Board name" />
+      <label for="board-name">{{ t("board.layout.modal.nameLabel") }}</label>
+      <input
+        id="board-name"
+        v-model.trim="form.name"
+        type="text"
+        :placeholder="t('board.layout.modal.namePlaceholder')"
+      />
       <p v-if="formError" class="form-error">{{ formError }}</p>
       <div class="modal-actions">
-        <button type="button" class="btn btn--secondary" @click="closeModal">Cancel</button>
+        <button type="button" class="btn btn--secondary" @click="closeModal">
+          {{ t("board.layout.actions.cancel") }}
+        </button>
         <button type="submit" class="btn" :disabled="isCreating">
-          {{ isCreating ? "Creating..." : "Create" }}
+          {{ isCreating ? t("board.layout.actions.creating") : t("board.layout.actions.submit") }}
         </button>
       </div>
     </form>
@@ -39,10 +48,12 @@
 
 <script setup>
 import { computed, onMounted, ref, watch } from "vue";
+import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 import api from "../lib/axios";
 import BaseModal from "../components/BaseModal.vue";
 
+const { t } = useI18n();
 const route = useRoute();
 const boards = ref([]);
 const isLoading = ref(false);
@@ -69,7 +80,7 @@ const fetchBoards = async () => {
     boards.value = res.data?.data || [];
   } catch (error) {
     boards.value = [];
-    errorMessage.value = "Failed to load boards.";
+    errorMessage.value = t("board.layout.status.errorLoad");
   } finally {
     isLoading.value = false;
   }
@@ -77,7 +88,7 @@ const fetchBoards = async () => {
 
 const openModal = () => {
   if (!projectId.value) {
-    formError.value = "No project selected.";
+    formError.value = t("board.layout.validation.noProject");
     return;
   }
   form.value = { name: "" };
@@ -91,7 +102,7 @@ const closeModal = () => {
 
 const createBoard = async () => {
   if (!form.value.name) {
-    formError.value = "Please enter a board name.";
+    formError.value = t("board.layout.validation.nameRequired");
     return;
   }
 
@@ -107,7 +118,7 @@ const createBoard = async () => {
     await fetchBoards();
     closeModal();
   } catch (error) {
-    formError.value = error?.response?.data?.message || "Failed to create board.";
+    formError.value = error?.response?.data?.message || t("board.layout.status.errorCreate");
   } finally {
     isCreating.value = false;
   }

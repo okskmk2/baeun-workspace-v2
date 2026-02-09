@@ -1,11 +1,13 @@
 <template>
   <div class="AcountLayout">
     <aside>
-      <button class="btn" type="button" @click="openModal">Create Page</button>
+      <button class="btn btn--sm" type="button" @click="openModal">
+        {{ t("wiki.layout.actions.create") }}
+      </button>
       <nav class="page-nav">
-        <p v-if="isLoading">Loading...</p>
+        <p v-if="isLoading">{{ t("wiki.layout.status.loading") }}</p>
         <p v-else-if="errorMessage">{{ errorMessage }}</p>
-        <p v-else-if="pages.length === 0">No pages yet.</p>
+        <p v-else-if="pages.length === 0">{{ t("wiki.layout.empty.pages") }}</p>
         <PageTree
           v-else
           :nodes="pages"
@@ -20,15 +22,22 @@
     </main>
   </div>
 
-  <BaseModal :open="isModalOpen" title="Create Page" @close="closeModal">
+  <BaseModal :open="isModalOpen" :title="t('wiki.layout.modal.title')" @close="closeModal">
     <form class="modal-form" @submit.prevent="createPage">
-      <label for="page-title">Page Title</label>
-      <input id="page-title" v-model.trim="form.title" type="text" placeholder="Page Title" />
+      <label for="page-title">{{ t("wiki.layout.modal.titleLabel") }}</label>
+      <input
+        id="page-title"
+        v-model.trim="form.title"
+        type="text"
+        :placeholder="t('wiki.layout.modal.titlePlaceholder')"
+      />
       <p v-if="formError" class="form-error">{{ formError }}</p>
       <div class="modal-actions">
-        <button type="button" class="btn btn--secondary" @click="closeModal">Cancel</button>
+        <button type="button" class="btn btn--secondary" @click="closeModal">
+          {{ t("wiki.layout.actions.cancel") }}
+        </button>
         <button type="submit" class="btn" :disabled="isCreating">
-          {{ isCreating ? "Creating..." : "Create" }}
+          {{ isCreating ? t("wiki.layout.actions.creating") : t("wiki.layout.actions.submit") }}
         </button>
       </div>
     </form>
@@ -37,12 +46,14 @@
 
 <script setup>
 import { computed, onMounted, ref, watch } from "vue";
+import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 import api from "../lib/axios";
 import BaseModal from "../components/BaseModal.vue";
 import PageTree from "../components/PageTree.vue";
 import { usePageStore } from "../stores/pageStore";
 
+const { t } = useI18n();
 const route = useRoute();
 const workspaceId = computed(() => route.params.workspaceId);
 const projectId = computed(() => route.params.projectId);
@@ -71,7 +82,7 @@ const fetchPages = async () => {
     await pageStore.fetchPages(projectId.value);
   } catch (error) {
     pageStore.pagesByProject[projectId.value] = [];
-    errorMessage.value = "Failed to load pages.";
+    errorMessage.value = t("wiki.layout.status.errorLoad");
   } finally {
     isLoading.value = false;
   }
@@ -79,7 +90,7 @@ const fetchPages = async () => {
 
 const openModal = () => {
   if (!projectId.value) {
-    formError.value = "No project selected.";
+    formError.value = t("wiki.layout.validation.noProject");
     return;
   }
   form.value = { title: "" };
@@ -139,19 +150,19 @@ const handleReorder = async ({ parentId, orderedIds }) => {
       }
     );
   } catch (error) {
-    errorMessage.value = "Failed to update page order.";
+    errorMessage.value = t("wiki.layout.status.errorReorder");
     await fetchPages();
   }
 };
 
 const createPage = async () => {
   if (!form.value.title) {
-    formError.value = "Please enter a page title.";
+    formError.value = t("wiki.layout.validation.titleRequired");
     return;
   }
 
   if (!projectId.value) {
-    formError.value = "No project selected.";
+    formError.value = t("wiki.layout.validation.noProject");
     return;
   }
 
@@ -174,7 +185,7 @@ const createPage = async () => {
     await pageStore.fetchPages(projectId.value);
     closeModal();
   } catch (error) {
-    formError.value = error?.response?.data?.message || "Failed to create page.";
+    formError.value = error?.response?.data?.message || t("wiki.layout.status.errorCreate");
   } finally {
     isCreating.value = false;
   }

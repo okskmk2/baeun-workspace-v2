@@ -1,6 +1,6 @@
 <template>
   <hgroup>
-    <h1>{{ page.title || "Page" }}</h1>
+    <h1>{{ page.title || t("wiki.page.header.fallbackTitle") }}</h1>
     <div class="actions">
       <button
         type="button"
@@ -8,10 +8,10 @@
         :disabled="!canEdit"
         @click="startEdit"
       >
-        Edit
+        {{ t("wiki.page.actions.edit") }}
       </button>
       <button type="button" class="btn btn--secondary btn--sm" @click="openPermissionModal">
-        Permissions
+        {{ t("wiki.page.actions.permissions") }}
       </button>
       <button
         v-if="isOwner"
@@ -20,89 +20,112 @@
         :disabled="isDeleting"
         @click="deletePage"
       >
-        {{ isDeleting ? "Deleting..." : "Delete" }}
+        {{ isDeleting ? t("wiki.page.actions.deleting") : t("wiki.page.actions.delete") }}
       </button>
     </div>
   </hgroup>
-  <p v-if="isLoading">Loading...</p>
+  <p v-if="isLoading">{{ t("wiki.page.status.loading") }}</p>
   <p v-else-if="errorMessage">{{ errorMessage }}</p>
   <article v-else class="wiki-content">
     <template v-if="isEditing">
-      <label class="edit-label" for="page-title">Title</label>
+      <label class="edit-label" for="page-title">{{ t("wiki.page.fields.titleLabel") }}</label>
       <input id="page-title" v-model.trim="editForm.title" type="text" class="edit-input" />
       <div class="edit-split">
         <section class="edit-pane">
-          <label class="edit-label" for="page-content">Content</label>
+          <label class="edit-label" for="page-content">
+            {{ t("wiki.page.fields.contentLabel") }}
+          </label>
           <textarea
             id="page-content"
             v-model="editForm.content"
             class="edit-textarea"
             rows="14"
-            placeholder="Enter Markdown content"
+            :placeholder="t('wiki.page.fields.contentPlaceholder')"
           ></textarea>
         </section>
         <section class="preview-pane">
-          <label class="edit-label">Preview</label>
+          <label class="edit-label">{{ t("wiki.page.fields.previewLabel") }}</label>
           <div class="markdown-body preview" v-html="renderedPreview"></div>
         </section>
       </div>
       <div class="edit-actions">
-        <button type="button" class="btn btn--secondary" @click="cancelEdit">Cancel</button>
+        <button type="button" class="btn btn--secondary" @click="cancelEdit">
+          {{ t("wiki.page.actions.cancel") }}
+        </button>
         <button type="button" class="btn" :disabled="isSaving" @click="savePage">
-          {{ isSaving ? "Saving..." : "Save" }}
+          {{ isSaving ? t("wiki.page.actions.saving") : t("wiki.page.actions.save") }}
         </button>
       </div>
     </template>
     <template v-else>
       <div v-if="page.content" class="markdown-body" v-html="renderedContent"></div>
-      <p v-else class="empty">No content.</p>
+      <p v-else class="empty">{{ t("wiki.page.empty.content") }}</p>
     </template>
   </article>
 
-  <BaseModal :open="isPermissionOpen" title="Page Permissions" @close="closePermissionModal">
+  <BaseModal
+    :open="isPermissionOpen"
+    :title="t('wiki.page.permissions.modal.title')"
+    @close="closePermissionModal"
+  >
     <form class="modal-form" @submit.prevent="savePermission">
-      <label for="permission-member">Project Members</label>
+      <label for="permission-member">{{ t("wiki.page.permissions.membersLabel") }}</label>
       <select id="permission-member" v-model="permissionForm.memberId">
-        <option value="">Select a member</option>
+        <option value="">{{ t("wiki.page.permissions.selectPlaceholder") }}</option>
         <option v-for="member in projectMembers" :key="member.id" :value="member.id">
           {{ member.name }} ({{ member.email }})
         </option>
       </select>
-      <label for="permission-role">Role</label>
+      <label for="permission-role">{{ t("wiki.page.permissions.roleLabel") }}</label>
       <select id="permission-role" v-model="permissionForm.roleName">
-        <option value="OWNER">OWNER</option>
-        <option value="EDITOR">EDITOR</option>
-        <option value="VIEWER">VIEWER</option>
+        <option
+          v-for="option in permissionRoleOptions"
+          :key="option.value"
+          :value="option.value"
+        >
+          {{ option.label }}
+        </option>
       </select>
       <p v-if="permissionError" class="form-error">{{ permissionError }}</p>
       <div class="modal-actions">
-        <button type="button" class="btn btn--secondary" @click="closePermissionModal">Cancel</button>
+        <button type="button" class="btn btn--secondary" @click="closePermissionModal">
+          {{ t("wiki.page.actions.cancel") }}
+        </button>
         <button type="submit" class="btn" :disabled="isPermissionSaving">
-          {{ isPermissionSaving ? "Saving..." : "Save" }}
+          {{
+            isPermissionSaving ? t("wiki.page.actions.saving") : t("wiki.page.actions.save")
+          }}
         </button>
       </div>
     </form>
     <div v-if="pageMembers.length" class="permission-list">
       <div v-for="member in pageMembers" :key="member.member_id" class="permission-row">
         <span>{{ member.name }}</span>
-        <span class="role">{{ member.role_name }}</span>
+        <span class="role">{{ getRoleLabel("page_member", member.role_name) }}</span>
       </div>
     </div>
   </BaseModal>
 
-  <BaseModal :open="isCancelOpen" title="Discard Changes" @close="closeCancelModal">
-    <p>Discard changes without saving?</p>
+  <BaseModal
+    :open="isCancelOpen"
+    :title="t('wiki.page.confirm.cancel.title')"
+    @close="closeCancelModal"
+  >
+    <p>{{ t("wiki.page.confirm.cancel.message") }}</p>
     <div class="modal-actions">
       <button type="button" class="btn btn--secondary" @click="closeCancelModal">
-        Continue Editing
+        {{ t("wiki.page.confirm.cancel.keepEditing") }}
       </button>
-      <button type="button" class="btn" @click="confirmCancelEdit">Discard Changes</button>
+      <button type="button" class="btn" @click="confirmCancelEdit">
+        {{ t("wiki.page.confirm.cancel.discard") }}
+      </button>
     </div>
   </BaseModal>
 </template>
 
 <script setup>
 import { computed, onMounted, ref, watch } from "vue";
+import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 import api from "../lib/axios";
 import BaseModal from "../components/BaseModal.vue";
@@ -112,7 +135,10 @@ import { usePageStore } from "../stores/pageStore";
 import MarkdownIt from "markdown-it";
 import hljs from "highlight.js";
 import "highlight.js/styles/github.css";
+import { useRoleLabels } from "../lib/roleLabels";
 
+const { t } = useI18n();
+const { getRoleLabel } = useRoleLabels();
 const route = useRoute();
 const projectId = computed(() => route.params.projectId);
 const pageId = computed(() => route.params.pageId);
@@ -132,6 +158,11 @@ const permissionError = ref("");
 const pageMembers = ref([]);
 const permissionForm = ref({ memberId: "", roleName: "VIEWER" });
 const isCancelOpen = ref(false);
+const permissionRoleOptions = computed(() => [
+  { value: "OWNER", label: t("wiki.page.permissions.roles.owner") },
+  { value: "EDITOR", label: t("wiki.page.permissions.roles.editor") },
+  { value: "VIEWER", label: t("wiki.page.permissions.roles.viewer") },
+]);
 
 const appStore = useAppStore();
 const projectMemberStore = useProjectMemberStore();
@@ -195,7 +226,7 @@ const fetchPage = async () => {
     page.value = res.data?.data || {};
   } catch (error) {
     page.value = {};
-    errorMessage.value = "Failed to load page.";
+    errorMessage.value = t("wiki.page.status.errorLoad");
   } finally {
     isLoading.value = false;
   }
@@ -243,7 +274,7 @@ const savePage = async () => {
     };
     isEditing.value = false;
   } catch (error) {
-    errorMessage.value = "Failed to save page.";
+    errorMessage.value = t("wiki.page.status.errorSave");
   } finally {
     isSaving.value = false;
   }
@@ -283,7 +314,7 @@ const confirmCancelEdit = () => {
 
 const savePermission = async () => {
   if (!permissionForm.value.memberId) {
-    permissionError.value = "Please select a member.";
+    permissionError.value = t("wiki.page.permissions.validation.selectMember");
     return;
   }
   if (!projectId.value || !pageId.value) return;
@@ -303,7 +334,8 @@ const savePermission = async () => {
     );
     await fetchPageMembers();
   } catch (error) {
-    permissionError.value = error?.response?.data?.message || "Failed to update permissions.";
+    permissionError.value =
+      error?.response?.data?.message || t("wiki.page.permissions.status.errorUpdate");
   } finally {
     isPermissionSaving.value = false;
   }
@@ -313,7 +345,7 @@ const deletePage = async () => {
   if (!projectId.value || !pageId.value) return;
   if (!isOwner.value) return;
 
-  const confirmed = window.confirm("Delete this page?");
+  const confirmed = window.confirm(t("wiki.page.confirm.delete"));
   if (!confirmed) return;
 
   isDeleting.value = true;
@@ -324,7 +356,7 @@ const deletePage = async () => {
     await pageStore.fetchPages(projectId.value);
     await router.push(`/workspace/${route.params.workspaceId}/project/${projectId.value}/wiki`);
   } catch (error) {
-    errorMessage.value = error?.response?.data?.message || "Failed to delete page.";
+    errorMessage.value = error?.response?.data?.message || t("wiki.page.status.errorDelete");
   } finally {
     isDeleting.value = false;
   }

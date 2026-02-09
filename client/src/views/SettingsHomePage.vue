@@ -1,26 +1,26 @@
 <template>
   <section class="settings-home">
     <hgroup>
-      <h1>Project Settings</h1>
-      <p>Manage the project name and theme.</p>
+      <h1>{{ t("settings.home.header.title") }}</h1>
+      <p>{{ t("settings.home.header.subtitle") }}</p>
     </hgroup>
 
-    <p v-if="isLoading" class="status">Loading...</p>
+    <p v-if="isLoading" class="status">{{ t("settings.home.status.loading") }}</p>
     <p v-else-if="errorMessage" class="status error">{{ errorMessage }}</p>
 
     <form v-else class="settings-form" @submit.prevent="saveSettings">
-      <label for="project-name">Project Name</label>
+      <label for="project-name">{{ t("settings.home.form.nameLabel") }}</label>
       <input
         id="project-name"
         v-model.trim="form.name"
         type="text"
-        placeholder="Project name"
+        :placeholder="t('settings.home.form.namePlaceholder')"
       />
 
       <div class="theme-section">
         <div class="theme-header">
-          <h2>GNB Theme</h2>
-          <span class="theme-desc">Select a background and foreground pair.</span>
+          <h2>{{ t("settings.home.theme.title") }}</h2>
+          <span class="theme-desc">{{ t("settings.home.theme.subtitle") }}</span>
         </div>
         <div class="palette">
           <label
@@ -47,7 +47,7 @@
 
       <div class="form-actions">
         <button type="submit" class="btn" :disabled="isSaving">
-          {{ isSaving ? "Saving..." : "Save" }}
+          {{ isSaving ? t("settings.home.actions.saving") : t("settings.home.actions.save") }}
         </button>
       </div>
     </form>
@@ -56,12 +56,14 @@
 
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 import api from "../lib/axios";
 import { addToast } from "../lib/toast";
 import { useAppStore } from "../stores/appStore";
 import { useWorkspaceStore } from "../stores/workspaceStore";
 
+const { t } = useI18n();
 const route = useRoute();
 const workspaceId = computed(() => route.params.workspaceId);
 const projectId = computed(() => route.params.projectId);
@@ -77,24 +79,34 @@ const form = ref({
   themeId: "",
 });
 
-const themePalette = [
-  { id: "classic", label: "Classic", bg: "#ffffff", fg: "#111827" },
-  { id: "indigo", label: "Indigo", bg: "#312e81", fg: "#e0e7ff" },
-  { id: "rose", label: "Rose", bg: "#9f1239", fg: "#fff1f2" },
-  { id: "emerald", label: "Emerald", bg: "#065f46", fg: "#ecfdf5" },
-  { id: "amber", label: "Amber", bg: "#92400e", fg: "#fffbeb" },
-  { id: "sky", label: "Sky", bg: "#0c4a6e", fg: "#e0f2fe" },
-  { id: "stone", label: "Stone", bg: "#292524", fg: "#fafaf9" },
-  { id: "violet", label: "Violet", bg: "#4c1d95", fg: "#ede9fe" },
-  { id: "teal", label: "Teal", bg: "#0f766e", fg: "#f0fdfa" },
+const themePaletteBase = [
+  { id: "classic", bg: "#ffffff", fg: "#111827" },
+  { id: "indigo", bg: "#312e81", fg: "#e0e7ff" },
+  { id: "rose", bg: "#9f1239", fg: "#fff1f2" },
+  { id: "emerald", bg: "#065f46", fg: "#ecfdf5" },
+  { id: "amber", bg: "#92400e", fg: "#fffbeb" },
+  { id: "sky", bg: "#0c4a6e", fg: "#e0f2fe" },
+  { id: "stone", bg: "#292524", fg: "#fafaf9" },
+  { id: "violet", bg: "#4c1d95", fg: "#ede9fe" },
+  { id: "teal", bg: "#0f766e", fg: "#f0fdfa" },
 ];
 
+const themePalette = computed(() =>
+  themePaletteBase.map((item) => ({
+    ...item,
+    label: t(`settings.home.theme.palette.${item.id}`),
+  }))
+);
+
 const resolveThemeId = (theme) => {
-  if (theme?.paletteId && themePalette.some((item) => item.id === theme.paletteId)) {
+  if (
+    theme?.paletteId &&
+    themePaletteBase.some((item) => item.id === theme.paletteId)
+  ) {
     return theme.paletteId;
   }
   if (theme?.background && theme?.foreground) {
-    const match = themePalette.find(
+    const match = themePaletteBase.find(
       (item) => item.bg === theme.background && item.fg === theme.foreground
     );
     if (match) return match.id;
@@ -113,7 +125,7 @@ const fetchProject = async () => {
     form.value.name = data.name || "";
     form.value.themeId = resolveThemeId(data.theme_json?.gnb);
   } catch (error) {
-    errorMessage.value = "Failed to load project details.";
+    errorMessage.value = t("settings.home.status.errorLoad");
   } finally {
     isLoading.value = false;
   }
@@ -121,13 +133,13 @@ const fetchProject = async () => {
 
 const saveSettings = async () => {
   if (!form.value.name) {
-    formError.value = "Please enter a project name.";
+    formError.value = t("settings.home.validation.nameRequired");
     return;
   }
 
-  const selected = themePalette.find((item) => item.id === form.value.themeId);
+  const selected = themePaletteBase.find((item) => item.id === form.value.themeId);
   if (!selected) {
-    formError.value = "Please select a theme.";
+    formError.value = t("settings.home.validation.themeRequired");
     return;
   }
 
@@ -164,9 +176,10 @@ const saveSettings = async () => {
       });
       workspaceStore.projectsByWorkspace[workspaceId.value] = updated;
     }
-    addToast({ message: "Project settings updated.", type: "success" });
+    addToast({ message: t("settings.home.toast.updated"), type: "success" });
   } catch (error) {
-    const message = error?.response?.data?.message || "Failed to update project settings.";
+    const message =
+      error?.response?.data?.message || t("settings.home.status.errorUpdate");
     formError.value = message;
     addToast({ message, type: "error" });
   } finally {
@@ -179,7 +192,7 @@ onMounted(fetchProject);
 watch(
   () => form.value.themeId,
   (value) => {
-    const selected = themePalette.find((item) => item.id === value);
+    const selected = themePalette.value.find((item) => item.id === value);
     if (!selected) {
       appStore.clearGnbPreviewTheme();
       return;

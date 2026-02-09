@@ -1,12 +1,14 @@
 <template>
   <main>
     <hgroup>
-      <h1>Projects</h1>
-      <button type="button" class="btn" @click="openModal">Create Project</button>
+      <h1>{{ t("workspace.home.header.title") }}</h1>
+      <button type="button" class="btn" @click="openModal">
+        {{ t("workspace.home.actions.create") }}
+      </button>
     </hgroup>
-    <p v-if="isLoading">Loading...</p>
+    <p v-if="isLoading">{{ t("workspace.home.status.loading") }}</p>
     <p v-else-if="errorMessage">{{ errorMessage }}</p>
-    <p v-else-if="projects.length === 0">No projects.</p>
+    <p v-else-if="projects.length === 0">{{ t("workspace.home.empty.projects") }}</p>
     <ul v-else>
       <li v-for="project in projects" :key="project.id">
         <router-link :to="`/workspace/${workspaceId}/project/${project.id}`">
@@ -18,26 +20,32 @@
           @click="deleteProject(project.id)"
           :disabled="deletingProjectId === project.id"
         >
-          {{ deletingProjectId === project.id ? "Deleting..." : "Delete" }}
+          {{
+            deletingProjectId === project.id
+              ? t("workspace.home.actions.deleting")
+              : t("workspace.home.actions.delete")
+          }}
         </button>
       </li>
     </ul>
   </main>
 
-  <BaseModal :open="isModalOpen" title="Create Project" @close="closeModal">
+  <BaseModal :open="isModalOpen" :title="t('workspace.home.modal.title')" @close="closeModal">
     <form class="modal-form" @submit.prevent="createProject">
-      <label for="project-name">Project Name</label>
+      <label for="project-name">{{ t("workspace.home.modal.nameLabel") }}</label>
       <input
         id="project-name"
         v-model.trim="form.name"
         type="text"
-        placeholder="Project name"
+        :placeholder="t('workspace.home.modal.namePlaceholder')"
       />
       <p v-if="formError" class="form-error">{{ formError }}</p>
       <div class="modal-actions">
-        <button type="button" class="btn btn--secondary" @click="closeModal">Cancel</button>
+        <button type="button" class="btn btn--secondary" @click="closeModal">
+          {{ t("workspace.home.actions.cancel") }}
+        </button>
         <button type="submit" class="btn" :disabled="isCreating">
-          {{ isCreating ? "Creating..." : "Create" }}
+          {{ isCreating ? t("workspace.home.actions.creating") : t("workspace.home.actions.submit") }}
         </button>
       </div>
     </form>
@@ -46,10 +54,12 @@
 
 <script setup>
 import { computed, onMounted, ref, watch } from "vue";
+import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 import BaseModal from "../components/BaseModal.vue";
 import { useWorkspaceStore } from "../stores/workspaceStore";
 
+const { t } = useI18n();
 const route = useRoute();
 const workspaceStore = useWorkspaceStore();
 const isLoading = ref(false);
@@ -74,7 +84,7 @@ const fetchProjects = async () => {
   try {
     await workspaceStore.fetchProjects(workspaceId.value);
   } catch (error) {
-    errorMessage.value = "Failed to load projects.";
+    errorMessage.value = t("workspace.home.status.errorLoad");
   } finally {
     isLoading.value = false;
   }
@@ -92,12 +102,12 @@ const closeModal = () => {
 
 const createProject = async () => {
   if (!form.value.name) {
-    formError.value = "Please enter a project name.";
+    formError.value = t("workspace.home.validation.nameRequired");
     return;
   }
 
   if (!workspaceId.value) {
-    formError.value = "No workspace selected.";
+    formError.value = t("workspace.home.validation.noWorkspace");
     return;
   }
 
@@ -109,7 +119,8 @@ const createProject = async () => {
     await fetchProjects();
     closeModal();
   } catch (error) {
-    formError.value = error?.response?.data?.message || "Failed to create project.";
+    formError.value =
+      error?.response?.data?.message || t("workspace.home.status.errorCreate");
   } finally {
     isCreating.value = false;
   }
@@ -117,7 +128,7 @@ const createProject = async () => {
 
 const deleteProject = async (projectId) => {
   if (!projectId) return;
-  const confirmed = window.confirm("Delete this project?");
+  const confirmed = window.confirm(t("workspace.home.confirm.delete"));
   if (!confirmed) return;
 
   deletingProjectId.value = projectId;
@@ -128,7 +139,7 @@ const deleteProject = async (projectId) => {
     await fetchProjects();
   } catch (error) {
     errorMessage.value =
-      error?.response?.data?.message || "Failed to delete project.";
+      error?.response?.data?.message || t("workspace.home.status.errorDelete");
   } finally {
     deletingProjectId.value = null;
   }

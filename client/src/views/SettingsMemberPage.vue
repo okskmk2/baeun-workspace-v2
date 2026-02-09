@@ -1,13 +1,13 @@
 <template>
   <div class="settings-member">
     <hgroup>
-      <h1>Project Members</h1>
+      <h1>{{ t("settings.member.header.title") }}</h1>
       <button type="button" class="btn" @click="openInviteModal">
-        Invite Project Member
+        {{ t("settings.member.actions.invite") }}
       </button>
     </hgroup>
 
-    <p v-if="isLoading">Loading...</p>
+    <p v-if="isLoading">{{ t("settings.member.status.loading") }}</p>
     <p v-else-if="errorMessage">{{ errorMessage }}</p>
 
     <ul v-else class="member-list">
@@ -17,25 +17,33 @@
           <span>{{ member.email }}</span>
         </div>
         <div class="member-actions">
-          <span class="role">{{ member.role_name }}</span>
+          <span class="role">{{ getRoleLabel("project_member", member.role_name) }}</span>
           <button
             type="button"
             class="btn btn--danger btn--sm"
             :disabled="isRemoveDisabled(member)"
             @click="removeMember(member.id)"
           >
-            {{ removingMemberId === member.id ? "Removing..." : "Remove Member" }}
+            {{
+              removingMemberId === member.id
+                ? t("settings.member.actions.removing")
+                : t("settings.member.actions.remove")
+            }}
           </button>
         </div>
       </li>
     </ul>
   </div>
 
-  <BaseModal :open="isInviteOpen" title="Invite Project Member" @close="closeInviteModal">
+  <BaseModal
+    :open="isInviteOpen"
+    :title="t('settings.member.modal.title')"
+    @close="closeInviteModal"
+  >
     <form class="modal-form" @submit.prevent="inviteMember">
-      <label for="workspace-member">Workspace Members</label>
+      <label for="workspace-member">{{ t("settings.member.modal.membersLabel") }}</label>
       <select id="workspace-member" v-model="selectedMemberId">
-        <option value="">Select a member</option>
+        <option value="">{{ t("settings.member.modal.selectPlaceholder") }}</option>
         <option
           v-for="member in workspaceMembers"
           :key="member.id"
@@ -48,10 +56,10 @@
       <p v-if="inviteError" class="form-error">{{ inviteError }}</p>
       <div class="modal-actions">
         <button type="button" class="btn btn--secondary" @click="closeInviteModal">
-          Cancel
+          {{ t("settings.member.actions.cancel") }}
         </button>
         <button type="submit" class="btn" :disabled="isInviting">
-          {{ isInviting ? "Inviting..." : "Invite" }}
+          {{ isInviting ? t("settings.member.actions.inviting") : t("settings.member.actions.submitInvite") }}
         </button>
       </div>
     </form>
@@ -60,11 +68,15 @@
 
 <script setup>
 import { computed, ref } from "vue";
+import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 import api from "../lib/axios";
 import BaseModal from "../components/BaseModal.vue";
 import { useProjectMemberStore } from "../stores/projectMemberStore";
+import { useRoleLabels } from "../lib/roleLabels";
 
+const { t } = useI18n();
+const { getRoleLabel } = useRoleLabels();
 const route = useRoute();
 const workspaceId = computed(() => route.params.workspaceId);
 const projectId = computed(() => route.params.projectId);
@@ -118,12 +130,12 @@ const closeInviteModal = () => {
 
 const inviteMember = async () => {
   if (!selectedMemberId.value) {
-    inviteError.value = "Please select a member to invite.";
+    inviteError.value = t("settings.member.validation.selectMember");
     return;
   }
 
   if (!projectId.value) {
-    inviteError.value = "No project selected.";
+    inviteError.value = t("settings.member.validation.noProject");
     return;
   }
 
@@ -146,7 +158,7 @@ const inviteMember = async () => {
     }
     closeInviteModal();
   } catch (error) {
-    inviteError.value = error?.response?.data?.message || "Invite failed.";
+    inviteError.value = error?.response?.data?.message || t("settings.member.status.errorInvite");
   } finally {
     isInviting.value = false;
   }
@@ -154,7 +166,7 @@ const inviteMember = async () => {
 
 const removeMember = async (memberId) => {
   if (!projectId.value || !memberId) return;
-  const confirmed = window.confirm("Remove this member?");
+  const confirmed = window.confirm(t("settings.member.confirm.remove"));
   if (!confirmed) return;
 
   removingMemberId.value = memberId;
@@ -168,7 +180,8 @@ const removeMember = async (memberId) => {
       current.filter((member) => String(member.id) !== String(memberId))
     );
   } catch (error) {
-    errorMessage.value = error?.response?.data?.message || "Failed to remove member.";
+    errorMessage.value =
+      error?.response?.data?.message || t("settings.member.status.errorRemove");
   } finally {
     removingMemberId.value = null;
   }

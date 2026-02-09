@@ -3,7 +3,7 @@
     <div class="modal" @click.stop>
       <div class="modal-header">
         <h2>{{ title }}</h2>
-        <button type="button" class="icon-button" @click="onClose" aria-label="?«ê¸°">
+        <button type="button" class="icon-button" @click="onClose" :aria-label="t('common.actions.close')">
           <MaterialSymbol name="close" :size="20" />
         </button>
       </div>
@@ -15,7 +15,10 @@
 </template>
 
 <script setup>
+import { useI18n } from "vue-i18n";
 import MaterialSymbol from "./MaterialSymbol.vue";
+
+const { t } = useI18n();
 
 const props = defineProps({
   open: { type: Boolean, default: false },

@@ -1,13 +1,13 @@
 <template>
   <hgroup>
-    <h1>Workspaces</h1>
+    <h1>{{ t("workspaceList.header.title") }}</h1>
     <div>
-      <button type="button" class="btn" @click="openModal">Add Workspace</button>
+      <button type="button" class="btn" @click="openModal">{{ t("workspaceList.actions.add") }}</button>
     </div>
   </hgroup>
-  <p v-if="isLoading">Loading...</p>
+  <p v-if="isLoading">{{ t("workspaceList.status.loading") }}</p>
   <p v-else-if="errorMessage">{{ errorMessage }}</p>
-  <p v-else-if="workspaces.length === 0">No workspaces yet.</p>
+  <p v-else-if="workspaces.length === 0">{{ t("workspaceList.empty.workspaces") }}</p>
   <ul v-else class="workspace-list">
     <li v-for="workspace in workspaces" :key="workspace.id" class="workspace-item">
       <div class="workspace-header">
@@ -17,7 +17,9 @@
               {{ workspace.name }}
             </router-link>
           </h2>
-          <Tag v-if="workspace.role_name">{{ workspace.role_name }}</Tag>
+          <Tag v-if="workspace.role_name">
+            {{ getRoleLabel("workspace_member", workspace.role_name) }}
+          </Tag>
         </div>
         <button
           type="button"
@@ -25,12 +27,18 @@
           @click="deleteWorkspace(workspace.id)"
           :disabled="deletingWorkspaceId === workspace.id"
         >
-          {{ deletingWorkspaceId === workspace.id ? "Deleting..." : "Delete" }}
+          {{
+            deletingWorkspaceId === workspace.id
+              ? t("workspaceList.actions.deleting")
+              : t("workspaceList.actions.delete")
+          }}
         </button>
       </div>
 
       <ul class="project-list">
-        <li v-if="!getProjects(workspace.id).length" class="project-empty">No projects yet.</li>
+        <li v-if="!getProjects(workspace.id).length" class="project-empty">
+          {{ t("workspaceList.empty.projects") }}
+        </li>
         <li v-for="project in getProjects(workspace.id)" :key="project.id">
           <router-link :to="`/workspace/${workspace.id}/project/${project.id}`">
             {{ project.name }}
@@ -40,20 +48,22 @@
     </li>
   </ul>
 
-  <BaseModal :open="isModalOpen" title="Add Workspace" @close="closeModal">
+  <BaseModal :open="isModalOpen" :title="t('workspaceList.modal.title')" @close="closeModal">
     <form class="modal-form" @submit.prevent="createWorkspace">
-      <label for="workspace-name">Workspace Name</label>
+      <label for="workspace-name">{{ t("workspaceList.modal.nameLabel") }}</label>
       <input
         id="workspace-name"
         v-model.trim="form.name"
         type="text"
-        placeholder="Workspace name"
+        :placeholder="t('workspaceList.modal.namePlaceholder')"
       />
       <p v-if="formError" class="form-error">{{ formError }}</p>
       <div class="modal-actions">
-        <button type="button" class="btn btn--secondary" @click="closeModal">Cancel</button>
+        <button type="button" class="btn btn--secondary" @click="closeModal">
+          {{ t("workspaceList.actions.cancel") }}
+        </button>
         <button type="submit" class="btn" :disabled="isCreating">
-          {{ isCreating ? "Creating..." : "Create" }}
+          {{ isCreating ? t("workspaceList.actions.creating") : t("workspaceList.actions.create") }}
         </button>
       </div>
     </form>
@@ -62,10 +72,14 @@
 
 <script setup>
 import { onMounted, ref } from "vue";
+import { useI18n } from "vue-i18n";
 import BaseModal from "../components/BaseModal.vue";
 import { useWorkspaceStore } from "../stores/workspaceStore";
 import Tag from "../components/Tag.vue";
+import { useRoleLabels } from "../lib/roleLabels";
 
+const { t } = useI18n();
+const { getRoleLabel } = useRoleLabels();
 const workspaceStore = useWorkspaceStore();
 const workspaces = ref([]);
 const isLoading = ref(false);
@@ -87,7 +101,7 @@ const fetchWorkspaces = async () => {
     );
   } catch (error) {
     workspaces.value = [];
-    errorMessage.value = "Failed to load workspaces.";
+    errorMessage.value = t("workspaceList.status.errorLoad");
   } finally {
     isLoading.value = false;
   }
@@ -107,7 +121,7 @@ const closeModal = () => {
 
 const createWorkspace = async () => {
   if (!form.value.name) {
-    formError.value = "Please enter a workspace name.";
+    formError.value = t("workspaceList.validation.nameRequired");
     return;
   }
 
@@ -119,7 +133,8 @@ const createWorkspace = async () => {
     await fetchWorkspaces();
     closeModal();
   } catch (error) {
-    formError.value = error?.response?.data?.message || "Failed to create workspace.";
+    formError.value =
+      error?.response?.data?.message || t("workspaceList.status.errorCreate");
   } finally {
     isCreating.value = false;
   }
@@ -127,7 +142,7 @@ const createWorkspace = async () => {
 
 const deleteWorkspace = async (workspaceId) => {
   if (!workspaceId) return;
-  const confirmed = window.confirm("Delete this workspace?");
+  const confirmed = window.confirm(t("workspaceList.confirm.delete"));
   if (!confirmed) return;
 
   deletingWorkspaceId.value = workspaceId;
@@ -137,7 +152,8 @@ const deleteWorkspace = async (workspaceId) => {
     await workspaceStore.deleteWorkspace(workspaceId);
     await fetchWorkspaces();
   } catch (error) {
-    errorMessage.value = error?.response?.data?.message || "Failed to delete workspace.";
+    errorMessage.value =
+      error?.response?.data?.message || t("workspaceList.status.errorDelete");
   } finally {
     deletingWorkspaceId.value = null;
   }

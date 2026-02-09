@@ -8,14 +8,17 @@
         :class="toast.type"
       >
         <span class="toast-message">{{ toast.message }}</span>
-        <button type="button" class="toast-close" @click="removeToast(toast.id)">닫기</button>
+        <button type="button" class="toast-close" @click="removeToast(toast.id)">{{ t("common.actions.close") }}</button>
       </div>
     </transition-group>
   </div>
 </template>
 
 <script setup>
+import { useI18n } from "vue-i18n";
 import { toastState, removeToast } from "../lib/toast";
+
+const { t } = useI18n();
 </script>
 
 <style scoped>

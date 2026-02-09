@@ -1,22 +1,22 @@
 <template>
   <hgroup>
     <div>
-      <h1 v-if="!isEditing">{{ issue.title || "Issue" }}</h1>
+      <h1 v-if="!isEditing">{{ issue.title || t("issue.detail.header.fallbackTitle") }}</h1>
       <input
         v-else
         v-model.trim="editForm.title"
         type="text"
         class="issue-title-input"
-        placeholder="Enter a title"
+        :placeholder="t('issue.detail.fields.titlePlaceholder')"
       />
-      <Tag>{{ issue.status || "" }}</Tag>
+      <Tag>{{ issueStatusLabel }}</Tag>
     </div>
     <div class="actions">
       <button v-if="!isEditing" class="btn btn--secondary btn--sm" @click="startEditing">
-        Edit
+        {{ t("issue.detail.actions.edit") }}
       </button>
       <button v-else class="btn btn--sm" @click="saveIssue" :disabled="isSaving">
-        {{ isSaving ? "Saving..." : "Save" }}
+        {{ isSaving ? t("issue.detail.actions.saving") : t("issue.detail.actions.save") }}
       </button>
       <button
         v-if="isEditing"
@@ -24,7 +24,7 @@
         @click="cancelEditing"
         :disabled="isSaving"
       >
-        Cancel
+        {{ t("issue.detail.actions.cancel") }}
       </button>
       <button
         v-if="canDeleteIssue"
@@ -32,28 +32,28 @@
         @click="deleteIssue"
         :disabled="isSaving || isDeleting"
       >
-        {{ isDeleting ? "Deleting..." : "Delete" }}
+        {{ isDeleting ? t("issue.detail.actions.deleting") : t("issue.detail.actions.delete") }}
       </button>
     </div>
   </hgroup>
 
-  <p v-if="isLoading">Loading...</p>
+  <p v-if="isLoading">{{ t("issue.detail.status.loading") }}</p>
   <p v-else-if="errorMessage">{{ errorMessage }}</p>
 
   <section v-else class="issue-grid">
     <div class="issue-main">
       <p v-if="!isEditing && issue.content">{{ issue.content }}</p>
-      <p v-else-if="!isEditing">No description.</p>
+      <p v-else-if="!isEditing">{{ t("issue.detail.empty.description") }}</p>
       <textarea
         v-else
         v-model.trim="editForm.content"
         class="issue-content-input"
         rows="8"
-        placeholder="Enter a description"
+        :placeholder="t('issue.detail.fields.descriptionPlaceholder')"
       ></textarea>
     </div>
     <aside class="issue-meta">
-      <h2>Assignees</h2>
+      <h2>{{ t("issue.detail.sections.assignees") }}</h2>
       <div class="role-picker">
         <RelatedMemberPicker
           v-for="role in roleOptions"
@@ -75,6 +75,7 @@
 
 <script setup>
 import { computed, onMounted, ref, watch } from "vue";
+import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 import api from "../lib/axios";
 import { addToast } from "../lib/toast";
@@ -83,6 +84,7 @@ import { useProjectMemberStore } from "../stores/projectMemberStore";
 import Tag from "../components/Tag.vue";
 import RelatedMemberPicker from "../components/RelatedMemberPicker.vue";
 
+const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const appStore = useAppStore();
@@ -110,12 +112,25 @@ const boardId = computed(() => route.params.boardId);
 const issueId = computed(() => route.params.issueId);
 const projectMembers = computed(() => projectMemberStore.getProjectMembers(projectId.value));
 
+const issueStatusLabel = computed(() => {
+  const key = String(issue.value?.status || "").toUpperCase();
+  if (!key) return "";
+  const map = {
+    BACKLOG: "issue.status.backlog",
+    IN_PROGRESS: "issue.status.inProgress",
+    IN_REVIEW: "issue.status.inReview",
+    DONE: "issue.status.done",
+  };
+  const labelKey = map[key];
+  return labelKey ? t(labelKey) : key;
+});
+
 const roleLabel = (role) => {
   const key = (role || "").toUpperCase();
-  if (key === "ASSIGNEE") return "담당자";
-  if (key === "REPORTER") return "보고자";
-  if (key === "REVIEWER") return "검토자";
-  if (key === "WATCHER") return "감시자";
+  if (key === "ASSIGNEE") return t("issue.detail.roles.assignee");
+  if (key === "REPORTER") return t("issue.detail.roles.reporter");
+  if (key === "REVIEWER") return t("issue.detail.roles.reviewer");
+  if (key === "WATCHER") return t("issue.detail.roles.watcher");
   return role || "";
 };
 const currentUserId = computed(() => appStore.currentUser?.id);
@@ -170,7 +185,7 @@ const fetchIssue = async (options = {}) => {
       };
     }
   } catch (error) {
-    errorMessage.value = "Failed to load issue.";
+    errorMessage.value = t("issue.detail.status.errorLoad");
   } finally {
     if (!silent) {
       isLoading.value = false;
@@ -200,7 +215,7 @@ const cancelEditing = () => {
 const saveIssue = async () => {
   if (!issueId.value) return;
   if (!editForm.value.title) {
-    errorMessage.value = "Please enter a title.";
+    errorMessage.value = t("issue.detail.validation.titleRequired");
     return;
   }
 
@@ -218,9 +233,10 @@ const saveIssue = async () => {
       content: editForm.value.content,
     };
     isEditing.value = false;
-    addToast({ message: "Issue updated.", type: "success" });
+    addToast({ message: t("issue.detail.toast.updated"), type: "success" });
   } catch (error) {
-    const message = error?.response?.data?.message || "Failed to update issue.";
+    const message =
+      error?.response?.data?.message || t("issue.detail.status.errorUpdate");
     errorMessage.value = message;
     addToast({ message, type: "error" });
   } finally {
@@ -231,7 +247,7 @@ const saveIssue = async () => {
 const deleteIssue = async () => {
   if (!issueId.value) return;
   if (!canDeleteIssue.value) return;
-  const confirmed = window.confirm("Delete this issue?");
+  const confirmed = window.confirm(t("issue.detail.confirm.delete"));
   if (!confirmed) return;
 
   isDeleting.value = true;
@@ -239,7 +255,7 @@ const deleteIssue = async () => {
 
   try {
     await api.delete(`/issues/${issueId.value}`);
-    addToast({ message: "Issue deleted.", type: "success" });
+    addToast({ message: t("issue.detail.toast.deleted"), type: "success" });
     if (workspaceId.value && projectId.value && boardId.value) {
       router.push(
         `/workspace/${workspaceId.value}/project/${projectId.value}/board/${boardId.value}`
@@ -248,7 +264,8 @@ const deleteIssue = async () => {
     }
     router.back();
   } catch (error) {
-    const message = error?.response?.data?.message || "Failed to delete issue.";
+    const message =
+      error?.response?.data?.message || t("issue.detail.status.errorDelete");
     errorMessage.value = message;
     addToast({ message, type: "error" });
   } finally {
@@ -272,7 +289,7 @@ const fetchIssueMembers = async (options = {}) => {
     const res = await api.get(`/issues/${issueId.value}/members`);
     updateIssueMembers(res.data?.data || []);
   } catch (error) {
-    relatedError.value = "Failed to load related members.";
+    relatedError.value = t("issue.detail.related.errorLoad");
   } finally {
     if (!silent) {
       isUpdatingRelated.value = false;
@@ -284,7 +301,7 @@ onMounted(fetchIssueMembers);
 watch(issueId, fetchIssueMembers);
 
 const removeRelatedMember = async (issueMemberId) => {
-  const confirmed = window.confirm("Remove this related member?");
+  const confirmed = window.confirm(t("issue.detail.related.confirmRemove"));
   if (!confirmed) return;
 
   updatingMemberId.value = issueMemberId;
@@ -294,7 +311,8 @@ const removeRelatedMember = async (issueMemberId) => {
     await api.delete(`/issues/members/${issueMemberId}`);
     await fetchIssueMembers({ silent: true });
   } catch (error) {
-    relatedError.value = error?.response?.data?.message || "Failed to remove related member.";
+    relatedError.value =
+      error?.response?.data?.message || t("issue.detail.related.errorRemove");
   } finally {
     updatingMemberId.value = null;
   }
@@ -303,7 +321,7 @@ const removeRelatedMember = async (issueMemberId) => {
 const addRelatedMemberByRole = async (role, memberId) => {
   const resolvedMemberId = memberId;
   if (!resolvedMemberId) {
-    relatedError.value = "Please select a member.";
+    relatedError.value = t("issue.detail.related.validation.selectMember");
     return;
   }
 
@@ -329,7 +347,8 @@ const addRelatedMemberByRole = async (role, memberId) => {
     });
     await fetchIssueMembers({ silent: true });
   } catch (error) {
-    relatedError.value = error?.response?.data?.message || "Failed to update related members.";
+    relatedError.value =
+      error?.response?.data?.message || t("issue.detail.related.errorUpdate");
   } finally {
     isUpdatingRelated.value = false;
   }

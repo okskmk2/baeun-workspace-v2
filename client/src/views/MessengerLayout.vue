@@ -1,18 +1,20 @@
 <template>
   <div class="AcountLayout">
     <aside>
-      <button class="btn btn--sm" type="button" @click="openModal">채널 만들기</button>
+      <button class="btn btn--sm" type="button" @click="openModal">
+        {{ t("messenger.layout.actions.createChannel") }}
+      </button>
       <nav class="chat-nav">
-        <p v-if="isLoading">불러오는 중...</p>
+        <p v-if="isLoading">{{ t("messenger.layout.status.loading") }}</p>
         <p v-else-if="errorMessage">{{ errorMessage }}</p>
-        <p v-else-if="rooms.length === 0">채널이 없습니다.</p>
+        <p v-else-if="rooms.length === 0">{{ t("messenger.layout.empty.channels") }}</p>
         <template v-else>
           <router-link
             v-for="room in rooms"
             :key="room.id"
             :to="`/workspace/${workspaceId}/project/${projectId}/messenger/${room.id}`"
           >
-            {{ room.name || "이름 없는 채널" }}
+            {{ room.name || t("messenger.layout.fallback.channelName") }}
           </router-link>
         </template>
       </nav>
@@ -22,15 +24,28 @@
     </main>
   </div>
 
-  <BaseModal :open="isModalOpen" title="채널 만들기" @close="closeModal">
+  <BaseModal
+    :open="isModalOpen"
+    :title="t('messenger.layout.modal.title')"
+    @close="closeModal"
+  >
     <form class="modal-form" @submit.prevent="createChannel">
-      <label for="channel-name">채널 이름</label>
-      <input id="channel-name" v-model.trim="form.name" type="text" placeholder="채널 이름" />
+      <label for="channel-name">{{ t("messenger.layout.modal.nameLabel") }}</label>
+      <input
+        id="channel-name"
+        v-model.trim="form.name"
+        type="text"
+        :placeholder="t('messenger.layout.modal.namePlaceholder')"
+      />
       <p v-if="formError" class="form-error">{{ formError }}</p>
       <div class="modal-actions">
-        <button type="button" class="btn btn--secondary" @click="closeModal">취소</button>
+        <button type="button" class="btn btn--secondary" @click="closeModal">
+          {{ t("messenger.layout.actions.cancel") }}
+        </button>
         <button type="submit" class="btn" :disabled="isCreating">
-          {{ isCreating ? "생성 중..." : "생성" }}
+          {{
+            isCreating ? t("messenger.layout.actions.creating") : t("messenger.layout.actions.create")
+          }}
         </button>
       </div>
     </form>
@@ -39,12 +54,14 @@
 
 <script setup>
 import { computed, onMounted, ref, watch } from "vue";
+import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 import api from "../lib/axios";
 import { addToast } from "../lib/toast";
 import BaseModal from "../components/BaseModal.vue";
 import { useChatStore } from "../stores/chatStore";
 
+const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const chatStore = useChatStore();
@@ -71,7 +88,7 @@ const fetchRooms = async () => {
   try {
     await chatStore.fetchRooms(projectId.value);
   } catch (error) {
-    errorMessage.value = "채널 목록을 불러오지 못했습니다.";
+    errorMessage.value = t("messenger.layout.status.errorLoad");
   } finally {
     isLoading.value = false;
   }
@@ -79,7 +96,7 @@ const fetchRooms = async () => {
 
 const openModal = () => {
   if (!projectId.value) {
-    formError.value = "프로젝트가 선택되지 않았습니다.";
+    formError.value = t("messenger.layout.validation.noProject");
     return;
   }
   form.value = { name: "" };
@@ -93,12 +110,12 @@ const closeModal = () => {
 
 const createChannel = async () => {
   if (!form.value.name) {
-    formError.value = "채널 이름을 입력해 주세요.";
+    formError.value = t("messenger.layout.validation.nameRequired");
     return;
   }
 
   if (!projectId.value) {
-    formError.value = "프로젝트가 선택되지 않았습니다.";
+    formError.value = t("messenger.layout.validation.noProject");
     return;
   }
 
@@ -113,7 +130,7 @@ const createChannel = async () => {
     });
     await fetchRooms();
     closeModal();
-    addToast({ message: "채널이 생성되었습니다.", type: "success" });
+    addToast({ message: t("messenger.layout.toast.created"), type: "success" });
     const newRoomId = res.data?.data?.id;
     if (newRoomId) {
       await router.push(
@@ -121,7 +138,8 @@ const createChannel = async () => {
       );
     }
   } catch (error) {
-    const message = error?.response?.data?.message || "채널 생성에 실패했습니다.";
+    const message =
+      error?.response?.data?.message || t("messenger.layout.status.errorCreate");
     formError.value = message;
     addToast({ message, type: "error" });
   } finally {

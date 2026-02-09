@@ -85,60 +85,60 @@ nav a:hover {
   padding: 4px;
 }
 
-.WorkspaceLayout {
+.ProjectLayout {
   display: flex;
   flex-direction: column;
   --gnb-bg: #ffffff;
   --gnb-fg: #111827;
 }
 
-.WorkspaceLayout .workspaceName {
+.ProjectLayout .workspaceName {
   text-decoration: none;
   color: inherit;
 }
 
-.WorkspaceLayout > header {
+.ProjectLayout > header {
   display: flex;
   justify-content: space-between;
   padding: 24px 40px;
   background-color: var(--gnb-bg);
   color: var(--gnb-fg);
 }
-.WorkspaceLayout > header > nav {
+.ProjectLayout > header > nav {
   display: flex;
   align-items: center;
 }
 
-.WorkspaceLayout .left {
+.ProjectLayout .left {
   display: flex;
   gap: 7rem;
 }
 
-.WorkspaceLayout .mainnav {
+.ProjectLayout .mainnav {
   font-size: 18px;
   gap: 3rem;
   display: flex;
 }
-.WorkspaceLayout > header a {
+.ProjectLayout > header a {
   color: var(--gnb-fg);
 }
 
-.WorkspaceLayout > header .utilnav a {
+.ProjectLayout > header .utilnav a {
   color: var(--gnb-fg);
 }
-.WorkspaceLayout .utilnav {
+.ProjectLayout .utilnav {
   font-size: 15px;
   gap: 20px;
   display: flex;
 }
 
-.WorkspaceLayout main {
+.ProjectLayout main {
   background-color: white;
   padding: 2rem 3rem;
   margin: 1rem;
 }
 
-.WorkspaceLayout > header .projectselect {
+.ProjectLayout > header .projectselect {
   padding: 4px;
   border: 1px solid #ddd;
   border-radius: 2px;

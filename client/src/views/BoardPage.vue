@@ -1,7 +1,9 @@
 <template>
   <hgroup>
-    <h1>{{ board.name || "Board" }}</h1>
-    <button type="button" class="btn" @click="openModal">Create Issue</button>
+    <h1>{{ board.name || t("board.page.header.fallbackTitle") }}</h1>
+    <button type="button" class="btn" @click="openModal">
+      {{ t("board.page.actions.createIssue") }}
+    </button>
   </hgroup>
 
   <div class="kanban">
@@ -37,31 +39,36 @@
               <span>{{ assignee.name }}</span>
               <Tag
                 v-if="assignee.role_name"
-                :label="assignee.role_name"
+                :label="getRoleLabel('issue_member', assignee.role_name)"
                 :variant="roleVariant(assignee.role_name)"
               />
             </div>
           </div>
-          <p v-else>No assignees</p>
+          <p v-else>{{ t("board.page.empty.assignees") }}</p>
         </article>
       </div>
     </section>
   </div>
 
-  <BaseModal :open="isModalOpen" title="Create Issue" @close="closeModal">
+  <BaseModal :open="isModalOpen" :title="t('board.page.modal.title')" @close="closeModal">
     <form class="modal-form" @submit.prevent="createIssue">
-      <label for="issue-title">Title</label>
-      <input id="issue-title" v-model.trim="form.title" type="text" placeholder="Issue title" />
+      <label for="issue-title">{{ t("board.page.modal.titleLabel") }}</label>
+      <input
+        id="issue-title"
+        v-model.trim="form.title"
+        type="text"
+        :placeholder="t('board.page.modal.titlePlaceholder')"
+      />
 
-      <label for="issue-content">Description</label>
+      <label for="issue-content">{{ t("board.page.modal.descriptionLabel") }}</label>
       <textarea
         id="issue-content"
         v-model.trim="form.content"
         rows="4"
-        placeholder="Enter issue details"
+        :placeholder="t('board.page.modal.descriptionPlaceholder')"
       ></textarea>
 
-      <label for="issue-status">Status</label>
+      <label for="issue-status">{{ t("board.page.modal.statusLabel") }}</label>
       <select id="issue-status" v-model="form.status">
         <option v-for="status in statuses" :key="status" :value="status">
           {{ statusLabels[status] }}
@@ -70,9 +77,11 @@
 
       <p v-if="formError" class="form-error">{{ formError }}</p>
       <div class="modal-actions">
-        <button type="button" class="btn btn--secondary" @click="closeModal">Cancel</button>
+        <button type="button" class="btn btn--secondary" @click="closeModal">
+          {{ t("board.page.actions.cancel") }}
+        </button>
         <button type="submit" class="btn" :disabled="isCreating">
-          {{ isCreating ? "Creating..." : "Create" }}
+          {{ isCreating ? t("board.page.actions.creating") : t("board.page.actions.create") }}
         </button>
       </div>
     </form>
@@ -81,11 +90,15 @@
 
 <script setup>
 import { computed, onMounted, ref, watch } from "vue";
+import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 import api from "../lib/axios";
 import BaseModal from "../components/BaseModal.vue";
 import Tag from "../components/Tag.vue";
+import { useRoleLabels } from "../lib/roleLabels";
 
+const { t } = useI18n();
+const { getRoleLabel } = useRoleLabels();
 const route = useRoute();
 
 const board = ref({});
@@ -101,12 +114,12 @@ const form = ref({
 });
 
 const statuses = ["BACKLOG", "IN_PROGRESS", "IN_REVIEW", "DONE"];
-const statusLabels = {
-  BACKLOG: "Backlog",
-  IN_PROGRESS: "In Progress",
-  IN_REVIEW: "In Review",
-  DONE: "Done",
-};
+const statusLabels = computed(() => ({
+  BACKLOG: t("issue.status.backlog"),
+  IN_PROGRESS: t("issue.status.inProgress"),
+  IN_REVIEW: t("issue.status.inReview"),
+  DONE: t("issue.status.done"),
+}));
 
 const workspaceId = computed(() => route.params.workspaceId);
 const projectId = computed(() => route.params.projectId);
@@ -167,7 +180,7 @@ const onDrop = async (status) => {
 
 const openModal = () => {
   if (!boardId.value) {
-    formError.value = "Please select a board.";
+    formError.value = t("board.page.validation.noBoard");
     return;
   }
   form.value = { title: "", content: "", status: "BACKLOG" };
@@ -181,7 +194,7 @@ const closeModal = () => {
 
 const createIssue = async () => {
   if (!form.value.title) {
-    formError.value = "Please enter a title.";
+    formError.value = t("board.page.validation.titleRequired");
     return;
   }
 
@@ -198,7 +211,7 @@ const createIssue = async () => {
     await fetchIssues();
     closeModal();
   } catch (error) {
-    formError.value = error?.response?.data?.message || "Failed to create issue.";
+    formError.value = error?.response?.data?.message || t("board.page.status.errorCreate");
   } finally {
     isCreating.value = false;
   }

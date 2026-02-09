@@ -1,49 +1,53 @@
 <template>
   <hgroup>
-    <h1>Activity Feed</h1>
-    <div class="actions">
-      <button type="button" class="btn btn--ghost btn--sm">Filter</button>
-    </div>
+    <h1>{{ t("wiki.home.header.title") }}</h1>
   </hgroup>
 
   <div class="feed">
     <div class="feed-group">
-      <div class="feed-date">Today</div>
+      <div class="feed-date">{{ t("wiki.home.feed.today") }}</div>
       <article class="feed-item">
-        <div class="feed-icon">U</div>
+        <ActivityBadge type="U" />
         <div class="feed-body">
-          <div class="feed-title">"Report Guide" content updated</div>
-          <div class="feed-meta">jina · 11:40</div>
+          <div class="feed-title">{{ t("wiki.home.feed.items.today1") }}</div>
+          <div class="feed-meta">{{ t("wiki.home.feed.items.today1Meta") }}</div>
         </div>
       </article>
       <article class="feed-item">
-        <div class="feed-icon">C</div>
+        <ActivityBadge type="C" />
         <div class="feed-body">
-          <div class="feed-title">Comment added to "Server Deployment"</div>
-          <div class="feed-meta">mira · 09:22</div>
+          <div class="feed-title">{{ t("wiki.home.feed.items.today2") }}</div>
+          <div class="feed-meta">{{ t("wiki.home.feed.items.today2Meta") }}</div>
         </div>
       </article>
     </div>
 
     <div class="feed-group">
-      <div class="feed-date">Yesterday</div>
+      <div class="feed-date">{{ t("wiki.home.feed.yesterday") }}</div>
       <article class="feed-item">
-        <div class="feed-icon">U</div>
+        <ActivityBadge type="U" />
         <div class="feed-body">
-          <div class="feed-title">"Access Policy" outline updated</div>
-          <div class="feed-meta">sojin · 17:05</div>
+          <div class="feed-title">{{ t("wiki.home.feed.items.yesterday1") }}</div>
+          <div class="feed-meta">{{ t("wiki.home.feed.items.yesterday1Meta") }}</div>
         </div>
       </article>
       <article class="feed-item">
-        <div class="feed-icon">C</div>
+        <ActivityBadge type="C" />
         <div class="feed-body">
-          <div class="feed-title">Comment added to "Release Notes"</div>
-          <div class="feed-meta">jojo · 15:10</div>
+          <div class="feed-title">{{ t("wiki.home.feed.items.yesterday2") }}</div>
+          <div class="feed-meta">{{ t("wiki.home.feed.items.yesterday2Meta") }}</div>
         </div>
       </article>
     </div>
   </div>
 </template>
+
+<script setup>
+import { useI18n } from "vue-i18n";
+import ActivityBadge from "../components/ActivityBadge.vue";
+
+const { t } = useI18n();
+</script>
 
 <style scoped>
 .section-header {
@@ -85,19 +89,6 @@
   border-radius: 12px;
   background: #f9fafb;
   border: 1px solid #f3f4f6;
-}
-
-.feed-icon {
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #0f172a;
-  color: #fff;
-  font-size: 12px;
-  font-weight: 700;
 }
 
 .feed-title {

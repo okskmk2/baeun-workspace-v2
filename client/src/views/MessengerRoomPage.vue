@@ -1,23 +1,25 @@
 <template>
   <hgroup>
     <div>
-      <h1>{{ roomTitle }}</h1>
+      <h1>{{ displayRoomTitle }}</h1>
       <span class="room-status" :class="{ offline: !isConnected }">
-        {{ isConnected ? "연결됨" : "연결 끊김" }}
+        {{ isConnected ? t("messenger.room.status.connected") : t("messenger.room.status.disconnected") }}
       </span>
     </div>
     <div class="actions">
-      <button type="button" class="btn btn--sm" @click="openInviteModal">초대하기</button>
+      <button type="button" class="btn btn--sm" @click="openInviteModal">
+        {{ t("messenger.room.actions.invite") }}
+      </button>
       <button
         type="button"
         class="btn btn--danger btn--sm"
         :disabled="isDeleting"
         @click="deletechannel"
       >
-        {{ isDeleting ? "삭제 중..." : "삭제" }}
+        {{ isDeleting ? t("messenger.room.actions.deleting") : t("messenger.room.actions.delete") }}
       </button>
       <button type="button" class="btn btn--secondary btn--sm" @click="openMembersModal">
-        참여자 확인
+        {{ t("messenger.room.actions.members") }}
       </button>
     </div>
   </hgroup>
@@ -33,51 +35,64 @@
     >
       <div class="message-content">{{ message.content }}</div>
       <div class="message-meta">
-        {{ message.creator_name || "알수없음" }} · {{ formatTime(message.created_at) }}
+        {{ message.creator_name || t("messenger.room.fallback.unknownUser") }} ·
+        {{ formatTime(message.created_at) }}
       </div>
     </div>
-    <p v-if="!messages.length" class="empty">메시지가 없습니다.</p>
+    <p v-if="!messages.length" class="empty">{{ t("messenger.room.empty.messages") }}</p>
   </div>
 
   <form class="composer" @submit.prevent="sendMessage">
     <input
       v-model.trim="draft"
       type="text"
-      placeholder="메시지를 입력하세요"
+      :placeholder="t('messenger.room.composer.placeholder')"
       :disabled="isSending"
     />
-    <button type="submit" class="btn btn--sm" :disabled="isSending || !draft">전송</button>
+    <button type="submit" class="btn btn--sm" :disabled="isSending || !draft">
+      {{ t("messenger.room.composer.send") }}
+    </button>
   </form>
 
-  <BaseModal :open="isInviteOpen" title="멤버 초대" @close="closeInviteModal">
+  <BaseModal :open="isInviteOpen" :title="t('messenger.room.invite.modal.title')" @close="closeInviteModal">
     <form class="modal-form" @submit.prevent="inviteMember">
-      <label for="invite-member">프로젝트 구성원</label>
+      <label for="invite-member">{{ t("messenger.room.invite.modal.membersLabel") }}</label>
       <select id="invite-member" v-model="selectedMemberId">
-        <option value="">선택하세요</option>
+        <option value="">{{ t("messenger.room.invite.modal.selectPlaceholder") }}</option>
         <option v-for="member in projectMembers" :key="member.id" :value="member.id">
           {{ member.name }} ({{ member.email }})
         </option>
       </select>
       <p v-if="inviteError" class="form-error">{{ inviteError }}</p>
       <div class="modal-actions">
-        <button type="button" class="btn btn--secondary" @click="closeInviteModal">취소</button>
+        <button type="button" class="btn btn--secondary" @click="closeInviteModal">
+          {{ t("messenger.room.actions.cancel") }}
+        </button>
         <button type="submit" class="btn" :disabled="isInviting">
-          {{ isInviting ? "초대 중..." : "초대" }}
+          {{ isInviting ? t("messenger.room.actions.inviting") : t("messenger.room.actions.inviteSubmit") }}
         </button>
       </div>
     </form>
   </BaseModal>
 
-  <BaseModal :open="isMembersOpen" title="참여자 목록" @close="closeMembersModal">
+  <BaseModal
+    :open="isMembersOpen"
+    :title="t('messenger.room.members.modal.title')"
+    @close="closeMembersModal"
+  >
     <div class="member-list">
-      <p v-if="isMembersLoading" class="status">불러오는 중...</p>
+      <p v-if="isMembersLoading" class="status">{{ t("messenger.room.members.status.loading") }}</p>
       <p v-else-if="membersError" class="status error">{{ membersError }}</p>
-      <p v-else-if="!chatMembers.length" class="status">참여자가 없습니다.</p>
+      <p v-else-if="!chatMembers.length" class="status">
+        {{ t("messenger.room.members.empty") }}
+      </p>
       <ul v-else>
         <li v-for="member in chatMembers" :key="member.id">
           <span class="member-name">{{ member.name }}</span>
           <span class="member-meta">{{ member.email }}</span>
-          <span class="member-role">{{ member.role_name }}</span>
+          <span class="member-role">
+            {{ getRoleLabel("channel_member", member.role_name) }}
+          </span>
         </li>
       </ul>
     </div>
@@ -86,12 +101,16 @@
 
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 import api from "../lib/axios";
 import BaseModal from "../components/BaseModal.vue";
 import { useProjectMemberStore } from "../stores/projectMemberStore";
 import { useChatStore } from "../stores/chatStore";
+import { useRoleLabels } from "../lib/roleLabels";
 
+const { t, locale } = useI18n();
+const { getRoleLabel } = useRoleLabels();
 const route = useRoute();
 const router = useRouter();
 const projectMemberStore = useProjectMemberStore();
@@ -104,7 +123,8 @@ const messages = ref([]);
 const draft = ref("");
 const isSending = ref(false);
 const isConnected = ref(false);
-const roomTitle = ref("채널");
+const roomTitle = ref("");
+const displayRoomTitle = computed(() => roomTitle.value || t("messenger.room.fallback.roomTitle"));
 let socket = null;
 const isInviteOpen = ref(false);
 const isInviting = ref(false);
@@ -122,15 +142,15 @@ const chatMembers = ref([]);
 
 const fetchchannelDetail = async () => {
   if (!roomId.value) {
-    roomTitle.value = "채널";
+    roomTitle.value = "";
     return;
   }
 
   try {
     const res = await api.get(`/channels/${roomId.value}`);
-    roomTitle.value = res.data?.data?.name || "채널";
+    roomTitle.value = res.data?.data?.name || "";
   } catch (error) {
-    roomTitle.value = "채널";
+    roomTitle.value = "";
   }
 };
 
@@ -154,7 +174,7 @@ const fetchChatMembers = async () => {
     chatMembers.value = res.data?.data || [];
   } catch (error) {
     chatMembers.value = [];
-    membersError.value = "참여자 목록을 불러오지 못했습니다.";
+    membersError.value = t("messenger.room.members.status.errorLoad");
   } finally {
     isMembersLoading.value = false;
   }
@@ -175,11 +195,9 @@ const connectSocket = () => {
       console.log("연결됨");
     }
   });
-
   socket.addEventListener("close", () => {
     isConnected.value = false;
   });
-
   socket.addEventListener("message", (event) => {
     try {
       const payload = JSON.parse(event.data);
@@ -209,7 +227,12 @@ const sendMessage = async () => {
 const formatTime = (value) => {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "";
-  return date.toLocaleTimeString("ko-KR", {
+  const localeMap = {
+    ko: "ko-KR",
+    en: "en-US",
+  };
+  const timeLocale = localeMap[locale.value] || "en-US";
+  return date.toLocaleTimeString(timeLocale, {
     hour: "2-digit",
     minute: "2-digit",
   });
@@ -242,12 +265,12 @@ const closeMembersModal = () => {
 
 const inviteMember = async () => {
   if (!selectedMemberId.value) {
-    inviteError.value = "초대할 멤버를 선택해 주세요.";
+    inviteError.value = t("messenger.room.invite.validation.selectMember");
     return;
   }
 
   if (!roomId.value) {
-    inviteError.value = "채널이 선택되지 않았습니다.";
+    inviteError.value = t("messenger.room.invite.validation.noChannel");
     return;
   }
 
@@ -260,7 +283,7 @@ const inviteMember = async () => {
     });
     closeInviteModal();
   } catch (error) {
-    inviteError.value = error?.response?.data?.message || "초대에 실패했습니다.";
+    inviteError.value = error?.response?.data?.message || t("messenger.room.invite.status.error");
   } finally {
     isInviting.value = false;
   }
@@ -268,7 +291,7 @@ const inviteMember = async () => {
 
 const deletechannel = async () => {
   if (!roomId.value) return;
-  const confirmed = window.confirm("채널을 삭제할까요? 되돌릴 수 없습니다.");
+  const confirmed = window.confirm(t("messenger.room.confirm.delete"));
   if (!confirmed) return;
 
   isDeleting.value = true;
@@ -283,7 +306,7 @@ const deletechannel = async () => {
     await chatStore.fetchRooms(projectId.value);
     await router.push(`/workspace/${workspaceId.value}/project/${projectId.value}/messenger`);
   } catch (error) {
-    deleteError.value = error?.response?.data?.message || "채널 삭제에 실패했습니다.";
+    deleteError.value = error?.response?.data?.message || t("messenger.room.status.errorDelete");
   } finally {
     isDeleting.value = false;
   }

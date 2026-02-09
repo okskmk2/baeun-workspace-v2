@@ -1,0 +1,612 @@
+{
+	"common": {
+		"actions": {
+			"close": "Close"
+		}
+	},
+	"roles": {
+		"workspace_member": {
+			"owner": "Owner",
+			"admin": "Admin",
+			"member": "Member",
+			"guest": "Guest"
+		},
+		"project_member": {
+			"owner": "Owner",
+			"admin": "Admin",
+			"member": "Member",
+			"guest": "Guest"
+		},
+		"issue_member": {
+			"assignee": "Assignee",
+			"reporter": "Reporter",
+			"reviewer": "Reviewer",
+			"watcher": "Watcher"
+		},
+		"page_member": {
+			"owner": "Owner",
+			"editor": "Editor",
+			"viewer": "Viewer"
+		},
+		"channel_member": {
+			"owner": "Owner",
+			"admin": "Admin",
+			"member": "Participant",
+			"guest": "Guest"
+		}
+	},
+	"layout": {
+		"default": {
+			"brand": "Baeun Workspace",
+			"nav": {
+				"overview": "Overview",
+				"store": "Store"
+			},
+			"util": {
+				"signup": "Sign up",
+				"login": "Login",
+				"account": "Account"
+			}
+		},
+		"account": {
+			"nav": {
+				"profile": "Profile",
+				"security": "Account Security",
+				"plan": "Plan & Subscription",
+				"billing": "Billing History",
+				"workspaces": "Workspaces"
+			}
+		},
+		"project": {
+			"projectNameFallback": "Project",
+			"nav": {
+				"board": "Board",
+				"wiki": "Wiki",
+				"messenger": "Messenger"
+			},
+			"util": {
+				"settings": "Settings",
+				"account": "Account"
+			}
+		},
+		"settings": {
+			"nav": {
+				"general": "General",
+				"members": "Members"
+			}
+		}
+	},
+	"settings": {
+		"home": {
+			"header": {
+				"title": "Project Settings",
+				"subtitle": "Manage the project name and theme."
+			},
+			"status": {
+				"loading": "Loading...",
+				"errorLoad": "Failed to load project details.",
+				"errorUpdate": "Failed to update project settings."
+			},
+			"form": {
+				"nameLabel": "Project Name",
+				"namePlaceholder": "Project name"
+			},
+			"theme": {
+				"title": "GNB Theme",
+				"subtitle": "Select a background and foreground pair.",
+				"palette": {
+					"classic": "Classic",
+					"indigo": "Indigo",
+					"rose": "Rose",
+					"emerald": "Emerald",
+					"amber": "Amber",
+					"sky": "Sky",
+					"stone": "Stone",
+					"violet": "Violet",
+					"teal": "Teal"
+				}
+			},
+			"actions": {
+				"save": "Save",
+				"saving": "Saving..."
+			},
+			"validation": {
+				"nameRequired": "Please enter a project name.",
+				"themeRequired": "Please select a theme."
+			},
+			"toast": {
+				"updated": "Project settings updated."
+			}
+		},
+		"member": {
+			"header": {
+				"title": "Project Members"
+			},
+			"status": {
+				"loading": "Loading...",
+				"errorInvite": "Invite failed.",
+				"errorRemove": "Failed to remove member."
+			},
+			"actions": {
+				"invite": "Invite Project Member",
+				"remove": "Remove Member",
+				"removing": "Removing...",
+				"cancel": "Cancel",
+				"submitInvite": "Invite",
+				"inviting": "Inviting..."
+			},
+			"modal": {
+				"title": "Invite Project Member",
+				"membersLabel": "Workspace Members",
+				"selectPlaceholder": "Select a member"
+			},
+			"validation": {
+				"selectMember": "Please select a member to invite.",
+				"noProject": "No project selected."
+			},
+			"confirm": {
+				"remove": "Remove this member?"
+			}
+		}
+	},
+	"workspace": {
+		"home": {
+			"header": {
+				"title": "Projects"
+			},
+			"status": {
+				"loading": "Loading...",
+				"errorLoad": "Failed to load projects.",
+				"errorCreate": "Failed to create project.",
+				"errorDelete": "Failed to delete project."
+			},
+			"empty": {
+				"projects": "No projects."
+			},
+			"actions": {
+				"create": "Create Project",
+				"delete": "Delete",
+				"deleting": "Deleting...",
+				"cancel": "Cancel",
+				"submit": "Create",
+				"creating": "Creating..."
+			},
+			"modal": {
+				"title": "Create Project",
+				"nameLabel": "Project Name",
+				"namePlaceholder": "Project name"
+			},
+			"validation": {
+				"nameRequired": "Please enter a project name.",
+				"noWorkspace": "No workspace selected."
+			},
+			"confirm": {
+				"delete": "Delete this project?"
+			}
+		}
+	},
+	"board": {
+		"layout": {
+			"actions": {
+				"create": "Create Board",
+				"cancel": "Cancel",
+				"submit": "Create",
+				"creating": "Creating..."
+			},
+			"status": {
+				"loading": "Loading...",
+				"errorLoad": "Failed to load boards.",
+				"errorCreate": "Failed to create board."
+			},
+			"empty": {
+				"boards": "No boards yet."
+			},
+			"modal": {
+				"title": "Create Board",
+				"nameLabel": "Board Name",
+				"namePlaceholder": "Board name"
+			},
+			"validation": {
+				"noProject": "No project selected.",
+				"nameRequired": "Please enter a board name."
+			}
+		},
+		"home": {
+			"header": {
+				"title": "Active Boards"
+			},
+			"actions": {
+				"filter": "Filter"
+			},
+			"feed": {
+				"today": "Today",
+				"yesterday": "Yesterday",
+				"items": {
+					"today1": "\"Login error\" status changed to In Progress",
+					"today1Meta": "Lina · 10:32",
+					"today2": "Created \"Access policy\"",
+					"today2Meta": "jojo · 09:10",
+					"yesterday1": "\"Release checklist\" status changed to In Review",
+					"yesterday1Meta": "mira · 18:42",
+					"yesterday2": "Created \"Build timeline\"",
+					"yesterday2Meta": "sojin · 15:20"
+				}
+			}
+		},
+		"page": {
+			"header": {
+				"fallbackTitle": "Board"
+			},
+			"actions": {
+				"createIssue": "Create Issue",
+				"cancel": "Cancel",
+				"create": "Create",
+				"creating": "Creating..."
+			},
+			"empty": {
+				"assignees": "No assignees"
+			},
+			"modal": {
+				"title": "Create Issue",
+				"titleLabel": "Title",
+				"titlePlaceholder": "Issue title",
+				"descriptionLabel": "Description",
+				"descriptionPlaceholder": "Enter issue details",
+				"statusLabel": "Status"
+			},
+			"validation": {
+				"noBoard": "Please select a board.",
+				"titleRequired": "Please enter a title."
+			},
+			"status": {
+				"errorCreate": "Failed to create issue."
+			}
+		}
+	},
+	"issue": {
+		"status": {
+			"backlog": "Backlog",
+			"inProgress": "In Progress",
+			"inReview": "In Review",
+			"done": "Done"
+		},
+		"detail": {
+			"header": {
+				"fallbackTitle": "Issue"
+			},
+			"actions": {
+				"edit": "Edit",
+				"save": "Save",
+				"saving": "Saving...",
+				"cancel": "Cancel",
+				"delete": "Delete",
+				"deleting": "Deleting..."
+			},
+			"status": {
+				"loading": "Loading...",
+				"errorLoad": "Failed to load issue.",
+				"errorUpdate": "Failed to update issue.",
+				"errorDelete": "Failed to delete issue."
+			},
+			"fields": {
+				"titlePlaceholder": "Enter a title",
+				"descriptionPlaceholder": "Enter a description"
+			},
+			"empty": {
+				"description": "No description."
+			},
+			"sections": {
+				"assignees": "Assignees"
+			},
+			"roles": {
+				"assignee": "Assignee",
+				"reporter": "Reporter",
+				"reviewer": "Reviewer",
+				"watcher": "Watcher"
+			},
+			"validation": {
+				"titleRequired": "Please enter a title."
+			},
+			"toast": {
+				"updated": "Issue updated.",
+				"deleted": "Issue deleted."
+			},
+			"confirm": {
+				"delete": "Delete this issue?"
+			},
+			"related": {
+				"errorLoad": "Failed to load related members.",
+				"confirmRemove": "Remove this related member?",
+				"errorRemove": "Failed to remove related member.",
+				"validation": {
+					"selectMember": "Please select a member."
+				},
+				"errorUpdate": "Failed to update related members."
+			}
+		}
+	},
+	"wiki": {
+		"layout": {
+			"actions": {
+				"create": "Create Page",
+				"cancel": "Cancel",
+				"submit": "Create",
+				"creating": "Creating..."
+			},
+			"status": {
+				"loading": "Loading...",
+				"errorLoad": "Failed to load pages.",
+				"errorCreate": "Failed to create page.",
+				"errorReorder": "Failed to update page order."
+			},
+			"empty": {
+				"pages": "No pages yet."
+			},
+			"modal": {
+				"title": "Create Page",
+				"titleLabel": "Page Title",
+				"titlePlaceholder": "Page title"
+			},
+			"validation": {
+				"noProject": "No project selected.",
+				"titleRequired": "Please enter a page title."
+			}
+		},
+		"home": {
+			"header": {
+				"title": "Activity Feed"
+			},
+			"actions": {
+				"filter": "Filter"
+			},
+			"feed": {
+				"today": "Today",
+				"yesterday": "Yesterday",
+				"items": {
+					"today1": "\"Report Guide\" content updated",
+					"today1Meta": "jina · 11:40",
+					"today2": "Created \"Server Deployment\"",
+					"today2Meta": "mira · 09:22",
+					"yesterday1": "\"Access Policy\" outline updated",
+					"yesterday1Meta": "sojin · 17:05",
+					"yesterday2": "Created \"Release Notes\"",
+					"yesterday2Meta": "jojo · 15:10"
+				}
+			}
+		},
+		"page": {
+			"header": {
+				"fallbackTitle": "Page"
+			},
+			"actions": {
+				"edit": "Edit",
+				"permissions": "Permissions",
+				"delete": "Delete",
+				"deleting": "Deleting...",
+				"cancel": "Cancel",
+				"save": "Save",
+				"saving": "Saving..."
+			},
+			"status": {
+				"loading": "Loading...",
+				"errorLoad": "Failed to load page.",
+				"errorSave": "Failed to save page.",
+				"errorDelete": "Failed to delete page."
+			},
+			"fields": {
+				"titleLabel": "Title",
+				"contentLabel": "Content",
+				"contentPlaceholder": "Enter Markdown content",
+				"previewLabel": "Preview"
+			},
+			"empty": {
+				"content": "No content."
+			},
+			"permissions": {
+				"modal": {
+					"title": "Page Permissions"
+				},
+				"membersLabel": "Project Members",
+				"selectPlaceholder": "Select a member",
+				"roleLabel": "Role",
+				"roles": {
+					"owner": "Owner",
+					"editor": "Editor",
+					"viewer": "Viewer"
+				},
+				"validation": {
+					"selectMember": "Please select a member."
+				},
+				"status": {
+					"errorUpdate": "Failed to update permissions."
+				}
+			},
+			"confirm": {
+				"delete": "Delete this page?",
+				"cancel": {
+					"title": "Discard Changes",
+					"message": "Discard changes without saving?",
+					"keepEditing": "Continue Editing",
+					"discard": "Discard Changes"
+				}
+			}
+		}
+	},
+	"messenger": {
+		"layout": {
+			"actions": {
+				"createChannel": "Create Channel",
+				"cancel": "Cancel",
+				"create": "Create",
+				"creating": "Creating..."
+			},
+			"status": {
+				"loading": "Loading...",
+				"errorLoad": "Failed to load channels.",
+				"errorCreate": "Failed to create channel."
+			},
+			"empty": {
+				"channels": "No channels yet."
+			},
+			"modal": {
+				"title": "Create Channel",
+				"nameLabel": "Channel Name",
+				"namePlaceholder": "Channel name"
+			},
+			"validation": {
+				"noProject": "No project selected.",
+				"nameRequired": "Please enter a channel name."
+			},
+			"toast": {
+				"created": "Channel created."
+			},
+			"fallback": {
+				"channelName": "Untitled channel"
+			}
+		},
+		"home": {
+			"header": {
+				"title": "Recent Messages"
+			},
+			"status": {
+				"loading": "Loading recent messages...",
+				"errorLoad": "Failed to load recent messages."
+			},
+			"feed": {
+				"channelFallback": "Channel",
+				"messageFallback": "Message",
+				"creatorFallback": "Unknown"
+			},
+			"date": {
+				"today": "Today",
+				"yesterday": "Yesterday"
+			},
+			"empty": {
+				"badge": "Chat",
+				"title": "No messages in the last 24 hours",
+				"description": "Create a channel from the left menu and start a conversation."
+			},
+			"actions": {
+				"createChannel": "Create Channel"
+			}
+		},
+		"room": {
+			"status": {
+				"connected": "Connected",
+				"disconnected": "Disconnected",
+				"errorDelete": "Failed to delete channel."
+			},
+			"actions": {
+				"invite": "Invite",
+				"delete": "Delete",
+				"deleting": "Deleting...",
+				"members": "Participants",
+				"cancel": "Cancel",
+				"inviteSubmit": "Invite",
+				"inviting": "Inviting..."
+			},
+			"empty": {
+				"messages": "No messages."
+			},
+			"composer": {
+				"placeholder": "Type a message",
+				"send": "Send"
+			},
+			"invite": {
+				"modal": {
+					"title": "Invite Members",
+					"membersLabel": "Project Members",
+					"selectPlaceholder": "Select a member"
+				},
+				"validation": {
+					"selectMember": "Please select a member to invite.",
+					"noChannel": "No channel selected."
+				},
+				"status": {
+					"error": "Invite failed."
+				}
+			},
+			"members": {
+				"modal": {
+					"title": "Participants"
+				},
+				"status": {
+					"loading": "Loading...",
+					"errorLoad": "Failed to load participants."
+				},
+				"empty": "No participants."
+			},
+			"confirm": {
+				"delete": "Delete this channel? This cannot be undone."
+			},
+			"fallback": {
+				"unknownUser": "Unknown",
+				"roomTitle": "Channel"
+			}
+		}
+	},
+	"workspaceList": {
+		"header": {
+			"title": "Workspaces"
+		},
+		"actions": {
+			"add": "Add Workspace",
+			"delete": "Delete",
+			"deleting": "Deleting...",
+			"cancel": "Cancel",
+			"create": "Create",
+			"creating": "Creating..."
+		},
+		"status": {
+			"loading": "Loading...",
+			"errorLoad": "Failed to load workspaces.",
+			"errorCreate": "Failed to create workspace.",
+			"errorDelete": "Failed to delete workspace."
+		},
+		"empty": {
+			"workspaces": "No workspaces yet.",
+			"projects": "No projects yet."
+		},
+		"modal": {
+			"title": "Add Workspace",
+			"nameLabel": "Workspace Name",
+			"namePlaceholder": "Workspace name"
+		},
+		"validation": {
+			"nameRequired": "Please enter a workspace name."
+		},
+		"confirm": {
+			"delete": "Delete this workspace?"
+		}
+	},
+	"profile": {
+		"header": {
+			"title": "Profile",
+			"subtitle": "Review your basic information."
+		},
+		"status": {
+			"loading": "Loading...",
+			"error": "Failed to load profile."
+		},
+		"fields": {
+			"name": "Name",
+			"email": "Email",
+			"joined": "Joined"
+		},
+		"locale": {
+			"title": "Locale",
+			"subtitle": "Choose the language and region for this workspace.",
+			"language": "Language",
+			"region": "Region",
+			"save": "Save locale",
+			"languageOptions": {
+				"ko": "Korean",
+				"en": "English"
+			},
+			"regionOptions": {
+				"kr": "Korea",
+				"us": "United States"
+			}
+		}
+	}
+}

@@ -1,9 +1,9 @@
 <template>
   <hgroup>
-    <h1>최근 메시지</h1>
+    <h1>{{ t("messenger.home.header.title") }}</h1>
   </hgroup>
 
-  <p v-if="isLoading" class="status">최근 메시지를 불러오는 중...</p>
+  <p v-if="isLoading" class="status">{{ t("messenger.home.status.loading") }}</p>
   <p v-else-if="errorMessage" class="status error">{{ errorMessage }}</p>
 
   <div v-else-if="groupedMessages.length" class="feed">
@@ -13,10 +13,12 @@
         <div class="feed-icon">M</div>
         <div class="feed-body">
           <div class="feed-title">
-            {{ item.channel_name || "채널" }} · {{ item.content || "메시지" }}
+            {{ item.channel_name || t("messenger.home.feed.channelFallback") }} ·
+            {{ item.content || t("messenger.home.feed.messageFallback") }}
           </div>
           <div class="feed-meta">
-            {{ item.creator_name || "알수없음" }} · {{ formatTime(item.created_at) }}
+            {{ item.creator_name || t("messenger.home.feed.creatorFallback") }} ·
+            {{ formatTime(item.created_at) }}
           </div>
         </div>
       </article>
@@ -25,19 +27,21 @@
 
   <div v-else class="empty" aria-live="polite">
     <div class="empty-card">
-      <div class="empty-badge">Chat</div>
-      <h1>최근 24시간 메시지가 없습니다</h1>
-      <p class="empty-desc">왼쪽 메뉴에서 채널을 만들고 메시지를 시작하세요.</p>
-      <button type="button" class="btn">채널 만들기</button>
+      <div class="empty-badge">{{ t("messenger.home.empty.badge") }}</div>
+      <h1>{{ t("messenger.home.empty.title") }}</h1>
+      <p class="empty-desc">{{ t("messenger.home.empty.description") }}</p>
+      <button type="button" class="btn">{{ t("messenger.home.actions.createChannel") }}</button>
     </div>
   </div>
 </template>
 
 <script setup>
 import { computed, onMounted, ref, watch } from "vue";
+import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 import api from "../lib/axios";
 
+const { t, locale } = useI18n();
 const route = useRoute();
 
 const isLoading = ref(false);
@@ -58,7 +62,7 @@ const fetchRecentMessages = async () => {
     messages.value = res.data?.data || [];
   } catch (error) {
     messages.value = [];
-    errorMessage.value = "최근 메시지를 불러오지 못했습니다.";
+    errorMessage.value = t("messenger.home.status.errorLoad");
   } finally {
     isLoading.value = false;
   }
@@ -71,15 +75,25 @@ const formatDateLabel = (value) => {
   const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const startOfYesterday = new Date(startOfToday.getTime() - 24 * 60 * 60 * 1000);
 
-  if (date >= startOfToday) return "오늘";
-  if (date >= startOfYesterday) return "어제";
-  return date.toLocaleDateString("ko-KR", { month: "2-digit", day: "2-digit" });
+  if (date >= startOfToday) return t("messenger.home.date.today");
+  if (date >= startOfYesterday) return t("messenger.home.date.yesterday");
+  const localeMap = {
+    ko: "ko-KR",
+    en: "en-US",
+  };
+  const dateLocale = localeMap[locale.value] || "en-US";
+  return date.toLocaleDateString(dateLocale, { month: "2-digit", day: "2-digit" });
 };
 
 const formatTime = (value) => {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "";
-  return date.toLocaleTimeString("ko-KR", {
+  const localeMap = {
+    ko: "ko-KR",
+    en: "en-US",
+  };
+  const timeLocale = localeMap[locale.value] || "en-US";
+  return date.toLocaleTimeString(timeLocale, {
     hour: "2-digit",
     minute: "2-digit",
   });
@@ -97,7 +111,9 @@ const groupedMessages = computed(() => {
   });
 
   const order = Array.from(buckets.keys());
-  const priority = (label) => (label === "오늘" ? 0 : label === "어제" ? 1 : 2);
+  const todayLabel = t("messenger.home.date.today");
+  const yesterdayLabel = t("messenger.home.date.yesterday");
+  const priority = (label) => (label === todayLabel ? 0 : label === yesterdayLabel ? 1 : 2);
   order.sort((a, b) => priority(a) - priority(b));
 
   return order.map((label) => ({
