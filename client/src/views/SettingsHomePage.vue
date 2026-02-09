@@ -1,55 +1,55 @@
 <template>
-  <section class="settings-home">
-    <hgroup>
+  <hgroup>
+    <div>
       <h1>{{ t("settings.home.header.title") }}</h1>
-      <p>{{ t("settings.home.header.subtitle") }}</p>
-    </hgroup>
+      <p class="subtitle">{{ t("settings.home.header.subtitle") }}</p>
+    </div>
+  </hgroup>
 
-    <p v-if="isLoading" class="status">{{ t("settings.home.status.loading") }}</p>
-    <p v-else-if="errorMessage" class="status error">{{ errorMessage }}</p>
+  <p v-if="isLoading" class="status">{{ t("settings.home.status.loading") }}</p>
+  <p v-else-if="errorMessage" class="status error">{{ errorMessage }}</p>
 
-    <form v-else class="settings-form" @submit.prevent="saveSettings">
-      <label for="project-name">{{ t("settings.home.form.nameLabel") }}</label>
-      <input
-        id="project-name"
-        v-model.trim="form.name"
-        type="text"
-        :placeholder="t('settings.home.form.namePlaceholder')"
-      />
+  <form v-else class="settings-form" @submit.prevent="saveSettings">
+    <label for="project-name">{{ t("settings.home.form.nameLabel") }}</label>
+    <input
+      id="project-name"
+      v-model.trim="form.name"
+      type="text"
+      :placeholder="t('settings.home.form.namePlaceholder')"
+    />
 
-      <div class="theme-section">
-        <div class="theme-header">
-          <h2>{{ t("settings.home.theme.title") }}</h2>
-          <span class="theme-desc">{{ t("settings.home.theme.subtitle") }}</span>
-        </div>
-        <div class="theme-grid">
-          <label
-            v-for="item in themeOptions"
-            :key="item.id"
-            class="theme-item"
-            :class="{ selected: form.themeId === item.id }"
-            :data-theme="item.id"
-            :style="{
-              '--swatch-bg': `var(--theme-${item.id}-bg)`,
-              '--swatch-fg': `var(--theme-${item.id}-fg)`,
-            }"
-          >
-            <input type="radio" name="theme" :value="item.id" v-model="form.themeId" />
-            <div class="swatch">Aa</div>
-            <span class="theme-name">{{ item.label }}</span>
-          </label>
-        </div>
+    <div class="theme-section">
+      <div class="theme-header">
+        <h2>{{ t("settings.home.theme.title") }}</h2>
+        <span class="theme-desc">{{ t("settings.home.theme.subtitle") }}</span>
       </div>
-
-      <p v-if="formError" class="status error">{{ formError }}</p>
-
-      <div class="form-actions">
-        <button type="submit" class="btn" :disabled="isSaving">
-          {{ isSaving ? t("settings.home.actions.saving") : t("settings.home.actions.save") }}
-        </button>
+      <div class="theme-grid">
+        <label
+          v-for="item in themeOptions"
+          :key="item.id"
+          class="theme-item"
+          :class="{ selected: form.themeId === item.id }"
+          :data-theme="item.id"
+          :style="{
+            '--swatch-bg': `var(--theme-${item.id}-bg)`,
+            '--swatch-fg': `var(--theme-${item.id}-fg)`,
+          }"
+        >
+          <input type="radio" name="theme" :value="item.id" v-model="form.themeId" />
+          <div class="swatch">Aa</div>
+          <span class="theme-name">{{ item.label }}</span>
+        </label>
       </div>
-    </form>
-  </section>
+    </div>
+
+    <p v-if="formError" class="status error">{{ formError }}</p>
+
+    <div class="form-actions">
+      <button type="submit" class="btn" :disabled="isSaving">
+        {{ isSaving ? t("settings.home.actions.saving") : t("settings.home.actions.save") }}
+      </button>
+    </div>
+  </form>
 </template>
 
 <script setup>
@@ -192,24 +192,6 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
-.settings-home {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-hgroup h1 {
-  margin: 0 0 4px;
-  font-size: 20px;
-  color: var(--color-text);
-}
-
-hgroup p {
-  margin: 0;
-  font-size: 14px;
-  color: var(--color-text-muted);
-}
-
 .settings-form {
   display: flex;
   flex-direction: column;

@@ -145,22 +145,14 @@ nav a:hover {
 
 .AcountLayout > aside {
   background-color: var(--color-page-bg);
-  padding: 2rem;
+  padding: 18px 20px;
   width: 10rem;
   flex-shrink: 0;
-}
-
-.AcountLayout > aside .btn {
-  background: var(--color-accent-lnb);
-  color: var(--color-text-inverse);
-}
-
-.AcountLayout > aside .btn:hover {
-  background: var(--color-accent-lnb-hover);
+  border-radius: 8px;
 }
 
 .AcountLayout > aside > nav {
-  gap: 1rem;
+  gap: 8px;
   display: flex;
   flex-direction: column;
 }
@@ -170,7 +162,10 @@ nav a:hover {
 
 .AcountLayout > aside > button + nav {
   margin-top: 1rem;
-  gap: 8px;
+}
+
+.AcountLayout > aside > button {
+  width: 100%;
 }
 
 .AcountLayout > main {
@@ -178,13 +173,14 @@ nav a:hover {
   background-color: var(--color-page-bg);
   padding: 2rem 3rem 4rem;
   margin: 0;
+  border-radius: 8px;
 }
 
 main > hgroup {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  margin-bottom: 1rem;
+  margin-bottom: 24px;
 }
 
 main > hgroup h1 {
@@ -197,6 +193,18 @@ main > hgroup div:has(h1) {
   display: flex;
   gap: 8px;
   align-items: center;
+}
+
+main > hgroup div:has(.subtitle) {
+  flex-direction: column;
+  gap: 2px;
+  align-items: flex-start;
+}
+
+main > hgroup .subtitle {
+  margin: 0;
+  font-size: 14px;
+  color: var(--color-text-muted);
 }
 
 main > hgroup .actions {

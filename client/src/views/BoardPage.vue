@@ -231,15 +231,6 @@ watch(boardId, async (nextId, prevId) => {
 </script>
 
 <style scoped>
-.board-page hgroup,
-hgroup {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 16px;
-}
-
 .board-page {
   display: flex;
   flex-direction: column;
