@@ -22,7 +22,7 @@
 }
 
 .markdown-body code {
-  font-family: "Courier New", Courier, monospace;
+  font-family: monospace;
   background-color: var(--color-surface-alt);
   padding: 2px 4px;
   border-radius: 4px;
@@ -30,4 +30,5 @@
 
 .markdown-body pre code {
   display: block;
+  padding: 8px 16px;
 }

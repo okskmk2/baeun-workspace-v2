@@ -114,7 +114,7 @@ onBeforeUnmount(() => {
   flex-direction: column;
   gap: 8px;
   padding: 12px;
-  border-radius: 2px;
+  border-radius: 4px;
   border: 1px solid var(--color-border);
   background: var(--color-surface);
 }

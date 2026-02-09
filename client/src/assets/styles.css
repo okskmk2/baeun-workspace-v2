@@ -87,6 +87,7 @@ nav a:hover {
   --gnb-bg: var(--color-gnb-bg);
   --gnb-fg: var(--color-gnb-text);
   color: var(--color-text);
+  min-height: 100%;
 }
 
 .ProjectLayout .workspaceName {
@@ -139,6 +140,7 @@ nav a:hover {
   display: flex;
   gap: 1rem;
   padding: 1rem;
+  flex-grow: 1;
 }
 
 .AcountLayout > aside {
@@ -162,10 +164,13 @@ nav a:hover {
   display: flex;
   flex-direction: column;
 }
+.AcountLayout > aside > nav a {
+  padding: 6px 8px;
+}
 
 .AcountLayout > aside > button + nav {
   margin-top: 1rem;
-  gap: 12px;
+  gap: 8px;
 }
 
 .AcountLayout > main {

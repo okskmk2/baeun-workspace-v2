@@ -49,7 +49,6 @@
 					<select v-model="locale" class="control-input" aria-label="Language">
 						<option value="ko">{{ t("profile.locale.languageOptions.ko") }}</option>
 						<option value="en">{{ t("profile.locale.languageOptions.en") }}</option>
-						<option value="id">{{ t("profile.locale.languageOptions.id") }}</option>
 					</select>
 				</label>
 				<label class="control">

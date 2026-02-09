@@ -178,7 +178,6 @@ const emitReorder = (payload) => emit("reorder", payload);
 
 .page-link {
   display: block;
-  padding: 6px 8px;
   text-decoration: none;
   border-radius: 8px;
   color: var(--color-text);

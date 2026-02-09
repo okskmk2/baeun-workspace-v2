@@ -607,8 +607,7 @@
       "save": "Save locale",
       "languageOptions": {
         "ko": "Korean",
-        "en": "English",
-        "id": "Indonesian"
+        "en": "English"
       },
       "regionOptions": {
         "kr": "Korea",

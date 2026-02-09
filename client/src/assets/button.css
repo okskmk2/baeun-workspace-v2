@@ -7,8 +7,7 @@ button {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  min-height: 36px;
-  padding: 8px 14px;
+  padding: 8px 16px;
   border-radius: 8px;
   border: 1px solid transparent;
   background: var(--color-accent);
@@ -66,13 +65,11 @@ button {
 }
 
 .btn--sm {
-  min-height: 30px;
   padding: 6px 10px;
   font-size: 12px;
 }
 
 .btn--lg {
-  min-height: 42px;
   padding: 10px 16px;
   font-size: 15px;
 }

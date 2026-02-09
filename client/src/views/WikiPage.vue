@@ -26,7 +26,7 @@
   </hgroup>
   <p v-if="isLoading">{{ t("wiki.page.status.loading") }}</p>
   <p v-else-if="errorMessage">{{ errorMessage }}</p>
-  <article v-else class="wiki-content">
+  <article v-else>
     <template v-if="isEditing">
       <label class="edit-label" for="page-title">{{ t("wiki.page.fields.titleLabel") }}</label>
       <input id="page-title" v-model.trim="editForm.title" type="text" class="edit-input" />
@@ -78,11 +78,7 @@
       </select>
       <label for="permission-role">{{ t("wiki.page.permissions.roleLabel") }}</label>
       <select id="permission-role" v-model="permissionForm.roleName">
-        <option
-          v-for="option in permissionRoleOptions"
-          :key="option.value"
-          :value="option.value"
-        >
+        <option v-for="option in permissionRoleOptions" :key="option.value" :value="option.value">
           {{ option.label }}
         </option>
       </select>
@@ -92,9 +88,7 @@
           {{ t("wiki.page.actions.cancel") }}
         </button>
         <button type="submit" class="btn" :disabled="isPermissionSaving">
-          {{
-            isPermissionSaving ? t("wiki.page.actions.saving") : t("wiki.page.actions.save")
-          }}
+          {{ isPermissionSaving ? t("wiki.page.actions.saving") : t("wiki.page.actions.save") }}
         </button>
       </div>
     </form>
@@ -169,9 +163,7 @@ const projectMemberStore = useProjectMemberStore();
 const pageStore = usePageStore();
 const currentUserId = computed(() => appStore.currentUser?.id);
 const router = useRouter();
-const projectMembers = computed(() =>
-  projectMemberStore.getProjectMembers(projectId.value)
-);
+const projectMembers = computed(() => projectMemberStore.getProjectMembers(projectId.value));
 
 const markdown = new MarkdownIt({
   html: false,
@@ -371,11 +363,6 @@ watch(projectId, fetchPageMembers);
 </script>
 
 <style scoped>
-.wiki-content {
-  padding: 12px;
-  background: var(--color-card-bg);
-}
-
 .edit-split {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -417,15 +404,14 @@ watch(projectId, fetchPageMembers);
   width: 100%;
   border: 1px solid var(--color-input-border);
   border-radius: 6px;
-  padding: 8px 10px;
-  font-size: 14px;
+  padding: 8px 12px;
+  font-size: 15px;
   margin-bottom: 12px;
   background-color: var(--color-input-bg);
   color: var(--color-text);
 }
 
 .edit-textarea {
-  font-family: monospace;
   height: 100%;
 }
 

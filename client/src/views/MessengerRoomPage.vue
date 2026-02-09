@@ -440,11 +440,10 @@ onBeforeUnmount(() => {
 
 .member-list li {
   display: grid;
-  grid-template-columns: 1fr auto;
   gap: 4px 12px;
   padding: 10px 12px;
   border: 1px solid var(--color-border);
-  border-radius: 10px;
+  border-radius: 8px;
   background: var(--color-card-bg);
 }
 

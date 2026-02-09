@@ -4,7 +4,7 @@
       <button class="btn" type="button" @click="openModal">
         {{ t("messenger.layout.actions.createChannel") }}
       </button>
-      <nav class="chat-nav">
+      <nav>
         <p v-if="isLoading">{{ t("messenger.layout.status.loading") }}</p>
         <p v-else-if="errorMessage">{{ errorMessage }}</p>
         <p v-else-if="rooms.length === 0">{{ t("messenger.layout.empty.channels") }}</p>
