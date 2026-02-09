@@ -11,12 +11,14 @@
   <ul v-else class="workspace-list">
     <li v-for="workspace in workspaces" :key="workspace.id" class="workspace-item">
       <div class="workspace-header">
-        <span>
-          <router-link :to="`/workspace/${workspace.id}`" class="workspace-link">
-            {{ workspace.name }}
-          </router-link>
+        <div>
+          <h2>
+            <router-link :to="`/workspace/${workspace.id}`" class="workspace-link">
+              {{ workspace.name }}
+            </router-link>
+          </h2>
           <Tag v-if="workspace.role_name">{{ workspace.role_name }}</Tag>
-        </span>
+        </div>
         <button
           type="button"
           class="btn btn--danger btn--sm"
@@ -155,10 +157,14 @@ const getProjects = (workspaceId) => workspaceStore.getProjects(workspaceId);
 }
 
 .workspace-item {
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 12px 14px;
-  background: #ffffff;
+  padding: 16px;
+  border-bottom: 1px solid #ddd;
+}
+
+.workspace-item h2 {
+  margin: 0;
+  font-size: 18px;
+  display: inline-block;
 }
 
 .workspace-header {
@@ -169,9 +175,7 @@ const getProjects = (workspaceId) => workspaceStore.getProjects(workspaceId);
 }
 
 .workspace-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
+  margin-right: 8px;
 }
 
 .project-list {

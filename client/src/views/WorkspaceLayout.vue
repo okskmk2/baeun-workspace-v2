@@ -139,11 +139,11 @@ watch(
 }
 
 .mainnav-link:hover {
-  background: color-mix(in srgb, var(--gnb-fg) 10%, transparent);
+  background-color: color-mix(in srgb, var(--gnb-bg) 95%, var(--gnb-fg) 5%);
 }
 
 .mainnav-link.router-link-active {
-  background: color-mix(in srgb, var(--gnb-fg) 18%, transparent);
+  background-color: color-mix(in srgb, var(--gnb-bg) 90%, var(--gnb-fg) 10%);
   font-weight: 600;
 }
 </style>

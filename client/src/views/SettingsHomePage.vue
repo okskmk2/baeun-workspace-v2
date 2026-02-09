@@ -60,10 +60,13 @@ import { useRoute } from "vue-router";
 import api from "../lib/axios";
 import { addToast } from "../lib/toast";
 import { useAppStore } from "../stores/appStore";
+import { useWorkspaceStore } from "../stores/workspaceStore";
 
 const route = useRoute();
+const workspaceId = computed(() => route.params.workspaceId);
 const projectId = computed(() => route.params.projectId);
 const appStore = useAppStore();
+const workspaceStore = useWorkspaceStore();
 
 const isLoading = ref(false);
 const isSaving = ref(false);
@@ -142,6 +145,25 @@ const saveSettings = async () => {
         },
       },
     });
+    if (workspaceId.value && projectId.value) {
+      const list = workspaceStore.getProjects(workspaceId.value);
+      const updated = list.map((project) => {
+        if (String(project.id) !== String(projectId.value)) return project;
+        return {
+          ...project,
+          name: form.value.name,
+          theme_json: {
+            ...(project.theme_json || {}),
+            gnb: {
+              paletteId: selected.id,
+              background: selected.bg,
+              foreground: selected.fg,
+            },
+          },
+        };
+      });
+      workspaceStore.projectsByWorkspace[workspaceId.value] = updated;
+    }
     addToast({ message: "프로젝트 설정이 저장되었습니다.", type: "success" });
   } catch (error) {
     const message = error?.response?.data?.message || "프로젝트 설정 저장에 실패했습니다.";

@@ -109,11 +109,8 @@ const onSubmit = async () => {
 
     appStore.setCurrentUser(response.data.data);
 
-    const workspaceRes = await api.get("/workspace/my");
-    const workspaces = workspaceRes.data?.data || [];
-
     if (workspaces.length > 0) {
-      router.push(`/workspace/${workspaces[0].id}`);
+      router.push("/account/workspaces");
     } else {
       router.push("/");
     }
