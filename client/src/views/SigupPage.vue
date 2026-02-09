@@ -1,19 +1,19 @@
 <template>
   <div class="signup">
     <header class="signup__header">
-      <h1>회원가입</h1>
-      <p>몇 분 만에 워크스페이스를 시작하세요.</p>
+      <h1>Sign up</h1>
+      <p>Start your workspace in minutes.</p>
     </header>
 
     <form class="signup__form" @submit.prevent="onSubmit">
       <div class="signup__field">
-        <label for="name">이름</label>
-        <input id="name" v-model.trim="name" type="text" autocomplete="name" placeholder="이름" />
+        <label for="name">Name</label>
+        <input id="name" v-model.trim="name" type="text" autocomplete="name" placeholder="Name" />
         <p v-if="errors.name" class="signup__error">{{ errors.name }}</p>
       </div>
 
       <div class="signup__field">
-        <label for="email">이메일</label>
+        <label for="email">Email</label>
         <input
           id="email"
           v-model.trim="email"
@@ -25,13 +25,13 @@
       </div>
 
       <div class="signup__field">
-        <label for="password">비밀번호</label>
+        <label for="password">Password</label>
         <input
           id="password"
           v-model.trim="password"
           type="password"
           autocomplete="new-password"
-          placeholder="6자 이상"
+          placeholder="At least 6 characters"
         />
         <p v-if="errors.password" class="signup__error">{{ errors.password }}</p>
         <div class="signup__strength">
@@ -42,18 +42,18 @@
               :style="{ width: strength.percent + '%' }"
             ></span>
           </div>
-          <span class="signup__strength-text">비밀번호 강도: {{ strength.label }}</span>
+          <span class="signup__strength-text">Password strength: {{ strength.label }}</span>
         </div>
       </div>
 
       <div class="signup__field">
-        <label for="confirmPassword">비밀번호 확인</label>
+        <label for="confirmPassword">Confirm password</label>
         <input
           id="confirmPassword"
           v-model.trim="confirmPassword"
           type="password"
           autocomplete="new-password"
-          placeholder="비밀번호를 다시 입력"
+          placeholder="Re-enter your password"
         />
         <p v-if="errors.confirmPassword" class="signup__error">
           {{ errors.confirmPassword }}
@@ -61,7 +61,7 @@
       </div>
 
       <button type="submit" class="btn" :disabled="loading">
-        {{ loading ? "가입 중..." : "회원가입" }}
+        {{ loading ? "Signing up..." : "Sign up" }}
       </button>
 
       <p v-if="errors.form" class="signup__error">{{ errors.form }}</p>
@@ -69,8 +69,8 @@
     </form>
 
     <p class="signup__signin">
-      이미 계정이 있으신가요?
-      <router-link to="/login">로그인</router-link>
+      Already have an account?
+      <router-link to="/login">Sign in</router-link>
     </p>
   </div>
 </template>
@@ -103,7 +103,7 @@ const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const strength = computed(() => {
   const value = password.value;
   if (!value) {
-    return { label: "입력하세요", tone: "empty", percent: 0 };
+    return { label: "Type a password", tone: "empty", percent: 0 };
   }
 
   let score = 0;
@@ -114,9 +114,9 @@ const strength = computed(() => {
   if (/[^A-Za-z0-9]/.test(value)) score += 1;
 
   const percent = Math.round((score / 5) * 100);
-  if (score <= 2) return { label: "약함", tone: "weak", percent };
+  if (score <= 2) return { label: "Weak", tone: "weak", percent };
   if (score <= 4) return { label: "보통", tone: "medium", percent };
-  return { label: "강함", tone: "strong", percent };
+  return { label: "Strong", tone: "strong", percent };
 });
 
 const validate = () => {
@@ -127,25 +127,25 @@ const validate = () => {
   errors.form = "";
 
   if (!name.value) {
-    errors.name = "이름을 입력해 주세요.";
+    errors.name = "Please enter your name.";
   }
 
   if (!email.value) {
-    errors.email = "이메일을 입력해 주세요.";
+    errors.email = "Please enter your email.";
   } else if (!emailPattern.test(email.value)) {
-    errors.email = "올바른 이메일 형식을 입력해 주세요.";
+    errors.email = "Please enter a valid email address.";
   }
 
   if (!password.value) {
-    errors.password = "비밀번호를 입력해 주세요.";
+    errors.password = "Please enter your password.";
   } else if (password.value.length < 6) {
-    errors.password = "비밀번호는 6자 이상이어야 합니다.";
+    errors.password = "Password must be at least 6 characters.";
   }
 
   if (!confirmPassword.value) {
-    errors.confirmPassword = "비밀번호를 다시 입력해 주세요.";
+    errors.confirmPassword = "Please confirm your password.";
   } else if (confirmPassword.value !== password.value) {
-    errors.confirmPassword = "비밀번호가 일치하지 않습니다.";
+    errors.confirmPassword = "Passwords do not match.";
   }
 
   return !errors.name && !errors.email && !errors.password && !errors.confirmPassword;
@@ -159,31 +159,31 @@ const onSubmit = async () => {
   loading.value = true;
   successMessage.value = "";
   try {
-    const response = await api.post("/member/signup", {
+    const response = await api.post("/members/signup", {
       name: name.value,
       email: email.value,
       password: password.value,
     });
 
     if (!response.data?.success) {
-      errors.form = response.data?.message || "회원가입에 실패했습니다.";
+      errors.form = response.data?.message || "Sign up failed.";
       return;
     }
 
-    const loginResponse = await api.post("/member/login", {
+    const loginResponse = await api.post("/members/login", {
       email: email.value,
       password: password.value,
     });
 
     if (!loginResponse.data?.success) {
-      errors.form = "가입은 완료되었지만 자동 로그인에 실패했습니다.";
+      errors.form = "Sign up succeeded but auto-login failed.";
       return;
     }
 
     appStore.setCurrentUser(loginResponse.data.data);
-    const workspaceRes = await api.get("/workspace/my");
+    const workspaceRes = await api.get("/workspaces/my");
     const workspaces = workspaceRes.data?.data || [];
-    successMessage.value = "가입이 완료되었습니다. 이동 중...";
+    successMessage.value = "Sign up completed. Redirecting...";
 
     if (workspaces.length > 0) {
       router.push(`/workspace/${workspaces[0].id}`);
@@ -191,7 +191,7 @@ const onSubmit = async () => {
       router.push("/");
     }
   } catch (error) {
-    errors.form = error?.response?.data?.message || "회원가입에 실패했습니다.";
+    errors.form = error?.response?.data?.message || "Sign up failed.";
   } finally {
     loading.value = false;
   }

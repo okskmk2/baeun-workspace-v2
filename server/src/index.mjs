@@ -1,10 +1,11 @@
 import express from "express";
 import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
-import cors from "cors"; // CORS 모듈 추가
+import cors from "cors"; // CORS module.
 import swaggerUi from "swagger-ui-express";
 import { swaggerSpec } from "./swagger.mjs";
 import pool from "./db.mjs";
+import logger from "./logger.mjs";
 import http from "http";
 import { WebSocketServer } from "ws";
 import { broadcastToRoom, joinRoom, removeSocket } from "./ws.mjs";
@@ -12,6 +13,7 @@ import { broadcastToRoom, joinRoom, removeSocket } from "./ws.mjs";
 import memberRouter from "./routes/member.route.mjs";
 import workspaceRouter from "./routes/workspace.route.mjs";
 import projectRouter from "./routes/project.route.mjs";
+import pagesRouter from "./routes/pages.route.mjs";
 import boardRouter from "./routes/board.route.mjs";
 import issueRouter from "./routes/issue.route.mjs";
 import chatRouter from "./routes/chat.route.mjs";
@@ -19,12 +21,12 @@ import chatRouter from "./routes/chat.route.mjs";
 const app = express();
 const pgSession = connectPgSimple(session);
 
-// 1. CORS 설정
+// 1. CORS setup.
 app.use(
   cors({
-    // 클라이언트의 주소 (프론트엔드 주소)
+    // Client origin (frontend URL).
     origin: "http://localhost:8080",
-    // 쿠키를 주고받기 위해 필수 설정
+    // Allow cookies to be sent.
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   })
@@ -33,14 +35,18 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Swagger 설정
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec, { swaggerUrl: "/api-docs.json" }));
+// Swagger setup.
+app.use(
+  "/api-docs",
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerSpec, { swaggerUrl: "/api-docs.json" })
+);
 app.get("/api-docs.json", (req, res) => {
   res.setHeader("Content-Type", "application/json");
   res.send(swaggerSpec);
 });
 
-// 2. 세션 설정 (이전과 동일)
+// 2. Session setup.
 const sessionParser = session({
   store: new pgSession({
     pool: pool,
@@ -51,8 +57,8 @@ const sessionParser = session({
   saveUninitialized: false,
   cookie: {
     httpOnly: true,
-    secure: false, // 배포 시(HTTPS) true로 변경
-    sameSite: "lax", // 크로스 도메인 쿠키 전달 설정
+    secure: false, // Set true when serving over HTTPS.
+    sameSite: "lax", // Cross-site cookie delivery setting.
     maxAge: 1000 * 60 * 60 * 24,
   },
 });
@@ -60,12 +66,13 @@ const sessionParser = session({
 app.use(sessionParser);
 
 // routes
-app.use("/api/member", memberRouter);
-app.use("/api/workspace", workspaceRouter);
-app.use("/api/project", projectRouter);
-app.use("/api/board", boardRouter);
-app.use("/api/issue", issueRouter);
-app.use("/api/chatroom", chatRouter);
+app.use("/api/members", memberRouter);
+app.use("/api/workspaces", workspaceRouter);
+app.use("/api/projects", projectRouter);
+app.use("/api/pages", pagesRouter);
+app.use("/api/boards", boardRouter);
+app.use("/api/issues", issueRouter);
+app.use("/api/channels", chatRouter);
 
 const PORT = 3000;
 const server = http.createServer(app);
@@ -101,31 +108,31 @@ wss.on("connection", (ws, request) => {
     }
 
     if (payload?.type === "join") {
-      if (!payload.chatroomId) return;
-      joinRoom(ws, payload.chatroomId);
+      if (!payload.channelId) return;
+      joinRoom(ws, payload.channelId);
       return;
     }
 
     if (payload?.type === "message") {
-      const { chatroomId, content } = payload;
-      if (!chatroomId || !content) return;
+      const { channelId, content } = payload;
+      if (!channelId || !content) return;
 
       try {
         const memberCheck = await pool.query(
-          "SELECT id FROM chatroom_member WHERE chatroom_id = $1 AND member_id = $2",
-          [chatroomId, userId]
+          "SELECT id FROM channel_member WHERE channel_id = $1 AND member_id = $2",
+          [channelId, userId]
         );
         if (memberCheck.rows.length === 0) return;
 
         const insertRes = await pool.query(
-          "INSERT INTO chat (chatroom_id, content, created_by) VALUES ($1, $2, $3) RETURNING id, content, created_at, created_by",
-          [chatroomId, content, userId]
+          "INSERT INTO message (channel_id, content, created_by) VALUES ($1, $2, $3) RETURNING id, content, created_at, created_by",
+          [channelId, content, userId]
         );
         const message = insertRes.rows[0];
         const creatorRes = await pool.query("SELECT name FROM member WHERE id = $1", [userId]);
         const creatorName = creatorRes.rows[0]?.name || "";
 
-        broadcastToRoom(chatroomId, {
+        broadcastToRoom(channelId, {
           type: "message",
           data: {
             id: message.id,
@@ -133,11 +140,14 @@ wss.on("connection", (ws, request) => {
             created_at: message.created_at,
             created_by: message.created_by,
             creator_name: creatorName,
-            chatroom_id: chatroomId,
+            channel_id: channelId,
           },
         });
       } catch (error) {
-        console.error("chat websocket error:", error);
+        logger.error("chat websocket error", {
+          err: error?.message,
+          stack: error?.stack,
+        });
       }
     }
   });
@@ -147,4 +157,4 @@ wss.on("connection", (ws, request) => {
   });
 });
 
-server.listen(PORT, () => console.log(`🚀 서버 가동 중: ${PORT}`));
+server.listen(PORT, () => logger.info(`Server listening on ${PORT}`));

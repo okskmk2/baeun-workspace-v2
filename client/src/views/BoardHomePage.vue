@@ -1,43 +1,43 @@
 <template>
   <header class="section-header">
-    <h2>활동 피드</h2>
+    <h2>Active Boards</h2>
     <div class="section-actions">
-      <button type="button" class="btn btn--ghost btn--sm">필터</button>
+      <button type="button" class="btn btn--ghost btn--sm">Filter</button>
     </div>
   </header>
 
   <div class="feed">
     <div class="feed-group">
-      <div class="feed-date">오늘</div>
+      <div class="feed-date">Today</div>
       <article class="feed-item">
         <div class="feed-icon">S</div>
         <div class="feed-body">
-          <div class="feed-title">"로그인 오류" 상태가 진행중으로 변경됨</div>
-          <div class="feed-meta">이은성 · 10:32</div>
+          <div class="feed-title">"Login error" status changed to In Progress</div>
+          <div class="feed-meta">Lina · 10:32</div>
         </div>
       </article>
       <article class="feed-item">
         <div class="feed-icon">C</div>
         <div class="feed-body">
-          <div class="feed-title">"권한 정책"에 새 코멘트</div>
+          <div class="feed-title">Comment added to "Access policy"</div>
           <div class="feed-meta">jojo · 09:10</div>
         </div>
       </article>
     </div>
 
     <div class="feed-group">
-      <div class="feed-date">어제</div>
+      <div class="feed-date">Yesterday</div>
       <article class="feed-item">
         <div class="feed-icon">S</div>
         <div class="feed-body">
-          <div class="feed-title">"알림 배치" 상태가 검토중으로 변경됨</div>
+          <div class="feed-title">"Release checklist" status changed to In Review</div>
           <div class="feed-meta">mira · 18:42</div>
         </div>
       </article>
       <article class="feed-item">
         <div class="feed-icon">C</div>
         <div class="feed-body">
-          <div class="feed-title">"빌드 파이프라인"에 새 코멘트</div>
+          <div class="feed-title">Comment added to "Build timeline"</div>
           <div class="feed-meta">sojin · 15:20</div>
         </div>
       </article>

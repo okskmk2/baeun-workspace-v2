@@ -1,17 +1,17 @@
 import express from "express";
-import bcrypt from "bcrypt"; // bcrypt 임포트
+import bcrypt from "bcrypt"; // bcrypt module.
 import { isAuth, isGuest } from "../middlewares/auth.middleware.mjs";
-import pool from "../db.mjs"; // 설정하신 DB 연결 풀
+import pool from "../db.mjs"; // DB connection config.
 
 const router = express.Router();
-const SALT_ROUNDS = 10; // 해싱 복잡도 (높을수록 보안 강화, 속도 저하)
+const SALT_ROUNDS = 10; // Hash cost (higher is more secure but slower).
 
 /**
  * @swagger
- * /api/member/signup:
+ * /api/members/signup:
  *   post:
- *     summary: 회원가입
- *     description: 새 사용자 회원가입 및 기본 워크스페이스 생성
+ *     summary: Signup
+ *     description: Create a user and a default workspace
  *     tags:
  *       - Member
  *     requestBody:
@@ -33,7 +33,7 @@ const SALT_ROUNDS = 10; // 해싱 복잡도 (높을수록 보안 강화, 속도 
  *               - password
  *     responses:
  *       201:
- *         description: 회원가입 성공
+ *         description: Signup success
  *         content:
  *           application/json:
  *             schema:
@@ -44,20 +44,20 @@ const SALT_ROUNDS = 10; // 해싱 복잡도 (높을수록 보안 강화, 속도 
  *                 message:
  *                   type: string
  *                 data:
- *                   type: object
+ *                   $ref: "#/components/schemas/SignupCreatedIds"
  *       400:
- *         description: 이미 존재하는 이메일
+ *         $ref: "#/components/responses/ErrorResponse"
  *       500:
- *         description: 서버 오류
+ *         $ref: "#/components/responses/ErrorResponse"
  */
 router.post("/signup", isGuest, async (req, res) => {
   const { name, email, password } = req.body;
-  const client = await pool.connect(); // 트랜잭션을 위해 클라이언트 직접 사용
+  const client = await pool.connect(); // Use a client for transaction control.
 
   try {
     await client.query("BEGIN");
 
-    // 1. 사용자 생성
+    // 1. Create user.
     const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
     const userRes = await client.query(
       `INSERT INTO member (name, email, password) VALUES ($1, $2, $3) RETURNING id, name`,
@@ -65,30 +65,30 @@ router.post("/signup", isGuest, async (req, res) => {
     );
     const userId = userRes.rows[0].id;
 
-    // 2. 기본 워크스페이스 생성 (개인 공간)
+    // 2. Create default workspace (personal space).
     const wsRes = await client.query(
       `INSERT INTO workspace (name, member_id, is_default) 
              VALUES ($1, $2, true) RETURNING id`,
-      [`${name}님의 개인 워크스페이스`, userId]
+      [`${name}'s personal workspace`, userId]
     );
     const workspaceId = wsRes.rows[0].id;
 
-    // 3. 워크스페이스 멤버 등록 (OWNER)
+    // 3. Add workspace member (OWNER).
     await client.query(
       `INSERT INTO workspace_member (workspace_id, member_id, role_name) 
              VALUES ($1, $2, 'OWNER')`,
       [workspaceId, userId]
     );
 
-    // 4. 기본 프로젝트 생성
+    // 4. Create default project.
     const projectRes = await client.query(
       `INSERT INTO project (name, workspace_id, is_default) 
      VALUES ($1, $2, true) RETURNING id`,
-      ["첫 번째 프로젝트", workspaceId]
+      ["First Project", workspaceId]
     );
     const projectId = projectRes.rows[0].id;
 
-    // 5. 프로젝트 멤버 등록 (생성자를 멤버로 추가)
+    // 5. Add project member (OWNER).
     await client.query(
       `INSERT INTO project_member (project_id, member_id, role_name) 
      VALUES ($1, $2, 'OWNER')`,
@@ -99,13 +99,13 @@ router.post("/signup", isGuest, async (req, res) => {
 
     res.status(201).json({
       success: true,
-      message: "회원가입 및 기본 공간 생성이 완료되었습니다.",
-      data: { userId, name },
+      message: "Signup complete. Default workspace created.",
+      data: { user_id: userId, workspace_id: workspaceId, project_id: projectId },
     });
   } catch (error) {
     await client.query("ROLLBACK");
     if (error.constraint === "member_email_unique") {
-      return res.status(400).json({ success: false, message: "이미 존재하는 이메일입니다." });
+      return res.status(400).json({ success: false, message: "Email already exists." });
     }
     res.status(500).json({ success: false, message: error.message });
   } finally {
@@ -115,10 +115,10 @@ router.post("/signup", isGuest, async (req, res) => {
 
 /**
  * @swagger
- * /api/member/login:
+ * /api/members/login:
  *   post:
- *     summary: 로그인
- *     description: 이메일과 비밀번호로 로그인
+ *     summary: Login
+ *     description: Login with email and password
  *     tags:
  *       - Member
  *     requestBody:
@@ -137,34 +137,50 @@ router.post("/signup", isGuest, async (req, res) => {
  *               - password
  *     responses:
  *       200:
- *         description: 로그인 성공
+ *         description: Login success
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: integer
+ *                     name:
+ *                       type: string
+ *                     email:
+ *                       type: string
  *       401:
- *         description: 이메일 또는 비밀번호가 틀림
+ *         $ref: "#/components/responses/ErrorResponse"
  *       500:
- *         description: 서버 오류
+ *         $ref: "#/components/responses/ErrorResponse"
  */
 router.post("/login", isGuest, async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    // 1. 이메일로 사용자 조회
+    // 1. Find user by email.
     const query = "SELECT * FROM member WHERE email = $1";
     const result = await pool.query(query, [email]);
 
     if (result.rows.length === 0) {
-      return res.status(401).json({ success: false, message: "이메일 또는 비밀번호가 틀립니다." });
+      return res.status(401).json({ success: false, message: "Invalid email or password." });
     }
 
     const user = result.rows[0];
 
-    // 2. 입력받은 비밀번호와 DB의 해시값 비교
+    // 2. Compare password hash.
     const isMatch = await bcrypt.compare(password, user.password);
 
     if (!isMatch) {
-      return res.status(401).json({ success: false, message: "이메일 또는 비밀번호가 틀립니다." });
+      return res.status(401).json({ success: false, message: "Invalid email or password." });
     }
 
-    // 3. 세션 저장
+    // 3. Set session.
     req.session.userId = user.id;
     req.session.userName = user.name;
 
@@ -179,39 +195,39 @@ router.post("/login", isGuest, async (req, res) => {
 
 /**
  * @swagger
- * /api/member/logout:
+ * /api/members/logout:
  *   post:
- *     summary: 로그아웃
- *     description: 세션을 파괴하고 로그아웃
+ *     summary: Logout
+ *     description: Destroy session and logout
  *     tags:
  *       - Member
  *     responses:
  *       200:
- *         description: 로그아웃 성공
+ *         $ref: "#/components/responses/Success200Message"
  *       500:
- *         description: 서버 오류
+ *         $ref: "#/components/responses/ErrorResponse"
  */
 router.post("/logout", isAuth, (req, res) => {
   req.session.destroy((err) => {
     if (err) {
-      return res.status(500).json({ success: false, message: "로그아웃 중 오류가 발생했습니다." });
+      return res.status(500).json({ success: false, message: "Logout failed." });
     }
-    res.clearCookie("connect.sid"); // 세션 쿠키 삭제
-    res.json({ success: true, message: "로그아웃 되었습니다." });
+    res.clearCookie("connect.sid"); // Clear session cookie.
+    res.json({ success: true, message: "Logged out." });
   });
 });
 
 /**
  * @swagger
- * /api/member/me:
+ * /api/members/me:
  *   get:
- *     summary: 현재 사용자 정보 조회
- *     description: 로그인된 사용자의 정보 조회
+ *     summary: Get current user
+ *     description: Get profile for the logged-in user
  *     tags:
  *       - Member
  *     responses:
  *       200:
- *         description: 사용자 정보 조회 성공
+ *         description: User profile retrieved
  *         content:
  *           application/json:
  *             schema:
@@ -222,7 +238,7 @@ router.post("/logout", isAuth, (req, res) => {
  *                 data:
  *                   $ref: '#/components/schemas/User'
  *       500:
- *         description: 서버 오류
+ *         $ref: "#/components/responses/ErrorResponse"
  */
 router.get("/me", isAuth, async (req, res) => {
   try {
@@ -239,8 +255,50 @@ router.get("/me", isAuth, async (req, res) => {
 });
 
 /**
- * @route   PUT /api/member/profile
- * @desc    내 프로필 수정
+ * @swagger
+ * /api/members/profile:
+ *   put:
+ *     summary: Update profile
+ *     description: Update profile for the logged-in user
+ *     tags:
+ *       - Member
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               img_url:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Profile updated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: integer
+ *                     name:
+ *                       type: string
+ *                     email:
+ *                       type: string
+ *                     img_url:
+ *                       type: string
+ *                       nullable: true
+ *       500:
+ *         $ref: "#/components/responses/ErrorResponse"
  */
 router.put("/profile", isAuth, async (req, res) => {
   const { name, img_url } = req.body;
@@ -256,7 +314,7 @@ router.put("/profile", isAuth, async (req, res) => {
 
     res.json({
       success: true,
-      message: "프로필이 수정되었습니다.",
+      message: "Profile updated.",
       data: result.rows[0],
     });
   } catch (error) {

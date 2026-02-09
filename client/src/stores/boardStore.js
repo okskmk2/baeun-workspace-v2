@@ -10,7 +10,7 @@ export const useBoardStore = defineStore('board', {
     async fetchBoards(projectId){
       if(!projectId) return
       try{
-        const res = await api.get(`/project/${projectId}/boards`)
+        const res = await api.get(`/boards`, { params: { projectId } })
         this.boardsByProject[projectId] = res.data?.data || []
       }catch(e){
         this.boardsByProject[projectId] = []

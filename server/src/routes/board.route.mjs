@@ -1,12 +1,77 @@
 import express from "express";
 import pool from "../db.mjs";
 import { isAuth } from "../middlewares/auth.middleware.mjs";
+import logger from "../logger.mjs";
 
 const router = express.Router();
 
 /**
  * @swagger
- * /api/board:
+ * /api/boards:
+ *   get:
+ *     summary: 프로젝트 보드 목록
+ *     description: 쿼리스트링 projectId로 특정 프로젝트 내의 활성 보드 목록 조회
+ *     tags:
+ *       - Board
+ *     parameters:
+ *       - in: query
+ *         name: projectId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: 보드 목록 조회 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: "#/components/schemas/Board"
+ *       400:
+ *         $ref: "#/components/responses/ErrorResponse"
+ *       403:
+ *         $ref: "#/components/responses/ErrorResponse"
+ *       500:
+ *         $ref: "#/components/responses/ErrorResponse"
+ */
+router.get("/", isAuth, async (req, res) => {
+  const { projectId } = req.query;
+  const userId = req.session.userId;
+
+  if (!projectId) {
+    return res.status(400).json({ success: false, message: "projectId가 필요합니다." });
+  }
+
+  try {
+    const memberCheck = await pool.query(
+      "SELECT id FROM project_member WHERE project_id = $1 AND member_id = $2",
+      [projectId, userId]
+    );
+
+    if (memberCheck.rows.length === 0) {
+      return res.status(403).json({ success: false, message: "접근 권한이 없습니다." });
+    }
+
+    const boards = await pool.query(
+      "SELECT * FROM board WHERE project_id = $1 AND is_active = 1 ORDER BY sort_order ASC, created_at DESC",
+      [projectId]
+    );
+
+    res.json({ success: true, data: boards.rows });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * @swagger
+ * /api/boards:
  *   post:
  *     summary: 보드 생성
  *     description: 새 보드를 생성하고 생성자를 OWNER로 등록
@@ -32,12 +97,21 @@ const router = express.Router();
  *     responses:
  *       201:
  *         description: 보드 생성 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   $ref: "#/components/schemas/CreatedId"
  *       400:
- *         description: 필수 항목 누락
+ *         $ref: "#/components/responses/ErrorResponse"
  *       403:
- *         description: 프로젝트 멤버가 아님
+ *         $ref: "#/components/responses/ErrorResponse"
  *       500:
- *         description: 서버 오류
+ *         $ref: "#/components/responses/ErrorResponse"
  */
 router.post("/", isAuth, async (req, res) => {
   const { name, project_id, type = "KANBAN" } = req.body;
@@ -82,10 +156,13 @@ router.post("/", isAuth, async (req, res) => {
 
     await client.query("COMMIT");
 
-    res.status(201).json({ success: true, data: newBoard });
+    res.status(201).json({ success: true, data: { id: newBoard.id } });
   } catch (error) {
     await client.query("ROLLBACK");
-    console.error("Board 생성 오류:", error);
+    logger.error("Board create error", {
+      err: error?.message,
+      stack: error?.stack,
+    });
     res.status(500).json({ success: false, message: error.message });
   } finally {
     client.release();
@@ -94,7 +171,7 @@ router.post("/", isAuth, async (req, res) => {
 
 /**
  * @swagger
- * /api/board/{boardId}:
+ * /api/boards/{boardId}:
  *   get:
  *     summary: 보드 상세 조회
  *     description: 보드의 상세 정보 조회
@@ -109,18 +186,24 @@ router.post("/", isAuth, async (req, res) => {
  *     responses:
  *       200:
  *         description: 보드 상세 조회 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   $ref: "#/components/schemas/Board"
  *       404:
- *         description: 보드를 찾을 수 없음
+ *         $ref: "#/components/responses/ErrorResponse"
  *       500:
- *         description: 서버 오류
+ *         $ref: "#/components/responses/ErrorResponse"
  */
 router.get("/:boardId", isAuth, async (req, res) => {
   const { boardId } = req.params;
   try {
-    const result = await pool.query(
-      "SELECT * FROM board WHERE id = $1",
-      [boardId]
-    );
+    const result = await pool.query("SELECT * FROM board WHERE id = $1", [boardId]);
 
     if (result.rows.length === 0) {
       return res.status(404).json({ success: false, message: "보드를 찾을 수 없습니다." });
@@ -134,7 +217,7 @@ router.get("/:boardId", isAuth, async (req, res) => {
 
 /**
  * @swagger
- * /api/board/{boardId}:
+ * /api/boards/{boardId}:
  *   delete:
  *     summary: 보드 삭제
  *     description: 보드 삭제 (OWNER 전용)
@@ -148,11 +231,11 @@ router.get("/:boardId", isAuth, async (req, res) => {
  *           type: integer
  *     responses:
  *       200:
- *         description: 보드 삭제 성공
+ *         $ref: "#/components/responses/Success200Message"
  *       403:
- *         description: 삭제 권한이 없음
+ *         $ref: "#/components/responses/ErrorResponse"
  *       500:
- *         description: 서버 오류
+ *         $ref: "#/components/responses/ErrorResponse"
  */
 router.delete("/:boardId", isAuth, async (req, res) => {
   const { boardId } = req.params;
@@ -179,10 +262,37 @@ router.delete("/:boardId", isAuth, async (req, res) => {
 });
 
 /**
- * @route   GET /api/board/:boardId/issue
- * @desc    특정 보드의 모든 이슈 조회
+ * @swagger
+ * /api/boards/{boardId}/issues:
+ *   get:
+ *     summary: 보드 이슈 목록
+ *     description: 특정 보드의 모든 이슈 조회
+ *     tags:
+ *       - Board
+ *     parameters:
+ *       - in: path
+ *         name: boardId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: 이슈 목록 조회 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: "#/components/schemas/IssueWithAssignees"
+ *       500:
+ *         $ref: "#/components/responses/ErrorResponse"
  */
-router.get("/:boardId/issue", isAuth, async (req, res) => {
+router.get("/:boardId/issues", isAuth, async (req, res) => {
   const { boardId } = req.params;
   try {
     const query = `

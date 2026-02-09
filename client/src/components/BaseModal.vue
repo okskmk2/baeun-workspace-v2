@@ -3,7 +3,7 @@
     <div class="modal" @click.stop>
       <div class="modal-header">
         <h2>{{ title }}</h2>
-        <button type="button" class="icon-button" @click="onClose" aria-label="닫기">
+        <button type="button" class="icon-button" @click="onClose" aria-label="?�기">
           <MaterialSymbol name="close" :size="20" />
         </button>
       </div>

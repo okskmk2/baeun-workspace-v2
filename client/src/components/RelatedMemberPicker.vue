@@ -12,19 +12,19 @@
             class="tag-remove"
             :disabled="isBusy(member.issue_member_id)"
             @click="handleRemove(member.issue_member_id)"
-            aria-label="삭제"
+            aria-label="Remove"
           >
             <MaterialSymbol name="close" :size="16" alt="" />
           </button>
         </span>
       </div>
-      <span v-else class="tag-empty">선택된 사람 없음</span>
+      <span v-else class="tag-empty">No one selected</span>
       <button
         type="button"
         class="picker-add"
         :disabled="isUpdating"
         @click="toggle"
-        aria-label="관련자 추가"
+        aria-label="Add assignee"
       >
         <MaterialSymbol name="add" :size="18" alt="" />
       </button>
@@ -40,7 +40,7 @@
         <span class="option-name">{{ member.name }}</span>
         <span class="option-meta">{{ member.email }}</span>
       </div>
-      <div v-if="!members.length" class="picker-empty">선택할 사람이 없습니다.</div>
+      <div v-if="!members.length" class="picker-empty">No members available.</div>
     </div>
   </div>
 </template>

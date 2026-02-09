@@ -28,6 +28,7 @@ import SettingsHomePage from "./views/SettingsHomePage.vue";
 import SettingsMemberPage from "./views/SettingsMemberPage.vue";
 import BlankPage from "./views/BlankPage.vue";
 import api from "./lib/axios";
+import { useAppStore } from "./stores/appStore";
 
 let authChecked = false;
 let isAuthenticated = false;
@@ -61,7 +62,7 @@ const routes = [
           { path: "", redirect: "/account/profile" },
           { path: "profile", component: ProfilePage },
           { path: "security", component: SecurityPage },
-          { path: "plan", component: PlanLicensePage }, // 구독+라이선스 통합
+          { path: "plan", component: PlanLicensePage }, // 구독+?�이?�스 ?�합
           { path: "billing", component: BillingPage },
           { path: "workspaces", component: WorkspaceListPage },
         ],
@@ -165,18 +166,30 @@ router.beforeEach(async (to, from, next) => {
     return next();
   }
 
-  if (authChecked && isAuthenticated) {
+  const appStore = useAppStore();
+  if (appStore.currentUser) {
+    authChecked = true;
+    isAuthenticated = true;
     return next();
   }
 
+  if (authChecked) {
+    if (isAuthenticated) return next();
+    return next({ path: "/login", query: { redirect: to.fullPath } });
+  }
+
   try {
-    await api.get("/member/me");
+    const res = await api.get("/members/me");
+    if (res.data?.success && res.data?.data) {
+      appStore.setCurrentUser(res.data.data);
+    }
     authChecked = true;
     isAuthenticated = true;
     return next();
   } catch (error) {
     authChecked = true;
     isAuthenticated = false;
+    appStore.setCurrentUser(null);
     return next({ path: "/login", query: { redirect: to.fullPath } });
   }
 });

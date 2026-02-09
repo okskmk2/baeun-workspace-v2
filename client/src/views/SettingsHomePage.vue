@@ -1,26 +1,26 @@
 <template>
   <section class="settings-home">
     <hgroup>
-      <h1>프로젝트 설정</h1>
-      <p>프로젝트 이름과 테마를 관리하세요.</p>
+      <h1>Project Settings</h1>
+      <p>Manage the project name and theme.</p>
     </hgroup>
 
-    <p v-if="isLoading" class="status">불러오는 중...</p>
+    <p v-if="isLoading" class="status">Loading...</p>
     <p v-else-if="errorMessage" class="status error">{{ errorMessage }}</p>
 
     <form v-else class="settings-form" @submit.prevent="saveSettings">
-      <label for="project-name">프로젝트 이름</label>
+      <label for="project-name">Project Name</label>
       <input
         id="project-name"
         v-model.trim="form.name"
         type="text"
-        placeholder="프로젝트 이름"
+        placeholder="Project name"
       />
 
       <div class="theme-section">
         <div class="theme-header">
-          <h2>GNB 테마</h2>
-          <span class="theme-desc">배경색과 글자색 조합을 선택하세요.</span>
+          <h2>GNB Theme</h2>
+          <span class="theme-desc">Select a background and foreground pair.</span>
         </div>
         <div class="palette">
           <label
@@ -47,7 +47,7 @@
 
       <div class="form-actions">
         <button type="submit" class="btn" :disabled="isSaving">
-          {{ isSaving ? "저장 중..." : "저장" }}
+          {{ isSaving ? "Saving..." : "Save" }}
         </button>
       </div>
     </form>
@@ -108,12 +108,12 @@ const fetchProject = async () => {
   errorMessage.value = "";
 
   try {
-    const res = await api.get(`/project/${projectId.value}`);
+    const res = await api.get(`/projects/${projectId.value}`);
     const data = res.data?.data || {};
     form.value.name = data.name || "";
     form.value.themeId = resolveThemeId(data.theme_json?.gnb);
   } catch (error) {
-    errorMessage.value = "프로젝트 정보를 불러오지 못했습니다.";
+    errorMessage.value = "Failed to load project details.";
   } finally {
     isLoading.value = false;
   }
@@ -121,13 +121,13 @@ const fetchProject = async () => {
 
 const saveSettings = async () => {
   if (!form.value.name) {
-    formError.value = "프로젝트 이름을 입력해주세요.";
+    formError.value = "Please enter a project name.";
     return;
   }
 
   const selected = themePalette.find((item) => item.id === form.value.themeId);
   if (!selected) {
-    formError.value = "테마를 선택해주세요.";
+    formError.value = "Please select a theme.";
     return;
   }
 
@@ -135,7 +135,7 @@ const saveSettings = async () => {
   formError.value = "";
 
   try {
-    await api.patch(`/project/${projectId.value}`, {
+    await api.patch(`/projects/${projectId.value}`, {
       name: form.value.name,
       theme_json: {
         gnb: {
@@ -164,9 +164,9 @@ const saveSettings = async () => {
       });
       workspaceStore.projectsByWorkspace[workspaceId.value] = updated;
     }
-    addToast({ message: "프로젝트 설정이 저장되었습니다.", type: "success" });
+    addToast({ message: "Project settings updated.", type: "success" });
   } catch (error) {
-    const message = error?.response?.data?.message || "프로젝트 설정 저장에 실패했습니다.";
+    const message = error?.response?.data?.message || "Failed to update project settings.";
     formError.value = message;
     addToast({ message, type: "error" });
   } finally {

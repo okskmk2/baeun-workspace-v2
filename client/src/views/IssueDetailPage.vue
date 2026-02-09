@@ -1,7 +1,40 @@
 <template>
   <hgroup>
-    <h1>{{ issue.title || "Issue" }}</h1>
-    <Tag>{{ issue.status || "" }}</Tag>
+    <div>
+      <h1 v-if="!isEditing">{{ issue.title || "Issue" }}</h1>
+      <input
+        v-else
+        v-model.trim="editForm.title"
+        type="text"
+        class="issue-title-input"
+        placeholder="Enter a title"
+      />
+      <Tag>{{ issue.status || "" }}</Tag>
+    </div>
+    <div class="actions">
+      <button v-if="!isEditing" class="btn btn--secondary btn--sm" @click="startEditing">
+        Edit
+      </button>
+      <button v-else class="btn btn--sm" @click="saveIssue" :disabled="isSaving">
+        {{ isSaving ? "Saving..." : "Save" }}
+      </button>
+      <button
+        v-if="isEditing"
+        class="btn btn--ghost btn--sm"
+        @click="cancelEditing"
+        :disabled="isSaving"
+      >
+        Cancel
+      </button>
+      <button
+        v-if="canDeleteIssue"
+        class="btn btn--danger btn--sm"
+        @click="deleteIssue"
+        :disabled="isSaving || isDeleting"
+      >
+        {{ isDeleting ? "Deleting..." : "Delete" }}
+      </button>
+    </div>
   </hgroup>
 
   <p v-if="isLoading">Loading...</p>
@@ -9,11 +42,18 @@
 
   <section v-else class="issue-grid">
     <div class="issue-main">
-      <p v-if="issue.content">{{ issue.content }}</p>
-      <p v-else>내용이 없습니다.</p>
+      <p v-if="!isEditing && issue.content">{{ issue.content }}</p>
+      <p v-else-if="!isEditing">No description.</p>
+      <textarea
+        v-else
+        v-model.trim="editForm.content"
+        class="issue-content-input"
+        rows="8"
+        placeholder="Enter a description"
+      ></textarea>
     </div>
     <aside class="issue-meta">
-      <h2>관련자</h2>
+      <h2>Assignees</h2>
       <div class="role-picker">
         <RelatedMemberPicker
           v-for="role in roleOptions"
@@ -35,24 +75,40 @@
 
 <script setup>
 import { computed, onMounted, ref, watch } from "vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import api from "../lib/axios";
+import { addToast } from "../lib/toast";
+import { useAppStore } from "../stores/appStore";
+import { useProjectMemberStore } from "../stores/projectMemberStore";
 import Tag from "../components/Tag.vue";
 import RelatedMemberPicker from "../components/RelatedMemberPicker.vue";
 
 const route = useRoute();
+const router = useRouter();
+const appStore = useAppStore();
+const projectMemberStore = useProjectMemberStore();
 const issue = ref({});
+const issueMembers = ref([]);
 const isLoading = ref(false);
+const isSaving = ref(false);
+const isDeleting = ref(false);
+const isEditing = ref(false);
 const errorMessage = ref("");
 const relatedError = ref("");
 const isUpdatingRelated = ref(false);
-const projectMembers = ref([]);
 const updatingMemberId = ref(null);
+const editForm = ref({
+  title: "",
+  content: "",
+});
 
 const roleOptions = ["ASSIGNEE", "REPORTER", "REVIEWER", "WATCHER"];
 
-const issueId = computed(() => route.params.issueId);
+const workspaceId = computed(() => route.params.workspaceId);
 const projectId = computed(() => route.params.projectId);
+const boardId = computed(() => route.params.boardId);
+const issueId = computed(() => route.params.issueId);
+const projectMembers = computed(() => projectMemberStore.getProjectMembers(projectId.value));
 
 const roleLabel = (role) => {
   const key = (role || "").toUpperCase();
@@ -62,13 +118,19 @@ const roleLabel = (role) => {
   if (key === "WATCHER") return "감시자";
   return role || "";
 };
-const issueMembers = computed(() => issue.value.members || []);
+const currentUserId = computed(() => appStore.currentUser?.id);
+const userIssueRole = computed(() => {
+  if (!currentUserId.value) return "";
+  const found = issueMembers.value.find(
+    (member) => String(member.member_id) === String(currentUserId.value)
+  );
+  return (found?.role_name || "").toUpperCase();
+});
+const canDeleteIssue = computed(() => ["REPORTER", "REVIEWER"].includes(userIssueRole.value));
 
 const roleMembers = (role) => {
   const key = (role || "").toUpperCase();
-  return issueMembers.value.filter(
-    (member) => (member.role_name || "").toUpperCase() === key
-  );
+  return issueMembers.value.filter((member) => (member.role_name || "").toUpperCase() === key);
 };
 
 const hasMemberInRole = (role, memberId) => {
@@ -80,15 +142,10 @@ const hasMemberInRole = (role, memberId) => {
 };
 
 const findIssueMemberByMemberId = (memberId) =>
-  issueMembers.value.find(
-    (member) => String(member.member_id) === String(memberId)
-  );
+  issueMembers.value.find((member) => String(member.member_id) === String(memberId));
 
 const updateIssueMembers = (members) => {
-  issue.value = {
-    ...issue.value,
-    members,
-  };
+  issueMembers.value = members;
 };
 
 const fetchIssue = async (options = {}) => {
@@ -104,10 +161,16 @@ const fetchIssue = async (options = {}) => {
   errorMessage.value = "";
 
   try {
-    const res = await api.get(`/issue/${issueId.value}`);
+    const res = await api.get(`/issues/${issueId.value}`);
     issue.value = res.data?.data || {};
+    if (!isEditing.value) {
+      editForm.value = {
+        title: issue.value.title || "",
+        content: issue.value.content || "",
+      };
+    }
   } catch (error) {
-    errorMessage.value = "이슈 정보를 불러오지 못했습니다.";
+    errorMessage.value = "Failed to load issue.";
   } finally {
     if (!silent) {
       isLoading.value = false;
@@ -117,6 +180,81 @@ const fetchIssue = async (options = {}) => {
 
 onMounted(fetchIssue);
 watch(issueId, fetchIssue);
+
+const startEditing = () => {
+  isEditing.value = true;
+  editForm.value = {
+    title: issue.value.title || "",
+    content: issue.value.content || "",
+  };
+};
+
+const cancelEditing = () => {
+  isEditing.value = false;
+  editForm.value = {
+    title: issue.value.title || "",
+    content: issue.value.content || "",
+  };
+};
+
+const saveIssue = async () => {
+  if (!issueId.value) return;
+  if (!editForm.value.title) {
+    errorMessage.value = "Please enter a title.";
+    return;
+  }
+
+  isSaving.value = true;
+  errorMessage.value = "";
+
+  try {
+    await api.patch(`/issues/${issueId.value}`, {
+      title: editForm.value.title,
+      content: editForm.value.content,
+    });
+    issue.value = {
+      ...issue.value,
+      title: editForm.value.title,
+      content: editForm.value.content,
+    };
+    isEditing.value = false;
+    addToast({ message: "Issue updated.", type: "success" });
+  } catch (error) {
+    const message = error?.response?.data?.message || "Failed to update issue.";
+    errorMessage.value = message;
+    addToast({ message, type: "error" });
+  } finally {
+    isSaving.value = false;
+  }
+};
+
+const deleteIssue = async () => {
+  if (!issueId.value) return;
+  if (!canDeleteIssue.value) return;
+  const confirmed = window.confirm("Delete this issue?");
+  if (!confirmed) return;
+
+  isDeleting.value = true;
+  errorMessage.value = "";
+
+  try {
+    await api.delete(`/issues/${issueId.value}`);
+    addToast({ message: "Issue deleted.", type: "success" });
+    if (workspaceId.value && projectId.value && boardId.value) {
+      router.push(
+        `/workspace/${workspaceId.value}/project/${projectId.value}/board/${boardId.value}`
+      );
+      return;
+    }
+    router.back();
+  } catch (error) {
+    const message = error?.response?.data?.message || "Failed to delete issue.";
+    errorMessage.value = message;
+    addToast({ message, type: "error" });
+  } finally {
+    isDeleting.value = false;
+  }
+};
 
 const fetchIssueMembers = async (options = {}) => {
   const { silent = false } = options;
@@ -131,10 +269,10 @@ const fetchIssueMembers = async (options = {}) => {
   relatedError.value = "";
 
   try {
-    const res = await api.get(`/issue/${issueId.value}/member`);
+    const res = await api.get(`/issues/${issueId.value}/members`);
     updateIssueMembers(res.data?.data || []);
   } catch (error) {
-    relatedError.value = "관련자 정보를 불러오지 못했습니다.";
+    relatedError.value = "Failed to load related members.";
   } finally {
     if (!silent) {
       isUpdatingRelated.value = false;
@@ -145,35 +283,18 @@ const fetchIssueMembers = async (options = {}) => {
 onMounted(fetchIssueMembers);
 watch(issueId, fetchIssueMembers);
 
-const fetchProjectMembers = async () => {
-  if (!projectId.value) {
-    projectMembers.value = [];
-    return;
-  }
-
-  try {
-    const res = await api.get(`/project/${projectId.value}/members`);
-    projectMembers.value = res.data?.data || [];
-  } catch (error) {
-    projectMembers.value = [];
-  }
-};
-
-onMounted(fetchProjectMembers);
-watch(projectId, fetchProjectMembers);
-
 const removeRelatedMember = async (issueMemberId) => {
-  const confirmed = window.confirm("관련자를 삭제할까요?");
+  const confirmed = window.confirm("Remove this related member?");
   if (!confirmed) return;
 
   updatingMemberId.value = issueMemberId;
   relatedError.value = "";
 
   try {
-    await api.delete(`/issue/member/${issueMemberId}`);
+    await api.delete(`/issues/members/${issueMemberId}`);
     await fetchIssueMembers({ silent: true });
   } catch (error) {
-    relatedError.value = error?.response?.data?.message || "관련자 삭제에 실패했습니다.";
+    relatedError.value = error?.response?.data?.message || "Failed to remove related member.";
   } finally {
     updatingMemberId.value = null;
   }
@@ -182,7 +303,7 @@ const removeRelatedMember = async (issueMemberId) => {
 const addRelatedMemberByRole = async (role, memberId) => {
   const resolvedMemberId = memberId;
   if (!resolvedMemberId) {
-    relatedError.value = "관련자를 선택해주세요.";
+    relatedError.value = "Please select a member.";
     return;
   }
 
@@ -197,18 +318,18 @@ const addRelatedMemberByRole = async (role, memberId) => {
       if (currentRole === nextRole) {
         return;
       }
-      await api.delete(`/issue/member/${current.issue_member_id}`);
+      await api.delete(`/issues/members/${current.issue_member_id}`);
     }
     if (hasMemberInRole(role, resolvedMemberId)) {
       return;
     }
-    await api.post(`/issue/${issueId.value}/member`, {
+    await api.post(`/issues/${issueId.value}/members`, {
       member_id: resolvedMemberId,
       role_name: role || "ASSIGNEE",
     });
     await fetchIssueMembers({ silent: true });
   } catch (error) {
-    relatedError.value = error?.response?.data?.message || "관련자 수정에 실패했습니다.";
+    relatedError.value = error?.response?.data?.message || "Failed to update related members.";
   } finally {
     isUpdatingRelated.value = false;
   }
@@ -240,6 +361,35 @@ const addRelatedMemberByRole = async (role, memberId) => {
 
 .issue-meta {
   grid-column: span 3;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+}
+
+.issue-title-input {
+  padding: 6px 10px;
+  border-radius: 4px;
+  border: 1px solid #e5e7eb;
+  font-size: 18px;
+  font-weight: 600;
+  margin-right: 8px;
+}
+
+.issue-content-input {
+  width: 100%;
+  min-height: 180px;
+  padding: 10px;
+  border-radius: 4px;
+  border: 1px solid #e5e7eb;
+  font-size: 14px;
+  resize: vertical;
+}
+
+.issue-meta h2 {
+  margin: 0 0 12px 0;
+  font-size: 16px;
 }
 
 @media (max-width: 900px) {

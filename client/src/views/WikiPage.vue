@@ -1,6 +1,6 @@
 <template>
   <hgroup>
-    <h1>{{ page.title || "페이지" }}</h1>
+    <h1>{{ page.title || "Page" }}</h1>
     <div class="actions">
       <button
         type="button"
@@ -8,10 +8,10 @@
         :disabled="!canEdit"
         @click="startEdit"
       >
-        편집
+        Edit
       </button>
       <button type="button" class="btn btn--secondary btn--sm" @click="openPermissionModal">
-        권한
+        Permissions
       </button>
       <button
         v-if="isOwner"
@@ -20,55 +20,55 @@
         :disabled="isDeleting"
         @click="deletePage"
       >
-        {{ isDeleting ? "삭제 중..." : "삭제" }}
+        {{ isDeleting ? "Deleting..." : "Delete" }}
       </button>
     </div>
   </hgroup>
-  <p v-if="isLoading">불러오는 중...</p>
+  <p v-if="isLoading">Loading...</p>
   <p v-else-if="errorMessage">{{ errorMessage }}</p>
   <article v-else class="wiki-content">
     <template v-if="isEditing">
-      <label class="edit-label" for="page-title">제목</label>
+      <label class="edit-label" for="page-title">Title</label>
       <input id="page-title" v-model.trim="editForm.title" type="text" class="edit-input" />
       <div class="edit-split">
         <section class="edit-pane">
-          <label class="edit-label" for="page-content">내용</label>
+          <label class="edit-label" for="page-content">Content</label>
           <textarea
             id="page-content"
             v-model="editForm.content"
             class="edit-textarea"
             rows="14"
-            placeholder="Markdown을 입력하세요"
+            placeholder="Enter Markdown content"
           ></textarea>
         </section>
         <section class="preview-pane">
-          <label class="edit-label">미리보기</label>
+          <label class="edit-label">Preview</label>
           <div class="markdown-body preview" v-html="renderedPreview"></div>
         </section>
       </div>
       <div class="edit-actions">
-        <button type="button" class="btn btn--secondary" @click="cancelEdit">취소</button>
+        <button type="button" class="btn btn--secondary" @click="cancelEdit">Cancel</button>
         <button type="button" class="btn" :disabled="isSaving" @click="savePage">
-          {{ isSaving ? "저장 중..." : "저장" }}
+          {{ isSaving ? "Saving..." : "Save" }}
         </button>
       </div>
     </template>
     <template v-else>
       <div v-if="page.content" class="markdown-body" v-html="renderedContent"></div>
-      <p v-else class="empty">내용이 없습니다.</p>
+      <p v-else class="empty">No content.</p>
     </template>
   </article>
 
-  <BaseModal :open="isPermissionOpen" title="페이지 권한" @close="closePermissionModal">
+  <BaseModal :open="isPermissionOpen" title="Page Permissions" @close="closePermissionModal">
     <form class="modal-form" @submit.prevent="savePermission">
-      <label for="permission-member">프로젝트 맴버</label>
+      <label for="permission-member">Project Members</label>
       <select id="permission-member" v-model="permissionForm.memberId">
-        <option value="">선택하세요</option>
+        <option value="">Select a member</option>
         <option v-for="member in projectMembers" :key="member.id" :value="member.id">
           {{ member.name }} ({{ member.email }})
         </option>
       </select>
-      <label for="permission-role">권한</label>
+      <label for="permission-role">Role</label>
       <select id="permission-role" v-model="permissionForm.roleName">
         <option value="OWNER">OWNER</option>
         <option value="EDITOR">EDITOR</option>
@@ -76,9 +76,9 @@
       </select>
       <p v-if="permissionError" class="form-error">{{ permissionError }}</p>
       <div class="modal-actions">
-        <button type="button" class="btn btn--secondary" @click="closePermissionModal">취소</button>
+        <button type="button" class="btn btn--secondary" @click="closePermissionModal">Cancel</button>
         <button type="submit" class="btn" :disabled="isPermissionSaving">
-          {{ isPermissionSaving ? "저장 중..." : "저장" }}
+          {{ isPermissionSaving ? "Saving..." : "Save" }}
         </button>
       </div>
     </form>
@@ -90,11 +90,13 @@
     </div>
   </BaseModal>
 
-  <BaseModal :open="isCancelOpen" title="편집 취소" @close="closeCancelModal">
-    <p>변경사항을 저장하지 않고 나가시겠습니까?</p>
+  <BaseModal :open="isCancelOpen" title="Discard Changes" @close="closeCancelModal">
+    <p>Discard changes without saving?</p>
     <div class="modal-actions">
-      <button type="button" class="btn btn--secondary" @click="closeCancelModal">계속 편집</button>
-      <button type="button" class="btn" @click="confirmCancelEdit">변경사항 버리기</button>
+      <button type="button" class="btn btn--secondary" @click="closeCancelModal">
+        Continue Editing
+      </button>
+      <button type="button" class="btn" @click="confirmCancelEdit">Discard Changes</button>
     </div>
   </BaseModal>
 </template>
@@ -105,6 +107,8 @@ import { useRoute, useRouter } from "vue-router";
 import api from "../lib/axios";
 import BaseModal from "../components/BaseModal.vue";
 import { useAppStore } from "../stores/appStore";
+import { useProjectMemberStore } from "../stores/projectMemberStore";
+import { usePageStore } from "../stores/pageStore";
 import MarkdownIt from "markdown-it";
 import hljs from "highlight.js";
 import "highlight.js/styles/github.css";
@@ -125,14 +129,18 @@ const isDeleting = ref(false);
 const isPermissionOpen = ref(false);
 const isPermissionSaving = ref(false);
 const permissionError = ref("");
-const projectMembers = ref([]);
 const pageMembers = ref([]);
 const permissionForm = ref({ memberId: "", roleName: "VIEWER" });
 const isCancelOpen = ref(false);
 
 const appStore = useAppStore();
+const projectMemberStore = useProjectMemberStore();
+const pageStore = usePageStore();
 const currentUserId = computed(() => appStore.currentUser?.id);
 const router = useRouter();
+const projectMembers = computed(() =>
+  projectMemberStore.getProjectMembers(projectId.value)
+);
 
 const markdown = new MarkdownIt({
   html: false,
@@ -181,11 +189,13 @@ const fetchPage = async () => {
   errorMessage.value = "";
 
   try {
-    const res = await api.get(`/project/${projectId.value}/pages/${pageId.value}`);
+    const res = await api.get(`/pages/${pageId.value}`, {
+      params: { project_id: projectId.value },
+    });
     page.value = res.data?.data || {};
   } catch (error) {
     page.value = {};
-    errorMessage.value = "페이지를 불러오지 못했습니다.";
+    errorMessage.value = "Failed to load page.";
   } finally {
     isLoading.value = false;
   }
@@ -216,10 +226,16 @@ const savePage = async () => {
 
   isSaving.value = true;
   try {
-    const res = await api.patch(`/project/${projectId.value}/pages/${pageId.value}`, {
-      title: editForm.value.title,
-      content: editForm.value.content,
-    });
+    const res = await api.patch(
+      `/pages/${pageId.value}`,
+      {
+        title: editForm.value.title,
+        content: editForm.value.content,
+      },
+      {
+        params: { project_id: projectId.value },
+      }
+    );
     page.value = res.data?.data || page.value;
     originalForm.value = {
       title: page.value.title || "",
@@ -227,19 +243,10 @@ const savePage = async () => {
     };
     isEditing.value = false;
   } catch (error) {
-    errorMessage.value = "페이지 저장에 실패했습니다.";
+    errorMessage.value = "Failed to save page.";
   } finally {
     isSaving.value = false;
   }
-};
-
-const fetchProjectMembers = async () => {
-  if (!projectId.value) {
-    projectMembers.value = [];
-    return;
-  }
-  const res = await api.get(`/project/${projectId.value}/members`);
-  projectMembers.value = res.data?.data || [];
 };
 
 const fetchPageMembers = async () => {
@@ -247,7 +254,9 @@ const fetchPageMembers = async () => {
     pageMembers.value = [];
     return;
   }
-  const res = await api.get(`/project/${projectId.value}/pages/${pageId.value}/members`);
+  const res = await api.get(`/pages/${pageId.value}/members`, {
+    params: { project_id: projectId.value },
+  });
   pageMembers.value = res.data?.data || [];
 };
 
@@ -256,7 +265,7 @@ const openPermissionModal = async () => {
   permissionForm.value = { memberId: "", roleName: "VIEWER" };
   permissionError.value = "";
   isPermissionOpen.value = true;
-  await Promise.all([fetchProjectMembers(), fetchPageMembers()]);
+  await fetchPageMembers();
 };
 
 const closePermissionModal = () => {
@@ -274,7 +283,7 @@ const confirmCancelEdit = () => {
 
 const savePermission = async () => {
   if (!permissionForm.value.memberId) {
-    permissionError.value = "멤버를 선택해주세요.";
+    permissionError.value = "Please select a member.";
     return;
   }
   if (!projectId.value || !pageId.value) return;
@@ -282,13 +291,19 @@ const savePermission = async () => {
   isPermissionSaving.value = true;
   permissionError.value = "";
   try {
-    await api.post(`/project/${projectId.value}/pages/${pageId.value}/member`, {
-      member_id: permissionForm.value.memberId,
-      role_name: permissionForm.value.roleName,
-    });
+    await api.post(
+      `/pages/${pageId.value}/members`,
+      {
+        member_id: permissionForm.value.memberId,
+        role_name: permissionForm.value.roleName,
+      },
+      {
+        params: { project_id: projectId.value },
+      }
+    );
     await fetchPageMembers();
   } catch (error) {
-    permissionError.value = error?.response?.data?.message || "권한 저장에 실패했습니다.";
+    permissionError.value = error?.response?.data?.message || "Failed to update permissions.";
   } finally {
     isPermissionSaving.value = false;
   }
@@ -298,15 +313,18 @@ const deletePage = async () => {
   if (!projectId.value || !pageId.value) return;
   if (!isOwner.value) return;
 
-  const confirmed = window.confirm("페이지를 삭제할까요?");
+  const confirmed = window.confirm("Delete this page?");
   if (!confirmed) return;
 
   isDeleting.value = true;
   try {
-    await api.delete(`/project/${projectId.value}/pages/${pageId.value}`);
+    await api.delete(`/pages/${pageId.value}`, {
+      params: { project_id: projectId.value },
+    });
+    await pageStore.fetchPages(projectId.value);
     await router.push(`/workspace/${route.params.workspaceId}/project/${projectId.value}/wiki`);
   } catch (error) {
-    errorMessage.value = error?.response?.data?.message || "페이지 삭제에 실패했습니다.";
+    errorMessage.value = error?.response?.data?.message || "Failed to delete page.";
   } finally {
     isDeleting.value = false;
   }

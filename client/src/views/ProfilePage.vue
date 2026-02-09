@@ -1,11 +1,11 @@
 <template>
 	<section class="profile">
 		<hgroup>
-			<h1>내 프로필</h1>
-			<p>기본 정보를 확인하세요.</p>
+			<h1>Profile</h1>
+			<p>Review your basic information.</p>
 		</hgroup>
 
-		<p v-if="isLoading" class="status">불러오는 중...</p>
+		<p v-if="isLoading" class="status">Loading...</p>
 		<p v-else-if="errorMessage" class="status error">{{ errorMessage }}</p>
 
 		<div v-else class="profile-card">
@@ -14,15 +14,15 @@
 			</div>
 			<div class="details">
 				<div class="detail">
-					<span class="label">이름</span>
+					<span class="label">Name</span>
 					<span class="value">{{ profile.name || "-" }}</span>
 				</div>
 				<div class="detail">
-					<span class="label">이메일</span>
+					<span class="label">Email</span>
 					<span class="value">{{ profile.email || "-" }}</span>
 				</div>
 				<div class="detail">
-					<span class="label">가입일</span>
+					<span class="label">Joined</span>
 					<span class="value">{{ formatDate(profile.created_at) || "-" }}</span>
 				</div>
 			</div>
@@ -43,11 +43,11 @@ const fetchProfile = async () => {
 	errorMessage.value = "";
 
 	try {
-		const res = await api.get("/member/me");
+		const res = await api.get("/members/me");
 		profile.value = res.data?.data || {};
 	} catch (error) {
 		profile.value = {};
-		errorMessage.value = "프로필 정보를 불러오지 못했습니다.";
+		errorMessage.value = "Failed to load profile.";
 	} finally {
 		isLoading.value = false;
 	}

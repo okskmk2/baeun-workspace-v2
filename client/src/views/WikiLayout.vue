@@ -1,11 +1,11 @@
 <template>
   <div class="AcountLayout">
     <aside>
-      <button class="btn" type="button" @click="openModal">페이지 만들기</button>
+      <button class="btn" type="button" @click="openModal">Create Page</button>
       <nav class="page-nav">
-        <p v-if="isLoading">불러오는 중...</p>
+        <p v-if="isLoading">Loading...</p>
         <p v-else-if="errorMessage">{{ errorMessage }}</p>
-        <p v-else-if="pages.length === 0">페이지가 없습니다.</p>
+        <p v-else-if="pages.length === 0">No pages yet.</p>
         <PageTree
           v-else
           :nodes="pages"
@@ -20,15 +20,15 @@
     </main>
   </div>
 
-  <BaseModal :open="isModalOpen" title="페이지 만들기" @close="closeModal">
+  <BaseModal :open="isModalOpen" title="Create Page" @close="closeModal">
     <form class="modal-form" @submit.prevent="createPage">
-      <label for="page-title">페이지 제목</label>
-      <input id="page-title" v-model.trim="form.title" type="text" placeholder="페이지 제목" />
+      <label for="page-title">Page Title</label>
+      <input id="page-title" v-model.trim="form.title" type="text" placeholder="Page Title" />
       <p v-if="formError" class="form-error">{{ formError }}</p>
       <div class="modal-actions">
-        <button type="button" class="btn btn--secondary" @click="closeModal">취소</button>
+        <button type="button" class="btn btn--secondary" @click="closeModal">Cancel</button>
         <button type="submit" class="btn" :disabled="isCreating">
-          {{ isCreating ? "저장 중..." : "저장" }}
+          {{ isCreating ? "Creating..." : "Create" }}
         </button>
       </div>
     </form>
@@ -41,13 +41,15 @@ import { useRoute } from "vue-router";
 import api from "../lib/axios";
 import BaseModal from "../components/BaseModal.vue";
 import PageTree from "../components/PageTree.vue";
+import { usePageStore } from "../stores/pageStore";
 
 const route = useRoute();
 const workspaceId = computed(() => route.params.workspaceId);
 const projectId = computed(() => route.params.projectId);
 const currentPageId = computed(() => route.params.pageId);
 
-const pages = ref([]);
+const pageStore = usePageStore();
+const pages = computed(() => pageStore.getPages(projectId.value));
 const isLoading = ref(false);
 const errorMessage = ref("");
 
@@ -58,7 +60,7 @@ const form = ref({ title: "" });
 
 const fetchPages = async () => {
   if (!projectId.value) {
-    pages.value = [];
+    pageStore.pagesByProject[projectId.value] = [];
     return;
   }
 
@@ -66,11 +68,10 @@ const fetchPages = async () => {
   errorMessage.value = "";
 
   try {
-    const res = await api.get(`/project/${projectId.value}/pages`);
-    pages.value = res.data?.data || [];
+    await pageStore.fetchPages(projectId.value);
   } catch (error) {
-    pages.value = [];
-    errorMessage.value = "페이지 목록을 불러오지 못했습니다.";
+    pageStore.pagesByProject[projectId.value] = [];
+    errorMessage.value = "Failed to load pages.";
   } finally {
     isLoading.value = false;
   }
@@ -78,7 +79,7 @@ const fetchPages = async () => {
 
 const openModal = () => {
   if (!projectId.value) {
-    formError.value = "프로젝트가 선택되지 않았습니다.";
+    formError.value = "No project selected.";
     return;
   }
   form.value = { title: "" };
@@ -127,24 +128,30 @@ const handleReorder = async ({ parentId, orderedIds }) => {
   applyReorder(parentId, orderedIds);
 
   try {
-    await api.post(`/project/${projectId.value}/pages/reorder`, {
-      parent_id: parentId ?? null,
-      ordered_ids: orderedIds,
-    });
+    await api.post(
+      "/pages/reorder",
+      {
+        parent_id: parentId ?? null,
+        ordered_ids: orderedIds,
+      },
+      {
+        params: { project_id: projectId.value },
+      }
+    );
   } catch (error) {
-    errorMessage.value = "페이지 순서 저장에 실패했습니다.";
+    errorMessage.value = "Failed to update page order.";
     await fetchPages();
   }
 };
 
 const createPage = async () => {
   if (!form.value.title) {
-    formError.value = "페이지 제목을 입력해주세요.";
+    formError.value = "Please enter a page title.";
     return;
   }
 
   if (!projectId.value) {
-    formError.value = "프로젝트가 선택되지 않았습니다.";
+    formError.value = "No project selected.";
     return;
   }
 
@@ -153,15 +160,21 @@ const createPage = async () => {
 
   try {
     const parentId = await resolveParentId();
-    await api.post(`/project/${projectId.value}/pages`, {
-      title: form.value.title,
-      content: null,
-      parent_id: parentId,
-    });
-    await fetchPages();
+    await api.post(
+      "/pages",
+      {
+        title: form.value.title,
+        content: null,
+        parent_id: parentId,
+      },
+      {
+        params: { project_id: projectId.value },
+      }
+    );
+    await pageStore.fetchPages(projectId.value);
     closeModal();
   } catch (error) {
-    formError.value = error?.response?.data?.message || "페이지 생성에 실패했습니다.";
+    formError.value = error?.response?.data?.message || "Failed to create page.";
   } finally {
     isCreating.value = false;
   }

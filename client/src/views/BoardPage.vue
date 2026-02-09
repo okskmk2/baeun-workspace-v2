@@ -1,7 +1,7 @@
 <template>
   <hgroup>
     <h1>{{ board.name || "Board" }}</h1>
-    <button type="button" class="btn" @click="openModal">이슈 만들기</button>
+    <button type="button" class="btn" @click="openModal">Create Issue</button>
   </hgroup>
 
   <div class="kanban">
@@ -13,7 +13,7 @@
       @drop="onDrop(status)"
     >
       <header>
-        <h2>{{ status }}</h2>
+        <h2>{{ statusLabels[status] }}</h2>
         <span>{{ issuesByStatus(status).length }}</span>
       </header>
 
@@ -42,37 +42,37 @@
               />
             </div>
           </div>
-          <p v-else>담당자 없음</p>
+          <p v-else>No assignees</p>
         </article>
       </div>
     </section>
   </div>
 
-  <BaseModal :open="isModalOpen" title="이슈 만들기" @close="closeModal">
+  <BaseModal :open="isModalOpen" title="Create Issue" @close="closeModal">
     <form class="modal-form" @submit.prevent="createIssue">
-      <label for="issue-title">제목</label>
-      <input id="issue-title" v-model.trim="form.title" type="text" placeholder="이슈 제목" />
+      <label for="issue-title">Title</label>
+      <input id="issue-title" v-model.trim="form.title" type="text" placeholder="Issue title" />
 
-      <label for="issue-content">내용</label>
+      <label for="issue-content">Description</label>
       <textarea
         id="issue-content"
         v-model.trim="form.content"
         rows="4"
-        placeholder="이슈 내용을 입력하세요"
+        placeholder="Enter issue details"
       ></textarea>
 
-      <label for="issue-status">상태</label>
+      <label for="issue-status">Status</label>
       <select id="issue-status" v-model="form.status">
         <option v-for="status in statuses" :key="status" :value="status">
-          {{ status }}
+          {{ statusLabels[status] }}
         </option>
       </select>
 
       <p v-if="formError" class="form-error">{{ formError }}</p>
       <div class="modal-actions">
-        <button type="button" class="btn btn--secondary" @click="closeModal">취소</button>
+        <button type="button" class="btn btn--secondary" @click="closeModal">Cancel</button>
         <button type="submit" class="btn" :disabled="isCreating">
-          {{ isCreating ? "저장 중..." : "저장" }}
+          {{ isCreating ? "Creating..." : "Create" }}
         </button>
       </div>
     </form>
@@ -97,10 +97,16 @@ const formError = ref("");
 const form = ref({
   title: "",
   content: "",
-  status: "백로그",
+  status: "BACKLOG",
 });
 
-const statuses = ["백로그", "진행중", "검토중", "완료"];
+const statuses = ["BACKLOG", "IN_PROGRESS", "IN_REVIEW", "DONE"];
+const statusLabels = {
+  BACKLOG: "Backlog",
+  IN_PROGRESS: "In Progress",
+  IN_REVIEW: "In Review",
+  DONE: "Done",
+};
 
 const workspaceId = computed(() => route.params.workspaceId);
 const projectId = computed(() => route.params.projectId);
@@ -108,18 +114,18 @@ const boardId = computed(() => route.params.boardId);
 
 const fetchBoard = async () => {
   if (!boardId.value) return;
-  const res = await api.get(`/board/${boardId.value}`);
+  const res = await api.get(`/boards/${boardId.value}`);
   board.value = res.data?.data || {};
 };
 
 const fetchIssues = async () => {
   if (!boardId.value) return;
-  const res = await api.get(`/board/${boardId.value}/issue`);
+  const res = await api.get(`/boards/${boardId.value}/issues`);
   issues.value = res.data?.data || [];
 };
 
 const issuesByStatus = (status) =>
-  issues.value.filter((issue) => (issue.status || "백로그") === status);
+  issues.value.filter((issue) => (issue.status || "BACKLOG") === status);
 const issueDetailPath = (issueId) =>
   `/workspace/${workspaceId.value}/project/${projectId.value}/board/${boardId.value}/issue/${issueId}`;
 
@@ -147,7 +153,7 @@ const onDrop = async (status) => {
   }
 
   try {
-    const res = await api.patch(`/issue/${issueId}`, { status });
+    const res = await api.patch(`/issues/${issueId}`, { status });
     const updated = res.data?.data;
     issues.value = issues.value.map((item) =>
       item.id === issueId ? { ...item, ...updated } : item
@@ -161,10 +167,10 @@ const onDrop = async (status) => {
 
 const openModal = () => {
   if (!boardId.value) {
-    formError.value = "보드를 선택해주세요.";
+    formError.value = "Please select a board.";
     return;
   }
-  form.value = { title: "", content: "", status: "백로그" };
+  form.value = { title: "", content: "", status: "BACKLOG" };
   formError.value = "";
   isModalOpen.value = true;
 };
@@ -175,7 +181,7 @@ const closeModal = () => {
 
 const createIssue = async () => {
   if (!form.value.title) {
-    formError.value = "제목을 입력해주세요.";
+    formError.value = "Please enter a title.";
     return;
   }
 
@@ -183,21 +189,16 @@ const createIssue = async () => {
   formError.value = "";
 
   try {
-    const res = await api.post("/issue", {
+    await api.post("/issues", {
       title: form.value.title,
       content: form.value.content,
       board_id: boardId.value,
       status: form.value.status,
     });
-    const created = res.data?.data;
-    if (created) {
-      issues.value = [...issues.value, created];
-    } else {
-      await fetchIssues();
-    }
+    await fetchIssues();
     closeModal();
   } catch (error) {
-    formError.value = error?.response?.data?.message || "이슈 생성에 실패했습니다.";
+    formError.value = error?.response?.data?.message || "Failed to create issue.";
   } finally {
     isCreating.value = false;
   }

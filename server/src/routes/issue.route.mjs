@@ -6,7 +6,7 @@ const router = express.Router();
 
 /**
  * @swagger
- * /api/issue:
+ * /api/issues:
  *   post:
  *     summary: 이슈 생성
  *     description: 새 이슈를 생성하고 작성자를 REPORTER로 등록
@@ -27,20 +27,29 @@ const router = express.Router();
  *                 type: integer
  *               status:
  *                 type: string
- *                 default: 백로그
+ *                 default: BACKLOG
  *             required:
  *               - title
  *               - board_id
  *     responses:
  *       201:
  *         description: 이슈 생성 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   $ref: "#/components/schemas/CreatedId"
  *       403:
- *         description: 이슈 생성 권한이 없음
+ *         $ref: "#/components/responses/ErrorResponse"
  *       500:
- *         description: 서버 오류
+ *         $ref: "#/components/responses/ErrorResponse"
  */
 router.post("/", isAuth, async (req, res) => {
-  const { title, content, board_id, status = "백로그" } = req.body;
+  const { title, content, board_id, status = "BACKLOG" } = req.body;
   const userId = req.session.userId;
 
   const client = await pool.connect();
@@ -73,7 +82,7 @@ router.post("/", isAuth, async (req, res) => {
     );
 
     await client.query("COMMIT");
-    res.status(201).json({ success: true, data: newIssue });
+    res.status(201).json({ success: true, data: { id: newIssue.id } });
   } catch (error) {
     await client.query("ROLLBACK");
     res.status(500).json({ success: false, message: error.message });
@@ -84,7 +93,7 @@ router.post("/", isAuth, async (req, res) => {
 
 /**
  * @swagger
- * /api/issue/{issueId}:
+ * /api/issues/{issueId}:
  *   get:
  *     summary: 이슈 상세 조회
  *     description: 이슈의 상세 정보 조회
@@ -99,10 +108,19 @@ router.post("/", isAuth, async (req, res) => {
  *     responses:
  *       200:
  *         description: 이슈 상세 조회 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   $ref: "#/components/schemas/Issue"
  *       404:
- *         description: 이슈를 찾을 수 없음
+ *         $ref: "#/components/responses/ErrorResponse"
  *       500:
- *         description: 서버 오류
+ *         $ref: "#/components/responses/ErrorResponse"
  */
 router.get("/:issueId", isAuth, async (req, res) => {
   const { issueId } = req.params;
@@ -123,7 +141,7 @@ router.get("/:issueId", isAuth, async (req, res) => {
 
 /**
  * @swagger
- * /api/issue/{issueId}/member:
+ * /api/issues/{issueId}/members:
  *   get:
  *     summary: 이슈 관련자 목록 조회
  *     description: 이슈에 연결된 멤버 목록 조회
@@ -138,10 +156,21 @@ router.get("/:issueId", isAuth, async (req, res) => {
  *     responses:
  *       200:
  *         description: 이슈 관련자 목록 조회 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: "#/components/schemas/IssueMember"
  *       500:
- *         description: 서버 오류
+ *         $ref: "#/components/responses/ErrorResponse"
  */
-router.get("/:issueId/member", isAuth, async (req, res) => {
+router.get("/:issueId/members", isAuth, async (req, res) => {
   const { issueId } = req.params;
   try {
     const membersRes = await pool.query(
@@ -163,7 +192,7 @@ router.get("/:issueId/member", isAuth, async (req, res) => {
 
 /**
  * @swagger
- * /api/issue/{issueId}:
+ * /api/issues/{issueId}:
  *   patch:
  *     summary: 이슈 수정
  *     description: 이슈의 정보와 상태 수정
@@ -190,10 +219,19 @@ router.get("/:issueId/member", isAuth, async (req, res) => {
  *     responses:
  *       200:
  *         description: 이슈 수정 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   $ref: "#/components/schemas/Issue"
  *       404:
- *         description: 이슈를 찾을 수 없음
+ *         $ref: "#/components/responses/ErrorResponse"
  *       500:
- *         description: 서버 오류
+ *         $ref: "#/components/responses/ErrorResponse"
  */
 router.patch("/:issueId", isAuth, async (req, res) => {
   const { issueId } = req.params;
@@ -215,27 +253,134 @@ router.patch("/:issueId", isAuth, async (req, res) => {
 });
 
 /**
- * 4. 이슈 담당자 추가 (ASSIGNEE 등)
+ * @swagger
+ * /api/issues/{issueId}/members:
+ *   post:
+ *     summary: 이슈 담당자 추가
+ *     description: 이슈에 담당자를 추가
+ *     tags:
+ *       - Issue
+ *     parameters:
+ *       - in: path
+ *         name: issueId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               member_id:
+ *                 type: integer
+ *               role_name:
+ *                 type: string
+ *                 default: ASSIGNEE
+ *             required:
+ *               - member_id
+ *     responses:
+ *       200:
+ *         description: 담당자 추가 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   $ref: "#/components/schemas/CreatedId"
+ *       500:
+ *         $ref: "#/components/responses/ErrorResponse"
  */
-router.post("/:issueId/member", isAuth, async (req, res) => {
+router.post("/:issueId/members", isAuth, async (req, res) => {
   const { issueId } = req.params;
   const { member_id, role_name = "ASSIGNEE" } = req.body;
   try {
-    await pool.query(
+    const insertRes = await pool.query(
       `INSERT INTO issue_member (issue_id, member_id, role_name) VALUES ($1, $2, $3)
-       ON CONFLICT DO NOTHING`,
+       ON CONFLICT DO NOTHING
+       RETURNING id`,
       [issueId, member_id, role_name]
     );
-    res.json({ success: true, message: "담당자가 추가되었습니다." });
+
+    let issueMemberId = insertRes.rows[0]?.id;
+    if (!issueMemberId) {
+      const existingRes = await pool.query(
+        "SELECT id FROM issue_member WHERE issue_id = $1 AND member_id = $2",
+        [issueId, member_id]
+      );
+      issueMemberId = existingRes.rows[0]?.id;
+    }
+
+    res.json({
+      success: true,
+      message: "담당자가 추가되었습니다.",
+      data: { id: issueMemberId },
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 });
 
 /**
- * 5. 이슈 담당자 역할 수정
+ * @swagger
+ * /api/issues/members/{issueMemberId}:
+ *   patch:
+ *     summary: 이슈 담당자 역할 수정
+ *     description: 이슈 담당자의 역할을 수정
+ *     tags:
+ *       - Issue
+ *     parameters:
+ *       - in: path
+ *         name: issueMemberId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               role_name:
+ *                 type: string
+ *             required:
+ *               - role_name
+ *     responses:
+ *       200:
+ *         description: 역할 수정 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: integer
+ *                     issue_id:
+ *                       type: integer
+ *                     member_id:
+ *                       type: integer
+ *                     role_name:
+ *                       type: string
+ *       400:
+ *         $ref: "#/components/responses/ErrorResponse"
+ *       404:
+ *         $ref: "#/components/responses/ErrorResponse"
+ *       500:
+ *         $ref: "#/components/responses/ErrorResponse"
  */
-router.patch("/member/:issueMemberId", isAuth, async (req, res) => {
+router.patch("/members/:issueMemberId", isAuth, async (req, res) => {
   const { issueMemberId } = req.params;
   const { role_name } = req.body;
 
@@ -260,9 +405,26 @@ router.patch("/member/:issueMemberId", isAuth, async (req, res) => {
 });
 
 /**
- * 6. 이슈 담당자 제거
+ * @swagger
+ * /api/issues/members/{issueMemberId}:
+ *   delete:
+ *     summary: 이슈 담당자 제거
+ *     description: 이슈 담당자를 제거
+ *     tags:
+ *       - Issue
+ *     parameters:
+ *       - in: path
+ *         name: issueMemberId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         $ref: "#/components/responses/Success200Message"
+ *       500:
+ *         $ref: "#/components/responses/ErrorResponse"
  */
-router.delete("/member/:issueMemberId", isAuth, async (req, res) => {
+router.delete("/members/:issueMemberId", isAuth, async (req, res) => {
   try {
     await pool.query(`DELETE FROM issue_member WHERE id = $1`, [req.params.issueMemberId]);
     res.json({ success: true, message: "멤버가 제외되었습니다." });
@@ -272,7 +434,24 @@ router.delete("/member/:issueMemberId", isAuth, async (req, res) => {
 });
 
 /**
- * 6. 이슈 삭제
+ * @swagger
+ * /api/issues/{issueId}:
+ *   delete:
+ *     summary: 이슈 삭제
+ *     description: 이슈 삭제
+ *     tags:
+ *       - Issue
+ *     parameters:
+ *       - in: path
+ *         name: issueId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         $ref: "#/components/responses/Success200Message"
+ *       500:
+ *         $ref: "#/components/responses/ErrorResponse"
  */
 router.delete("/:issueId", isAuth, async (req, res) => {
   try {

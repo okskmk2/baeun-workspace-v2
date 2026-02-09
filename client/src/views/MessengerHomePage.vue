@@ -1,9 +1,9 @@
 <template>
   <hgroup>
-    <h1>최근 대화</h1>
+    <h1>최근 메시지</h1>
   </hgroup>
 
-  <p v-if="isLoading" class="status">최근 대화를 불러오는 중...</p>
+  <p v-if="isLoading" class="status">최근 메시지를 불러오는 중...</p>
   <p v-else-if="errorMessage" class="status error">{{ errorMessage }}</p>
 
   <div v-else-if="groupedMessages.length" class="feed">
@@ -13,7 +13,7 @@
         <div class="feed-icon">M</div>
         <div class="feed-body">
           <div class="feed-title">
-            {{ item.chatroom_name || "채팅방" }} · {{ item.content || "메시지" }}
+            {{ item.channel_name || "채널" }} · {{ item.content || "메시지" }}
           </div>
           <div class="feed-meta">
             {{ item.creator_name || "알수없음" }} · {{ formatTime(item.created_at) }}
@@ -26,9 +26,9 @@
   <div v-else class="empty" aria-live="polite">
     <div class="empty-card">
       <div class="empty-badge">Chat</div>
-      <h1>최근 24시간 대화가 없습니다</h1>
-      <p class="empty-desc">왼쪽 메뉴에서 새로운 채팅방을 만들고 대화를 시작하세요.</p>
-      <button type="button" class="btn">채팅방 만들기</button>
+      <h1>최근 24시간 메시지가 없습니다</h1>
+      <p class="empty-desc">왼쪽 메뉴에서 채널을 만들고 메시지를 시작하세요.</p>
+      <button type="button" class="btn">채널 만들기</button>
     </div>
   </div>
 </template>
@@ -52,13 +52,13 @@ const fetchRecentMessages = async () => {
   errorMessage.value = "";
 
   try {
-    const res = await api.get("/chatroom/recent", {
+    const res = await api.get("/channels/recent", {
       params: { project_id: projectId.value },
     });
     messages.value = res.data?.data || [];
   } catch (error) {
     messages.value = [];
-    errorMessage.value = "최근 대화를 불러오지 못했습니다.";
+    errorMessage.value = "최근 메시지를 불러오지 못했습니다.";
   } finally {
     isLoading.value = false;
   }

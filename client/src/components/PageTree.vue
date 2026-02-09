@@ -61,17 +61,17 @@ const dragId = sharedDragId;
 const dropTargetId = ref("");
 const dropPosition = ref("before");
 
-// 현재 타겟이 드래그 중인 요소와 같은 부모를 가졌는지 확인
+// Only allow reorders within the same parent.
 const isTargetValid = computed(() => {
   return String(sharedParentId.value) === String(props.parentId);
 });
 
 const onDragStart = (id, event) => {
   sharedDragId.value = String(id);
-  sharedParentId.value = props.parentId; // 현재 레벨의 parentId 저장
+  sharedParentId.value = props.parentId;
 
   event.dataTransfer.effectAllowed = "move";
-  // 다른 컴포넌트 인스턴스(다른 레벨)에서도 알 수 있도록 데이터 저장
+  // Persist ids for cross-level instances.
   event.dataTransfer.setData("drag-id", String(id));
   event.dataTransfer.setData("parent-id", String(props.parentId));
 };
@@ -83,16 +83,10 @@ const onDragEnd = () => {
 };
 
 const onDragOverItem = (targetId, event) => {
-  // 1. 자기 자신 제외
+  // Ignore self.
   if (String(targetId) === sharedDragId.value) return;
 
-  // 2. DataTransfer에서 부모 ID 가져오기 (HTML5 표준 방식 보완)
-  // dragover에서는 보안상 getData를 쓸 수 없으므로, 내부 ref(draggingParentId)를 활용하거나
-  // 전역 상태 관리(Pinia 등)를 쓰는 것이 좋지만,
-  // 같은 컴포넌트 재귀 구조에서는 '공유된 상태'가 아니므로 로직 처리가 필요합니다.
-
-  // 가이드라인을 그릴지 결정 (현재 컴포넌트의 parentId와 드래그 시작 parentId 비교)
-  // *주의: 이 로직이 작동하려면 드래그 시작 시 전역 변수나 싱글톤을 활용하는 것이 가장 확실합니다.
+  // Only show drop indicator when parent ids match.
   if (!isTargetValid.value) {
     dropTargetId.value = "";
     return;
@@ -189,7 +183,7 @@ const emitReorder = (payload) => emit("reorder", payload);
   background-color: #f3f4f6;
 }
 
-/* 드롭 위치 시각화 */
+/* Drop indicator line */
 .page-item.drop-before::before,
 .page-item.drop-after::after {
   content: "";

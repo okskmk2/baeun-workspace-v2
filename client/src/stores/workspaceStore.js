@@ -9,7 +9,7 @@ export const useWorkspaceStore = defineStore("workspace", {
   }),
   actions: {
     async fetchWorkspaces() {
-      const res = await api.get("/workspace/my");
+      const res = await api.get("/workspaces/my");
       this.workspaces = res.data?.data || [];
       this.workspaces.forEach((workspace) => {
         this.workspaceById[workspace.id] = workspace;
@@ -18,7 +18,7 @@ export const useWorkspaceStore = defineStore("workspace", {
     },
     async fetchWorkspace(workspaceId) {
       if (!workspaceId) return null;
-      const res = await api.get(`/workspace/${workspaceId}`);
+      const res = await api.get(`/workspaces/${workspaceId}`);
       const workspace = res.data?.data || null;
       if (workspace) {
         this.workspaceById[workspaceId] = workspace;
@@ -27,7 +27,7 @@ export const useWorkspaceStore = defineStore("workspace", {
     },
     async fetchProjects(workspaceId) {
       if (!workspaceId) return [];
-      const res = await api.get(`/workspace/${workspaceId}/projects`);
+      const res = await api.get(`/projects?workspaceId=${workspaceId}`);
       const projects = res.data?.data || [];
       this.projectsByWorkspace[workspaceId] = projects;
       return projects;
@@ -39,7 +39,7 @@ export const useWorkspaceStore = defineStore("workspace", {
       return this.workspaceById[workspaceId]?.name || "";
     },
     async createWorkspace(payload) {
-      const res = await api.post("/workspace", payload);
+      const res = await api.post("/workspaces", payload);
       const workspace = res.data?.data;
       if (workspace) {
         this.workspaces = [workspace, ...this.workspaces];
@@ -49,13 +49,13 @@ export const useWorkspaceStore = defineStore("workspace", {
     },
     async deleteWorkspace(workspaceId) {
       if (!workspaceId) return;
-      await api.delete(`/workspace/${workspaceId}`);
+      await api.delete(`/workspaces/${workspaceId}`);
       this.workspaces = this.workspaces.filter((item) => item.id !== workspaceId);
       delete this.workspaceById[workspaceId];
       delete this.projectsByWorkspace[workspaceId];
     },
     async createProject(workspaceId, name) {
-      const res = await api.post("/project", {
+      const res = await api.post("/projects", {
         name,
         workspace_id: workspaceId,
       });

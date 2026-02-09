@@ -1,8 +1,8 @@
 <template>
   <main>
     <hgroup>
-      <h1>프로젝트 목록</h1>
-      <button type="button" class="btn" @click="openModal">프로젝트 만들기</button>
+      <h1>Projects</h1>
+      <button type="button" class="btn" @click="openModal">Create Project</button>
     </hgroup>
     <p v-if="isLoading">Loading...</p>
     <p v-else-if="errorMessage">{{ errorMessage }}</p>
@@ -18,26 +18,26 @@
           @click="deleteProject(project.id)"
           :disabled="deletingProjectId === project.id"
         >
-          {{ deletingProjectId === project.id ? "삭제 중..." : "삭제" }}
+          {{ deletingProjectId === project.id ? "Deleting..." : "Delete" }}
         </button>
       </li>
     </ul>
   </main>
 
-  <BaseModal :open="isModalOpen" title="프로젝트 만들기" @close="closeModal">
+  <BaseModal :open="isModalOpen" title="Create Project" @close="closeModal">
     <form class="modal-form" @submit.prevent="createProject">
-      <label for="project-name">프로젝트 이름</label>
+      <label for="project-name">Project Name</label>
       <input
         id="project-name"
         v-model.trim="form.name"
         type="text"
-        placeholder="프로젝트 이름"
+        placeholder="Project name"
       />
       <p v-if="formError" class="form-error">{{ formError }}</p>
       <div class="modal-actions">
-        <button type="button" class="btn btn--secondary" @click="closeModal">취소</button>
+        <button type="button" class="btn btn--secondary" @click="closeModal">Cancel</button>
         <button type="submit" class="btn" :disabled="isCreating">
-          {{ isCreating ? "저장 중..." : "저장" }}
+          {{ isCreating ? "Creating..." : "Create" }}
         </button>
       </div>
     </form>
@@ -92,12 +92,12 @@ const closeModal = () => {
 
 const createProject = async () => {
   if (!form.value.name) {
-    formError.value = "프로젝트 이름을 입력해주세요.";
+    formError.value = "Please enter a project name.";
     return;
   }
 
   if (!workspaceId.value) {
-    formError.value = "워크스페이스가 선택되지 않았습니다.";
+    formError.value = "No workspace selected.";
     return;
   }
 
@@ -109,7 +109,7 @@ const createProject = async () => {
     await fetchProjects();
     closeModal();
   } catch (error) {
-    formError.value = error?.response?.data?.message || "프로젝트 생성에 실패했습니다.";
+    formError.value = error?.response?.data?.message || "Failed to create project.";
   } finally {
     isCreating.value = false;
   }
@@ -117,18 +117,18 @@ const createProject = async () => {
 
 const deleteProject = async (projectId) => {
   if (!projectId) return;
-  const confirmed = window.confirm("프로젝트를 삭제할까요?");
+  const confirmed = window.confirm("Delete this project?");
   if (!confirmed) return;
 
   deletingProjectId.value = projectId;
   errorMessage.value = "";
 
   try {
-    await api.delete(`/project/${projectId}`);
+    await api.delete(`/projects/${projectId}`);
     await fetchProjects();
   } catch (error) {
     errorMessage.value =
-      error?.response?.data?.message || "프로젝트 삭제에 실패했습니다.";
+      error?.response?.data?.message || "Failed to delete project.";
   } finally {
     deletingProjectId.value = null;
   }

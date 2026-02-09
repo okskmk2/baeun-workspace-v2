@@ -9,7 +9,7 @@ export const usePageStore = defineStore('page', {
     async fetchPages(projectId){
       if(!projectId) return
       try{
-        const res = await api.get(`/project/${projectId}/pages`)
+        const res = await api.get("/pages", { params: { project_id: projectId } })
         this.pagesByProject[projectId] = res.data?.data || []
       }catch(e){
         this.pagesByProject[projectId] = []

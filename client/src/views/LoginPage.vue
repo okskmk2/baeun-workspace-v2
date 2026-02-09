@@ -1,13 +1,13 @@
 <template>
   <div class="login">
     <header class="login__header">
-      <h1>로그인</h1>
-      <p>이메일과 비밀번호를 입력해 주세요.</p>
+      <h1>Login</h1>
+      <p>Enter your email and password.</p>
     </header>
 
     <form class="login__form" @submit.prevent="onSubmit">
       <div class="login__field">
-        <label for="email">이메일</label>
+        <label for="email">Email</label>
         <input
           id="email"
           v-model.trim="email"
@@ -19,32 +19,32 @@
       </div>
 
       <div class="login__field">
-        <label for="password">비밀번호</label>
+        <label for="password">Password</label>
         <input
           id="password"
           v-model.trim="password"
           type="password"
           autocomplete="current-password"
-          placeholder="비밀번호"
+          placeholder="Password"
         />
         <p v-if="errors.password" class="login__error">{{ errors.password }}</p>
       </div>
 
       <label class="login__remember">
         <input v-model="remember" type="checkbox" />
-        <span>로그인 상태 유지</span>
+        <span>Remember me</span>
       </label>
 
       <button type="submit" class="btn" :disabled="loading">
-        {{ loading ? "로그인 중..." : "로그인" }}
+        {{ loading ? "Signing in..." : "Sign in" }}
       </button>
 
       <p v-if="errors.form" class="login__error">{{ errors.form }}</p>
     </form>
 
     <p class="login__signup">
-      아직 계정이 없으신가요?
-      <router-link to="/signup">회원가입</router-link>
+      Don't have an account?
+      <router-link to="/signup">Sign up</router-link>
     </p>
   </div>
 </template>
@@ -76,15 +76,15 @@ const validate = () => {
   errors.form = "";
 
   if (!email.value) {
-    errors.email = "이메일을 입력해 주세요.";
+    errors.email = "Please enter your email.";
   } else if (!emailPattern.test(email.value)) {
-    errors.email = "올바른 이메일 형식을 입력해 주세요.";
+    errors.email = "Please enter a valid email address.";
   }
 
   if (!password.value) {
-    errors.password = "비밀번호를 입력해 주세요.";
+    errors.password = "Please enter your password.";
   } else if (password.value.length < 6) {
-    errors.password = "비밀번호는 6자 이상이어야 합니다.";
+    errors.password = "Password must be at least 6 characters.";
   }
 
   return !errors.email && !errors.password;
@@ -97,13 +97,13 @@ const onSubmit = async () => {
 
   loading.value = true;
   try {
-    const response = await api.post("/member/login", {
+    const response = await api.post("/members/login", {
       email: email.value,
       password: password.value,
     });
 
     if (!response.data?.success) {
-      errors.form = response.data?.message || "로그인에 실패했습니다.";
+      errors.form = response.data?.message || "Login failed.";
       return;
     }
 
@@ -115,7 +115,7 @@ const onSubmit = async () => {
       router.push("/");
     }
   } catch (error) {
-    errors.form = error?.response?.data?.message || "로그인에 실패했습니다.";
+    errors.form = error?.response?.data?.message || "Login failed.";
   } finally {
     loading.value = false;
   }

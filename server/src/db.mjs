@@ -1,32 +1,36 @@
 import pg from "pg";
 import dotenv from "dotenv";
+import logger from "./logger.mjs";
 
-// .env 파일의 환경 변수를 로드합니다.
+// Load environment variables from .env.
 dotenv.config();
 
 /**
- * PostgreSQL Connection Pool 설정
- * 매 요청마다 새로운 연결을 생성하지 않고, 미리 생성된 연결을 재사용하여 성능을 높입니다.
+ * PostgreSQL connection pool setup.
+ * Avoid creating a new connection per request by reusing pooled connections.
  */
 const pool = new pg.Pool({
   connectionString: process.env.DATABASE_URL,
 
-  // 최대 연결 수 (기본값 10)
+  // Max connections (default is 10).
   max: 20,
-  // 연결 시도 시간 제한 (ms)
+  // Connection timeout (ms).
   connectionTimeoutMillis: 2000,
-  // 연결이 유휴 상태로 유지되는 시간 (ms)
+  // Idle timeout before a connection is closed (ms).
   idleTimeoutMillis: 30000,
 });
 
-// 데이터베이스 연결 확인 이벤트
+// Database connection event.
 pool.on("connect", () => {
-  console.log("✅ PostgreSQL DB에 성공적으로 연결되었습니다.");
+  logger.info("PostgreSQL DB connected.");
 });
 
-// 에러 핸들링
+// Error handler.
 pool.on("error", (err) => {
-  console.error("❌ 예기치 못한 DB 연결 에러 발생:", err);
+  logger.error("Unexpected DB connection error", {
+    err: err?.message,
+    stack: err?.stack,
+  });
   process.exit(-1);
 });
 

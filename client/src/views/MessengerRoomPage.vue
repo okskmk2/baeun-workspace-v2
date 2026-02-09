@@ -12,7 +12,7 @@
         type="button"
         class="btn btn--danger btn--sm"
         :disabled="isDeleting"
-        @click="deleteChatroom"
+        @click="deletechannel"
       >
         {{ isDeleting ? "삭제 중..." : "삭제" }}
       </button>
@@ -89,9 +89,13 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import api from "../lib/axios";
 import BaseModal from "../components/BaseModal.vue";
+import { useProjectMemberStore } from "../stores/projectMemberStore";
+import { useChatStore } from "../stores/chatStore";
 
 const route = useRoute();
 const router = useRouter();
+const projectMemberStore = useProjectMemberStore();
+const chatStore = useChatStore();
 const roomId = computed(() => route.params.roomId);
 const projectId = computed(() => route.params.projectId);
 const workspaceId = computed(() => route.params.workspaceId);
@@ -100,12 +104,14 @@ const messages = ref([]);
 const draft = ref("");
 const isSending = ref(false);
 const isConnected = ref(false);
-const roomTitle = ref("채팅방");
+const roomTitle = ref("채널");
 let socket = null;
 const isInviteOpen = ref(false);
 const isInviting = ref(false);
 const inviteError = ref("");
-const projectMembers = ref([]);
+const projectMembers = computed(() =>
+  projectMemberStore.getProjectMembers(projectId.value)
+);
 const selectedMemberId = ref("");
 const isDeleting = ref(false);
 const deleteError = ref("");
@@ -114,38 +120,24 @@ const isMembersLoading = ref(false);
 const membersError = ref("");
 const chatMembers = ref([]);
 
-const fetchChatroomDetail = async () => {
+const fetchchannelDetail = async () => {
   if (!roomId.value) {
-    roomTitle.value = "채팅방";
+    roomTitle.value = "채널";
     return;
   }
 
   try {
-    const res = await api.get(`/chatroom/${roomId.value}`);
-    roomTitle.value = res.data?.data?.name || "채팅방";
+    const res = await api.get(`/channels/${roomId.value}`);
+    roomTitle.value = res.data?.data?.name || "채널";
   } catch (error) {
-    roomTitle.value = "채팅방";
+    roomTitle.value = "채널";
   }
 };
 
 const fetchMessages = async () => {
   if (!roomId.value) return;
-  const res = await api.get(`/chatroom/${roomId.value}/messages`);
+  const res = await api.get(`/channels/${roomId.value}/messages`);
   messages.value = res.data?.data || [];
-};
-
-const fetchProjectMembers = async () => {
-  if (!projectId.value) {
-    projectMembers.value = [];
-    return;
-  }
-
-  try {
-    const res = await api.get(`/project/${projectId.value}/members`);
-    projectMembers.value = res.data?.data || [];
-  } catch (error) {
-    projectMembers.value = [];
-  }
 };
 
 const fetchChatMembers = async () => {
@@ -158,7 +150,7 @@ const fetchChatMembers = async () => {
   membersError.value = "";
 
   try {
-    const res = await api.get(`/chatroom/${roomId.value}/members`);
+    const res = await api.get(`/channels/${roomId.value}/members`);
     chatMembers.value = res.data?.data || [];
   } catch (error) {
     chatMembers.value = [];
@@ -179,8 +171,8 @@ const connectSocket = () => {
   socket.addEventListener("open", () => {
     isConnected.value = true;
     if (roomId.value) {
-      socket.send(JSON.stringify({ type: "join", chatroomId: roomId.value }));
-      console.log("방 연결됨");
+      socket.send(JSON.stringify({ type: "join", channelId: roomId.value }));
+      console.log("연결됨");
     }
   });
 
@@ -206,7 +198,7 @@ const sendMessage = async () => {
   socket.send(
     JSON.stringify({
       type: "message",
-      chatroomId: roomId.value,
+      channelId: roomId.value,
       content: draft.value,
     })
   );
@@ -229,11 +221,10 @@ const isSystemMessage = (message) => {
   return /님이 .*님을 초대했습니다\.$/.test(content);
 };
 
-const openInviteModal = async () => {
+const openInviteModal = () => {
   inviteError.value = "";
   selectedMemberId.value = "";
   isInviteOpen.value = true;
-  await fetchProjectMembers();
 };
 
 const closeInviteModal = () => {
@@ -251,12 +242,12 @@ const closeMembersModal = () => {
 
 const inviteMember = async () => {
   if (!selectedMemberId.value) {
-    inviteError.value = "초대할 멤버를 선택해주세요.";
+    inviteError.value = "초대할 멤버를 선택해 주세요.";
     return;
   }
 
   if (!roomId.value) {
-    inviteError.value = "대화방이 선택되지 않았습니다.";
+    inviteError.value = "채널이 선택되지 않았습니다.";
     return;
   }
 
@@ -264,7 +255,7 @@ const inviteMember = async () => {
   inviteError.value = "";
 
   try {
-    await api.post(`/chatroom/${roomId.value}/invite`, {
+    await api.post(`/channels/${roomId.value}/invite`, {
       member_id: selectedMemberId.value,
     });
     closeInviteModal();
@@ -275,43 +266,42 @@ const inviteMember = async () => {
   }
 };
 
-const deleteChatroom = async () => {
+const deletechannel = async () => {
   if (!roomId.value) return;
-  const confirmed = window.confirm("이 채팅방을 삭제할까요? 되돌릴 수 없습니다.");
+  const confirmed = window.confirm("채널을 삭제할까요? 되돌릴 수 없습니다.");
   if (!confirmed) return;
 
   isDeleting.value = true;
   deleteError.value = "";
 
   try {
-    await api.delete(`/chatroom/${roomId.value}`);
+    await api.delete(`/channels/${roomId.value}`);
     if (socket) {
       socket.close();
       socket = null;
     }
+    await chatStore.fetchRooms(projectId.value);
     await router.push(`/workspace/${workspaceId.value}/project/${projectId.value}/messenger`);
   } catch (error) {
-    deleteError.value = error?.response?.data?.message || "채팅방 삭제에 실패했습니다.";
+    deleteError.value = error?.response?.data?.message || "채널 삭제에 실패했습니다.";
   } finally {
     isDeleting.value = false;
   }
 };
 
 onMounted(async () => {
-  await fetchChatroomDetail();
+  await fetchchannelDetail();
   await fetchMessages();
   connectSocket();
 });
 
 watch(roomId, async () => {
-  await fetchChatroomDetail();
+  await fetchchannelDetail();
   await fetchMessages();
   if (socket && socket.readyState === 1) {
-    socket.send(JSON.stringify({ type: "join", chatroomId: roomId.value }));
+    socket.send(JSON.stringify({ type: "join", channelId: roomId.value }));
   }
 });
-
-watch(projectId, fetchProjectMembers);
 
 onBeforeUnmount(() => {
   if (socket) {

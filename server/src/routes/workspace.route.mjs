@@ -1,15 +1,16 @@
 import express from "express";
 import pool from "../db.mjs";
 import { isAuth } from "../middlewares/auth.middleware.mjs";
+import logger from "../logger.mjs";
 
 const router = express.Router();
 
 /**
  * @swagger
- * /api/workspace:
+ * /api/workspaces:
  *   post:
- *     summary: 워크스페이스 생성
- *     description: 새 워크스페이스를 생성하고 생성자를 OWNER로 등록
+ *     summary: Create workspace
+ *     description: Create a workspace and add the creator as OWNER
  *     tags:
  *       - Workspace
  *     requestBody:
@@ -29,21 +30,32 @@ const router = express.Router();
  *               - name
  *     responses:
  *       201:
- *         description: 워크스페이스 생성 성공
+ *         description: Workspace created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   $ref: "#/components/schemas/CreatedId"
  *       500:
- *         description: 서버 오류
+ *         $ref: "#/components/responses/ErrorResponse"
  */
 router.post("/", isAuth, async (req, res) => {
   const { name, img_url, theme_json } = req.body;
-  const userId = req.session.userId; // 인증 미들웨어에서 검증된 세션 ID
+  const userId = req.session.userId; // Validated session user ID.
 
-  // DB 트랜잭션 시작 (워크스페이스 생성과 멤버 등록은 하나로 묶여야 함)
+  // DB transaction for workspace + member creation.
   const client = await pool.connect();
 
   try {
     await client.query("BEGIN");
 
-    // 1. 워크스페이스 생성
+    // 1. Create workspace.
     const workspaceQuery = `
             INSERT INTO workspace (name, member_id, img_url, theme_json)
             VALUES ($1, $2, $3, $4)
@@ -52,7 +64,7 @@ router.post("/", isAuth, async (req, res) => {
     const workspaceRes = await client.query(workspaceQuery, [name, userId, img_url, theme_json]);
     const newWorkspace = workspaceRes.rows[0];
 
-    // 2. 워크스페이스 멤버 테이블에 생성자를 'OWNER'로 등록
+    // 2. Add workspace member as OWNER.
     const memberQuery = `
             INSERT INTO workspace_member (workspace_id, member_id, role_name)
             VALUES ($1, $2, 'OWNER');
@@ -63,13 +75,16 @@ router.post("/", isAuth, async (req, res) => {
 
     res.status(201).json({
       success: true,
-      message: "워크스페이스가 생성되었습니다.",
-      data: newWorkspace,
+      message: "Workspace created.",
+      data: { id: newWorkspace.id },
     });
   } catch (error) {
     await client.query("ROLLBACK");
-    console.error("Workspace 생성 오류:", error);
-    res.status(500).json({ success: false, message: "서버 오류로 생성에 실패했습니다." });
+    logger.error("Workspace creation error", {
+      err: error?.message,
+      stack: error?.stack,
+    });
+    res.status(500).json({ success: false, message: "Server error. Workspace create failed." });
   } finally {
     client.release();
   }
@@ -77,15 +92,15 @@ router.post("/", isAuth, async (req, res) => {
 
 /**
  * @swagger
- * /api/workspace/my:
+ * /api/workspaces/my:
  *   get:
- *     summary: 내 워크스페이스 목록
- *     description: 현재 사용자가 참여 중인 워크스페이스 목록 조회
+ *     summary: My workspaces
+ *     description: List workspaces the user participates in
  *     tags:
  *       - Workspace
  *     responses:
  *       200:
- *         description: 워크스페이스 목록 조회 성공
+ *         description: Workspaces retrieved
  *         content:
  *           application/json:
  *             schema:
@@ -96,9 +111,21 @@ router.post("/", isAuth, async (req, res) => {
  *                 data:
  *                   type: array
  *                   items:
- *                     $ref: '#/components/schemas/Workspace'
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                       name:
+ *                         type: string
+ *                       img_url:
+ *                         type: string
+ *                         nullable: true
+ *                       is_default:
+ *                         type: boolean
+ *                       role_name:
+ *                         type: string
  *       500:
- *         description: 서버 오류
+ *         $ref: "#/components/responses/ErrorResponse"
  */
 router.get("/my", isAuth, async (req, res) => {
   try {
@@ -122,10 +149,10 @@ router.get("/my", isAuth, async (req, res) => {
 
 /**
  * @swagger
- * /api/workspace/{workspaceId}:
+ * /api/workspaces/{workspaceId}:
  *   get:
- *     summary: 워크스페이스 상세 조회
- *     description: 특정 워크스페이스 상세 정보 조회
+ *     summary: Get workspace detail
+ *     description: Get workspace detail
  *     tags:
  *       - Workspace
  *     parameters:
@@ -136,27 +163,47 @@ router.get("/my", isAuth, async (req, res) => {
  *           type: integer
  *     responses:
  *       200:
- *         description: 워크스페이스 상세 조회 성공
+ *         description: Workspace detail retrieved
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: integer
+ *                     name:
+ *                       type: string
+ *                     img_url:
+ *                       type: string
+ *                       nullable: true
+ *                     is_default:
+ *                       type: boolean
+ *                     role_name:
+ *                       type: string
  *       403:
- *         description: 접근 권한이 없음
+ *         $ref: "#/components/responses/ErrorResponse"
  *       404:
- *         description: 워크스페이스를 찾을 수 없음
+ *         $ref: "#/components/responses/ErrorResponse"
  *       500:
- *         description: 서버 오류
+ *         $ref: "#/components/responses/ErrorResponse"
  */
 router.get("/:workspaceId", isAuth, async (req, res) => {
   const { workspaceId } = req.params;
   const userId = req.session.userId;
 
   try {
-    // 💡 보안: 현재 사용자가 해당 워크스페이스의 멤버인지 먼저 확인
     const memberCheck = await pool.query(
       "SELECT id FROM workspace_member WHERE workspace_id = $1 AND member_id = $2",
       [workspaceId, userId]
     );
 
     if (memberCheck.rows.length === 0) {
-      return res.status(403).json({ success: false, message: "접근 권한이 없습니다." });
+      return res.status(403).json({ success: false, message: "Access denied." });
     }
 
     const workspaceRes = await pool.query(
@@ -169,7 +216,7 @@ router.get("/:workspaceId", isAuth, async (req, res) => {
 
     const workspace = workspaceRes.rows[0];
     if (!workspace) {
-      return res.status(404).json({ success: false, message: "워크스페이스를 찾을 수 없습니다." });
+      return res.status(404).json({ success: false, message: "Workspace not found." });
     }
 
     res.json({ success: true, data: workspace });
@@ -179,11 +226,125 @@ router.get("/:workspaceId", isAuth, async (req, res) => {
 });
 
 /**
+ * @route   POST /api/workspaces/:workspaceId/members
+ * @desc    Invite a workspace member by email
+ */
+/**
  * @swagger
- * /api/workspace/{workspaceId}/projects:
+ * /api/workspaces/{workspaceId}/members:
+ *   post:
+ *     summary: Invite workspace member
+ *     description: Invite a user by email to the workspace
+ *     tags:
+ *       - Workspace
+ *     parameters:
+ *       - in: path
+ *         name: workspaceId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               role_name:
+ *                 type: string
+ *                 enum: [OWNER, ADMIN, MEMBER]
+ *             required:
+ *               - email
+ *     responses:
+ *       200:
+ *         description: Invite success
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   $ref: "#/components/schemas/CreatedId"
+ *       400:
+ *         $ref: "#/components/responses/ErrorResponse"
+ *       403:
+ *         $ref: "#/components/responses/ErrorResponse"
+ *       404:
+ *         $ref: "#/components/responses/ErrorResponse"
+ *       500:
+ *         $ref: "#/components/responses/ErrorResponse"
+ */
+router.post("/:workspaceId/members", isAuth, async (req, res) => {
+  const { workspaceId } = req.params;
+  const { email, role_name = "MEMBER" } = req.body;
+  const inviterId = req.session.userId;
+
+  try {
+    // 1. Check invite permission (OWNER or ADMIN).
+    const adminCheck = await pool.query(
+      "SELECT role_name FROM workspace_member WHERE workspace_id = $1 AND member_id = $2",
+      [workspaceId, inviterId]
+    );
+
+    if (!adminCheck.rows[0] || !["OWNER", "ADMIN"].includes(adminCheck.rows[0].role_name)) {
+      return res.status(403).json({ success: false, message: "No permission to invite members." });
+    }
+
+    // 2. Check user exists by email.
+    const userRes = await pool.query("SELECT id FROM member WHERE email = $1", [email]);
+    if (userRes.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No user with that email.",
+      });
+    }
+    const targetUserId = userRes.rows[0].id;
+
+    // 3. Check duplicate member.
+    const duplicateCheck = await pool.query(
+      "SELECT id FROM workspace_member WHERE workspace_id = $1 AND member_id = $2",
+      [workspaceId, targetUserId]
+    );
+    if (duplicateCheck.rows.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: "User is already a workspace member.",
+      });
+    }
+
+    // 4. Add member.
+    const insertRes = await pool.query(
+      "INSERT INTO workspace_member (workspace_id, member_id, role_name) VALUES ($1, $2, $3) RETURNING id",
+      [workspaceId, targetUserId, role_name]
+    );
+
+    res.json({
+      success: true,
+      message: "Member added.",
+      data: { id: insertRes.rows[0].id },
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * @route   GET /api/workspaces/:workspaceId/members
+ * @desc    List workspace members
+ */
+/**
+ * @swagger
+ * /api/workspaces/{workspaceId}/members:
  *   get:
- *     summary: 워크스페이스 프로젝트 목록
- *     description: 특정 워크스페이스의 프로젝트 목록 조회
+ *     summary: Workspace members
+ *     description: List workspace members
  *     tags:
  *       - Workspace
  *     parameters:
@@ -194,94 +355,30 @@ router.get("/:workspaceId", isAuth, async (req, res) => {
  *           type: integer
  *     responses:
  *       200:
- *         description: 프로젝트 목록 조회 성공
- *       403:
- *         description: 접근 권한이 없음
+ *         description: Members retrieved
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                       name:
+ *                         type: string
+ *                       email:
+ *                         type: string
+ *                         format: email
+ *                       role_name:
+ *                         type: string
  *       500:
- *         description: 서버 오류
- */
-router.get("/:workspaceId/projects", isAuth, async (req, res) => {
-  const { workspaceId } = req.params;
-  const userId = req.session.userId;
-
-  try {
-    const memberCheck = await pool.query(
-      "SELECT id FROM workspace_member WHERE workspace_id = $1 AND member_id = $2",
-      [workspaceId, userId]
-    );
-
-    if (memberCheck.rows.length === 0) {
-      return res.status(403).json({ success: false, message: "접근 권한이 없습니다." });
-    }
-
-    const projectsRes = await pool.query(
-      "SELECT * FROM project WHERE workspace_id = $1 ORDER BY sort_order ASC, id DESC",
-      [workspaceId]
-    );
-
-    res.json({ success: true, data: projectsRes.rows });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-});
-
-/**
- * @route   POST /api/workspace/:workspaceId/member
- * @desc    이메일로 워크스페이스 멤버 초대
- */
-router.post("/:workspaceId/member", isAuth, async (req, res) => {
-  const { workspaceId } = req.params;
-  const { email, role_name = "MEMBER" } = req.body;
-  const inviterId = req.session.userId;
-
-  try {
-    // 1. 초대 권한 확인 (초대자가 해당 워크스페이스의 OWNER나 ADMIN인지)
-    const adminCheck = await pool.query(
-      "SELECT role_name FROM workspace_member WHERE workspace_id = $1 AND member_id = $2",
-      [workspaceId, inviterId]
-    );
-
-    if (!adminCheck.rows[0] || !["OWNER", "ADMIN"].includes(adminCheck.rows[0].role_name)) {
-      return res.status(403).json({ success: false, message: "멤버 초대 권한이 없습니다." });
-    }
-
-    // 2. 초대할 사용자가 존재하는지 확인
-    const userRes = await pool.query("SELECT id FROM member WHERE email = $1", [email]);
-    if (userRes.rows.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: "해당 이메일을 가진 사용자가 없습니다.",
-      });
-    }
-    const targetUserId = userRes.rows[0].id;
-
-    // 3. 이미 멤버인지 확인
-    const duplicateCheck = await pool.query(
-      "SELECT id FROM workspace_member WHERE workspace_id = $1 AND member_id = $2",
-      [workspaceId, targetUserId]
-    );
-    if (duplicateCheck.rows.length > 0) {
-      return res.status(400).json({
-        success: false,
-        message: "이미 워크스페이스에 참여 중인 멤버입니다.",
-      });
-    }
-
-    // 4. 멤버 추가
-    await pool.query(
-      "INSERT INTO workspace_member (workspace_id, member_id, role_name) VALUES ($1, $2, $3)",
-      [workspaceId, targetUserId, role_name]
-    );
-
-    res.json({ success: true, message: "멤버가 성공적으로 추가되었습니다." });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-});
-
-/**
- * @route   GET /api/workspace/:workspaceId/members
- * @desc    워크스페이스 소속 멤버 목록 조회
+ *         $ref: "#/components/responses/ErrorResponse"
  */
 router.get("/:workspaceId/members", isAuth, async (req, res) => {
   try {
@@ -300,16 +397,40 @@ router.get("/:workspaceId/members", isAuth, async (req, res) => {
 });
 
 /**
- * @route   DELETE /api/workspace/:workspaceId
- * @desc    워크스페이스 삭제 (OWNER 전용)
+ * @route   DELETE /api/workspaces/:workspaceId
+ * @desc    Delete workspace (OWNER only)
+ */
+/**
+ * @swagger
+ * /api/workspaces/{workspaceId}:
+ *   delete:
+ *     summary: Delete workspace
+ *     description: Delete workspace (OWNER only, default workspace cannot be deleted)
+ *     tags:
+ *       - Workspace
+ *     parameters:
+ *       - in: path
+ *         name: workspaceId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         $ref: "#/components/responses/Success200Message"
+ *       403:
+ *         $ref: "#/components/responses/ErrorResponse"
+ *       404:
+ *         $ref: "#/components/responses/ErrorResponse"
+ *       500:
+ *         $ref: "#/components/responses/ErrorResponse"
  */
 router.delete("/:workspaceId", isAuth, async (req, res) => {
   const { workspaceId } = req.params;
   const userId = req.session.userId;
 
   try {
-    // 1. 워크스페이스 정보 및 권한 동시 확인
-    // role_name을 확인하여 소유자 여부를 판단하고, is_default를 확인하여 삭제 가능 여부를 판단합니다.
+    // 1. Check workspace info and permissions.
+    // role_name is used to verify OWNER, is_default blocks deletion.
     const workspaceCheck = await pool.query(
       `SELECT wm.role_name, w.is_default 
        FROM workspace w
@@ -320,41 +441,44 @@ router.delete("/:workspaceId", isAuth, async (req, res) => {
 
     const target = workspaceCheck.rows[0];
 
-    // 해당 워크스페이스의 멤버가 아니거나 결과가 없는 경우
+    // Not a member or no matching workspace.
     if (!target) {
       return res.status(404).json({
         success: false,
-        message: "워크스페이스를 찾을 수 없거나 접근 권한이 없습니다.",
+        message: "Workspace not found or access denied.",
       });
     }
 
-    // 권한 확인: OWNER가 아닌 경우
+    // Permission check: OWNER only.
     if (target.role_name !== "OWNER") {
       return res.status(403).json({
         success: false,
-        message: "워크스페이스 삭제 권한이 없습니다. (소유자만 가능)",
+        message: "No permission to delete workspace. (Owner only.)",
       });
     }
 
-    // 💡 정책 확인: 기본(Personal) 워크스페이스인 경우 삭제 불가
+    // Policy check: default (personal) workspace cannot be deleted.
     if (target.is_default) {
       return res.status(403).json({
         success: false,
-        message: "기본으로 제공되는 개인 워크스페이스는 삭제할 수 없습니다.",
+        message: "Default personal workspace cannot be deleted.",
       });
     }
 
-    // 2. 워크스페이스 삭제
-    // ON DELETE CASCADE 설정에 의해 관련 프로젝트, 멤버, 보드 등이 자동 삭제됩니다.
+    // 2. Delete workspace.
+    // ON DELETE CASCADE removes related projects, members, and boards.
     await pool.query("DELETE FROM workspace WHERE id = $1", [workspaceId]);
 
     res.json({
       success: true,
-      message: "워크스페이스와 모든 관련 데이터가 성공적으로 삭제되었습니다.",
+      message: "Workspace and related data deleted.",
     });
   } catch (error) {
-    console.error("Workspace 삭제 오류:", error);
-    res.status(500).json({ success: false, message: "서버 오류로 삭제에 실패했습니다." });
+    logger.error("Workspace delete error", {
+      err: error?.message,
+      stack: error?.stack,
+    });
+    res.status(500).json({ success: false, message: "Server error. Delete failed." });
   }
 });
 

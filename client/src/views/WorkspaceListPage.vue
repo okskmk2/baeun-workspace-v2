@@ -1,13 +1,13 @@
 <template>
   <hgroup>
-    <h1>워크스페이스 목록</h1>
+    <h1>Workspaces</h1>
     <div>
-      <button type="button" class="btn" @click="openModal">워크스페이스 추가</button>
+      <button type="button" class="btn" @click="openModal">Add Workspace</button>
     </div>
   </hgroup>
-  <p v-if="isLoading">불러오는 중...</p>
+  <p v-if="isLoading">Loading...</p>
   <p v-else-if="errorMessage">{{ errorMessage }}</p>
-  <p v-else-if="workspaces.length === 0">워크스페이스가 없습니다.</p>
+  <p v-else-if="workspaces.length === 0">No workspaces yet.</p>
   <ul v-else class="workspace-list">
     <li v-for="workspace in workspaces" :key="workspace.id" class="workspace-item">
       <div class="workspace-header">
@@ -25,12 +25,12 @@
           @click="deleteWorkspace(workspace.id)"
           :disabled="deletingWorkspaceId === workspace.id"
         >
-          {{ deletingWorkspaceId === workspace.id ? "삭제 중..." : "삭제" }}
+          {{ deletingWorkspaceId === workspace.id ? "Deleting..." : "Delete" }}
         </button>
       </div>
 
       <ul class="project-list">
-        <li v-if="!getProjects(workspace.id).length" class="project-empty">프로젝트가 없습니다.</li>
+        <li v-if="!getProjects(workspace.id).length" class="project-empty">No projects yet.</li>
         <li v-for="project in getProjects(workspace.id)" :key="project.id">
           <router-link :to="`/workspace/${workspace.id}/project/${project.id}`">
             {{ project.name }}
@@ -40,20 +40,20 @@
     </li>
   </ul>
 
-  <BaseModal :open="isModalOpen" title="워크스페이스 추가" @close="closeModal">
+  <BaseModal :open="isModalOpen" title="Add Workspace" @close="closeModal">
     <form class="modal-form" @submit.prevent="createWorkspace">
-      <label for="workspace-name">워크스페이스 이름</label>
+      <label for="workspace-name">Workspace Name</label>
       <input
         id="workspace-name"
         v-model.trim="form.name"
         type="text"
-        placeholder="워크스페이스 이름"
+        placeholder="Workspace name"
       />
       <p v-if="formError" class="form-error">{{ formError }}</p>
       <div class="modal-actions">
-        <button type="button" class="btn btn--secondary" @click="closeModal">취소</button>
+        <button type="button" class="btn btn--secondary" @click="closeModal">Cancel</button>
         <button type="submit" class="btn" :disabled="isCreating">
-          {{ isCreating ? "저장 중..." : "저장" }}
+          {{ isCreating ? "Creating..." : "Create" }}
         </button>
       </div>
     </form>
@@ -87,7 +87,7 @@ const fetchWorkspaces = async () => {
     );
   } catch (error) {
     workspaces.value = [];
-    errorMessage.value = "워크스페이스 목록을 불러오지 못했습니다.";
+    errorMessage.value = "Failed to load workspaces.";
   } finally {
     isLoading.value = false;
   }
@@ -107,7 +107,7 @@ const closeModal = () => {
 
 const createWorkspace = async () => {
   if (!form.value.name) {
-    formError.value = "워크스페이스 이름을 입력해주세요.";
+    formError.value = "Please enter a workspace name.";
     return;
   }
 
@@ -119,7 +119,7 @@ const createWorkspace = async () => {
     await fetchWorkspaces();
     closeModal();
   } catch (error) {
-    formError.value = error?.response?.data?.message || "워크스페이스 생성에 실패했습니다.";
+    formError.value = error?.response?.data?.message || "Failed to create workspace.";
   } finally {
     isCreating.value = false;
   }
@@ -127,7 +127,7 @@ const createWorkspace = async () => {
 
 const deleteWorkspace = async (workspaceId) => {
   if (!workspaceId) return;
-  const confirmed = window.confirm("워크스페이스를 삭제할까요?");
+  const confirmed = window.confirm("Delete this workspace?");
   if (!confirmed) return;
 
   deletingWorkspaceId.value = workspaceId;
@@ -137,7 +137,7 @@ const deleteWorkspace = async (workspaceId) => {
     await workspaceStore.deleteWorkspace(workspaceId);
     await fetchWorkspaces();
   } catch (error) {
-    errorMessage.value = error?.response?.data?.message || "워크스페이스 삭제에 실패했습니다.";
+    errorMessage.value = error?.response?.data?.message || "Failed to delete workspace.";
   } finally {
     deletingWorkspaceId.value = null;
   }

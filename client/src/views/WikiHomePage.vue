@@ -1,43 +1,43 @@
 <template>
   <hgroup>
-    <h1>활동 피드</h1>
+    <h1>Activity Feed</h1>
     <div class="actions">
-      <button type="button" class="btn btn--ghost btn--sm">필터</button>
+      <button type="button" class="btn btn--ghost btn--sm">Filter</button>
     </div>
   </hgroup>
 
   <div class="feed">
     <div class="feed-group">
-      <div class="feed-date">오늘</div>
+      <div class="feed-date">Today</div>
       <article class="feed-item">
         <div class="feed-icon">U</div>
         <div class="feed-body">
-          <div class="feed-title">"온보딩 가이드" 내용이 수정됨</div>
-          <div class="feed-meta">이은성 · 11:40</div>
+          <div class="feed-title">"Report Guide" content updated</div>
+          <div class="feed-meta">jina · 11:40</div>
         </div>
       </article>
       <article class="feed-item">
         <div class="feed-icon">C</div>
         <div class="feed-body">
-          <div class="feed-title">"서버 배포" 문서에 새 코멘트</div>
+          <div class="feed-title">Comment added to "Server Deployment"</div>
           <div class="feed-meta">mira · 09:22</div>
         </div>
       </article>
     </div>
 
     <div class="feed-group">
-      <div class="feed-date">어제</div>
+      <div class="feed-date">Yesterday</div>
       <article class="feed-item">
         <div class="feed-icon">U</div>
         <div class="feed-body">
-          <div class="feed-title">"권한 정책" 목차가 정리됨</div>
+          <div class="feed-title">"Access Policy" outline updated</div>
           <div class="feed-meta">sojin · 17:05</div>
         </div>
       </article>
       <article class="feed-item">
         <div class="feed-icon">C</div>
         <div class="feed-body">
-          <div class="feed-title">"릴리즈 노트" 문서에 새 코멘트</div>
+          <div class="feed-title">Comment added to "Release Notes"</div>
           <div class="feed-meta">jojo · 15:10</div>
         </div>
       </article>

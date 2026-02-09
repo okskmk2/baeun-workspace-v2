@@ -27,6 +27,7 @@ body,
 input,
 textarea {
   box-sizing: border-box;
+  font-family: sans-serif;
 }
 
 nav a {

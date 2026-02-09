@@ -1,11 +1,11 @@
 <template>
   <div class="AcountLayout">
     <aside>
-      <button type="button" class="btn" @click="openModal">보드 만들기</button>
+      <button type="button" class="btn" @click="openModal">Create Board</button>
       <nav>
-        <p v-if="isLoading">불러오는 중...</p>
+        <p v-if="isLoading">Loading...</p>
         <p v-else-if="errorMessage">{{ errorMessage }}</p>
-        <p v-else-if="boards.length === 0">보드가 없습니다.</p>
+        <p v-else-if="boards.length === 0">No boards yet.</p>
         <template v-else>
           <router-link
             v-for="board in boards"
@@ -22,15 +22,15 @@
     </main>
   </div>
 
-  <BaseModal :open="isModalOpen" title="보드 만들기" @close="closeModal">
+  <BaseModal :open="isModalOpen" title="Create Board" @close="closeModal">
     <form class="modal-form" @submit.prevent="createBoard">
-      <label for="board-name">보드 이름</label>
-      <input id="board-name" v-model.trim="form.name" type="text" placeholder="보드 이름" />
+      <label for="board-name">Board Name</label>
+      <input id="board-name" v-model.trim="form.name" type="text" placeholder="Board name" />
       <p v-if="formError" class="form-error">{{ formError }}</p>
       <div class="modal-actions">
-        <button type="button" class="btn btn--secondary" @click="closeModal">취소</button>
+        <button type="button" class="btn btn--secondary" @click="closeModal">Cancel</button>
         <button type="submit" class="btn" :disabled="isCreating">
-          {{ isCreating ? "저장 중..." : "저장" }}
+          {{ isCreating ? "Creating..." : "Create" }}
         </button>
       </div>
     </form>
@@ -65,11 +65,11 @@ const fetchBoards = async () => {
   errorMessage.value = "";
 
   try {
-    const res = await api.get(`/project/${projectId.value}/boards`);
+    const res = await api.get(`/boards`, { params: { projectId: projectId.value } });
     boards.value = res.data?.data || [];
   } catch (error) {
     boards.value = [];
-    errorMessage.value = "보드 목록을 불러오지 못했습니다.";
+    errorMessage.value = "Failed to load boards.";
   } finally {
     isLoading.value = false;
   }
@@ -77,7 +77,7 @@ const fetchBoards = async () => {
 
 const openModal = () => {
   if (!projectId.value) {
-    formError.value = "프로젝트가 선택되지 않았습니다.";
+    formError.value = "No project selected.";
     return;
   }
   form.value = { name: "" };
@@ -91,7 +91,7 @@ const closeModal = () => {
 
 const createBoard = async () => {
   if (!form.value.name) {
-    formError.value = "보드 이름을 입력해주세요.";
+    formError.value = "Please enter a board name.";
     return;
   }
 
@@ -99,7 +99,7 @@ const createBoard = async () => {
   formError.value = "";
 
   try {
-    await api.post("/board", {
+    await api.post("/boards", {
       name: form.value.name,
       project_id: projectId.value,
       type: "KANBAN",
@@ -107,7 +107,7 @@ const createBoard = async () => {
     await fetchBoards();
     closeModal();
   } catch (error) {
-    formError.value = error?.response?.data?.message || "보드 생성에 실패했습니다.";
+    formError.value = error?.response?.data?.message || "Failed to create board.";
   } finally {
     isCreating.value = false;
   }

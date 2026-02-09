@@ -1,13 +1,13 @@
 <template>
   <div class="settings-member">
     <hgroup>
-      <h1>프로젝트 맴버 관리</h1>
+      <h1>Project Members</h1>
       <button type="button" class="btn" @click="openInviteModal">
-        프로젝트 맴버 초대하기
+        Invite Project Member
       </button>
     </hgroup>
 
-    <p v-if="isLoading">불러오는 중...</p>
+    <p v-if="isLoading">Loading...</p>
     <p v-else-if="errorMessage">{{ errorMessage }}</p>
 
     <ul v-else class="member-list">
@@ -24,18 +24,18 @@
             :disabled="isRemoveDisabled(member)"
             @click="removeMember(member.id)"
           >
-            {{ removingMemberId === member.id ? "제외 중..." : "구성원 제외" }}
+            {{ removingMemberId === member.id ? "Removing..." : "Remove Member" }}
           </button>
         </div>
       </li>
     </ul>
   </div>
 
-  <BaseModal :open="isInviteOpen" title="프로젝트 맴버 초대" @close="closeInviteModal">
+  <BaseModal :open="isInviteOpen" title="Invite Project Member" @close="closeInviteModal">
     <form class="modal-form" @submit.prevent="inviteMember">
-      <label for="workspace-member">워크스페이스 맴버</label>
+      <label for="workspace-member">Workspace Members</label>
       <select id="workspace-member" v-model="selectedMemberId">
-        <option value="">선택하세요</option>
+        <option value="">Select a member</option>
         <option
           v-for="member in workspaceMembers"
           :key="member.id"
@@ -48,10 +48,10 @@
       <p v-if="inviteError" class="form-error">{{ inviteError }}</p>
       <div class="modal-actions">
         <button type="button" class="btn btn--secondary" @click="closeInviteModal">
-          취소
+          Cancel
         </button>
         <button type="submit" class="btn" :disabled="isInviting">
-          {{ isInviting ? "초대 중..." : "초대" }}
+          {{ isInviting ? "Inviting..." : "Invite" }}
         </button>
       </div>
     </form>
@@ -59,16 +59,20 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, ref } from "vue";
 import { useRoute } from "vue-router";
 import api from "../lib/axios";
 import BaseModal from "../components/BaseModal.vue";
+import { useProjectMemberStore } from "../stores/projectMemberStore";
 
 const route = useRoute();
 const workspaceId = computed(() => route.params.workspaceId);
 const projectId = computed(() => route.params.projectId);
+const projectMemberStore = useProjectMemberStore();
 
-const projectMembers = ref([]);
+const projectMembers = computed(() =>
+  projectMemberStore.getProjectMembers(projectId.value)
+);
 const workspaceMembers = ref([]);
 const isLoading = ref(false);
 const errorMessage = ref("");
@@ -79,26 +83,6 @@ const isInviting = ref(false);
 const inviteError = ref("");
 const selectedMemberId = ref("");
 
-const fetchProjectMembers = async () => {
-  if (!projectId.value) {
-    projectMembers.value = [];
-    return;
-  }
-
-  isLoading.value = true;
-  errorMessage.value = "";
-
-  try {
-    const res = await api.get(`/project/${projectId.value}/members`);
-    projectMembers.value = res.data?.data || [];
-  } catch (error) {
-    projectMembers.value = [];
-    errorMessage.value = "프로젝트 맴버를 불러오지 못했습니다.";
-  } finally {
-    isLoading.value = false;
-  }
-};
-
 const fetchWorkspaceMembers = async () => {
   if (!workspaceId.value) {
     workspaceMembers.value = [];
@@ -106,7 +90,7 @@ const fetchWorkspaceMembers = async () => {
   }
 
   try {
-    const res = await api.get(`/workspace/${workspaceId.value}/members`);
+    const res = await api.get(`/workspaces/${workspaceId.value}/members`);
     workspaceMembers.value = res.data?.data || [];
   } catch (error) {
     workspaceMembers.value = [];
@@ -134,12 +118,12 @@ const closeInviteModal = () => {
 
 const inviteMember = async () => {
   if (!selectedMemberId.value) {
-    inviteError.value = "초대할 맴버를 선택해주세요.";
+    inviteError.value = "Please select a member to invite.";
     return;
   }
 
   if (!projectId.value) {
-    inviteError.value = "프로젝트가 선택되지 않았습니다.";
+    inviteError.value = "No project selected.";
     return;
   }
 
@@ -147,13 +131,22 @@ const inviteMember = async () => {
   inviteError.value = "";
 
   try {
-    await api.post(`/project/${projectId.value}/member`, {
+    await api.post(`/projects/${projectId.value}/members`, {
       member_id: selectedMemberId.value,
     });
-    await fetchProjectMembers();
+    const invited = workspaceMembers.value.find(
+      (member) => String(member.id) === String(selectedMemberId.value)
+    );
+    if (invited) {
+      const current = projectMemberStore.getProjectMembers(projectId.value);
+      projectMemberStore.setProjectMembers(projectId.value, [
+        ...current,
+        { ...invited, role_name: "MEMBER" },
+      ]);
+    }
     closeInviteModal();
   } catch (error) {
-    inviteError.value = error?.response?.data?.message || "초대에 실패했습니다.";
+    inviteError.value = error?.response?.data?.message || "Invite failed.";
   } finally {
     isInviting.value = false;
   }
@@ -161,24 +154,25 @@ const inviteMember = async () => {
 
 const removeMember = async (memberId) => {
   if (!projectId.value || !memberId) return;
-  const confirmed = window.confirm("구성원을 제외할까요?");
+  const confirmed = window.confirm("Remove this member?");
   if (!confirmed) return;
 
   removingMemberId.value = memberId;
   errorMessage.value = "";
 
   try {
-    await api.delete(`/project/${projectId.value}/member/${memberId}`);
-    await fetchProjectMembers();
+    await api.delete(`/projects/${projectId.value}/members/${memberId}`);
+    const current = projectMemberStore.getProjectMembers(projectId.value);
+    projectMemberStore.setProjectMembers(
+      projectId.value,
+      current.filter((member) => String(member.id) !== String(memberId))
+    );
   } catch (error) {
-    errorMessage.value = error?.response?.data?.message || "구성원 제외에 실패했습니다.";
+    errorMessage.value = error?.response?.data?.message || "Failed to remove member.";
   } finally {
     removingMemberId.value = null;
   }
 };
-
-onMounted(fetchProjectMembers);
-watch(projectId, fetchProjectMembers);
 </script>
 
 <style scoped>
