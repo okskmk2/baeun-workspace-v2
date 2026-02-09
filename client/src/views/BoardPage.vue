@@ -231,6 +231,15 @@ watch(boardId, async (nextId, prevId) => {
 </script>
 
 <style scoped>
+.board-page hgroup,
+hgroup {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
 .board-page {
   display: flex;
   flex-direction: column;
@@ -240,39 +249,58 @@ watch(boardId, async (nextId, prevId) => {
 .kanban {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
+  gap: 16px;
 }
 
 .kanban-column {
-  border: 1px solid var(--color-border);
-  padding: 10px 10px 24px;
-  min-height: 240px;
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  padding: 12px 12px 20px;
+  min-height: 320px;
   background: var(--color-surface);
+  border-radius: 4px;
+  /* box-shadow: 0 10px 30px rgba(15, 23, 42, 0.04); */
 }
 
 .kanban-column header {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 16px;
+  align-items: center;
+  margin-bottom: 14px;
 }
 
 .kanban-column header h2 {
-  font-size: 15px;
+  font-size: 14px;
   margin: 0;
+  padding: 6px 10px;
+  font-weight: 600;
+}
+
+.kanban-column header span {
+  font-size: 12px;
+  color: #3d434b;
+  background: #e2e8f0;
+  border-radius: 999px;
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  line-height: 1;
+  align-items: center;
+  justify-content: center;
 }
 
 .kanban-cards {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 12px;
 }
 
 .kanban-card {
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  background-color: var(--color-surface);
   border: 1px solid var(--color-border);
-  background: var(--color-card-bg);
-  padding: 8px 10px;
+  padding: 12px 12px;
   cursor: grab;
+  border-radius: 8px;
+  /* box-shadow: 0 10px 20px rgba(15, 23, 42, 0.06); */
 }
 
 .kanban-card h3 {
@@ -280,10 +308,15 @@ watch(boardId, async (nextId, prevId) => {
   margin: 0;
 }
 
+.kanban-card h3 > a {
+  color: var(--color-text);
+}
+
 .kanban-card p {
   margin: 0;
   margin-top: 1rem;
-  font-size: 15px;
+  font-size: 14px;
+  color: #94a3b8;
 }
 
 .assignee-list {
@@ -297,6 +330,8 @@ watch(boardId, async (nextId, prevId) => {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  font-size: 12px;
+  color: var(--color-text);
 }
 
 .kanban-card:active {

@@ -63,8 +63,8 @@ const emit = defineEmits(["add", "remove"]);
 const isOpen = ref(false);
 const rootRef = ref(null);
 
-const selectedIds = computed(() =>
-  new Set(props.selected.map((member) => String(member.member_id)))
+const selectedIds = computed(
+  () => new Set(props.selected.map((member) => String(member.member_id)))
 );
 
 const isOptionDisabled = (memberId) => {
@@ -115,8 +115,8 @@ onBeforeUnmount(() => {
   gap: 8px;
   padding: 12px;
   border-radius: 2px;
-  border: 1px solid #e5e7eb;
-  background: #ffffff;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
 }
 
 .picker-header {
@@ -127,7 +127,7 @@ onBeforeUnmount(() => {
 
 .picker-label {
   font-size: 13px;
-  color: #374151;
+  color: var(--color-text);
   font-weight: 600;
 }
 

@@ -48,14 +48,14 @@
 
   --theme-h: var(--theme-light-h);
   --theme-s: var(--theme-light-s);
-  --theme-body-s: 8%;
-  --theme-body-l: 96%;
+  --theme-body-s: 25%;
+  --theme-body-l: 94%;
   --theme-surface-l: 98%;
   --theme-surface-alt-l: 94%;
   --theme-text-l: 12%;
   --theme-text-muted-l: 39%;
   --theme-border-l: 86%;
-  --theme-page-l: 98%;
+  --theme-page-l: 99%;
   --theme-card-l: 100%;
   --theme-input-l: 100%;
   --theme-input-border-l: 84%;
