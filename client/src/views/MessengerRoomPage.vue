@@ -367,11 +367,12 @@ onBeforeUnmount(() => {
   border: 1px solid var(--color-border);
   border-radius: 8px;
   padding: 12px;
-  min-height: 240px;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  background: var(--color-card-bg);
+  background-color: var(--color-card-bg);
+  height: calc(100vh - 335px);
+  overflow-y: scroll;
 }
 
 .message {
@@ -385,7 +386,7 @@ onBeforeUnmount(() => {
   text-align: center;
   padding: 6px 10px;
   border-radius: 999px;
-  background: var(--color-surface-alt);
+  background-color: var(--color-surface-alt);
 }
 
 .message.system .message-meta {
@@ -444,7 +445,7 @@ onBeforeUnmount(() => {
   padding: 10px 12px;
   border: 1px solid var(--color-border);
   border-radius: 8px;
-  background: var(--color-card-bg);
+  background-color: var(--color-card-bg);
 }
 
 .member-name {

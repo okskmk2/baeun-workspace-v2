@@ -262,7 +262,7 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  background: var(--swatch-bg, var(--color-surface));
+  background-color: var(--swatch-bg, var(--color-surface));
   color: var(--swatch-fg, var(--color-text));
 }
 

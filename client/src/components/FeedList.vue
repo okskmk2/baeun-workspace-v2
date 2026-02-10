@@ -50,6 +50,6 @@ const resolveItemKey = (item, index) => resolveKey(item, props.itemKey, index);
   width: 28px;
   height: 28px;
   border-radius: 8px;
-  background: color-mix(in srgb, var(--color-border) 55%, transparent);
+  background-color: color-mix(in srgb, var(--color-border) 55%, transparent);
 }
 </style>

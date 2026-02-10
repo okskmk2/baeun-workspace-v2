@@ -382,7 +382,7 @@ watch(projectId, fetchPageMembers);
   border: 1px solid var(--color-border);
   border-radius: 6px;
   padding: 10px 12px;
-  background: var(--color-surface);
+  background-color: var(--color-surface);
   overflow: auto;
 }
 

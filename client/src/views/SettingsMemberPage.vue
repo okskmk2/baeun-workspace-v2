@@ -211,7 +211,7 @@ const removeMember = async (memberId) => {
   padding: 10px 12px;
   border-radius: 10px;
   border: 1px solid #e5e7eb;
-  background: #ffffff;
+  background-color: #ffffff;
 }
 
 .member-info {

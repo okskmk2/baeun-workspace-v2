@@ -234,7 +234,7 @@ const onSubmit = async () => {
   display: grid;
   gap: 16px;
   padding: var(--card-padding);
-  background: #ffffff;
+  background-color: #ffffff;
   border-radius: 18px;
   border: 1px solid #e5e7eb;
   box-shadow: 0 18px 50px rgba(15, 23, 42, 0.08);
@@ -253,7 +253,7 @@ const onSubmit = async () => {
   padding: 10px 12px;
   border-radius: 10px;
   border: 1px solid #e2e8f0;
-  background: #f8fafc;
+  background-color: #f8fafc;
   font-size: 14px;
   transition:
     border-color 0.15s ease,
@@ -264,7 +264,7 @@ const onSubmit = async () => {
   outline: none;
   border-color: #2563eb;
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
-  background: #ffffff;
+  background-color: #ffffff;
 }
 
 .signup__error {
@@ -284,7 +284,7 @@ const onSubmit = async () => {
   width: 100%;
   height: 6px;
   border-radius: 999px;
-  background: #e2e8f0;
+  background-color: #e2e8f0;
   overflow: hidden;
 }
 
@@ -299,15 +299,15 @@ const onSubmit = async () => {
 
 .signup__strength-fill.empty,
 .signup__strength-fill.weak {
-  background: #f87171;
+  background-color: #f87171;
 }
 
 .signup__strength-fill.medium {
-  background: #fbbf24;
+  background-color: #fbbf24;
 }
 
 .signup__strength-fill.strong {
-  background: #22c55e;
+  background-color: #22c55e;
 }
 
 .signup__strength-text {

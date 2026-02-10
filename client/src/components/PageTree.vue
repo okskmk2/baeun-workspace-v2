@@ -195,7 +195,7 @@ const emitReorder = (payload) => emit("reorder", payload);
   left: 0;
   right: 0;
   height: 2px;
-  background: var(--color-accent);
+  background-color: var(--color-accent);
   z-index: 10;
 }
 

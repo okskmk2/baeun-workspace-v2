@@ -51,14 +51,14 @@ const toneClass = computed(() => `activity-badge--${tone.value}`);
 }
 
 .activity-badge--update {
-  background: #111827;
+  background-color: #111827;
 }
 
 .activity-badge--create {
-  background: #166534;
+  background-color: #166534;
 }
 
 .activity-badge--delete {
-  background: #dc2626;
+  background-color: #dc2626;
 }
 </style>

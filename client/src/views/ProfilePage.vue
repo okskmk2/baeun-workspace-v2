@@ -158,7 +158,7 @@ onMounted(fetchProfile);
   padding: 16px;
   border: 1px solid #e5e7eb;
   border-radius: 12px;
-  background: #ffffff;
+  background-color: #ffffff;
   align-items: center;
 }
 
@@ -172,7 +172,7 @@ onMounted(fetchProfile);
   padding: 16px;
   border: 1px solid #e5e7eb;
   border-radius: 12px;
-  background: #ffffff;
+  background-color: #ffffff;
   display: grid;
   gap: 16px;
 }
@@ -214,14 +214,14 @@ onMounted(fetchProfile);
   border: 1px solid #d1d5db;
   font-size: 14px;
   color: #111827;
-  background: #ffffff;
+  background-color: #ffffff;
 }
 
 .save-button {
   padding: 10px 16px;
   border-radius: 999px;
   border: none;
-  background: #111827;
+  background-color: #111827;
   color: #ffffff;
   font-size: 13px;
   font-weight: 600;

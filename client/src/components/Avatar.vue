@@ -35,7 +35,7 @@ const ariaLabel = computed(() => props.label || "Avatar");
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  background: var(--color-accent);
+  background-color: var(--color-accent);
   color: var(--color-text-inverse);
   letter-spacing: 0.02em;
   user-select: none;

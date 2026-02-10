@@ -161,7 +161,7 @@ const onSubmit = async () => {
   display: grid;
   gap: 16px;
   padding: var(--card-padding);
-  background: #ffffff;
+  background-color: #ffffff;
   border-radius: 18px;
   border: 1px solid #e5e7eb;
   box-shadow: 0 18px 50px rgba(15, 23, 42, 0.08);
@@ -180,7 +180,7 @@ const onSubmit = async () => {
   padding: 10px 12px;
   border-radius: 10px;
   border: 1px solid #e2e8f0;
-  background: #f8fafc;
+  background-color: #f8fafc;
   font-size: 14px;
   transition:
     border-color 0.15s ease,
@@ -191,7 +191,7 @@ const onSubmit = async () => {
   outline: none;
   border-color: #2563eb;
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
-  background: #ffffff;
+  background-color: #ffffff;
 }
 
 .login__remember {

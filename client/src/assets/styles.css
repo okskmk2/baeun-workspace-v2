@@ -98,7 +98,7 @@ nav a:hover {
 .ProjectLayout > header {
   display: flex;
   justify-content: space-between;
-  padding: 24px 40px;
+  padding: 16px 40px;
   background-color: var(--gnb-bg);
   color: var(--gnb-fg);
 }
@@ -113,7 +113,7 @@ nav a:hover {
 }
 
 .ProjectLayout .mainnav {
-  font-size: 18px;
+  font-size: 16px;
   gap: 24px;
   display: flex;
 }
@@ -272,7 +272,7 @@ main > hgroup .actions {
   gap: 12px;
   padding: 12px;
   border-radius: 4px;
-  background: var(--color-surface);
+  background-color: var(--color-surface);
   border: 1px solid var(--color-border);
 }
 

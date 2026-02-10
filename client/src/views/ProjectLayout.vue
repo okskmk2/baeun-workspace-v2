@@ -165,7 +165,6 @@ onBeforeUnmount(() => {
   border-radius: 4px;
   color: var(--gnb-fg);
   text-decoration: none;
-  font-size: 18px;
   line-height: 1;
 }
 

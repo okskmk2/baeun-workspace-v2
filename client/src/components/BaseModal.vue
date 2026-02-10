@@ -41,7 +41,7 @@ const onClose = () => {
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.3);
+  background-color: rgba(0, 0, 0, 0.3);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -74,7 +74,7 @@ const onClose = () => {
 .icon-button {
   color: var(--text-color);
   border: none;
-  background: transparent;
+  background-color: transparent;
   padding: 0;
   cursor: pointer;
   display: inline-flex;

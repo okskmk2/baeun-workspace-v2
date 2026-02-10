@@ -231,26 +231,19 @@ watch(boardId, async (nextId, prevId) => {
 </script>
 
 <style scoped>
-.board-page {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
 .kanban {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 16px;
+  gap: 24px;
+  min-width: 45rem;
+  min-height: 30rem;
 }
 
-.kanban-column {
-  border: 1px solid rgba(15, 23, 42, 0.06);
-  padding: 12px 12px 20px;
-  min-height: 320px;
-  background: var(--color-surface);
-  border-radius: 4px;
-  /* box-shadow: 0 10px 30px rgba(15, 23, 42, 0.04); */
-}
+/* .kanban-column + .kanban-column {
+  border-left: 1px solid #ddd;
+  padding-left: 8px;
+  margin-left: 8px;
+} */
 
 .kanban-column header {
   display: flex;
@@ -261,17 +254,17 @@ watch(boardId, async (nextId, prevId) => {
 .kanban-column header h2 {
   font-size: 14px;
   margin: 0;
-  padding: 6px 10px;
   font-weight: 600;
 }
 
 .kanban-column header span {
-  font-size: 12px;
-  color: #3d434b;
-  background: #e2e8f0;
+  margin-left: 6px;
+  font-size: 10px;
+  color: var(--color-text);
+  background-color: #e2e8f0;
   border-radius: 999px;
-  width: 24px;
-  height: 24px;
+  width: 18px;
+  height: 18px;
   display: inline-flex;
   line-height: 1;
   align-items: center;
@@ -281,7 +274,7 @@ watch(boardId, async (nextId, prevId) => {
 .kanban-cards {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  row-gap: 8px;
 }
 
 .kanban-card {
@@ -291,7 +284,6 @@ watch(boardId, async (nextId, prevId) => {
   padding: 12px 12px;
   cursor: grab;
   border-radius: 8px;
-  /* box-shadow: 0 10px 20px rgba(15, 23, 42, 0.06); */
 }
 
 .kanban-card h3 {

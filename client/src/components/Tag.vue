@@ -22,7 +22,7 @@ const variantClass = computed(() => `tag--${props.variant}`);
   padding: 2px 8px;
   border-radius: 999px;
   border: 1px solid #e5e7eb;
-  background: #f9fafb;
+  background-color: #f9fafb;
   color: #111827;
   font-size: 12px;
   line-height: 1.4;
@@ -31,31 +31,31 @@ const variantClass = computed(() => `tag--${props.variant}`);
 
 .tag--default {
   border-color: #e5e7eb;
-  background: #f9fafb;
+  background-color: #f9fafb;
   color: #111827;
 }
 
 .tag--info {
   border-color: #bfdbfe;
-  background: #eff6ff;
+  background-color: #eff6ff;
   color: #1d4ed8;
 }
 
 .tag--success {
   border-color: #bbf7d0;
-  background: #f0fdf4;
+  background-color: #f0fdf4;
   color: #15803d;
 }
 
 .tag--warning {
   border-color: #fde68a;
-  background: #fffbeb;
+  background-color: #fffbeb;
   color: #b45309;
 }
 
 .tag--danger {
   border-color: #fecaca;
-  background: #fef2f2;
+  background-color: #fef2f2;
   color: #b91c1c;
 }
 </style>

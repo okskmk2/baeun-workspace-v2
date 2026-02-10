@@ -42,7 +42,7 @@ const { t } = useI18n();
   max-width: 320px;
   padding: 12px 14px;
   border-radius: 12px;
-  background: #111827;
+  background-color: #111827;
   color: #ffffff;
   box-shadow: 0 10px 30px rgba(15, 23, 42, 0.18);
   display: flex;
@@ -53,15 +53,15 @@ const { t } = useI18n();
 }
 
 .toast.success {
-  background: #16a34a;
+  background-color: #16a34a;
 }
 
 .toast.error {
-  background: #b91c1c;
+  background-color: #b91c1c;
 }
 
 .toast.info {
-  background: #0f172a;
+  background-color: #0f172a;
 }
 
 .toast-message {
@@ -71,7 +71,7 @@ const { t } = useI18n();
 
 .toast-close {
   border: none;
-  background: rgba(255, 255, 255, 0.2);
+  background-color: rgba(255, 255, 255, 0.2);
   color: #ffffff;
   font-size: 12px;
   padding: 4px 8px;

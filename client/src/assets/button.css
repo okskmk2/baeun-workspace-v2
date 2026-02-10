@@ -10,7 +10,7 @@ button {
   padding: 8px 16px;
   border-radius: 8px;
   border: 1px solid transparent;
-  background: var(--color-accent);
+  background-color: var(--color-accent);
   color: var(--color-text-inverse);
   font-size: 14px;
   font-weight: 600;
@@ -19,10 +19,11 @@ button {
     background-color 0.15s ease,
     border-color 0.15s ease,
     transform 0.12s ease;
+  box-shadow: 0px 1px 1px 1px rgba(210, 210, 210, 0.2);
 }
 
 .btn:hover {
-  background: var(--color-accent-hover);
+  background-color: var(--color-accent-hover);
 }
 
 .btn:active {
@@ -37,31 +38,31 @@ button {
 }
 
 .btn--secondary {
-  background: var(--color-surface);
+  background-color: var(--color-surface);
   color: var(--color-text);
   border-color: var(--color-border);
 }
 
 .btn--secondary:hover {
-  background: var(--color-surface-alt);
+  background-color: var(--color-surface-alt);
 }
 
 .btn--ghost {
-  background: transparent;
+  background-color: transparent;
   color: var(--color-text-muted);
   border-color: transparent;
 }
 
 .btn--ghost:hover {
-  background: var(--color-surface-alt);
+  background-color: var(--color-surface-alt);
 }
 
 .btn--danger {
-  background: var(--color-danger);
+  background-color: var(--color-danger);
 }
 
 .btn--danger:hover {
-  background: color-mix(in srgb, var(--color-danger) 85%, black 15%);
+  background-color: color-mix(in srgb, var(--color-danger) 85%, black 15%);
 }
 
 .btn--sm {

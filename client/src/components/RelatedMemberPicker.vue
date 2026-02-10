@@ -116,7 +116,7 @@ onBeforeUnmount(() => {
   padding: 12px;
   border-radius: 4px;
   border: 1px solid var(--color-border);
-  background: var(--color-surface);
+  background-color: var(--color-surface);
 }
 
 .picker-header {
@@ -155,7 +155,7 @@ onBeforeUnmount(() => {
   padding: 4px 8px;
   border-radius: 999px;
   border: 1px solid #e5e7eb;
-  background: #f9fafb;
+  background-color: #f9fafb;
   font-size: 12px;
   color: #111827;
 }
@@ -169,7 +169,7 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: center;
   border: none;
-  background: transparent;
+  background-color: transparent;
   padding: 0;
   cursor: pointer;
 }
@@ -187,7 +187,7 @@ onBeforeUnmount(() => {
   height: 28px;
   border-radius: 999px;
   border: 1px dashed #d1d5db;
-  background: #ffffff;
+  background-color: #ffffff;
   color: #6b7280;
   cursor: pointer;
 }
@@ -209,7 +209,7 @@ onBeforeUnmount(() => {
   padding: 8px;
   border-radius: 10px;
   border: 1px solid #e5e7eb;
-  background: #ffffff;
+  background-color: #ffffff;
   box-shadow: 0 12px 30px rgba(15, 23, 42, 0.12);
   max-height: 220px;
   overflow-y: auto;
@@ -225,7 +225,7 @@ onBeforeUnmount(() => {
 }
 
 .picker-option:hover {
-  background: #f3f4f6;
+  background-color: #f3f4f6;
 }
 
 .picker-option.disabled {
@@ -234,7 +234,7 @@ onBeforeUnmount(() => {
 }
 
 .picker-option.disabled:hover {
-  background: transparent;
+  background-color: transparent;
 }
 
 .option-name {
