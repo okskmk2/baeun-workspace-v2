@@ -1,0 +1,24 @@
+{
+  "name": "baeun-workspace-v2",
+  "version": "1.0.0",
+  "description": "",
+  "homepage": "https://github.com/okskmk2/baeun-workspace-v2#readme",
+  "bugs": {
+    "url": "https://github.com/okskmk2/baeun-workspace-v2/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/okskmk2/baeun-workspace-v2.git"
+  },
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "client": "cd client && npm start",
+    "server": "cd server && npm start",
+    "deploy": "gcloud config set account okskmk2@gmail.com && gcloud config set project baeun-workspace-dev && gcloud app deploy",
+    "build": "cd client && npm install && npm run build && cd .. && cd server && npm install",
+    "start": "npm run server"
+  }
+}

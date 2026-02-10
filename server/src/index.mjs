@@ -74,7 +74,7 @@ app.use("/api/boards", boardRouter);
 app.use("/api/issues", issueRouter);
 app.use("/api/channels", chatRouter);
 
-const PORT = 3000;
+const PORT = process.env.PORT || 8080;
 const server = http.createServer(app);
 const wss = new WebSocketServer({ noServer: true });
 
