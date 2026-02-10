@@ -30,7 +30,7 @@
 
   <p v-if="deleteError" class="form-error">{{ deleteError }}</p>
 
-  <div class="messages">
+  <div ref="messagesContainer" class="messages">
     <div
       v-for="message in messages"
       :key="message.id"
@@ -170,7 +170,7 @@
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 import api from "../lib/axios";
@@ -192,6 +192,7 @@ const projectId = computed(() => route.params.projectId);
 const workspaceId = computed(() => route.params.workspaceId);
 
 const messages = ref([]);
+const messagesContainer = ref(null);
 const draft = ref("");
 const isSending = ref(false);
 const isConnected = ref(false);
@@ -238,6 +239,12 @@ const fetchMessages = async () => {
   if (!roomId.value) return;
   const res = await api.get(`/channels/${roomId.value}/messages`);
   messages.value = res.data?.data || [];
+};
+
+const scrollMessagesToBottom = async () => {
+  await nextTick();
+  if (!messagesContainer.value) return;
+  messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
 };
 
 const fetchChatMembers = async () => {
@@ -484,6 +491,15 @@ watch(roomId, async () => {
     socket.send(JSON.stringify({ type: "join", channelId: roomId.value }));
   }
 });
+
+watch(
+  () => messages.value.length,
+  (nextLength, previousLength) => {
+    if (nextLength > previousLength) {
+      scrollMessagesToBottom();
+    }
+  }
+);
 
 onBeforeUnmount(() => {
   if (socket) {
