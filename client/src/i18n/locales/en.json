@@ -166,16 +166,31 @@
       },
       "actions": {
         "create": "Create Project",
+        "inviteMember": "Invite Member",
         "delete": "Delete",
         "deleting": "Deleting...",
         "cancel": "Cancel",
         "submit": "Create",
-        "creating": "Creating..."
+        "creating": "Creating...",
+        "invitingMember": "Inviting..."
       },
       "modal": {
         "title": "Create Project",
         "nameLabel": "Project Name",
         "namePlaceholder": "Project name"
+      },
+      "members": {
+        "modal": {
+          "title": "Invite Workspace Member"
+        },
+        "emailLabel": "Email",
+        "roleLabel": "Role",
+        "status": {
+          "errorInvite": "Invite failed."
+        },
+        "validation": {
+          "emailRequired": "Please enter an email."
+        }
       },
       "validation": {
         "nameRequired": "Please enter a project name.",
@@ -512,6 +527,18 @@
       "composer": {
         "placeholder": "Type a message",
         "send": "Send"
+      },
+      "feedback": {
+        "like": "Like",
+        "checking": "Checking",
+        "done": "Done",
+        "excited": "Excited",
+        "sad": "Sad",
+        "funny": "Funny",
+        "add": "Add reaction",
+        "modal": {
+          "title": "Add reaction"
+        }
       },
       "invite": {
         "modal": {

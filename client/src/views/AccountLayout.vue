@@ -1,5 +1,5 @@
 <template>
-  <div class="AcountLayout">
+  <div class="LnbLayout">
     <aside>
       <nav>
         <router-link to="/account/profile">{{ t("layout.account.nav.profile") }}</router-link>

@@ -1,5 +1,5 @@
 <template>
-  <div class="AcountLayout">
+  <div class="LnbLayout">
     <aside>
       <button class="btn" type="button" @click="openModal">
         {{ t("messenger.layout.actions.createChannel") }}

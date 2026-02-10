@@ -166,16 +166,31 @@
       },
       "actions": {
         "create": "프로젝트 생성",
+        "inviteMember": "구성원 초대",
         "delete": "삭제",
         "deleting": "삭제 중...",
         "cancel": "취소",
         "submit": "생성",
-        "creating": "생성 중..."
+        "creating": "생성 중...",
+        "invitingMember": "초대 중..."
       },
       "modal": {
         "title": "프로젝트 생성",
         "nameLabel": "프로젝트 이름",
         "namePlaceholder": "프로젝트 이름"
+      },
+      "members": {
+        "modal": {
+          "title": "워크스페이스 구성원 초대"
+        },
+        "emailLabel": "이메일",
+        "roleLabel": "역할",
+        "status": {
+          "errorInvite": "초대에 실패했습니다."
+        },
+        "validation": {
+          "emailRequired": "이메일을 입력하세요."
+        }
       },
       "validation": {
         "nameRequired": "프로젝트 이름을 입력하세요.",
@@ -512,6 +527,18 @@
       "composer": {
         "placeholder": "메시지를 입력하세요",
         "send": "전송"
+      },
+      "feedback": {
+        "like": "좋아요",
+        "checking": "확인 중",
+        "done": "완료",
+        "excited": "신난다",
+        "sad": "슬퍼요",
+        "funny": "웃김",
+        "add": "피드백 등록",
+        "modal": {
+          "title": "피드백 등록"
+        }
       },
       "invite": {
         "modal": {

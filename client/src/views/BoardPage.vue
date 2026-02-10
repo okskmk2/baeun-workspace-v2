@@ -248,7 +248,7 @@ watch(boardId, async (nextId, prevId) => {
 .kanban-column header {
   display: flex;
   align-items: center;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
 }
 
 .kanban-column header h2 {
@@ -275,10 +275,11 @@ watch(boardId, async (nextId, prevId) => {
   display: flex;
   flex-direction: column;
   row-gap: 8px;
+  height: calc(100vh - 249px);
+  overflow-y: auto;
 }
 
 .kanban-card {
-  border: 1px solid rgba(15, 23, 42, 0.06);
   background-color: var(--color-surface);
   border: 1px solid var(--color-border);
   padding: 12px 12px;
@@ -288,11 +289,18 @@ watch(boardId, async (nextId, prevId) => {
 
 .kanban-card h3 {
   font-size: 14px;
+  font-weight: normal;
   margin: 0;
 }
 
 .kanban-card h3 > a {
   color: var(--color-text);
+  text-decoration: none;
+  word-break: break-all;
+}
+
+.kanban-card h3 > a:hover {
+  text-decoration: underline;
 }
 
 .kanban-card p {

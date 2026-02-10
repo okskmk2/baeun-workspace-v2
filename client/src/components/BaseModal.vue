@@ -2,7 +2,7 @@
   <div v-if="open" class="modal-backdrop" @click="onClose">
     <div class="modal" @click.stop>
       <div class="modal-header">
-        <h2>{{ title }}</h2>
+        <h1>{{ title }}</h1>
         <button
           type="button"
           class="icon-button"
@@ -51,7 +51,7 @@ const onClose = () => {
 .modal {
   background-color: var(--color-page-bg);
   border: 1px solid var(--color-border);
-  padding: 8px 24px 18px;
+  padding: 16px 24px 18px;
   max-width: 420px;
   width: 100%;
   border-radius: 8px;
@@ -63,6 +63,11 @@ const onClose = () => {
   justify-content: space-between;
   gap: 8px;
   margin-bottom: 12px;
+}
+
+.modal-header h1 {
+  font-size: 16px;
+  margin: 0;
 }
 
 .modal-body {

@@ -19,7 +19,7 @@ button {
     background-color 0.15s ease,
     border-color 0.15s ease,
     transform 0.12s ease;
-  box-shadow: 0px 1px 1px 1px rgba(210, 210, 210, 0.2);
+  /* box-shadow: 0px 1px 1px 1px rgba(210, 210, 210, 0.2); */
 }
 
 .btn:hover {
@@ -63,6 +63,25 @@ button {
 
 .btn--danger:hover {
   background-color: color-mix(in srgb, var(--color-danger) 85%, black 15%);
+}
+
+.btn--link {
+  background-color: transparent;
+  border-color: transparent;
+  box-shadow: none;
+  padding: 0;
+  /* color: var(--color-accent); */
+  color: var(--color-text);
+  font-weight: 400;
+}
+
+.btn--link:hover {
+  background-color: transparent;
+  text-decoration: underline;
+}
+
+.btn--link:active {
+  transform: none;
 }
 
 .btn--sm {

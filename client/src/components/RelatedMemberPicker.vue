@@ -133,6 +133,7 @@ onBeforeUnmount(() => {
 
 .picker-tags {
   display: flex;
+  align-items: center;
   flex-wrap: wrap;
   gap: 6px;
 }

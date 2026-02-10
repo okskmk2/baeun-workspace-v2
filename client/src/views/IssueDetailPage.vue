@@ -1,4 +1,5 @@
 <template>
+  <BackLinkButton @click="$router.back()"> 보드로 돌아가기 </BackLinkButton>
   <hgroup>
     <div>
       <h1 v-if="!isEditing">{{ issue.title || t("issue.detail.header.fallbackTitle") }}</h1>
@@ -83,6 +84,7 @@ import { useAppStore } from "../stores/appStore";
 import { useProjectMemberStore } from "../stores/projectMemberStore";
 import Tag from "../components/Tag.vue";
 import RelatedMemberPicker from "../components/RelatedMemberPicker.vue";
+import BackLinkButton from "../components/BackLinkButton.vue";
 
 const { t } = useI18n();
 const route = useRoute();

@@ -2,9 +2,14 @@
   <main>
     <hgroup>
       <h1>{{ t("workspace.home.header.title") }}</h1>
-      <button type="button" class="btn" @click="openModal">
-        {{ t("workspace.home.actions.create") }}
-      </button>
+      <div class="actions">
+        <button type="button" class="btn btn--secondary" @click="openMemberModal">
+          {{ t("workspace.home.actions.inviteMember") }}
+        </button>
+        <button type="button" class="btn" @click="openModal">
+          {{ t("workspace.home.actions.create") }}
+        </button>
+      </div>
     </hgroup>
     <p v-if="isLoading">{{ t("workspace.home.status.loading") }}</p>
     <p v-else-if="errorMessage">{{ errorMessage }}</p>
@@ -45,7 +50,44 @@
           {{ t("workspace.home.actions.cancel") }}
         </button>
         <button type="submit" class="btn" :disabled="isCreating">
-          {{ isCreating ? t("workspace.home.actions.creating") : t("workspace.home.actions.submit") }}
+          {{
+            isCreating ? t("workspace.home.actions.creating") : t("workspace.home.actions.submit")
+          }}
+        </button>
+      </div>
+    </form>
+  </BaseModal>
+
+  <BaseModal
+    :open="isMemberModalOpen"
+    :title="t('workspace.home.members.modal.title')"
+    @close="closeMemberModal"
+  >
+    <form class="modal-form" @submit.prevent="inviteMember">
+      <label for="member-email">{{ t("workspace.home.members.emailLabel") }}</label>
+      <input
+        id="member-email"
+        v-model.trim="memberForm.email"
+        type="email"
+        placeholder="member@example.com"
+      />
+      <label for="member-role">{{ t("workspace.home.members.roleLabel") }}</label>
+      <select id="member-role" v-model="memberForm.role">
+        <option value="OWNER">{{ t("roles.workspace_member.owner") }}</option>
+        <option value="ADMIN">{{ t("roles.workspace_member.admin") }}</option>
+        <option value="MEMBER">{{ t("roles.workspace_member.member") }}</option>
+      </select>
+      <p v-if="memberError" class="form-error">{{ memberError }}</p>
+      <div class="modal-actions">
+        <button type="button" class="btn btn--secondary" @click="closeMemberModal">
+          {{ t("workspace.home.actions.cancel") }}
+        </button>
+        <button type="submit" class="btn" :disabled="isInvitingMember">
+          {{
+            isInvitingMember
+              ? t("workspace.home.actions.invitingMember")
+              : t("workspace.home.actions.submit")
+          }}
         </button>
       </div>
     </form>
@@ -56,6 +98,7 @@
 import { computed, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
+import api from "../lib/axios";
 import BaseModal from "../components/BaseModal.vue";
 import { useWorkspaceStore } from "../stores/workspaceStore";
 
@@ -66,9 +109,13 @@ const isLoading = ref(false);
 const errorMessage = ref("");
 const isModalOpen = ref(false);
 const isCreating = ref(false);
+const isMemberModalOpen = ref(false);
+const isInvitingMember = ref(false);
 const deletingProjectId = ref(null);
 const formError = ref("");
 const form = ref({ name: "" });
+const memberError = ref("");
+const memberForm = ref({ email: "", role: "MEMBER" });
 const workspaceId = computed(() => route.params.workspaceId);
 const projects = computed(() => workspaceStore.getProjects(workspaceId.value));
 
@@ -100,6 +147,16 @@ const closeModal = () => {
   isModalOpen.value = false;
 };
 
+const openMemberModal = () => {
+  memberForm.value = { email: "", role: "MEMBER" };
+  memberError.value = "";
+  isMemberModalOpen.value = true;
+};
+
+const closeMemberModal = () => {
+  isMemberModalOpen.value = false;
+};
+
 const createProject = async () => {
   if (!form.value.name) {
     formError.value = t("workspace.home.validation.nameRequired");
@@ -119,8 +176,7 @@ const createProject = async () => {
     await fetchProjects();
     closeModal();
   } catch (error) {
-    formError.value =
-      error?.response?.data?.message || t("workspace.home.status.errorCreate");
+    formError.value = error?.response?.data?.message || t("workspace.home.status.errorCreate");
   } finally {
     isCreating.value = false;
   }
@@ -138,10 +194,37 @@ const deleteProject = async (projectId) => {
     await api.delete(`/projects/${projectId}`);
     await fetchProjects();
   } catch (error) {
-    errorMessage.value =
-      error?.response?.data?.message || t("workspace.home.status.errorDelete");
+    errorMessage.value = error?.response?.data?.message || t("workspace.home.status.errorDelete");
   } finally {
     deletingProjectId.value = null;
+  }
+};
+
+const inviteMember = async () => {
+  if (!memberForm.value.email) {
+    memberError.value = t("workspace.home.members.validation.emailRequired");
+    return;
+  }
+
+  if (!workspaceId.value) {
+    memberError.value = t("workspace.home.validation.noWorkspace");
+    return;
+  }
+
+  isInvitingMember.value = true;
+  memberError.value = "";
+
+  try {
+    await api.post(`/workspaces/${workspaceId.value}/members`, {
+      email: memberForm.value.email,
+      role_name: memberForm.value.role,
+    });
+    closeMemberModal();
+  } catch (error) {
+    memberError.value =
+      error?.response?.data?.message || t("workspace.home.members.status.errorInvite");
+  } finally {
+    isInvitingMember.value = false;
   }
 };
 

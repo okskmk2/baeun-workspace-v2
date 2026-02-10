@@ -37,11 +37,49 @@
       class="message"
       :class="{ system: isSystemMessage(message) }"
     >
-      <div class="message-content">{{ message.content }}</div>
-      <div class="message-meta">
-        {{ message.creator_name || t("messenger.room.fallback.unknownUser") }} ·
-        {{ formatTime(message.created_at) }}
-      </div>
+      <template v-if="isSystemMessage(message)">
+        <div class="message-content">{{ message.content }}</div>
+      </template>
+      <template v-else>
+        <Avatar
+          class="message-avatar"
+          :text="getInitials(message.creator_name)"
+          :label="message.creator_name || t('messenger.room.fallback.unknownUser')"
+          :size="36"
+        />
+        <div class="message-body">
+          <div class="message-header">
+            <span class="message-author">
+              {{ message.creator_name || t("messenger.room.fallback.unknownUser") }}
+            </span>
+            <span class="message-time">{{ formatTime(message.created_at) }}</span>
+          </div>
+          <div class="message-content">{{ message.content }}</div>
+          <div class="message-feedback">
+            <div class="feedback-items">
+              <div
+                v-for="option in feedbackOptions"
+                :key="option.key"
+                v-show="getFeedbackCount(message, option.key) > 0"
+                class="feedback-chip"
+                :class="{ active: isFeedbackMine(message, option.key) }"
+                :aria-label="t(option.labelKey)"
+              >
+                <MaterialSymbol :name="option.icon" :size="16" />
+                <span class="feedback-count">{{ getFeedbackCount(message, option.key) }}</span>
+              </div>
+            </div>
+            <button
+              type="button"
+              class="feedback-button"
+              :aria-label="t('messenger.room.feedback.add')"
+              @click="openFeedbackModal(message)"
+            >
+              <MaterialSymbol name="add_reaction" :size="16" />
+            </button>
+          </div>
+        </div>
+      </template>
     </div>
     <p v-if="!messages.length" class="empty">{{ t("messenger.room.empty.messages") }}</p>
   </div>
@@ -109,6 +147,26 @@
       </ul>
     </div>
   </BaseModal>
+
+  <BaseModal
+    :open="isFeedbackOpen"
+    :title="t('messenger.room.feedback.modal.title')"
+    @close="closeFeedbackModal"
+  >
+    <div class="feedback-modal">
+      <button
+        v-for="option in feedbackOptions"
+        :key="option.key"
+        type="button"
+        class="feedback-option"
+        :class="{ 'is-active': isActiveFeedbackOption(option.key) }"
+        @click="selectFeedback(option.key)"
+      >
+        <MaterialSymbol :name="option.icon" :size="20" />
+        <span>{{ t(option.labelKey) }}</span>
+      </button>
+    </div>
+  </BaseModal>
 </template>
 
 <script setup>
@@ -117,6 +175,8 @@ import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 import api from "../lib/axios";
 import BaseModal from "../components/BaseModal.vue";
+import Avatar from "../components/Avatar.vue";
+import MaterialSymbol from "../components/MaterialSymbol.vue";
 import { useProjectMemberStore } from "../stores/projectMemberStore";
 import { useChatStore } from "../stores/chatStore";
 import { useRoleLabels } from "../lib/roleLabels";
@@ -149,6 +209,16 @@ const isMembersOpen = ref(false);
 const isMembersLoading = ref(false);
 const membersError = ref("");
 const chatMembers = ref([]);
+const isFeedbackOpen = ref(false);
+const activeFeedbackMessageId = ref(null);
+const feedbackOptions = [
+  { key: "like", icon: "thumb_up", labelKey: "messenger.room.feedback.like" },
+  { key: "checking", icon: "schedule", labelKey: "messenger.room.feedback.checking" },
+  { key: "done", icon: "task_alt", labelKey: "messenger.room.feedback.done" },
+  { key: "excited", icon: "celebration", labelKey: "messenger.room.feedback.excited" },
+  { key: "sad", icon: "sentiment_dissatisfied", labelKey: "messenger.room.feedback.sad" },
+  { key: "funny", icon: "sentiment_very_satisfied", labelKey: "messenger.room.feedback.funny" },
+];
 
 const fetchchannelDetail = async () => {
   if (!roomId.value) {
@@ -213,6 +283,20 @@ const connectSocket = () => {
       const payload = JSON.parse(event.data);
       if (payload?.type === "message" && payload?.data) {
         messages.value = [...messages.value, payload.data];
+        return;
+      }
+      if (payload?.type === "feedback" && payload?.data) {
+        const messageId = payload.data.message_id;
+        const counts = payload.data.feedback_counts || {};
+        messages.value = messages.value.map((message) =>
+          String(message.id) === String(messageId)
+            ? {
+                ...message,
+                feedback_counts: counts,
+                feedback_mine: message.feedback_mine || [],
+              }
+            : message
+        );
       }
     } catch (error) {
       // ignore bad payloads
@@ -253,6 +337,70 @@ const isSystemMessage = (message) => {
   if (message?.message_type === "SYSTEM") return true;
   const content = message?.content || "";
   return /님이 .*님을 초대했습니다\.$/.test(content);
+};
+
+const getFeedbackCount = (message, key) => {
+  if (!message?.id) return 0;
+  const baseCounts = message.feedback_counts || message.feedbackCounts || {};
+  return baseCounts[key] || 0;
+};
+
+const isFeedbackMine = (message, key) => {
+  const mine = message?.feedback_mine || message?.feedbackMine || [];
+  return mine.includes(key);
+};
+
+const isActiveFeedbackOption = (key) => {
+  if (!activeFeedbackMessageId.value) return false;
+  const target = messages.value.find(
+    (message) => String(message.id) === String(activeFeedbackMessageId.value)
+  );
+  if (!target) return false;
+  return isFeedbackMine(target, key);
+};
+
+const openFeedbackModal = (message) => {
+  activeFeedbackMessageId.value = message?.id || null;
+  if (!activeFeedbackMessageId.value) return;
+  isFeedbackOpen.value = true;
+};
+
+const closeFeedbackModal = () => {
+  isFeedbackOpen.value = false;
+  activeFeedbackMessageId.value = null;
+};
+
+const selectFeedback = (key) => {
+  const messageId = activeFeedbackMessageId.value;
+  if (!messageId || !roomId.value) return;
+  api
+    .post(`/channels/${roomId.value}/messages/${messageId}/feedback`, {
+      feedback_key: key,
+    })
+    .then((res) => {
+      const counts = res.data?.data?.feedback_counts || {};
+      const mine = res.data?.data?.feedback_mine || [];
+      messages.value = messages.value.map((message) =>
+        String(message.id) === String(messageId)
+          ? { ...message, feedback_counts: counts, feedback_mine: mine }
+          : message
+      );
+      closeFeedbackModal();
+    })
+    .catch(() => {
+      // keep modal open on error
+    });
+};
+
+const getInitials = (name) => {
+  if (!name) return "?";
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (!parts.length) return "?";
+  return parts
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase();
 };
 
 const openInviteModal = () => {
@@ -369,28 +517,53 @@ onBeforeUnmount(() => {
   padding: 12px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 12px;
   background-color: var(--color-card-bg);
-  height: calc(100vh - 335px);
+  height: calc(100vh - 318px);
   overflow-y: scroll;
 }
 
 .message {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  gap: 12px;
+  align-items: flex-start;
 }
 
 .message.system {
-  align-items: center;
+  justify-content: center;
   text-align: center;
   padding: 6px 10px;
   border-radius: 999px;
   background-color: var(--color-surface-alt);
 }
 
-.message.system .message-meta {
-  display: none;
+.message-avatar {
+  flex-shrink: 0;
+}
+
+.message-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  flex: 1;
+}
+
+.message-header {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.message-author {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.message-time {
+  font-size: 12px;
+  color: var(--color-text-muted);
 }
 
 .message-content {
@@ -398,9 +571,89 @@ onBeforeUnmount(() => {
   color: var(--color-text);
 }
 
-.message-meta {
-  font-size: 12px;
+.message-feedback {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.feedback-items {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.feedback-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  /* border-style: none; */
+  background-color: var(--color-surface);
+  /* background-color: transparent; */
   color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.feedback-button:hover {
+  color: var(--color-text);
+  border-color: var(--color-text-muted);
+}
+
+.feedback-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  background-color: var(--color-surface-alt);
+  color: var(--color-text);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.feedback-chip.active {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.feedback-count {
+  min-width: 12px;
+  text-align: center;
+}
+
+.feedback-modal {
+  display: grid;
+  gap: 8px;
+}
+
+.feedback-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--color-border);
+  background-color: var(--color-card-bg);
+  color: var(--color-text);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+}
+
+.feedback-option.is-active {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.feedback-option:hover {
+  border-color: var(--color-text-muted);
 }
 
 .empty {

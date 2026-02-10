@@ -155,19 +155,16 @@ const emitReorder = (payload) => emit("reorder", payload);
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 6px;
   user-select: none;
 }
 
 .page-list--nested {
-  margin-top: 6px;
-  margin-left: 10px;
-  padding-left: 8px;
+  margin-left: 8px;
 }
 
 .page-item {
   position: relative;
-  padding: 4px 0;
+  padding: 1px 0;
   cursor: grab;
   user-select: none;
 }
@@ -179,12 +176,14 @@ const emitReorder = (payload) => emit("reorder", payload);
 .page-link {
   display: block;
   text-decoration: none;
-  border-radius: 8px;
+  padding: 4px 8px;
+  /* border-radius: 8px; */
   color: var(--color-text);
 }
 
 .page-link:hover {
-  background-color: var(--color-surface-alt);
+  text-decoration: underline;
+  /* background-color: var(--color-surface-alt); */
 }
 
 /* Drop indicator line */

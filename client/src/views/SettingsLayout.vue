@@ -1,5 +1,5 @@
 <template>
-  <div class="AcountLayout">
+  <div class="LnbLayout">
     <aside>
       <nav>
         <router-link :to="`/workspace/${workspaceId}/project/${projectId}/settings`"

@@ -2,10 +2,18 @@
 @import url(./theme.css);
 @import url(./button.css);
 @import url(./markdown.css);
+/* 
+@font-face {
+  font-display: swap;
+  font-family: "pretendard";
+  src: url(./PretendardJPVariable.woff2) format("woff2");
+  font-weight: 100 900;
+  font-variation-settings: "wght" 400;
+} */
 
 body {
   background-color: var(--color-bg);
-  font-family: sans-serif;
+  font-family: "sans-serif";
   margin: 0;
 }
 
@@ -109,7 +117,7 @@ nav a:hover {
 
 .ProjectLayout .left {
   display: flex;
-  gap: 7rem;
+  gap: 4rem;
 }
 
 .ProjectLayout .mainnav {
@@ -136,14 +144,14 @@ nav a:hover {
   margin: 1rem;
 }
 
-.AcountLayout {
+.LnbLayout {
   display: flex;
   gap: 1rem;
   padding: 1rem;
   flex-grow: 1;
 }
 
-.AcountLayout > aside {
+.LnbLayout > aside {
   background-color: var(--color-page-bg);
   padding: 18px 20px;
   width: 10rem;
@@ -151,24 +159,24 @@ nav a:hover {
   border-radius: 8px;
 }
 
-.AcountLayout > aside > nav {
+.LnbLayout > aside > nav {
   gap: 8px;
   display: flex;
   flex-direction: column;
 }
-.AcountLayout > aside > nav a {
+.LnbLayout > aside > nav a {
   padding: 6px 8px;
 }
 
-.AcountLayout > aside > button + nav {
+.LnbLayout > aside > button + nav {
   margin-top: 1rem;
 }
 
-.AcountLayout > aside > button {
+.LnbLayout > aside > button {
   width: 100%;
 }
 
-.AcountLayout > main {
+.LnbLayout > main {
   flex-grow: 1;
   background-color: var(--color-page-bg);
   padding: 2rem 3rem 4rem;

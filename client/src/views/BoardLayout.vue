@@ -1,5 +1,5 @@
 <template>
-  <div class="AcountLayout">
+  <div class="LnbLayout BoardLayout">
     <aside>
       <button type="button" class="btn" @click="openModal">
         {{ t("board.layout.actions.create") }}
@@ -127,3 +127,12 @@ const createBoard = async () => {
 onMounted(fetchBoards);
 watch(projectId, fetchBoards);
 </script>
+<style scoped>
+.BoardLayout aside nav {
+  /* font-size: 14px; */
+  gap: 4px;
+}
+.BoardLayout main {
+  padding: 18px 24px 3rem;
+}
+</style>

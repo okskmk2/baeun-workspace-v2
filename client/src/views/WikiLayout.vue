@@ -1,5 +1,5 @@
 <template>
-  <div class="AcountLayout">
+  <div class="LnbLayout WikiLayout">
     <aside>
       <button class="btn" type="button" @click="openModal">
         {{ t("wiki.layout.actions.create") }}
@@ -196,12 +196,11 @@ watch(projectId, fetchPages);
 watch(workspaceId, fetchPages);
 </script>
 
-<style scoped>
-.page-nav h3 {
-  margin: 12px 0 8px;
+<style>
+.page-nav {
   font-size: 14px;
-  font-weight: 600;
-  color: var(--color-text);
 }
-
+.WikiLayout aside {
+  width: 15rem;
+}
 </style>
