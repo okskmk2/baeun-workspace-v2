@@ -30,6 +30,7 @@ import SettingsMemberPage from "./views/SettingsMemberPage.vue";
 import BlankPage from "./views/BlankPage.vue";
 import api from "./lib/axios";
 import { useAppStore } from "./stores/appStore";
+import { useProjectMemberStore } from "./stores/projectMemberStore";
 
 let authChecked = false;
 let isAuthenticated = false;
@@ -140,6 +141,7 @@ const routes = [
           },
           {
             path: "settings",
+            meta: { requiresProjectAdmin: true },
             component: SettingsLayout,
             children: [
               {
@@ -165,6 +167,7 @@ export const router = createRouter({
 
 router.beforeEach(async (to, from, next) => {
   const appStore = useAppStore();
+  const projectMemberStore = useProjectMemberStore();
 
   if (!authChecked) {
     try {
@@ -193,6 +196,31 @@ router.beforeEach(async (to, from, next) => {
 
   if (to.path === "/login" && isAuthenticated) {
     return next({ path: "/account" });
+  }
+
+  const requiresProjectAdmin = to.matched.some(
+    (record) => record.meta?.requiresProjectAdmin
+  );
+  if (requiresProjectAdmin) {
+    const { workspaceId, projectId } = to.params;
+    if (!projectId || !workspaceId) {
+      return next({ path: "/account" });
+    }
+
+    try {
+      const members = await projectMemberStore.fetchProjectMembers(projectId);
+      const currentUserId = appStore.currentUser?.id;
+      const currentMember = members.find(
+        (member) => String(member.id) === String(currentUserId)
+      );
+      const role = String(currentMember?.role_name || "").toUpperCase();
+
+      if (!["OWNER", "ADMIN"].includes(role)) {
+        return next({ path: `/workspace/${workspaceId}/project/${projectId}/board` });
+      }
+    } catch (error) {
+      return next({ path: `/workspace/${workspaceId}/project/${projectId}/board` });
+    }
   }
 
   return next();

@@ -32,9 +32,12 @@
         </template>
       </div>
       <nav class="utilnav">
-        <router-link :to="`/workspace/${workspaceId}/project/${projectId}/settings`">{{
-          t("layout.project.util.settings")
-        }}</router-link>
+        <router-link
+          v-if="canAccessProjectSettings"
+          :to="`/workspace/${workspaceId}/project/${projectId}/settings`"
+        >
+          {{ t("layout.project.util.settings") }}
+        </router-link>
         <router-link to="/account">
           <Avatar :text="accountInitials" :label="accountLabel" :size="32" />
         </router-link>
@@ -65,6 +68,7 @@ const { gnbPreviewTheme, currentUser } = storeToRefs(appStore);
 const workspaceId = computed(() => route.params.workspaceId);
 const projectId = computed(() => route.params.projectId);
 const projects = computed(() => workspaceStore.getProjects(workspaceId.value));
+const projectMembers = computed(() => projectMemberStore.getProjectMembers(projectId.value));
 const currentProject = computed(() => {
   if (!projectId.value) return "";
   const list = projects.value || [];
@@ -77,6 +81,17 @@ const accountInitials = computed(() => {
   return name.slice(0, 2).toUpperCase();
 });
 const accountLabel = computed(() => currentUser.value?.name || t("layout.project.util.account"));
+const currentUserId = computed(() => currentUser.value?.id);
+const currentProjectRole = computed(() => {
+  if (!currentUserId.value) return "";
+  const found = projectMembers.value.find(
+    (member) => String(member.id) === String(currentUserId.value)
+  );
+  return (found?.role_name || "").toUpperCase();
+});
+const canAccessProjectSettings = computed(() =>
+  ["OWNER", "ADMIN"].includes(currentProjectRole.value)
+);
 const projectThemeMode = computed(() => {
   const theme = currentProject.value?.theme_json || {};
   return theme.mode || theme.theme?.mode || theme.colorScheme || "";

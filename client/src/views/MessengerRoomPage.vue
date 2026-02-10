@@ -273,7 +273,7 @@ const connectSocket = () => {
   }
 
   const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-  socket = new WebSocket(`${protocol}://${window.location.hostname}:3000/ws`);
+  socket = new WebSocket(`${protocol}://${window.location.hostname}:8080/ws`);
 
   socket.addEventListener("open", () => {
     isConnected.value = true;

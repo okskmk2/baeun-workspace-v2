@@ -9,6 +9,13 @@ import logger from "./logger.mjs";
 import http from "http";
 import { WebSocketServer } from "ws";
 import { broadcastToRoom, joinRoom, removeSocket } from "./ws.mjs";
+import path from "path";
+import { fileURLToPath } from "url";
+
+// __dirname 대체 구현 (ESM에서는 직접 만들어야 함)
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 // routes
 import memberRouter from "./routes/member.route.mjs";
 import workspaceRouter from "./routes/workspace.route.mjs";
@@ -36,12 +43,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Swagger setup.
-app.use(
-  "/api-docs",
-  swaggerUi.serve,
-  swaggerUi.setup(swaggerSpec, { swaggerUrl: "/api-docs.json" })
-);
-app.get("/api-docs.json", (req, res) => {
+app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec, { swaggerUrl: "/openapi.json" }));
+app.get("/openapi.json", (req, res) => {
   res.setHeader("Content-Type", "application/json");
   res.send(swaggerSpec);
 });
@@ -73,6 +76,30 @@ app.use("/api/pages", pagesRouter);
 app.use("/api/boards", boardRouter);
 app.use("/api/issues", issueRouter);
 app.use("/api/channels", chatRouter);
+
+// Static files serve
+const staticPath = path.join(__dirname, "../../client/dist");
+
+app.use(
+  express.static(staticPath, {
+    maxAge: "7d",
+    immutable: true,
+    setHeaders: (res, filePath) => {
+      if (filePath.endsWith("index.html")) {
+        res.setHeader("Cache-Control", "no-cache");
+      }
+    },
+  })
+);
+
+// SPA fallback
+app.get("{/*path}", (req, res) => {
+  res.sendFile(path.join(staticPath, "index.html"), {
+    headers: {
+      "Cache-Control": "no-cache",
+    },
+  });
+});
 
 const PORT = process.env.PORT || 8080;
 const server = http.createServer(app);
