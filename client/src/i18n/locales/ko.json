@@ -39,7 +39,7 @@
     "default": {
       "brand": "바은 워크스페이스",
       "nav": {
-        "overview": "개요",
+        "about": "소개",
         "store": "스토어"
       },
       "util": {

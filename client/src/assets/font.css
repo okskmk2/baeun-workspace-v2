@@ -1,0 +1,15 @@
+@font-face {
+  font-family: "SUIT";
+  src: url("/SUIT-Variable.ttf") format("truetype");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+body,
+select,
+input,
+textarea {
+  box-sizing: border-box;
+  font-family: "SUIT", "sans-serif";
+}

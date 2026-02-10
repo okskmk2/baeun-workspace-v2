@@ -16,7 +16,7 @@
       <button v-if="!isEditing" class="btn btn--sm btn--secondary" @click="startEditing">
         {{ t("issue.detail.actions.edit") }}
       </button>
-      <button v-else class="btn" @click="saveIssue" :disabled="isSaving">
+      <button v-else class="btn btn--sm" @click="saveIssue" :disabled="isSaving">
         {{ isSaving ? t("issue.detail.actions.saving") : t("issue.detail.actions.save") }}
       </button>
       <button

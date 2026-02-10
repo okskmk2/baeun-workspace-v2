@@ -289,7 +289,7 @@ watch(boardId, async (nextId, prevId) => {
 .kanban-column header h2 {
   font-size: 14px;
   margin: 0;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .kanban-column header span {

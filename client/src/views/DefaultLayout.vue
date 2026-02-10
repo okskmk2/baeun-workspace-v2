@@ -1,9 +1,12 @@
 <template>
   <div class="DefaultLayout">
     <header>
-      <router-link class="brand" to="/">{{ t("layout.default.brand") }}</router-link>
+      <router-link class="brand" to="/">
+        <img class="brand-logo" src="/favicon.svg" alt="Brand logo" />
+        <span class="brand-text">{{ t("layout.default.brand") }}</span>
+      </router-link>
       <nav class="mainnav">
-        <router-link to="/">{{ t("layout.default.nav.overview") }}</router-link>
+        <router-link to="/">{{ t("layout.default.nav.about") }}</router-link>
         <router-link to="/store">{{ t("layout.default.nav.store") }}</router-link>
       </nav>
       <nav class="utilnav">

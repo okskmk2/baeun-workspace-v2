@@ -13,7 +13,7 @@ button {
   background-color: var(--color-accent);
   color: var(--color-text-inverse);
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
   transition:
     background-color 0.15s ease,

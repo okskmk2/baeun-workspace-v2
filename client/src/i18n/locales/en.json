@@ -39,7 +39,7 @@
     "default": {
       "brand": "Baeun Workspace",
       "nav": {
-        "overview": "Overview",
+        "about": "About",
         "store": "Store"
       },
       "util": {

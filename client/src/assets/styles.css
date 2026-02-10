@@ -1,19 +1,11 @@
+@import url(./font.css);
 @import url(./variables.css);
 @import url(./theme.css);
 @import url(./button.css);
 @import url(./markdown.css);
-/* 
-@font-face {
-  font-display: swap;
-  font-family: "pretendard";
-  src: url(./PretendardJPVariable.woff2) format("woff2");
-  font-weight: 100 900;
-  font-variation-settings: "wght" 400;
-} */
 
 body {
   background-color: var(--color-bg);
-  font-family: "sans-serif";
   margin: 0;
 }
 
@@ -25,12 +17,6 @@ html,
 body,
 #app {
   height: 100%;
-}
-
-input,
-textarea {
-  box-sizing: border-box;
-  font-family: sans-serif;
 }
 
 nav a {
@@ -65,6 +51,20 @@ nav a:hover {
   text-decoration: none;
   color: inherit;
   font-size: 18px;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 800;
+}
+
+.DefaultLayout .brand-logo {
+  height: 24px;
+  width: 24px;
+  display: block;
+}
+
+.DefaultLayout .brand-text {
+  line-height: 1;
 }
 
 .DefaultLayout > header {
@@ -81,6 +81,7 @@ nav a:hover {
 .DefaultLayout .mainnav {
   font-size: 18px;
   gap: 60px;
+  font-weight: 600;
 }
 .DefaultLayout .utilnav {
   font-size: 15px;
@@ -234,7 +235,7 @@ main > hgroup {
 main > hgroup h1 {
   font-size: 24px;
   margin: 0;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 main > hgroup div:has(h1) {

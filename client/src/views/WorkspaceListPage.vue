@@ -206,7 +206,7 @@ const getProjects = (workspaceId) => workspaceStore.getProjects(workspaceId);
 .project-list li a {
   /* color: #374151; */
   /* text-decoration: none; */
-  font-size: 14px;
+  /* font-size: 14px; */
 }
 
 .project-empty {
