@@ -166,6 +166,7 @@ onBeforeUnmount(() => {
   color: var(--gnb-fg);
   text-decoration: none;
   line-height: 1;
+  font-weight: bold;
 }
 
 .mainnav-link:hover {

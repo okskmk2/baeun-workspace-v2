@@ -199,6 +199,44 @@
       "confirm": {
         "delete": "Delete this project?"
       }
+    },
+    "detail": {
+      "header": {
+        "title": "Workspace detail",
+        "subtitle": "Manage access and projects in one place."
+      },
+      "status": {
+        "loading": "Loading workspace...",
+        "errorLoad": "Failed to load workspace detail."
+      },
+      "actions": {
+        "back": "Back to workspaces",
+        "open": "Open workspace"
+      },
+      "sections": {
+        "summary": "Summary",
+        "stats": "Key stats",
+        "projects": "Projects"
+      },
+      "fields": {
+        "name": "Workspace name",
+        "owner": "Owner",
+        "created": "Created"
+      },
+      "stats": {
+        "projects": "Projects",
+        "members": "Members",
+        "licenses": "Licenses"
+      },
+      "empty": {
+        "projects": "No projects yet."
+      },
+      "fallback": {
+        "name": "Workspace",
+        "owner": "Unassigned",
+        "date": "-",
+        "count": "-"
+      }
     }
   },
   "board": {
@@ -234,6 +272,10 @@
       "actions": {
         "filter": "Filter"
       },
+      "empty": {
+        "title": "No board activity yet",
+        "description": "Create a board to start tracking work."
+      },
       "feed": {
         "today": "Today",
         "yesterday": "Yesterday",
@@ -255,6 +297,8 @@
       },
       "actions": {
         "createIssue": "Create Issue",
+        "delete": "Delete Board",
+        "deleting": "Deleting...",
         "cancel": "Cancel",
         "create": "Create",
         "creating": "Creating..."
@@ -275,7 +319,11 @@
         "titleRequired": "Please enter a title."
       },
       "status": {
-        "errorCreate": "Failed to create issue."
+        "errorCreate": "Failed to create issue.",
+        "errorDelete": "Failed to delete board."
+      },
+      "confirm": {
+        "delete": "Delete this board?"
       }
     }
   },
@@ -374,6 +422,10 @@
       },
       "actions": {
         "filter": "Filter"
+      },
+      "empty": {
+        "title": "No wiki activity yet",
+        "description": "Create a page to start documenting."
       },
       "feed": {
         "today": "Today",
@@ -498,8 +550,7 @@
         "yesterday": "Yesterday"
       },
       "empty": {
-        "badge": "Chat",
-        "title": "No messages in the last 24 hours",
+         "title": "No messages in the last 24 hours",
         "description": "Create a channel from the left menu and start a conversation."
       },
       "actions": {
@@ -605,6 +656,250 @@
     },
     "confirm": {
       "delete": "Delete this workspace?"
+    }
+  },
+  "home": {
+    "hero": {
+      "eyebrow": "Baeun Workspace",
+      "title": "Run teams, projects, and client work from one workspace.",
+      "subtitle": "Plan, execute, document, and bill in a single flow your operators can own.",
+      "primaryCta": "Start a workspace",
+      "secondaryCta": "See plans"
+    },
+    "stats": {
+      "workspaces": "Teams onboarded",
+      "projects": "Active projects",
+      "boards": "Work items shipped",
+      "messages": "Messages resolved"
+    },
+    "snapshot": {
+      "title": "Operations snapshot",
+      "description": "A quick view of the full work lifecycle.",
+      "chips": [
+        "Onboarding",
+        "Planning",
+        "Delivery",
+        "Documentation",
+        "Messaging",
+        "Billing"
+      ],
+      "metrics": {
+        "primaryLabel": "Primary KPI",
+        "primaryValue": "Active teams",
+        "cadenceLabel": "Reporting cadence",
+        "cadenceValue": "Daily summaries"
+      }
+    },
+    "features": {
+      "title": "What you can run today",
+      "subtitle": "Designed for operators who own outcomes, not tools.",
+      "workspace": {
+        "title": "Onboard the whole company",
+        "description": "Invite, organize, and control access without extra tools.",
+        "bullets": [
+          "Roles keep ownership clear",
+          "Default workspace speeds up launch",
+          "Shared brand settings for every team"
+        ],
+        "tags": [
+          "Access control",
+          "Branding",
+          "Directory"
+        ]
+      },
+      "project": {
+        "title": "Deliver projects consistently",
+        "description": "Track work, files, and updates per project.",
+        "bullets": [
+          "Project views stay organized",
+          "Clear ownership for each delivery",
+          "Consistent status reporting"
+        ],
+        "tags": [
+          "Roadmaps",
+          "Ownership",
+          "Status"
+        ]
+      },
+      "board": {
+        "title": "Keep work moving",
+        "description": "Visual boards for priorities and blockers.",
+        "bullets": [
+          "Custom statuses stay consistent",
+          "Assignments stay visible",
+          "Progress is easy to scan"
+        ],
+        "tags": [
+          "Priorities",
+          "Assignments",
+          "Progress"
+        ]
+      },
+      "wiki": {
+        "title": "Document once",
+        "description": "Keep runbooks and decisions in one place.",
+        "bullets": [
+          "Structured pages for teams",
+          "Permissioned access",
+          "Knowledge stays searchable"
+        ],
+        "tags": [
+          "Runbooks",
+          "Policies",
+          "Knowledge"
+        ]
+      },
+      "messenger": {
+        "title": "Fast team alignment",
+        "description": "Channels and updates tied to the work.",
+        "bullets": [
+          "Conversation stays contextual",
+          "Message history keeps teams aligned",
+          "Feedback loops stay lightweight"
+        ],
+        "tags": [
+          "Channels",
+          "Updates",
+          "Feedback"
+        ]
+      },
+      "billing": {
+        "title": "Licenses and payments",
+        "description": "Scale access with clear billing.",
+        "bullets": [
+          "Member-based pricing",
+          "Renewals and upgrades tracked",
+          "Billing history in one place"
+        ],
+        "tags": [
+          "Licensing",
+          "Renewals",
+          "Billing"
+        ]
+      }
+    },
+    "cta": {
+      "title": "Ready to run operations?",
+      "description": "Invite your team, launch a project, and stay on top of delivery.",
+      "primary": "Start free"
+    }
+  },
+  "store": {
+    "hero": {
+      "eyebrow": "Store",
+      "title": "Plans built for growing teams",
+      "subtitle": "Choose workspace or project licenses and assign them to members.",
+      "primaryCta": "Start with a plan",
+      "secondaryCta": "Talk to sales"
+    },
+    "actions": {
+      "select": "Select plan"
+    },
+    "groups": {
+      "workspace": {
+        "title": "Workspace licenses",
+        "description": "Best for teams who want a full workspace allocation."
+      },
+      "project": {
+        "title": "Project licenses",
+        "description": "Ideal for smaller teams or add-on projects."
+      }
+    },
+    "plans": {
+      "badges": {
+        "popular": "Most popular"
+      },
+      "workspace": {
+        "monthly": {
+          "name": "Workspace Monthly",
+          "price": "$12",
+          "period": "per member / month",
+          "includes": [
+            "Full workspace access",
+            "Monthly billing",
+            "Cancel anytime"
+          ]
+        },
+        "yearly": {
+          "name": "Workspace Yearly",
+          "price": "$120",
+          "period": "per member / year",
+          "includes": [
+            "Save with annual billing",
+            "Priority support",
+            "Ready for team growth"
+          ]
+        },
+        "lifetime": {
+          "name": "Workspace Lifetime",
+          "price": "$420",
+          "period": "per member / lifetime",
+          "includes": [
+            "One-time purchase",
+            "Long-term team access",
+            "No renewals"
+          ]
+        }
+      },
+      "project": {
+        "monthly": {
+          "name": "Project Monthly",
+          "price": "$6",
+          "period": "per member / month",
+          "includes": [
+            "Per-project access",
+            "Scale by team size",
+            "Upgrade to workspace anytime"
+          ]
+        },
+        "yearly": {
+          "name": "Project Yearly",
+          "price": "$60",
+          "period": "per member / year",
+          "includes": [
+            "Lower annual cost",
+            "Bundle multiple projects",
+            "Shared billing history"
+          ]
+        },
+        "lifetime": {
+          "name": "Project Lifetime",
+          "price": "$240",
+          "period": "per member / lifetime",
+          "includes": [
+            "One-time purchase",
+            "Ideal for long-term clients",
+            "Keep access long-term"
+          ]
+        }
+      }
+    },
+    "sections": {
+      "lifecycle": {
+        "title": "License lifecycle",
+        "steps": [
+          {
+            "title": "Purchased",
+            "description": "License is ready to assign."
+          },
+          {
+            "title": "Active",
+            "description": "Assigned to a workspace or project."
+          },
+          {
+            "title": "Renewal",
+            "description": "Coverage ends at the renewal date."
+          }
+        ]
+      },
+      "payment": {
+        "title": "Payments and receipts",
+        "bullets": [
+          "Track amount, method, and receipt reference",
+          "Member-based pricing stays transparent",
+          "Billing history stays organized"
+        ]
+      }
     }
   },
   "profile": {

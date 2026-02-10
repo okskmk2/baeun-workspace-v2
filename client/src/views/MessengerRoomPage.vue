@@ -530,26 +530,30 @@ onBeforeUnmount(() => {
 .messages {
   border: 1px solid var(--color-border);
   border-radius: 8px;
-  padding: 12px;
+  /* padding: 16px 24px; */
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  /* gap: 16px; */
   background-color: var(--color-card-bg);
   height: calc(100vh - 318px);
   overflow-y: scroll;
 }
 
 .message {
+  padding: 16px;
   display: flex;
   gap: 12px;
   align-items: flex-start;
+}
+
+.message:hover {
+  background-color: var(--color-surface);
 }
 
 .message.system {
   justify-content: center;
   text-align: center;
   padding: 6px 10px;
-  border-radius: 999px;
   background-color: var(--color-surface-alt);
 }
 

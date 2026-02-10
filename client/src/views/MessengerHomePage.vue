@@ -6,11 +6,7 @@
   <p v-if="isLoading" class="status">{{ t("messenger.home.status.loading") }}</p>
   <p v-else-if="errorMessage" class="status error">{{ errorMessage }}</p>
 
-  <FeedList
-    v-else-if="groupedMessages.length"
-    :groups="groupedMessages"
-    item-key="message_id"
-  >
+  <FeedList v-else-if="groupedMessages.length" :groups="groupedMessages" item-key="message_id">
     <template #icon>
       <div class="feed-icon">M</div>
     </template>
@@ -28,7 +24,6 @@
 
   <div v-else class="empty" aria-live="polite">
     <div class="empty-card">
-      <div class="empty-badge">{{ t("messenger.home.empty.badge") }}</div>
       <h1>{{ t("messenger.home.empty.title") }}</h1>
       <p class="empty-desc">{{ t("messenger.home.empty.description") }}</p>
       <button type="button" class="btn">{{ t("messenger.home.actions.createChannel") }}</button>
@@ -152,7 +147,6 @@ watch(projectId, fetchRecentMessages);
   font-size: 18px;
 }
 
-
 .feed-icon {
   width: 28px;
   height: 28px;
@@ -166,7 +160,6 @@ watch(projectId, fetchRecentMessages);
   font-weight: 700;
 }
 
-
 .empty {
   display: flex;
   justify-content: center;
@@ -179,20 +172,6 @@ watch(projectId, fetchRecentMessages);
   border-radius: 12px;
   border: 1px dashed var(--color-border);
   text-align: center;
-}
-
-.empty-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 4px 10px;
-  border-radius: 999px;
-  background-color: var(--color-text);
-  color: var(--color-text-inverse);
-  font-size: 12px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  margin-bottom: 12px;
 }
 
 .empty-card h1 {

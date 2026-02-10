@@ -1,10 +1,17 @@
 <template>
   <hgroup>
     <h1>{{ board.name || t("board.page.header.fallbackTitle") }}</h1>
-    <button type="button" class="btn btn--sm" @click="openModal">
-      {{ t("board.page.actions.createIssue") }}
-    </button>
+    <div class="actions">
+      <button type="button" class="btn btn--secondary btn--sm" @click="openModal">
+        {{ t("board.page.actions.createIssue") }}
+      </button>
+      <button type="button" class="btn btn--danger btn--sm" @click="deleteBoard">
+        {{ isDeleting ? t("board.page.actions.deleting") : t("board.page.actions.delete") }}
+      </button>
+    </div>
   </hgroup>
+
+  <p v-if="deleteError" class="form-error">{{ deleteError }}</p>
 
   <div class="kanban">
     <section
@@ -91,21 +98,26 @@
 <script setup>
 import { computed, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import api from "../lib/axios";
 import BaseModal from "../components/BaseModal.vue";
 import Tag from "../components/Tag.vue";
 import { useRoleLabels } from "../lib/roleLabels";
+import { useBoardStore } from "../stores/boardStore";
 
 const { t } = useI18n();
 const { getRoleLabel } = useRoleLabels();
 const route = useRoute();
+const router = useRouter();
+const boardStore = useBoardStore();
 
 const board = ref({});
 const issues = ref([]);
 const draggingIssueId = ref(null);
 const isModalOpen = ref(false);
 const isCreating = ref(false);
+const isDeleting = ref(false);
+const deleteError = ref("");
 const formError = ref("");
 const form = ref({
   title: "",
@@ -217,6 +229,24 @@ const createIssue = async () => {
   }
 };
 
+const deleteBoard = async () => {
+  if (!boardId.value) return;
+  const confirmed = window.confirm(t("board.page.confirm.delete"));
+  if (!confirmed) return;
+
+  isDeleting.value = true;
+  deleteError.value = "";
+
+  try {
+    await boardStore.deleteBoard(boardId.value, projectId.value);
+    router.push(`/workspace/${workspaceId.value}/project/${projectId.value}/board`);
+  } catch (error) {
+    deleteError.value = error?.response?.data?.message || t("board.page.status.errorDelete");
+  } finally {
+    isDeleting.value = false;
+  }
+};
+
 const loadBoardData = async () => {
   await Promise.all([fetchBoard(), fetchIssues()]);
 };
@@ -237,6 +267,11 @@ watch(boardId, async (nextId, prevId) => {
   gap: 24px;
   min-width: 45rem;
   min-height: 30rem;
+}
+
+.actions {
+  display: inline-flex;
+  gap: 8px;
 }
 
 /* .kanban-column + .kanban-column {

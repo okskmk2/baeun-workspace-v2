@@ -19,6 +19,13 @@ export const useBoardStore = defineStore('board', {
     },
     getBoards(projectId){
       return this.boardsByProject[projectId] || []
+    },
+    async deleteBoard(boardId, projectId){
+      if(!boardId) return
+      await api.delete(`/boards/${boardId}`)
+      if(!projectId) return
+      const current = this.boardsByProject[projectId] || []
+      this.boardsByProject[projectId] = current.filter((board) => board.id !== boardId)
     }
   }
 })

@@ -10,6 +10,7 @@ import SecurityPage from "./views/SecurityPage.vue";
 import PlanLicensePage from "./views/PlanLicensePage.vue";
 import BillingPage from "./views/BillingPage.vue";
 import WorkspaceListPage from "./views/WorkspaceListPage.vue";
+import WorkspaceDetailPage from "./views/WorkspaceDetailPage.vue";
 import WorkspaceLayout from "./views/WorkspaceLayout.vue";
 import WorkspaceHomePage from "./views/WorkspaceHomePage.vue";
 import IssueDetailPage from "./views/IssueDetailPage.vue";
@@ -65,6 +66,7 @@ const routes = [
           { path: "plan", component: PlanLicensePage }, // 구독+?�이?�스 ?�합
           { path: "billing", component: BillingPage },
           { path: "workspaces", component: WorkspaceListPage },
+          { path: "workspaces/:workspaceId", component: WorkspaceDetailPage },
         ],
       },
     ],

@@ -52,10 +52,12 @@ import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 import api from "../lib/axios";
 import BaseModal from "../components/BaseModal.vue";
+import { useBoardStore } from "../stores/boardStore";
 
 const { t } = useI18n();
 const route = useRoute();
-const boards = ref([]);
+const boardStore = useBoardStore();
+const boards = computed(() => boardStore.getBoards(projectId.value));
 const isLoading = ref(false);
 const errorMessage = ref("");
 const isModalOpen = ref(false);
@@ -68,7 +70,6 @@ const projectId = computed(() => route.params.projectId);
 
 const fetchBoards = async () => {
   if (!projectId.value) {
-    boards.value = [];
     return;
   }
 
@@ -76,10 +77,8 @@ const fetchBoards = async () => {
   errorMessage.value = "";
 
   try {
-    const res = await api.get(`/boards`, { params: { projectId: projectId.value } });
-    boards.value = res.data?.data || [];
+    await boardStore.fetchBoards(projectId.value);
   } catch (error) {
-    boards.value = [];
     errorMessage.value = t("board.layout.status.errorLoad");
   } finally {
     isLoading.value = false;

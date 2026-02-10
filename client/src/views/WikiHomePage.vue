@@ -3,7 +3,7 @@
     <h1>{{ t("wiki.home.header.title") }}</h1>
   </hgroup>
 
-  <FeedList :groups="feedGroups" :item-key="itemKey">
+  <FeedList v-if="hasFeedItems" :groups="feedGroups" :item-key="itemKey">
     <template #icon="{ item }">
       <ActivityBadge :type="item.type" />
     </template>
@@ -12,6 +12,14 @@
       <div class="feed-meta">{{ item.meta }}</div>
     </template>
   </FeedList>
+
+  <div v-else class="empty" aria-live="polite">
+    <div class="empty-card">
+      <h1>{{ t("wiki.home.empty.title") }}</h1>
+      <p class="empty-desc">{{ t("wiki.home.empty.description") }}</p>
+      <button type="button" class="btn">{{ t("wiki.layout.actions.create") }}</button>
+    </div>
+  </div>
 </template>
 
 <script setup>
@@ -59,6 +67,10 @@ const feedGroups = computed(() => [
   },
 ]);
 
+const hasFeedItems = computed(() =>
+  feedGroups.value.some((group) => Array.isArray(group.items) && group.items.length > 0)
+);
+
 const itemKey = "id";
 </script>
 
@@ -73,6 +85,32 @@ const itemKey = "id";
 .section-header h2 {
   margin: 0;
   font-size: 18px;
+}
+
+.empty {
+  display: flex;
+  justify-content: center;
+}
+
+.empty-card {
+  max-width: 520px;
+  width: 100%;
+  padding: 20px 24px;
+  border-radius: 12px;
+  border: 1px dashed var(--color-border);
+  text-align: center;
+}
+
+.empty-card h1 {
+  margin: 0 0 8px;
+  font-size: 18px;
+  color: var(--color-text);
+}
+
+.empty-desc {
+  margin: 0 0 16px;
+  color: var(--color-text-muted);
+  font-size: 14px;
 }
 
 </style>
