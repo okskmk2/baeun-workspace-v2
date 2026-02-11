@@ -13,7 +13,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { SESSION_TTL_MS, SESSION_TTL_SECONDS } from "./config/session.mjs";
 
-// __dirname 대체 구현 (ESM에서는 직접 만들어야 함)
+// __dirname ?��?구현 (ESM?�서??직접 만들?�야 ??
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -28,17 +28,21 @@ import chatRouter from "./routes/chat.route.mjs";
 
 const app = express();
 const pgSession = connectPgSimple(session);
+const isProduction = process.env.NODE_ENV === "production";
+
+// Cloud Run and other reverse-proxy platforms
+app.set("trust proxy", 1);
 
 // 1. CORS setup.
-app.use(
-  cors({
-    // Client origin (frontend URL).
-    origin: "http://localhost:8080",
-    // Allow cookies to be sent.
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-  })
-);
+// app.use(
+//   cors({
+//     // Client origin (frontend URL).
+//     origin: "http://localhost:8080",
+//     // Allow cookies to be sent.
+//     credentials: true,
+//     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+//   })
+// );
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -62,7 +66,7 @@ const sessionParser = session({
   saveUninitialized: false,
   cookie: {
     httpOnly: true,
-    secure: false, // Set true when serving over HTTPS.
+    secure: isProduction, // Use secure cookies in production (HTTPS).
     sameSite: "lax", // Cross-site cookie delivery setting.
     maxAge: SESSION_TTL_MS,
   },
@@ -80,7 +84,7 @@ app.use("/api/issues", issueRouter);
 app.use("/api/channels", chatRouter);
 
 // Static files serve
-const staticPath = path.join(__dirname, "../../client/dist");
+const staticPath = path.join(__dirname, "../../frontend/dist");
 
 app.use(
   express.static(staticPath, {
@@ -103,7 +107,7 @@ app.get("{/*path}", (req, res) => {
   });
 });
 
-const PORT = process.env.PORT || 8080;
+const PORT = parseInt(process.env.PORT) || 8080;
 const server = http.createServer(app);
 const wss = new WebSocketServer({ noServer: true });
 
@@ -187,3 +191,5 @@ wss.on("connection", (ws, request) => {
 });
 
 server.listen(PORT, () => logger.info(`Server listening on ${PORT}`));
+
+

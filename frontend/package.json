@@ -5,6 +5,7 @@
   "scripts": {
     "start": "vite",
     "build": "vite build",
+    "build:prod": "vite build --mode prod",
     "preview": "vite preview"
   },
   "dependencies": {

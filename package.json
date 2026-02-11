@@ -15,10 +15,10 @@
   "type": "commonjs",
   "main": "index.js",
   "scripts": {
-    "client": "cd client && npm start",
-    "server": "cd server && npm start",
-    "deploy": "gcloud config set account okskmk2@gmail.com && gcloud config set project baeun-workspace-dev && gcloud app deploy",
-    "build": "cd client && npm install && npm run build && cd .. && cd server && npm install",
-    "start": "npm run server"
+    "start:frontend": "cd frontend && npm start",
+    "start:backend": "cd backend && npm start",
+    "deploy": "gcloud config set account okskmk2@gmail.com && gcloud config set project baeun-workspace-dev && gcloud run deploy --source .",
+    "build": "cd frontend && npm install && npm run build:prod && cd .. && cd backend && npm install",
+    "start": "npm run start:backend"
   }
 }

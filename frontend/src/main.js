@@ -23,9 +23,13 @@ const bootstrapAuthState = async () => {
   appStore.setCurrentUser(null);
 };
 
-const app = createApp(App);
-app.use(pinia);
-await bootstrapAuthState();
-app.use(router);
-app.use(i18n);
-app.mount("#app");
+const startApp = async () => {
+  const app = createApp(App);
+  app.use(pinia);
+  await bootstrapAuthState();
+  app.use(router);
+  app.use(i18n);
+  app.mount("#app");
+};
+
+startApp();

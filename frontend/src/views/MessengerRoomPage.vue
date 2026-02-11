@@ -274,7 +274,8 @@ const connectSocket = () => {
   }
 
   const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-  socket = new WebSocket(`${protocol}://${window.location.hostname}:8080/ws`);
+  const port = window.location.hostname.includes("localhost") ? ":8080" : "";
+  socket = new WebSocket(`${protocol}://${window.location.hostname}${port}/ws`);
 
   socket.addEventListener("open", () => {
     isConnected.value = true;
