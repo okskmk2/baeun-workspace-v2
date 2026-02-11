@@ -235,13 +235,40 @@ router.get("/:issueId/members", isAuth, async (req, res) => {
  */
 router.patch("/:issueId", isAuth, async (req, res) => {
   const { issueId } = req.params;
-  const { title, content, status } = req.body;
+  let { title, content, status, board_id } = req.body; // Use 'let' for board_id as it might be reassigned
+
   try {
+    // If status is being set to BACKLOG, automatically move to the project's backlog board
+    if (status === 'BACKLOG') {
+      // 1. Get the current issue's project_id
+      const currentIssueInfo = await pool.query(
+        `SELECT b.project_id
+         FROM issue i
+         JOIN board b ON i.board_id = b.id
+         WHERE i.id = $1`,
+        [issueId]
+      );
+
+      if (currentIssueInfo.rows.length > 0) {
+        const currentProjectId = currentIssueInfo.rows[0].project_id;
+
+        // 2. Find the backlog board for this project
+        const backlogBoard = await pool.query(
+          `SELECT id FROM board WHERE project_id = $1 AND type = 'BACKLOG'`,
+          [currentProjectId]
+        );
+
+        if (backlogBoard.rows.length > 0) {
+          board_id = backlogBoard.rows[0].id; // Override board_id to the backlog board's ID
+        }
+      }
+    }
+
     const result = await pool.query(
-      `UPDATE issue 
-       SET title = COALESCE($1, title), content = COALESCE($2, content), status = COALESCE($3, status), updated_at = CURRENT_TIMESTAMP
-       WHERE id = $4 RETURNING *`,
-      [title, content, status, issueId]
+      `UPDATE issue
+       SET title = COALESCE($1, title), content = COALESCE($2, content), status = COALESCE($3, status), board_id = COALESCE($4, board_id), updated_at = CURRENT_TIMESTAMP
+       WHERE id = $5 RETURNING *`,
+      [title, content, status, board_id, issueId]
     );
 
     if (result.rows.length === 0)

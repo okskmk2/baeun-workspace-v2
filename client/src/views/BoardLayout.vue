@@ -5,6 +5,10 @@
         {{ t("board.layout.actions.create") }}
       </button>
       <nav>
+        <span class="lnb-item">
+          <MaterialSymbol name="view_kanban" :size="18" alt="" />
+          보드 목록
+        </span>
         <p v-if="isLoading">{{ t("board.layout.status.loading") }}</p>
         <p v-else-if="errorMessage">{{ errorMessage }}</p>
         <p v-else-if="boards.length === 0">{{ t("board.layout.empty.boards") }}</p>
@@ -17,8 +21,11 @@
             {{ board.name }}
           </router-link>
         </template>
-        <router-link :to="`/workspace/${workspaceId}/project/${projectId}/board/backlog`">
-          {{ t("backlog.page.header.title") }}
+        <router-link
+          class="lnb-item"
+          :to="`/workspace/${workspaceId}/project/${projectId}/board/backlog`"
+        >
+          <MaterialSymbol name="low_priority" size="18" />{{ t("backlog.page.header.title") }}
         </router-link>
       </nav>
     </aside>
@@ -56,6 +63,7 @@ import { useRoute } from "vue-router";
 import api from "../lib/axios";
 import BaseModal from "../components/BaseModal.vue";
 import { useBoardStore } from "../stores/boardStore";
+import MaterialSymbol from "../components/MaterialSymbol.vue";
 
 const { t } = useI18n();
 const route = useRoute();

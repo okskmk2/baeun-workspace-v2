@@ -1,6 +1,9 @@
 <template>
   <hgroup>
-    <h1>{{ t("backlog.page.header.title") }}</h1>
+    <div>
+      <h1>{{ t("backlog.page.header.title") }}</h1>
+      <p class="subtitle">드래그 앤 드롭으로 이슈를 프로젝트에 할당할 수 있습니다.</p>
+    </div>
     <div class="actions">
       <button type="button" class="btn btn--sm" @click="openModal" :disabled="!backlogBoardId">
         {{ t("backlog.page.actions.createIssue") }}
@@ -8,30 +11,63 @@
     </div>
   </hgroup>
 
-  <div class="issue-list">
-    <p v-if="isLoadingIssues">{{ t("backlog.page.status.loading") }}</p>
-    <p v-else-if="errorMessage">{{ errorMessage }}</p>
-    <p v-else-if="issues.length === 0">{{ t("backlog.page.empty.issues") }}</p>
-    <article v-for="issue in issues" :key="issue.id" class="issue-card">
-      <h3>
-        <router-link :to="issueDetailPath(issue.id)">{{ issue.title }}</router-link>
-      </h3>
-      <div v-if="issue.assignee_members?.length" class="assignee-list">
-        <div
-          v-for="assignee in issue.assignee_members"
-          :key="`${issue.id}-${assignee.id}-${assignee.role_name}`"
-          class="assignee-item"
-        >
-          <span>{{ assignee.name }}</span>
-          <Tag
-            v-if="assignee.role_name"
-            :label="getRoleLabel('issue_member', assignee.role_name)"
-            :variant="roleVariant(assignee.role_name)"
-          />
+  <div class="backlog-layout">
+    <div class="backlog-issues">
+      <p v-if="isLoadingIssues">{{ t("backlog.page.status.loading") }}</p>
+      <p v-else-if="errorMessage">{{ errorMessage }}</p>
+      <p v-else-if="issues.length === 0">{{ t("backlog.page.empty.issues") }}</p>
+      <article
+        v-for="issue in issues"
+        :key="issue.id"
+        class="issue-card"
+        draggable="true"
+        @dragstart="onDragStart(issue)"
+      >
+        <h3>
+          <router-link :to="issueDetailPath(issue.id)">{{ issue.title }}</router-link>
+        </h3>
+        <div v-if="issue.assignee_members?.length" class="assignee-list">
+          <div
+            v-for="assignee in issue.assignee_members"
+            :key="`${issue.id}-${assignee.id}-${assignee.role_name}`"
+            class="assignee-item"
+          >
+            <span>{{ assignee.name }}</span>
+            <Tag
+              v-if="assignee.role_name"
+              :label="getRoleLabel('issue_member', assignee.role_name)"
+              :variant="roleVariant(assignee.role_name)"
+            />
+          </div>
         </div>
+        <p v-else>{{ t("backlog.page.empty.assignees") }}</p>
+      </article>
+    </div>
+
+    <div class="project-boards">
+      <h2>{{ t("backlog.page.boardList.title") }}</h2>
+      <p v-if="isLoadingBoards">{{ t("backlog.page.status.loadingBoards") }}</p>
+      <p v-else-if="boardListError">{{ boardListError }}</p>
+      <p v-else-if="boardsForDisplay.length === 0">{{ t("backlog.page.boardList.empty") }}</p>
+      <div v-else class="board-cards-grid">
+        <article
+          v-for="board in boardsForDisplay"
+          :key="board.id"
+          class="board-card"
+          @dragover.prevent
+          @drop="onDropToBoard(board.id)"
+          @click="$router.push(`/workspace/${workspaceId}/project/${projectId}/board/${board.id}`)"
+        >
+          <h3>{{ board.name }}</h3>
+          <div class="issue-counts">
+            <div v-for="(count, status) in board.issue_counts" :key="status" class="status-count">
+              <span>{{ t(`issue.status.${convertSnakeToCamel(status)}`) }}:</span>
+              <span class="tabular-nums">{{ count }}</span>
+            </div>
+          </div>
+        </article>
       </div>
-      <p v-else>{{ t("backlog.page.empty.assignees") }}</p>
-    </article>
+    </div>
   </div>
 
   <BaseModal :open="isModalOpen" :title="t('backlog.page.modal.title')" @close="closeModal">
@@ -73,7 +109,8 @@ import api from "../lib/axios";
 import BaseModal from "../components/BaseModal.vue";
 import Tag from "../components/Tag.vue";
 import { useRoleLabels } from "../lib/roleLabels";
-import { useBoardStore } from "../stores/boardStore"; // Import boardStore
+import { useBoardStore } from "../stores/boardStore";
+import { convertSnakeToCamel } from "../lib/utils";
 
 const { t } = useI18n();
 const { getRoleLabel } = useRoleLabels();
@@ -92,6 +129,11 @@ const form = ref({
   content: "",
   status: "BACKLOG", // Default to BACKLOG status
 });
+
+const boardsForDisplay = ref([]);
+const isLoadingBoards = ref(false);
+const boardListError = ref("");
+const draggingIssueId = ref(null); // To store the ID of the dragged issue
 
 const workspaceId = computed(() => route.params.workspaceId);
 const projectId = computed(() => route.params.projectId);
@@ -118,6 +160,7 @@ const fetchBacklogBoard = async () => {
     errorMessage.value = t("backlog.page.status.errorLoad");
   }
 };
+
 const fetchIssues = async () => {
   if (!backlogBoardId.value) {
     isLoadingIssues.value = false;
@@ -135,6 +178,26 @@ const fetchIssues = async () => {
   }
 };
 
+const fetchBoardsForDisplay = async () => {
+  if (!projectId.value) return;
+  isLoadingBoards.value = true;
+  boardListError.value = "";
+  try {
+    let boardsFromStore = boardStore.getBoards(projectId.value);
+    if (boardsFromStore.length === 0) {
+      // If boards are not yet loaded in the store for this project
+      await boardStore.fetchBoards(projectId.value);
+      boardsFromStore = boardStore.getBoards(projectId.value);
+    }
+
+    boardsForDisplay.value = boardsFromStore.filter((board) => board.type !== "BACKLOG");
+  } catch (error) {
+    boardListError.value = error?.response?.data?.message || t("backlog.page.boardList.errorLoad");
+  } finally {
+    isLoadingBoards.value = false;
+  }
+};
+
 const issueDetailPath = (issueId) =>
   `/workspace/${workspaceId.value}/project/${projectId.value}/board/${backlogBoardId.value}/issue/${issueId}`;
 
@@ -145,6 +208,60 @@ const roleVariant = (role) => {
   if (key === "REVIEWER") return "warning";
   if (key === "WATCHER") return "default";
   return "default";
+};
+
+const onDragStart = (issue) => {
+  draggingIssueId.value = issue.id;
+};
+
+const onDropToBoard = async (targetBoardId) => {
+  const issueId = draggingIssueId.value;
+  if (!issueId) return;
+
+  const currentIssue = issues.value.find((item) => item.id === issueId);
+  if (!currentIssue || currentIssue.board_id === targetBoardId) {
+    draggingIssueId.value = null;
+    return;
+  }
+
+  try {
+    const res = await api.patch(`/issues/${issueId}`, {
+      board_id: targetBoardId,
+      status: "PENDING", // Set status to PENDING when dropped onto a board
+    });
+    const updated = res.data?.data;
+
+    // Remove issue from backlog list
+    issues.value = issues.value.filter((issue) => issue.id !== issueId);
+
+    // Update counts on the target board
+    const targetBoardIndex = boardsForDisplay.value.findIndex(
+      (board) => board.id === targetBoardId
+    );
+    if (targetBoardIndex !== -1) {
+      const board = boardsForDisplay.value[targetBoardIndex];
+      const newIssueCounts = { ...board.issue_counts };
+
+      // Decrement BACKLOG count from the original board (if it was from the backlog board)
+      // This is implicit, as we filter issues out of the backlog issues list
+      // So no need to decrease backlog counts, as this issue was originally a backlog issue
+
+      // Increment PENDING count for the target board
+      newIssueCounts.PENDING = (newIssueCounts.PENDING || 0) + 1;
+
+      boardsForDisplay.value[targetBoardIndex] = {
+        ...board,
+        issue_counts: newIssueCounts,
+      };
+    }
+  } catch (error) {
+    console.error("Failed to move issue:", error);
+    // Optionally re-fetch data if update fails
+    await fetchIssues();
+    await fetchBoardsForDisplay();
+  } finally {
+    draggingIssueId.value = null;
+  }
 };
 
 const openModal = () => {
@@ -187,30 +304,33 @@ const createIssue = async () => {
 };
 
 onMounted(async () => {
-  await fetchBacklogBoard();
-  // await fetchIssues();
+  await Promise.all([fetchBacklogBoard(), fetchBoardsForDisplay()]);
+  await fetchIssues(); // Fetch issues after backlogBoardId is set
 });
 
 watch(projectId, async (nextId, prevId) => {
   if (nextId && nextId !== prevId) {
-    await fetchBacklogBoard();
-    await fetchIssues();
-  }
-});
-
-watch(backlogBoardId, async (newBoardId, oldBoardId) => {
-  if (newBoardId && newBoardId !== oldBoardId) {
+    await Promise.all([fetchBacklogBoard(), fetchBoardsForDisplay()]);
     await fetchIssues();
   }
 });
 </script>
 
 <style scoped>
-.issue-list {
+.backlog-layout {
+  display: grid;
+  grid-template-columns: 3fr 9fr; /* 3/9 column ratio */
+  gap: 24px;
+}
+
+.backlog-issues {
+  /* Style for the backlog issues column */
   display: flex;
   flex-direction: column;
   gap: 12px;
-  margin-top: 24px;
+  height: calc(100vh - 180px); /* Adjust height to fit layout */
+  overflow-y: auto;
+  padding-right: 12px; /* Add some padding for scrollbar */
 }
 
 .issue-card {
@@ -218,10 +338,11 @@ watch(backlogBoardId, async (newBoardId, oldBoardId) => {
   border: 1px solid var(--color-border);
   padding: 12px 16px;
   border-radius: 8px;
+  cursor: grab;
 }
 
 .issue-card h3 {
-  font-size: 16px;
+  font-size: 14px; /* Reduced font size for backlog list */
   font-weight: 500;
   margin: 0 0 8px 0;
 }
@@ -237,22 +358,109 @@ watch(backlogBoardId, async (newBoardId, oldBoardId) => {
 
 .issue-card p {
   margin: 0;
-  font-size: 14px;
+  font-size: 12px; /* Reduced font size */
   color: #94a3b8;
 }
 
 .assignee-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 8px;
+  gap: 4px; /* Reduced gap */
+  margin-top: 6px; /* Reduced margin */
 }
 
 .assignee-item {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  font-size: 12px;
+  gap: 4px; /* Reduced gap */
+  font-size: 10px; /* Reduced font size */
   color: var(--color-text);
+}
+
+.project-boards {
+  /* Style for the project boards column */
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.project-boards h2 {
+  font-size: 18px;
+  margin-bottom: 12px;
+}
+
+.board-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(
+    auto-fill,
+    minmax(200px, 1fr)
+  ); /* Responsive grid for board cards */
+  gap: 16px;
+  /* height: calc(100vh - 230px); */
+  overflow-y: auto;
+}
+
+.board-card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  padding: 16px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: all 0.2s ease-in-out;
+}
+
+.board-card:hover {
+  border-color: var(--color-primary);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.board-card h3 {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+  color: var(--color-text);
+}
+
+.issue-counts {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+}
+
+.status-count {
+  display: flex;
+  justify-content: space-between;
+  padding: 2px 0;
+}
+
+/* Modal specific styles, might need adjustment */
+.modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.form-error {
+  color: var(--color-danger);
+  font-size: 0.85rem;
+}
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+@media (max-width: 900px) {
+  .backlog-layout {
+    grid-template-columns: 1fr; /* Stack columns on smaller screens */
+  }
+  .backlog-issues,
+  .project-boards {
+    height: auto;
+    max-height: 50vh; /* Limit height for stacked sections */
+  }
 }
 </style>

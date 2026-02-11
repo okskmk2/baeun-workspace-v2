@@ -445,7 +445,8 @@
         "loading": "Loading...",
         "errorLoad": "Failed to load backlog.",
         "errorCreate": "Failed to create issue.",
-        "errorBoardNotFound": "Backlog board not found."
+        "errorBoardNotFound": "Backlog board not found.",
+        "loadingBoards": "Loading boards..."
       },
       "empty": {
         "issues": "No backlog issues.",
@@ -461,6 +462,11 @@
       "validation": {
         "noBoard": "Backlog board not found.",
         "titleRequired": "Please enter a title."
+      },
+      "boardList": {
+        "title": "Project Boards",
+        "empty": "No boards to display.",
+        "errorLoad": "Failed to load board list."
       }
     }
   },

@@ -10,7 +10,12 @@
         class="issue-title-input"
         :placeholder="t('issue.detail.fields.titlePlaceholder')"
       />
-      <Tag>{{ issueStatusLabel }}</Tag>
+      <Tag v-if="!isEditing">{{ issueStatusLabel }}</Tag>
+      <select v-else v-model="editForm.status" class="issue-status-select">
+        <option v-for="statusOption in allStatuses" :key="statusOption" :value="statusOption">
+          {{ t(`issue.status.${convertSnakeToCamel(statusOption)}`) }}
+        </option>
+      </select>
     </div>
     <div class="actions">
       <button v-if="!isEditing" class="btn btn--sm btn--secondary" @click="startEditing">
@@ -85,6 +90,7 @@ import { useProjectMemberStore } from "../stores/projectMemberStore";
 import Tag from "../components/Tag.vue";
 import RelatedMemberPicker from "../components/RelatedMemberPicker.vue";
 import BackLinkButton from "../components/BackLinkButton.vue";
+import { convertSnakeToCamel } from "../lib/utils";
 
 const { t } = useI18n();
 const route = useRoute();
@@ -104,7 +110,10 @@ const updatingMemberId = ref(null);
 const editForm = ref({
   title: "",
   content: "",
+  status: "BACKLOG", // Added status field
 });
+
+const allStatuses = ["BACKLOG", "PENDING", "IN_PROGRESS", "IN_REVIEW", "DONE"]; // Define all possible statuses
 
 const roleOptions = ["ASSIGNEE", "REPORTER", "REVIEWER", "WATCHER"];
 
@@ -119,6 +128,7 @@ const issueStatusLabel = computed(() => {
   if (!key) return "";
   const map = {
     BACKLOG: "issue.status.backlog",
+    PENDING: "issue.status.pending",
     IN_PROGRESS: "issue.status.inProgress",
     IN_REVIEW: "issue.status.inReview",
     DONE: "issue.status.done",
@@ -203,6 +213,7 @@ const startEditing = () => {
   editForm.value = {
     title: issue.value.title || "",
     content: issue.value.content || "",
+    status: issue.value.status || "BACKLOG", // Initialize status
   };
 };
 
@@ -211,6 +222,7 @@ const cancelEditing = () => {
   editForm.value = {
     title: issue.value.title || "",
     content: issue.value.content || "",
+    status: issue.value.status || "BACKLOG", // Reset status
   };
 };
 
@@ -228,11 +240,13 @@ const saveIssue = async () => {
     await api.patch(`/issues/${issueId.value}`, {
       title: editForm.value.title,
       content: editForm.value.content,
+      status: editForm.value.status,
     });
     issue.value = {
       ...issue.value,
       title: editForm.value.title,
       content: editForm.value.content,
+      status: editForm.value.status,
     };
     isEditing.value = false;
     addToast({ message: t("issue.detail.toast.updated"), type: "success" });
@@ -376,6 +390,10 @@ const addRelatedMemberByRole = async (role, memberId) => {
   grid-column: span 9;
 }
 
+.issue-main p {
+  white-space: pre-wrap;
+}
+
 .issue-meta {
   grid-column: span 3;
 }
@@ -392,6 +410,16 @@ const addRelatedMemberByRole = async (role, memberId) => {
   font-size: 18px;
   font-weight: 600;
   margin-right: 8px;
+}
+
+.issue-status-select {
+  padding: 6px 10px;
+  border-radius: 4px;
+  border: 1px solid #e5e7eb;
+  font-size: 14px;
+  margin-left: 8px;
+  /* Adjust width as needed */
+  min-width: 120px;
 }
 
 .issue-content-input {

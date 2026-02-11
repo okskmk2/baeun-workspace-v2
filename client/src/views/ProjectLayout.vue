@@ -9,17 +9,17 @@
           <nav class="mainnav">
             <router-link
               class="mainnav-link"
-              :to="`/workspace/${workspaceId}/project/${projectId}/board`"
-            >
-              <MaterialSymbol name="view_kanban" :size="20" alt="" />
-              <span>{{ t("layout.project.nav.board") }}</span>
-            </router-link>
-            <router-link
-              class="mainnav-link"
               :to="`/workspace/${workspaceId}/project/${projectId}/wiki`"
             >
               <MaterialSymbol name="menu_book" :size="20" alt="" />
               <span>{{ t("layout.project.nav.wiki") }}</span>
+            </router-link>
+            <router-link
+              class="mainnav-link"
+              :to="`/workspace/${workspaceId}/project/${projectId}/board`"
+            >
+              <MaterialSymbol name="view_kanban" :size="20" alt="" />
+              <span>{{ t("layout.project.nav.board") }}</span>
             </router-link>
             <router-link
               class="mainnav-link"

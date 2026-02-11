@@ -59,7 +59,34 @@ router.get("/", isAuth, async (req, res) => {
     }
 
     const boards = await pool.query(
-      "SELECT * FROM board WHERE project_id = $1 AND is_active = 1 ORDER BY sort_order ASC, created_at DESC",
+      `SELECT
+          b.*,
+          COALESCE(
+              json_build_object(
+                  'BACKLOG', COUNT(CASE WHEN i.status = 'BACKLOG' THEN 1 ELSE NULL END),
+                  'PENDING', COUNT(CASE WHEN i.status = 'PENDING' THEN 1 ELSE NULL END),
+                  'IN_PROGRESS', COUNT(CASE WHEN i.status = 'IN_PROGRESS' THEN 1 ELSE NULL END),
+                  'IN_REVIEW', COUNT(CASE WHEN i.status = 'IN_REVIEW' THEN 1 ELSE NULL END),
+                  'DONE', COUNT(CASE WHEN i.status = 'DONE' THEN 1 ELSE NULL END)
+              ),
+              json_build_object(
+                  'BACKLOG', 0,
+                  'PENDING', 0,
+                  'IN_PROGRESS', 0,
+                  'IN_REVIEW', 0,
+                  'DONE', 0
+              )
+          ) AS issue_counts
+      FROM
+          board b
+      LEFT JOIN
+          issue i ON b.id = i.board_id
+      WHERE
+          b.project_id = $1 AND b.is_active = 1
+      GROUP BY
+          b.id
+      ORDER BY
+          b.sort_order ASC, b.created_at DESC;`,
       [projectId]
     );
 

@@ -211,6 +211,13 @@ nav a:hover {
   padding: 6px 8px;
 }
 
+.LnbLayout > aside > nav .lnb-item {
+  padding: 6px 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .LnbLayout > aside > button + nav {
   margin-top: 1rem;
 }
