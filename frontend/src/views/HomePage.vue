@@ -60,6 +60,45 @@
       </div>
     </section>
 
+    <section id="pricing" class="pricing">
+      <div class="section-heading">
+        <h2>가격 계산기</h2>
+        <p>슬라이더로 옵션을 조절하면 예상 요금이 실시간 계산됩니다.</p>
+      </div>
+      <div class="pricing-panel">
+        <div class="controls">
+          <label>워크스페이스 수: <strong>{{ ws }}</strong></label>
+          <input type="range" min="1" max="50" v-model.number="ws">
+
+          <label>프로젝트 수: <strong>{{ proj }}</strong></label>
+          <input type="range" min="1" max="100" v-model.number="proj">
+
+          <label>멤버 수: <strong>{{ mem }}</strong></label>
+          <input type="range" min="1" max="1000" v-model.number="mem">
+
+          <label>스토리지(GB): <strong>{{ stor }}</strong> GB</label>
+          <input type="range" min="10" max="2024" step="10" v-model.number="stor">
+
+          <div class="billing-toggle">
+            <label><input type="radio" value="monthly" v-model="billing"> 월별</label>
+            <label><input type="radio" value="yearly" v-model="billing"> 연간(라이선스 15% 할인)</label>
+          </div>
+        </div>
+
+        <div class="summary">
+          <div class="summary-card">
+            <h3>예상 월 결제</h3>
+            <div class="price">${{ total.toFixed(2) }}</div>
+            <div class="summary-actions">
+              <router-link class="btn" to="/signup">견적서 받기</router-link>
+              <router-link class="btn btn--secondary" to="/demo">데모 예약</router-link>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="pricing-note">기본 단가: 워크스페이스 $10, 프로젝트 $3, 멤버 $2, 스토리지 $1/10GB (스토리지는 종량제로 할인 미적용)</p>
+    </section>
+
     <section class="cta">
       <div>
         <h2>{{ t("home.cta.title") }}</h2>
@@ -71,7 +110,7 @@
 </template>
 
 <script setup>
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 
 const { t } = useI18n();
@@ -178,6 +217,21 @@ const featureCards = computed(() => [
     ],
   },
 ]);
+
+// Pricing calculator state
+const ws = ref(1);
+const proj = ref(3);
+const mem = ref(5);
+const stor = ref(50);
+const billing = ref("monthly");
+
+const total = computed(() => {
+  const licenseMonthly = ws.value * 10 + proj.value * 3 + mem.value * 2;
+  const storageMonthly = (stor.value / 10) * 1;
+  const discountedLicense =
+    billing.value === "yearly" ? licenseMonthly * (1 - 0.15) : licenseMonthly;
+  return discountedLicense + storageMonthly;
+});
 </script>
 
 <style scoped>
@@ -396,5 +450,22 @@ const featureCards = computed(() => [
   .cta {
     align-items: flex-start;
   }
+}
+
+/* Pricing styles */
+.pricing-panel{display:flex;gap:20px;align-items:flex-start;margin-top:12px}
+.controls{flex:1}
+.controls label{display:block;margin:12px 0 6px;color:var(--dl-text-muted)}
+.controls input[type=range]{width:100%}
+.billing-toggle{margin-top:10px;display:flex;gap:12px}
+.summary{width:280px}
+.summary-card{background:linear-gradient(180deg,var(--color-accent-soft, rgba(37,99,235,0.12)), #fff);padding:18px;border-radius:12px;border:1px solid var(--dl-border);text-align:center}
+.summary-card .price{font-size:28px;margin:10px 0;font-weight:700;color:var(--color-accent)}
+.summary-actions{display:flex;gap:8px;justify-content:center}
+.pricing-note{color:var(--dl-text-muted);margin-top:8px}
+
+@media (max-width:900px){
+  .pricing-panel{flex-direction:column}
+  .summary{width:100%}
 }
 </style>

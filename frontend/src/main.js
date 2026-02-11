@@ -5,6 +5,7 @@ import "./assets/styles.css";
 import { router } from "./router";
 import { i18n } from "./i18n";
 import api from "./lib/axios";
+import { AUTH_SKIP_REDIRECT_PARAM, AUTH_SKIP_REDIRECT_VALUE } from "./lib/authFlags";
 import { useAppStore } from "./stores/appStore";
 
 const pinia = createPinia();
@@ -12,7 +13,11 @@ const pinia = createPinia();
 const bootstrapAuthState = async () => {
   const appStore = useAppStore(pinia);
   try {
-    const res = await api.get("/members/me");
+    const res = await api.get("/members/me", {
+      params: {
+        [AUTH_SKIP_REDIRECT_PARAM]: AUTH_SKIP_REDIRECT_VALUE,
+      },
+    });
     if (res.data) {
       appStore.setCurrentUser(res.data);
       return;
