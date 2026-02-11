@@ -272,6 +272,84 @@ router.get("/:channelId", isAuth, async (req, res) => {
 
 /**
  * @swagger
+ * /api/channels/{channelId}:
+ *   patch:
+ *     summary: 채널 수정
+ *     description: 채널 이름 변경 (OWNER 전용)
+ *     tags:
+ *       - Channel
+ *     parameters:
+ *       - in: path
+ *         name: channelId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *             required:
+ *               - name
+ *     responses:
+ *       200:
+ *         description: 채널 수정 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   $ref: "#/components/schemas/Channel"
+ *       400:
+ *         $ref: "#/components/responses/ErrorResponse"
+ *       403:
+ *         $ref: "#/components/responses/ErrorResponse"
+ *       500:
+ *         $ref: "#/components/responses/ErrorResponse"
+ */
+router.patch("/:channelId", isAuth, async (req, res) => {
+  const { channelId } = req.params;
+  const { name } = req.body;
+  const userId = req.session.userId;
+
+  if (!name) {
+    return res.status(400).json({ success: false, message: "채널 이름은 필수입니다." });
+  }
+
+  try {
+    const authCheck = await pool.query(
+      "SELECT role_name FROM channel_member WHERE channel_id = $1 AND member_id = $2",
+      [channelId, userId]
+    );
+
+    if (!authCheck.rows[0] || authCheck.rows[0].role_name !== "OWNER") {
+      return res.status(403).json({ success: false, message: "채널 수정 권한이 없습니다." });
+    }
+
+    const updateRes = await pool.query(
+      "UPDATE channel SET name = $1 WHERE id = $2 RETURNING *",
+      [name, channelId]
+    );
+
+    res.json({ success: true, data: updateRes.rows[0] });
+  } catch (error) {
+    logger.error("channel update error", {
+      err: error?.message,
+      stack: error?.stack,
+    });
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * @swagger
  * /api/channels/{channelId}/messages:
  *   get:
  *     summary: 채팅 메시지 목록

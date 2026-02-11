@@ -5,6 +5,14 @@ import logger from "../logger.mjs";
 
 const router = express.Router();
 
+const getWorkspaceMemberRole = async (workspaceId, memberId) => {
+  const result = await pool.query(
+    "SELECT role_name FROM workspace_member WHERE workspace_id = $1 AND member_id = $2",
+    [workspaceId, memberId]
+  );
+  return result.rows[0]?.role_name || null;
+};
+
 /**
  * @swagger
  * /api/workspaces:
@@ -225,6 +233,44 @@ router.get("/:workspaceId", isAuth, async (req, res) => {
   }
 });
 
+router.put("/:workspaceId", isAuth, async (req, res) => {
+  const { workspaceId } = req.params;
+  const { name } = req.body;
+  const userId = req.session.userId;
+
+  const nextName = String(name || "").trim();
+  if (!nextName) {
+    return res.status(400).json({ success: false, message: "Workspace name is required." });
+  }
+
+  try {
+    const roleName = await getWorkspaceMemberRole(workspaceId, userId);
+    if (!roleName) {
+      return res.status(404).json({ success: false, message: "Workspace not found or access denied." });
+    }
+    if (!["OWNER", "ADMIN"].includes(roleName)) {
+      return res.status(403).json({ success: false, message: "No permission to update workspace." });
+    }
+
+    const updateRes = await pool.query(
+      "UPDATE workspace SET name = $1 WHERE id = $2 RETURNING id, name",
+      [nextName, workspaceId]
+    );
+
+    if (updateRes.rows.length === 0) {
+      return res.status(404).json({ success: false, message: "Workspace not found." });
+    }
+
+    res.json({
+      success: true,
+      message: "Workspace name updated.",
+      data: updateRes.rows[0],
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 /**
  * @route   POST /api/workspaces/:workspaceId/members
  * @desc    Invite a workspace member by email
@@ -381,7 +427,15 @@ router.post("/:workspaceId/members", isAuth, async (req, res) => {
  *         $ref: "#/components/responses/ErrorResponse"
  */
 router.get("/:workspaceId/members", isAuth, async (req, res) => {
+  const { workspaceId } = req.params;
+  const userId = req.session.userId;
+
   try {
+    const roleName = await getWorkspaceMemberRole(workspaceId, userId);
+    if (!roleName) {
+      return res.status(403).json({ success: false, message: "Access denied." });
+    }
+
     const query = `
             SELECT m.id, m.name, m.email, wm.role_name 
             FROM workspace_member wm
@@ -389,8 +443,60 @@ router.get("/:workspaceId/members", isAuth, async (req, res) => {
             WHERE wm.workspace_id = $1
             ORDER BY m.name ASC;
         `;
-    const result = await pool.query(query, [req.params.workspaceId]);
+    const result = await pool.query(query, [workspaceId]);
     res.json({ success: true, data: result.rows });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+router.delete("/:workspaceId/members/:memberId", isAuth, async (req, res) => {
+  const { workspaceId, memberId } = req.params;
+  const actorId = req.session.userId;
+  const targetMemberId = Number(memberId);
+
+  if (!Number.isInteger(targetMemberId) || targetMemberId <= 0) {
+    return res.status(400).json({ success: false, message: "Invalid member id." });
+  }
+
+  try {
+    const actorRole = await getWorkspaceMemberRole(workspaceId, actorId);
+    if (!actorRole) {
+      return res.status(403).json({ success: false, message: "Access denied." });
+    }
+    if (!["OWNER", "ADMIN"].includes(actorRole)) {
+      return res.status(403).json({ success: false, message: "No permission to remove member." });
+    }
+
+    if (String(actorId) === String(targetMemberId)) {
+      return res.status(400).json({ success: false, message: "You cannot remove yourself." });
+    }
+
+    const targetRole = await getWorkspaceMemberRole(workspaceId, targetMemberId);
+    if (!targetRole) {
+      return res.status(404).json({ success: false, message: "Member not found in workspace." });
+    }
+
+    if (actorRole === "ADMIN" && ["OWNER", "ADMIN"].includes(targetRole)) {
+      return res.status(403).json({ success: false, message: "Admin can remove MEMBER only." });
+    }
+
+    if (targetRole === "OWNER") {
+      const ownerCountRes = await pool.query(
+        "SELECT COUNT(*)::int AS count FROM workspace_member WHERE workspace_id = $1 AND role_name = 'OWNER'",
+        [workspaceId]
+      );
+      if ((ownerCountRes.rows[0]?.count || 0) <= 1) {
+        return res.status(403).json({ success: false, message: "Cannot remove the last OWNER." });
+      }
+    }
+
+    await pool.query("DELETE FROM workspace_member WHERE workspace_id = $1 AND member_id = $2", [
+      workspaceId,
+      targetMemberId,
+    ]);
+
+    res.json({ success: true, message: "Member removed." });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

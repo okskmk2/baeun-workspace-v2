@@ -218,6 +218,80 @@ router.get("/:boardId", isAuth, async (req, res) => {
 /**
  * @swagger
  * /api/boards/{boardId}:
+ *   patch:
+ *     summary: 보드 수정
+ *     description: 보드 이름 변경 (OWNER 전용)
+ *     tags:
+ *       - Board
+ *     parameters:
+ *       - in: path
+ *         name: boardId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *             required:
+ *               - name
+ *     responses:
+ *       200:
+ *         description: 보드 수정 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   $ref: "#/components/schemas/Board"
+ *       400:
+ *         $ref: "#/components/responses/ErrorResponse"
+ *       403:
+ *         $ref: "#/components/responses/ErrorResponse"
+ *       500:
+ *         $ref: "#/components/responses/ErrorResponse"
+ */
+router.patch("/:boardId", isAuth, async (req, res) => {
+  const { boardId } = req.params;
+  const { name } = req.body;
+  const userId = req.session.userId;
+
+  if (!name) {
+    return res.status(400).json({ success: false, message: "보드 이름은 필수입니다." });
+  }
+
+  try {
+    const authCheck = await pool.query(
+      "SELECT role_name FROM board_member WHERE board_id = $1 AND member_id = $2",
+      [boardId, userId]
+    );
+
+    if (!authCheck.rows[0] || authCheck.rows[0].role_name !== "OWNER") {
+      return res.status(403).json({ success: false, message: "보드 수정 권한이 없습니다." });
+    }
+
+    const updateRes = await pool.query(
+      "UPDATE board SET name = $1 WHERE id = $2 RETURNING *",
+      [name, boardId]
+    );
+
+    res.json({ success: true, data: updateRes.rows[0] });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * @swagger
+ * /api/boards/{boardId}:
  *   delete:
  *     summary: 보드 삭제
  *     description: 보드 삭제 (OWNER 전용)
@@ -250,6 +324,20 @@ router.delete("/:boardId", isAuth, async (req, res) => {
 
     if (!authCheck.rows[0] || authCheck.rows[0].role_name !== "OWNER") {
       return res.status(403).json({ success: false, message: "보드 삭제 권한이 없습니다." });
+    }
+
+    // 추가: 보드가 기본 백로그 보드인지 확인 (type으로 구분)
+    const boardCheck = await pool.query(
+      "SELECT type FROM board WHERE id = $1",
+      [boardId]
+    );
+
+    if (boardCheck.rows.length === 0) {
+      return res.status(404).json({ success: false, message: "보드를 찾을 수 없습니다." });
+    }
+
+    if (boardCheck.rows[0].type === 'BACKLOG') {
+      return res.status(403).json({ success: false, message: "백로그 보드는 삭제할 수 없습니다." });
     }
 
     // ON DELETE CASCADE에 의해 관련 issue, board_member 자동 삭제됨

@@ -1,20 +1,19 @@
 <template>
+  <hgroup>
+    <div>
+      <h1>{{ t("workspace.detail.header.title") }}</h1>
+      <p class="subtitle">{{ t("workspace.detail.header.subtitle") }}</p>
+    </div>
+    <div class="actions">
+      <router-link class="btn btn--secondary" to="/account/workspaces">
+        {{ t("workspace.detail.actions.back") }}
+      </router-link>
+      <router-link class="btn" :to="`/workspace/${workspaceId}`">
+        {{ t("workspace.detail.actions.open") }}
+      </router-link>
+    </div>
+  </hgroup>
   <section class="workspace-detail">
-    <hgroup>
-      <div>
-        <h1>{{ t("workspace.detail.header.title") }}</h1>
-        <p class="subtitle">{{ t("workspace.detail.header.subtitle") }}</p>
-      </div>
-      <div class="actions">
-        <router-link class="btn btn--secondary" to="/account/workspaces">
-          {{ t("workspace.detail.actions.back") }}
-        </router-link>
-        <router-link class="btn" :to="`/workspace/${workspaceId}`">
-          {{ t("workspace.detail.actions.open") }}
-        </router-link>
-      </div>
-    </hgroup>
-
     <p v-if="isLoading" class="status">{{ t("workspace.detail.status.loading") }}</p>
     <p v-else-if="errorMessage" class="status error">{{ errorMessage }}</p>
 
@@ -75,6 +74,85 @@
           </li>
         </ul>
       </section>
+
+      <section class="card card--full">
+        <div class="card__header">
+          <h2>Workspace Settings</h2>
+        </div>
+        <form class="inline-form" @submit.prevent="updateWorkspaceName">
+          <label for="workspace-name-input">Workspace Name</label>
+          <div class="inline-form__row">
+            <input
+              id="workspace-name-input"
+              v-model.trim="nameForm"
+              type="text"
+              :disabled="!canManageWorkspace || isUpdatingName"
+              placeholder="Enter workspace name"
+            />
+            <button type="submit" class="btn" :disabled="!canManageWorkspace || isUpdatingName">
+              {{ isUpdatingName ? "Saving..." : "Save" }}
+            </button>
+          </div>
+          <p v-if="nameError" class="status error">{{ nameError }}</p>
+          <p v-else-if="nameSuccess" class="status success">{{ nameSuccess }}</p>
+          <p v-if="!canManageWorkspace" class="status muted">
+            Only OWNER or ADMIN can edit workspace name.
+          </p>
+        </form>
+      </section>
+
+      <section class="card card--full">
+        <div class="card__header">
+          <h2>Members</h2>
+          <Tag variant="info">{{ members.length }} users</Tag>
+        </div>
+
+        <form v-if="canManageWorkspace" class="invite-form" @submit.prevent="inviteMember">
+          <label for="member-email-input">Invite by Email</label>
+          <div class="invite-form__grid">
+            <input
+              id="member-email-input"
+              v-model.trim="inviteForm.email"
+              type="email"
+              placeholder="member@example.com"
+              :disabled="isInvitingMember"
+            />
+            <select v-model="inviteForm.role" :disabled="isInvitingMember">
+              <option value="MEMBER">{{ t("roles.workspace_member.member") }}</option>
+              <option value="ADMIN">{{ t("roles.workspace_member.admin") }}</option>
+              <option value="OWNER">{{ t("roles.workspace_member.owner") }}</option>
+            </select>
+            <button type="submit" class="btn" :disabled="isInvitingMember">
+              {{ isInvitingMember ? "Inviting..." : "Invite" }}
+            </button>
+          </div>
+        </form>
+        <p v-if="memberActionError" class="status error">{{ memberActionError }}</p>
+        <p v-else-if="memberActionSuccess" class="status success">{{ memberActionSuccess }}</p>
+
+        <p v-if="isMembersLoading" class="status">Loading members...</p>
+        <p v-else-if="!members.length" class="empty">No members found.</p>
+        <ul v-else class="member-list">
+          <li v-for="member in members" :key="member.id" class="member-item">
+            <div class="member-info">
+              <p class="member-name">{{ member.name }}</p>
+              <p class="member-email">{{ member.email }}</p>
+            </div>
+            <div class="member-actions">
+              <Tag>{{ getRoleLabel("workspace_member", member.role_name) }}</Tag>
+              <button
+                v-if="canRemoveMember(member)"
+                type="button"
+                class="btn btn--danger btn--sm"
+                :disabled="removingMemberId === member.id"
+                @click="removeMember(member)"
+              >
+                {{ removingMemberId === member.id ? "Removing..." : "Remove" }}
+              </button>
+            </div>
+          </li>
+        </ul>
+      </section>
     </div>
   </section>
 </template>
@@ -86,14 +164,29 @@ import { useRoute } from "vue-router";
 import Tag from "../components/Tag.vue";
 import { useRoleLabels } from "../lib/roleLabels";
 import { useWorkspaceStore } from "../stores/workspaceStore";
+import { useAppStore } from "../stores/appStore";
 
 const { t, locale } = useI18n();
 const { getRoleLabel } = useRoleLabels();
 const route = useRoute();
 const workspaceStore = useWorkspaceStore();
+const appStore = useAppStore();
 
 const isLoading = ref(false);
 const errorMessage = ref("");
+const isMembersLoading = ref(false);
+const members = ref([]);
+
+const nameForm = ref("");
+const isUpdatingName = ref(false);
+const nameError = ref("");
+const nameSuccess = ref("");
+
+const inviteForm = ref({ email: "", role: "MEMBER" });
+const isInvitingMember = ref(false);
+const removingMemberId = ref(null);
+const memberActionError = ref("");
+const memberActionSuccess = ref("");
 
 const workspaceId = computed(() => route.params.workspaceId);
 const workspace = computed(() => workspaceStore.workspaceById[workspaceId.value] || null);
@@ -101,13 +194,20 @@ const projects = computed(() => workspaceStore.getProjects(workspaceId.value));
 
 const workspaceName = computed(() => workspace.value?.name || "");
 const workspaceRole = computed(() => workspace.value?.role_name || "");
+const workspaceRoleUpper = computed(() => String(workspaceRole.value || "").toUpperCase());
 const workspaceRoleLabel = computed(() => getRoleLabel("workspace_member", workspaceRole.value));
 const workspaceOwner = computed(() => workspace.value?.owner_name || "");
+const currentUserId = computed(() => appStore.currentUser?.id);
+const canManageWorkspace = computed(() => ["OWNER", "ADMIN"].includes(workspaceRoleUpper.value));
 
-const formatCount = (value) => (Number.isFinite(value) ? String(value) : t("workspace.detail.fallback.count"));
+const formatCount = (value) =>
+  Number.isFinite(value) ? String(value) : t("workspace.detail.fallback.count");
 
 const projectCount = computed(() => formatCount(projects.value.length));
-const memberCount = computed(() => formatCount(workspace.value?.member_count));
+const memberCount = computed(() => {
+  if (members.value.length) return String(members.value.length);
+  return formatCount(workspace.value?.member_count);
+});
 const licenseCount = computed(() => formatCount(workspace.value?.license_count));
 
 const formattedCreatedAt = computed(() => {
@@ -132,6 +232,7 @@ const fetchWorkspaceDetail = async () => {
   try {
     await workspaceStore.fetchWorkspace(workspaceId.value);
     await workspaceStore.fetchProjects(workspaceId.value);
+    nameForm.value = workspaceStore.workspaceById[workspaceId.value]?.name || "";
   } catch (error) {
     errorMessage.value = t("workspace.detail.status.errorLoad");
   } finally {
@@ -139,8 +240,107 @@ const fetchWorkspaceDetail = async () => {
   }
 };
 
-onMounted(fetchWorkspaceDetail);
-watch(() => route.params.workspaceId, fetchWorkspaceDetail);
+const fetchMembers = async () => {
+  if (!workspaceId.value) return;
+  isMembersLoading.value = true;
+  try {
+    members.value = await workspaceStore.fetchWorkspaceMembers(workspaceId.value);
+  } catch (error) {
+    memberActionError.value = error?.response?.data?.message || "Failed to load members.";
+  } finally {
+    isMembersLoading.value = false;
+  }
+};
+
+const updateWorkspaceName = async () => {
+  if (!canManageWorkspace.value) return;
+  const nextName = String(nameForm.value || "").trim();
+  nameError.value = "";
+  nameSuccess.value = "";
+
+  if (!nextName) {
+    nameError.value = "Workspace name is required.";
+    return;
+  }
+  if (nextName === workspaceName.value) {
+    nameSuccess.value = "No changes to save.";
+    return;
+  }
+
+  isUpdatingName.value = true;
+  try {
+    await workspaceStore.updateWorkspaceName(workspaceId.value, nextName);
+    nameSuccess.value = "Workspace name updated.";
+    await workspaceStore.fetchWorkspace(workspaceId.value);
+  } catch (error) {
+    nameError.value = error?.response?.data?.message || "Failed to update workspace name.";
+  } finally {
+    isUpdatingName.value = false;
+  }
+};
+
+const inviteMember = async () => {
+  memberActionError.value = "";
+  memberActionSuccess.value = "";
+  const email = String(inviteForm.value.email || "").trim();
+
+  if (!email) {
+    memberActionError.value = "Member email is required.";
+    return;
+  }
+
+  isInvitingMember.value = true;
+  try {
+    await workspaceStore.inviteWorkspaceMember(workspaceId.value, {
+      email,
+      role_name: inviteForm.value.role,
+    });
+    inviteForm.value = { email: "", role: "MEMBER" };
+    memberActionSuccess.value = "Member invited.";
+    await Promise.all([fetchMembers(), workspaceStore.fetchWorkspace(workspaceId.value)]);
+  } catch (error) {
+    memberActionError.value = error?.response?.data?.message || "Failed to invite member.";
+  } finally {
+    isInvitingMember.value = false;
+  }
+};
+
+const canRemoveMember = (member) => {
+  if (!canManageWorkspace.value) return false;
+  if (!member?.id || String(member.id) === String(currentUserId.value)) return false;
+  if (workspaceRoleUpper.value === "ADMIN") {
+    return String(member.role_name || "").toUpperCase() === "MEMBER";
+  }
+  return true;
+};
+
+const removeMember = async (member) => {
+  if (!canRemoveMember(member)) return;
+
+  const confirmed = window.confirm(`Remove ${member.name || member.email} from this workspace?`);
+  if (!confirmed) return;
+
+  memberActionError.value = "";
+  memberActionSuccess.value = "";
+  removingMemberId.value = member.id;
+
+  try {
+    await workspaceStore.removeWorkspaceMember(workspaceId.value, member.id);
+    memberActionSuccess.value = "Member removed.";
+    await Promise.all([fetchMembers(), workspaceStore.fetchWorkspace(workspaceId.value)]);
+  } catch (error) {
+    memberActionError.value = error?.response?.data?.message || "Failed to remove member.";
+  } finally {
+    removingMemberId.value = null;
+  }
+};
+
+const fetchWorkspaceData = async () => {
+  await Promise.all([fetchWorkspaceDetail(), fetchMembers()]);
+};
+
+onMounted(fetchWorkspaceData);
+watch(() => route.params.workspaceId, fetchWorkspaceData);
 </script>
 
 <style scoped>
@@ -158,6 +358,14 @@ watch(() => route.params.workspaceId, fetchWorkspaceDetail);
 
 .status.error {
   color: var(--color-danger);
+}
+
+.status.success {
+  color: #166534;
+}
+
+.status.muted {
+  color: var(--dl-text-muted);
 }
 
 .detail-grid {
@@ -261,5 +469,93 @@ watch(() => route.params.workspaceId, fetchWorkspaceDetail);
   margin: 0;
   color: var(--dl-text-muted);
   font-size: 14px;
+}
+
+.inline-form,
+.invite-form {
+  display: grid;
+  gap: 10px;
+}
+
+.inline-form label,
+.invite-form label {
+  font-size: 12px;
+  color: var(--dl-text-muted);
+}
+
+.inline-form__row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+}
+
+.inline-form input,
+.invite-form input,
+.invite-form select {
+  width: 100%;
+  min-height: 38px;
+  border-radius: 10px;
+  border: 1px solid var(--dl-border);
+  background: var(--dl-page-bg);
+  color: var(--dl-text);
+  padding: 8px 10px;
+}
+
+.invite-form__grid {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr auto;
+  gap: 8px;
+}
+
+.member-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.member-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border: 1px solid var(--dl-border);
+  background: var(--dl-page-bg);
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.member-info {
+  min-width: 0;
+}
+
+.member-name {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.member-email {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: var(--dl-text-muted);
+}
+
+.member-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+@media (max-width: 820px) {
+  .invite-form__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .member-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }
 </style>

@@ -10,7 +10,7 @@
   --theme-emerald-h: 160;
   --theme-emerald-s: 45%;
   --theme-amber-h: 32;
-  --theme-amber-s: 75%;
+  --theme-amber-s: 70%;
   --theme-sky-h: 200;
   --theme-sky-s: 60%;
   --theme-stone-h: 20;
@@ -63,8 +63,8 @@
   --theme-gnb-text-l: 92%;
   --theme-lnb-l: 24%;
   --theme-lnb-text-l: 88%;
-  --theme-accent-l: 42%;
-  --theme-accent-hover-l: 36%;
+  --theme-accent-l: 36%;
+  --theme-accent-hover-l: 42%;
   --theme-accent-soft-s: 30%;
   --theme-accent-soft-l: 90%;
 }
@@ -96,9 +96,9 @@
 :root[data-theme="light"] {
   --theme-h: var(--theme-light-h);
   --theme-s: var(--theme-light-s);
-  --theme-gnb-l: 96%;
+  --theme-gnb-l: 99%;
   --theme-gnb-text-l: 18%;
-  --theme-lnb-l: 94%;
+  --theme-lnb-l: 97%;
   --theme-lnb-text-l: 24%;
 }
 

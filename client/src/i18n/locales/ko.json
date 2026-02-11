@@ -64,6 +64,9 @@
         "wiki": "위키",
         "messenger": "메신저"
       },
+      "search": {
+        "placeholder": "프로젝트에서 검색"
+      },
       "util": {
         "settings": "설정",
         "account": "계정"
@@ -263,6 +266,9 @@
       "validation": {
         "noProject": "프로젝트가 선택되지 않았습니다.",
         "nameRequired": "보드 이름을 입력하세요."
+      },
+      "nav": {
+        "backlog": "백로그"
       }
     },
     "home": {
@@ -297,6 +303,7 @@
       },
       "actions": {
         "createIssue": "이슈 만들기",
+        "settings": "보드 설정",
         "delete": "보드 삭제",
         "deleting": "삭제 중...",
         "cancel": "취소",
@@ -325,11 +332,45 @@
       "confirm": {
         "delete": "이 보드를 삭제할까요?"
       }
+    },
+    "settings": {
+      "header": {
+        "title": "보드 설정",
+        "subtitle": "보드 환경을 관리하세요."
+      },
+      "form": {
+        "nameLabel": "보드 이름",
+        "namePlaceholder": "보드 이름"
+      },
+      "actions": {
+        "back": "보드로 돌아가기",
+        "save": "저장",
+        "saving": "저장 중...",
+        "delete": "보드 삭제",
+        "deleting": "삭제 중..."
+      },
+      "status": {
+        "loading": "불러오는 중...",
+        "errorLoad": "보드 정보를 불러오지 못했습니다.",
+        "errorUpdate": "보드를 수정하지 못했습니다.",
+        "errorDelete": "보드를 삭제하지 못했습니다."
+      },
+      "validation": {
+        "nameRequired": "보드 이름을 입력하세요."
+      },
+      "danger": {
+        "title": "주의 구역",
+        "description": "보드를 삭제하면 복구할 수 없습니다."
+      },
+      "confirm": {
+        "delete": "이 보드를 삭제할까요?"
+      }
     }
   },
   "issue": {
     "status": {
       "backlog": "백로그",
+      "pending": "대기 중",
       "inProgress": "진행 중",
       "inReview": "검토 중",
       "done": "완료"
@@ -386,6 +427,40 @@
           "selectMember": "멤버를 선택하세요."
         },
         "errorUpdate": "관련 멤버를 업데이트하지 못했습니다."
+      }
+    }
+  },
+  "backlog": {
+    "page": {
+      "header": {
+        "title": "백로그"
+      },
+      "actions": {
+        "createIssue": "이슈 만들기",
+        "creating": "생성 중...",
+        "cancel": "취소",
+        "create": "생성"
+      },
+      "status": {
+        "loading": "불러오는 중...",
+        "errorLoad": "백로그를 불러오지 못했습니다.",
+        "errorCreate": "이슈를 생성하지 못했습니다.",
+        "errorBoardNotFound": "백로그 보드를 찾을 수 없습니다."
+      },
+      "empty": {
+        "issues": "백로그 이슈가 없습니다.",
+        "assignees": "담당자 없음"
+      },
+      "modal": {
+        "title": "백로그 이슈 만들기",
+        "titleLabel": "제목",
+        "titlePlaceholder": "이슈 제목",
+        "descriptionLabel": "설명",
+        "descriptionPlaceholder": "이슈 내용을 입력하세요"
+      },
+      "validation": {
+        "noBoard": "백로그 보드를 찾을 수 없습니다.",
+        "titleRequired": "제목을 입력하세요."
       }
     }
   },
@@ -565,8 +640,7 @@
       },
       "actions": {
         "invite": "초대하기",
-        "delete": "삭제",
-        "deleting": "삭제 중...",
+        "settings": "채널 설정",
         "members": "참여자 확인",
         "cancel": "취소",
         "inviteSubmit": "초대",
@@ -622,6 +696,39 @@
         "unknownUser": "알 수 없음",
         "roomTitle": "채널"
       }
+    },
+    "settings": {
+      "header": {
+        "title": "채널 설정",
+        "subtitle": "채널 환경을 관리하세요."
+      },
+      "form": {
+        "nameLabel": "채널 이름",
+        "namePlaceholder": "채널 이름"
+      },
+      "actions": {
+        "back": "채널로 돌아가기",
+        "save": "저장",
+        "saving": "저장 중...",
+        "delete": "채널 삭제",
+        "deleting": "삭제 중..."
+      },
+      "status": {
+        "loading": "불러오는 중...",
+        "errorLoad": "채널 정보를 불러오지 못했습니다.",
+        "errorUpdate": "채널을 수정하지 못했습니다.",
+        "errorDelete": "채널을 삭제하지 못했습니다."
+      },
+      "validation": {
+        "nameRequired": "채널 이름을 입력하세요."
+      },
+      "danger": {
+        "title": "주의 구역",
+        "description": "채널을 삭제하면 복구할 수 없습니다."
+      },
+      "confirm": {
+        "delete": "채널을 삭제할까요? 되돌릴 수 없습니다."
+      }
     }
   },
   "workspaceList": {
@@ -675,14 +782,7 @@
     "snapshot": {
       "title": "운영 스냅샷",
       "description": "업무 라이프사이클을 한눈에 확인하세요.",
-      "chips": [
-        "온보딩",
-        "기획",
-        "딜리버리",
-        "문서화",
-        "메시지",
-        "결제"
-      ],
+      "chips": ["온보딩", "기획", "딜리버리", "문서화", "메시지", "결제"],
       "metrics": {
         "primaryLabel": "핵심 지표",
         "primaryValue": "활성 팀",
@@ -701,81 +801,37 @@
           "기본 워크스페이스로 빠른 시작",
           "팀 공통 브랜딩 유지"
         ],
-        "tags": [
-          "접근 제어",
-          "브랜딩",
-          "디렉터리"
-        ]
+        "tags": ["접근 제어", "브랜딩", "디렉터리"]
       },
       "project": {
         "title": "프로젝트를 일관되게",
         "description": "프로젝트별로 업무, 파일, 업데이트를 관리하세요.",
-        "bullets": [
-          "프로젝트 뷰를 깔끔하게",
-          "딜리버리 책임을 명확히",
-          "상태 보고를 일관되게"
-        ],
-        "tags": [
-          "로드맵",
-          "책임",
-          "상태"
-        ]
+        "bullets": ["프로젝트 뷰를 깔끔하게", "딜리버리 책임을 명확히", "상태 보고를 일관되게"],
+        "tags": ["로드맵", "책임", "상태"]
       },
       "board": {
         "title": "업무 흐름 유지",
         "description": "우선순위와 장애물을 한눈에 확인하세요.",
-        "bullets": [
-          "상태 기준을 통일",
-          "담당자를 쉽게 파악",
-          "진척도를 빠르게 확인"
-        ],
-        "tags": [
-          "우선순위",
-          "담당",
-          "진척"
-        ]
+        "bullets": ["상태 기준을 통일", "담당자를 쉽게 파악", "진척도를 빠르게 확인"],
+        "tags": ["우선순위", "담당", "진척"]
       },
       "wiki": {
         "title": "문서는 한 번",
         "description": "런북과 결정사항을 한 곳에 정리하세요.",
-        "bullets": [
-          "팀별 구조화 문서",
-          "권한 기반 접근",
-          "지식 검색 가능"
-        ],
-        "tags": [
-          "런북",
-          "정책",
-          "지식"
-        ]
+        "bullets": ["팀별 구조화 문서", "권한 기반 접근", "지식 검색 가능"],
+        "tags": ["런북", "정책", "지식"]
       },
       "messenger": {
         "title": "빠른 팀 정렬",
         "description": "업무와 연결된 채널 업데이트를 제공합니다.",
-        "bullets": [
-          "대화의 맥락 유지",
-          "메시지 기록으로 정렬",
-          "가벼운 피드백 루프"
-        ],
-        "tags": [
-          "채널",
-          "업데이트",
-          "피드백"
-        ]
+        "bullets": ["대화의 맥락 유지", "메시지 기록으로 정렬", "가벼운 피드백 루프"],
+        "tags": ["채널", "업데이트", "피드백"]
       },
       "billing": {
         "title": "라이선스와 결제",
         "description": "명확한 과금으로 접근을 확장하세요.",
-        "bullets": [
-          "멤버 기반 과금",
-          "갱신 및 업그레이드 관리",
-          "결제 이력 한 곳"
-        ],
-        "tags": [
-          "라이선스",
-          "갱신",
-          "결제"
-        ]
+        "bullets": ["멤버 기반 과금", "갱신 및 업그레이드 관리", "결제 이력 한 곳"],
+        "tags": ["라이선스", "갱신", "결제"]
       }
     },
     "cta": {
@@ -814,31 +870,19 @@
           "name": "워크스페이스 월간",
           "price": "12,000원",
           "period": "멤버당 / 월",
-          "includes": [
-            "워크스페이스 전체 접근",
-            "월간 결제",
-            "언제든 해지"
-          ]
+          "includes": ["워크스페이스 전체 접근", "월간 결제", "언제든 해지"]
         },
         "yearly": {
           "name": "워크스페이스 연간",
           "price": "120,000원",
           "period": "멤버당 / 년",
-          "includes": [
-            "연간 결제로 절감",
-            "우선 지원",
-            "팀 확장 준비"
-          ]
+          "includes": ["연간 결제로 절감", "우선 지원", "팀 확장 준비"]
         },
         "lifetime": {
           "name": "워크스페이스 라이프타임",
           "price": "420,000원",
           "period": "멤버당 / 영구",
-          "includes": [
-            "일회성 결제",
-            "장기 팀에 적합",
-            "갱신 없음"
-          ]
+          "includes": ["일회성 결제", "장기 팀에 적합", "갱신 없음"]
         }
       },
       "project": {
@@ -846,31 +890,19 @@
           "name": "프로젝트 월간",
           "price": "6,000원",
           "period": "멤버당 / 월",
-          "includes": [
-            "프로젝트 단위 접근",
-            "팀 규모에 맞춰 확장",
-            "워크스페이스로 언제든 전환"
-          ]
+          "includes": ["프로젝트 단위 접근", "팀 규모에 맞춰 확장", "워크스페이스로 언제든 전환"]
         },
         "yearly": {
           "name": "프로젝트 연간",
           "price": "60,000원",
           "period": "멤버당 / 년",
-          "includes": [
-            "연간 비용 절감",
-            "프로젝트 묶음",
-            "결제 이력 공유"
-          ]
+          "includes": ["연간 비용 절감", "프로젝트 묶음", "결제 이력 공유"]
         },
         "lifetime": {
           "name": "프로젝트 라이프타임",
           "price": "240,000원",
           "period": "멤버당 / 영구",
-          "includes": [
-            "프로젝트 일회성 결제",
-            "장기 고객용",
-            "장기 접근 유지"
-          ]
+          "includes": ["프로젝트 일회성 결제", "장기 고객용", "장기 접근 유지"]
         }
       }
     },
@@ -894,11 +926,7 @@
       },
       "payment": {
         "title": "결제 및 영수증",
-        "bullets": [
-          "금액/수단/영수증 참조 기록",
-          "멤버 기반 요금 투명",
-          "결제 이력 정리"
-        ]
+        "bullets": ["금액/수단/영수증 참조 기록", "멤버 기반 요금 투명", "결제 이력 정리"]
       }
     }
   },

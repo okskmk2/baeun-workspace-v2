@@ -13,11 +13,11 @@ const pool = new pg.Pool({
   connectionString: process.env.DATABASE_URL,
 
   // Max connections (default is 10).
-  max: 20,
+  max: 7,
   // Connection timeout (ms).
   connectionTimeoutMillis: 2000,
   // Idle timeout before a connection is closed (ms).
-  idleTimeoutMillis: 30000,
+  idleTimeoutMillis: 60000,
 });
 
 // Database connection event.

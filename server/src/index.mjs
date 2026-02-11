@@ -11,6 +11,7 @@ import { WebSocketServer } from "ws";
 import { broadcastToRoom, joinRoom, removeSocket } from "./ws.mjs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { SESSION_TTL_MS, SESSION_TTL_SECONDS } from "./config/session.mjs";
 
 // __dirname 대체 구현 (ESM에서는 직접 만들어야 함)
 const __filename = fileURLToPath(import.meta.url);
@@ -54,6 +55,7 @@ const sessionParser = session({
   store: new pgSession({
     pool: pool,
     tableName: "session",
+    ttl: SESSION_TTL_SECONDS,
   }),
   secret: process.env.SESSION_SECRET || "secret",
   resave: false,
@@ -62,7 +64,7 @@ const sessionParser = session({
     httpOnly: true,
     secure: false, // Set true when serving over HTTPS.
     sameSite: "lax", // Cross-site cookie delivery setting.
-    maxAge: 1000 * 60 * 60 * 24,
+    maxAge: SESSION_TTL_MS,
   },
 });
 

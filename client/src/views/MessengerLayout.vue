@@ -1,5 +1,5 @@
 <template>
-  <div class="LnbLayout">
+  <div class="LnbLayout ChannelLayout">
     <aside>
       <button class="btn" type="button" @click="openModal">
         {{ t("messenger.layout.actions.createChannel") }}
@@ -24,11 +24,7 @@
     </main>
   </div>
 
-  <BaseModal
-    :open="isModalOpen"
-    :title="t('messenger.layout.modal.title')"
-    @close="closeModal"
-  >
+  <BaseModal :open="isModalOpen" :title="t('messenger.layout.modal.title')" @close="closeModal">
     <form class="modal-form" @submit.prevent="createChannel">
       <label for="channel-name">{{ t("messenger.layout.modal.nameLabel") }}</label>
       <input
@@ -44,7 +40,9 @@
         </button>
         <button type="submit" class="btn" :disabled="isCreating">
           {{
-            isCreating ? t("messenger.layout.actions.creating") : t("messenger.layout.actions.create")
+            isCreating
+              ? t("messenger.layout.actions.creating")
+              : t("messenger.layout.actions.create")
           }}
         </button>
       </div>
@@ -138,8 +136,7 @@ const createChannel = async () => {
       );
     }
   } catch (error) {
-    const message =
-      error?.response?.data?.message || t("messenger.layout.status.errorCreate");
+    const message = error?.response?.data?.message || t("messenger.layout.status.errorCreate");
     formError.value = message;
     addToast({ message, type: "error" });
   } finally {
@@ -150,3 +147,9 @@ const createChannel = async () => {
 onMounted(fetchRooms);
 watch(projectId, fetchRooms);
 </script>
+
+<style>
+.ChannelLayout main {
+  padding-bottom: 2rem;
+}
+</style>

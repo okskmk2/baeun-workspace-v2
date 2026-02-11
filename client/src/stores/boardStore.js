@@ -26,6 +26,17 @@ export const useBoardStore = defineStore('board', {
       if(!projectId) return
       const current = this.boardsByProject[projectId] || []
       this.boardsByProject[projectId] = current.filter((board) => board.id !== boardId)
+    },
+    updateBoardName(boardId, projectId, name){
+      if(!boardId || !projectId) return
+      const current = this.boardsByProject[projectId] || []
+      this.boardsByProject[projectId] = current.map((board) => {
+        if(String(board.id) !== String(boardId)) return board
+        return {
+          ...board,
+          name
+        }
+      })
     }
   }
 })

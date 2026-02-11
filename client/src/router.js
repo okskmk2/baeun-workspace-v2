@@ -20,19 +20,20 @@ import WikiLayout from "./views/WikiLayout.vue";
 import MessengerLayout from "./views/MessengerLayout.vue";
 import ProjectLayout from "./views/ProjectLayout.vue";
 import BoardPage from "./views/BoardPage.vue";
+import BoardSettingsPage from "./views/BoardSettingsPage.vue";
 import WikiHomePage from "./views/WikiHomePage.vue";
 import WikiPage from "./views/WikiPage.vue";
 import MessengerHomePage from "./views/MessengerHomePage.vue";
 import MessengerRoomPage from "./views/MessengerRoomPage.vue";
+import MessengerSettingsPage from "./views/MessengerSettingsPage.vue";
 import SettingsLayout from "./views/SettingsLayout.vue";
 import SettingsHomePage from "./views/SettingsHomePage.vue";
 import SettingsMemberPage from "./views/SettingsMemberPage.vue";
 import BlankPage from "./views/BlankPage.vue";
-import api from "./lib/axios";
+import BacklogPage from "./views/BacklogPage.vue";
 import { useAppStore } from "./stores/appStore";
 import { useProjectMemberStore } from "./stores/projectMemberStore";
 
-let authChecked = false;
 let isAuthenticated = false;
 
 const routes = [
@@ -106,11 +107,20 @@ const routes = [
                 component: BoardPage,
               },
               {
+                path: ":boardId/settings",
+                component: BoardSettingsPage,
+              },
+              {
                 path: ":boardId/issue/:issueId",
                 component: IssueDetailPage,
               },
+              {
+                path: "backlog",
+                component: BacklogPage,
+              },
             ],
           },
+
           {
             path: "wiki",
             component: WikiLayout,
@@ -132,6 +142,10 @@ const routes = [
               {
                 path: "",
                 component: MessengerHomePage,
+              },
+              {
+                path: ":roomId/settings",
+                component: MessengerSettingsPage,
               },
               {
                 path: ":roomId",
@@ -169,39 +183,14 @@ router.beforeEach(async (to, from, next) => {
   const appStore = useAppStore();
   const projectMemberStore = useProjectMemberStore();
 
-  if (!authChecked) {
-    try {
-      const res = await api.get("/members/me");
-      if (res.data?.success && res.data?.data) {
-        appStore.setCurrentUser(res.data.data);
-        isAuthenticated = true;
-      } else {
-        isAuthenticated = false;
-        appStore.setCurrentUser(null);
-      }
-    } catch (error) {
-      isAuthenticated = false;
-      appStore.setCurrentUser(null);
-    } finally {
-      authChecked = true;
-    }
-  } else {
-    isAuthenticated = Boolean(appStore.currentUser);
+  if (typeof window !== "undefined" && window.sessionStorage.getItem("auth:force-logout") === "1") {
+    appStore.setCurrentUser(null);
+    window.sessionStorage.removeItem("auth:force-logout");
   }
 
-  const requiresAuth = to.matched.some((record) => record.meta?.requiresAuth);
-  if (requiresAuth && !isAuthenticated) {
-    return next({ path: "/login", query: { redirect: to.fullPath } });
-  }
-
-  if (to.path === "/login" && isAuthenticated) {
-    return next({ path: "/account" });
-  }
-
-  const requiresProjectAdmin = to.matched.some(
-    (record) => record.meta?.requiresProjectAdmin
-  );
-  if (requiresProjectAdmin) {
+  isAuthenticated = Boolean(appStore.currentUser);
+  const requiresProjectAdmin = to.matched.some((record) => record.meta?.requiresProjectAdmin);
+  if (requiresProjectAdmin && isAuthenticated) {
     const { workspaceId, projectId } = to.params;
     if (!projectId || !workspaceId) {
       return next({ path: "/account" });
@@ -210,9 +199,7 @@ router.beforeEach(async (to, from, next) => {
     try {
       const members = await projectMemberStore.fetchProjectMembers(projectId);
       const currentUserId = appStore.currentUser?.id;
-      const currentMember = members.find(
-        (member) => String(member.id) === String(currentUserId)
-      );
+      const currentMember = members.find((member) => String(member.id) === String(currentUserId));
       const role = String(currentMember?.role_name || "").toUpperCase();
 
       if (!["OWNER", "ADMIN"].includes(role)) {

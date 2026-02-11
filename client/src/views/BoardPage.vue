@@ -2,16 +2,19 @@
   <hgroup>
     <h1>{{ board.name || t("board.page.header.fallbackTitle") }}</h1>
     <div class="actions">
-      <button type="button" class="btn btn--secondary btn--sm" @click="openModal">
+      <button type="button" class="btn btn--sm" @click="openModal">
         {{ t("board.page.actions.createIssue") }}
       </button>
-      <button type="button" class="btn btn--danger btn--sm" @click="deleteBoard">
-        {{ isDeleting ? t("board.page.actions.deleting") : t("board.page.actions.delete") }}
-      </button>
+      <router-link
+        class="btn btn--icon"
+        :aria-label="t('board.page.actions.settings')"
+        :title="t('board.page.actions.settings')"
+        :to="boardSettingsPath"
+      >
+        <MaterialSymbol name="settings" :size="18" />
+      </router-link>
     </div>
   </hgroup>
-
-  <p v-if="deleteError" class="form-error">{{ deleteError }}</p>
 
   <div class="kanban">
     <section
@@ -98,26 +101,22 @@
 <script setup>
 import { computed, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
-import { useRoute, useRouter } from "vue-router";
+import { useRoute } from "vue-router";
 import api from "../lib/axios";
 import BaseModal from "../components/BaseModal.vue";
+import MaterialSymbol from "../components/MaterialSymbol.vue";
 import Tag from "../components/Tag.vue";
 import { useRoleLabels } from "../lib/roleLabels";
-import { useBoardStore } from "../stores/boardStore";
 
 const { t } = useI18n();
 const { getRoleLabel } = useRoleLabels();
 const route = useRoute();
-const router = useRouter();
-const boardStore = useBoardStore();
 
 const board = ref({});
 const issues = ref([]);
 const draggingIssueId = ref(null);
 const isModalOpen = ref(false);
 const isCreating = ref(false);
-const isDeleting = ref(false);
-const deleteError = ref("");
 const formError = ref("");
 const form = ref({
   title: "",
@@ -125,9 +124,10 @@ const form = ref({
   status: "BACKLOG",
 });
 
-const statuses = ["BACKLOG", "IN_PROGRESS", "IN_REVIEW", "DONE"];
+const statuses = ["PENDING", "IN_PROGRESS", "IN_REVIEW", "DONE"];
 const statusLabels = computed(() => ({
   BACKLOG: t("issue.status.backlog"),
+  PENDING: t("issue.status.pending"),
   IN_PROGRESS: t("issue.status.inProgress"),
   IN_REVIEW: t("issue.status.inReview"),
   DONE: t("issue.status.done"),
@@ -153,6 +153,9 @@ const issuesByStatus = (status) =>
   issues.value.filter((issue) => (issue.status || "BACKLOG") === status);
 const issueDetailPath = (issueId) =>
   `/workspace/${workspaceId.value}/project/${projectId.value}/board/${boardId.value}/issue/${issueId}`;
+const boardSettingsPath = computed(
+  () => `/workspace/${workspaceId.value}/project/${projectId.value}/board/${boardId.value}/settings`
+);
 
 const roleVariant = (role) => {
   const key = (role || "").toUpperCase();
@@ -229,23 +232,6 @@ const createIssue = async () => {
   }
 };
 
-const deleteBoard = async () => {
-  if (!boardId.value) return;
-  const confirmed = window.confirm(t("board.page.confirm.delete"));
-  if (!confirmed) return;
-
-  isDeleting.value = true;
-  deleteError.value = "";
-
-  try {
-    await boardStore.deleteBoard(boardId.value, projectId.value);
-    router.push(`/workspace/${workspaceId.value}/project/${projectId.value}/board`);
-  } catch (error) {
-    deleteError.value = error?.response?.data?.message || t("board.page.status.errorDelete");
-  } finally {
-    isDeleting.value = false;
-  }
-};
 
 const loadBoardData = async () => {
   await Promise.all([fetchBoard(), fetchIssues()]);

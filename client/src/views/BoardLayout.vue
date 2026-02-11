@@ -10,13 +10,16 @@
         <p v-else-if="boards.length === 0">{{ t("board.layout.empty.boards") }}</p>
         <template v-else>
           <router-link
-            v-for="board in boards"
+            v-for="board in boards.filter((b) => b.type !== 'BACKLOG')"
             :key="board.id"
             :to="`/workspace/${workspaceId}/project/${projectId}/board/${board.id}`"
           >
             {{ board.name }}
           </router-link>
         </template>
+        <router-link :to="`/workspace/${workspaceId}/project/${projectId}/board/backlog`">
+          {{ t("backlog.page.header.title") }}
+        </router-link>
       </nav>
     </aside>
     <main>

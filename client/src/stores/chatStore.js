@@ -29,6 +29,17 @@ export const useChatStore = defineStore('chat', {
         this.messagesByRoom[roomId] = []
         throw e
       }
+    },
+    updateRoomName(roomId, projectId, name){
+      if(!roomId || !projectId) return
+      const current = this.roomsByProject[projectId] || []
+      this.roomsByProject[projectId] = current.map((room) => {
+        if(String(room.id) !== String(roomId)) return room
+        return {
+          ...room,
+          name
+        }
+      })
     }
   }
 })

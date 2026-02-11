@@ -148,8 +148,9 @@ nav a:hover {
   display: flex;
   justify-content: space-between;
   padding: 16px 40px;
-  background-color: var(--gnb-bg);
   color: var(--gnb-fg);
+  background-color: var(--gnb-bg);
+  /* background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 8 8'%3E%3Cg fill='%23000000' fill-opacity='0.03'%3E%3Cpath fill-rule='evenodd' d='M0 0h4v4H0V0zm4 4h4v4H4V4z'/%3E%3C/g%3E%3C/svg%3E"); */
 }
 .ProjectLayout > header > nav {
   display: flex;
@@ -159,6 +160,7 @@ nav a:hover {
 .ProjectLayout .left {
   display: flex;
   gap: 4rem;
+  align-items: center;
 }
 
 .ProjectLayout .mainnav {

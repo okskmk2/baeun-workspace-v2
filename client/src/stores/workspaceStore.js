@@ -66,5 +66,32 @@ export const useWorkspaceStore = defineStore("workspace", {
       }
       return project;
     },
+    async updateWorkspaceName(workspaceId, name) {
+      if (!workspaceId) return null;
+      const res = await api.put(`/workspaces/${workspaceId}`, { name });
+      const updated = res.data?.data || null;
+      if (updated) {
+        const current = this.workspaceById[workspaceId] || {};
+        this.workspaceById[workspaceId] = { ...current, ...updated };
+        this.workspaces = this.workspaces.map((item) =>
+          String(item.id) === String(workspaceId) ? { ...item, ...updated } : item
+        );
+      }
+      return updated;
+    },
+    async fetchWorkspaceMembers(workspaceId) {
+      if (!workspaceId) return [];
+      const res = await api.get(`/workspaces/${workspaceId}/members`);
+      return res.data?.data || [];
+    },
+    async inviteWorkspaceMember(workspaceId, payload) {
+      if (!workspaceId) return null;
+      const res = await api.post(`/workspaces/${workspaceId}/members`, payload);
+      return res.data?.data || null;
+    },
+    async removeWorkspaceMember(workspaceId, memberId) {
+      if (!workspaceId || !memberId) return;
+      await api.delete(`/workspaces/${workspaceId}/members/${memberId}`);
+    },
   },
 });

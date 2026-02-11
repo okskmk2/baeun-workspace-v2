@@ -31,12 +31,17 @@
           </nav>
         </template>
       </div>
+
       <nav class="utilnav">
+        <SearchInput :placeholder="t('layout.project.search.placeholder')" />
         <router-link
           v-if="canAccessProjectSettings"
           :to="`/workspace/${workspaceId}/project/${projectId}/settings`"
+          class="btn btn--icon"
+          :aria-label="t('layout.project.util.settings')"
+          :title="t('layout.project.util.settings')"
         >
-          {{ t("layout.project.util.settings") }}
+          <MaterialSymbol name="settings" :size="18" alt="" />
         </router-link>
         <router-link to="/account">
           <Avatar :text="accountInitials" :label="accountLabel" :size="32" />
@@ -57,6 +62,7 @@ import { useWorkspaceStore } from "../stores/workspaceStore";
 import { useAppStore } from "../stores/appStore";
 import MaterialSymbol from "../components/MaterialSymbol.vue";
 import Avatar from "../components/Avatar.vue";
+import SearchInput from "../components/SearchInput.vue";
 
 const { t } = useI18n();
 const route = useRoute();

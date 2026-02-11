@@ -173,6 +173,14 @@ router.post("/", isAuth, async (req, res) => {
     `;
     await client.query(memberQuery, [newProject.id, userId]);
 
+    // Create a default "Backlog" board for the new project
+    const backlogBoardQuery = `
+        INSERT INTO board (name, project_id, type)
+        VALUES ($1, $2, $3)
+        RETURNING id;
+    `;
+    await client.query(backlogBoardQuery, ['Backlog', newProject.id, 'BACKLOG']);
+
     await client.query("COMMIT");
 
     res.status(201).json({

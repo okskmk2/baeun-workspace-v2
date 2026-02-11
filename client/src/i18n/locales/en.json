@@ -64,6 +64,9 @@
         "wiki": "Wiki",
         "messenger": "Messenger"
       },
+      "search": {
+        "placeholder": "Search in project"
+      },
       "util": {
         "settings": "Settings",
         "account": "Account"
@@ -263,6 +266,9 @@
       "validation": {
         "noProject": "No project selected.",
         "nameRequired": "Please enter a board name."
+      },
+      "nav": {
+        "backlog": "Backlog"
       }
     },
     "home": {
@@ -297,6 +303,7 @@
       },
       "actions": {
         "createIssue": "Create Issue",
+        "settings": "Board settings",
         "delete": "Delete Board",
         "deleting": "Deleting...",
         "cancel": "Cancel",
@@ -325,11 +332,45 @@
       "confirm": {
         "delete": "Delete this board?"
       }
+    },
+    "settings": {
+      "header": {
+        "title": "Board Settings",
+        "subtitle": "Manage board preferences."
+      },
+      "form": {
+        "nameLabel": "Board Name",
+        "namePlaceholder": "Board name"
+      },
+      "actions": {
+        "back": "Back to board",
+        "save": "Save",
+        "saving": "Saving...",
+        "delete": "Delete Board",
+        "deleting": "Deleting..."
+      },
+      "status": {
+        "loading": "Loading...",
+        "errorLoad": "Failed to load board details.",
+        "errorUpdate": "Failed to update board.",
+        "errorDelete": "Failed to delete board."
+      },
+      "validation": {
+        "nameRequired": "Please enter a board name."
+      },
+      "danger": {
+        "title": "Danger zone",
+        "description": "Deleting a board is permanent."
+      },
+      "confirm": {
+        "delete": "Delete this board?"
+      }
     }
   },
   "issue": {
     "status": {
       "backlog": "Backlog",
+      "pending": "Pending",
       "inProgress": "In Progress",
       "inReview": "In Review",
       "done": "Done"
@@ -386,6 +427,40 @@
           "selectMember": "Please select a member."
         },
         "errorUpdate": "Failed to update related members."
+      }
+    }
+  },
+  "backlog": {
+    "page": {
+      "header": {
+        "title": "Backlog"
+      },
+      "actions": {
+        "createIssue": "Create Issue",
+        "creating": "Creating...",
+        "cancel": "Cancel",
+        "create": "Create"
+      },
+      "status": {
+        "loading": "Loading...",
+        "errorLoad": "Failed to load backlog.",
+        "errorCreate": "Failed to create issue.",
+        "errorBoardNotFound": "Backlog board not found."
+      },
+      "empty": {
+        "issues": "No backlog issues.",
+        "assignees": "No assignees"
+      },
+      "modal": {
+        "title": "Create Backlog Issue",
+        "titleLabel": "Title",
+        "titlePlaceholder": "Issue title",
+        "descriptionLabel": "Description",
+        "descriptionPlaceholder": "Enter issue details"
+      },
+      "validation": {
+        "noBoard": "Backlog board not found.",
+        "titleRequired": "Please enter a title."
       }
     }
   },
@@ -550,7 +625,7 @@
         "yesterday": "Yesterday"
       },
       "empty": {
-         "title": "No messages in the last 24 hours",
+        "title": "No messages in the last 24 hours",
         "description": "Create a channel from the left menu and start a conversation."
       },
       "actions": {
@@ -565,8 +640,7 @@
       },
       "actions": {
         "invite": "Invite",
-        "delete": "Delete",
-        "deleting": "Deleting...",
+        "settings": "Channel settings",
         "members": "Participants",
         "cancel": "Cancel",
         "inviteSubmit": "Invite",
@@ -622,6 +696,39 @@
         "unknownUser": "Unknown",
         "roomTitle": "Channel"
       }
+    },
+    "settings": {
+      "header": {
+        "title": "Channel Settings",
+        "subtitle": "Manage channel preferences."
+      },
+      "form": {
+        "nameLabel": "Channel Name",
+        "namePlaceholder": "Channel name"
+      },
+      "actions": {
+        "back": "Back to channel",
+        "save": "Save",
+        "saving": "Saving...",
+        "delete": "Delete Channel",
+        "deleting": "Deleting..."
+      },
+      "status": {
+        "loading": "Loading...",
+        "errorLoad": "Failed to load channel details.",
+        "errorUpdate": "Failed to update channel.",
+        "errorDelete": "Failed to delete channel."
+      },
+      "validation": {
+        "nameRequired": "Please enter a channel name."
+      },
+      "danger": {
+        "title": "Danger zone",
+        "description": "Deleting a channel is permanent."
+      },
+      "confirm": {
+        "delete": "Delete this channel? This cannot be undone."
+      }
     }
   },
   "workspaceList": {
@@ -675,14 +782,7 @@
     "snapshot": {
       "title": "Operations snapshot",
       "description": "A quick view of the full work lifecycle.",
-      "chips": [
-        "Onboarding",
-        "Planning",
-        "Delivery",
-        "Documentation",
-        "Messaging",
-        "Billing"
-      ],
+      "chips": ["Onboarding", "Planning", "Delivery", "Documentation", "Messaging", "Billing"],
       "metrics": {
         "primaryLabel": "Primary KPI",
         "primaryValue": "Active teams",
@@ -701,11 +801,7 @@
           "Default workspace speeds up launch",
           "Shared brand settings for every team"
         ],
-        "tags": [
-          "Access control",
-          "Branding",
-          "Directory"
-        ]
+        "tags": ["Access control", "Branding", "Directory"]
       },
       "project": {
         "title": "Deliver projects consistently",
@@ -715,11 +811,7 @@
           "Clear ownership for each delivery",
           "Consistent status reporting"
         ],
-        "tags": [
-          "Roadmaps",
-          "Ownership",
-          "Status"
-        ]
+        "tags": ["Roadmaps", "Ownership", "Status"]
       },
       "board": {
         "title": "Keep work moving",
@@ -729,11 +821,7 @@
           "Assignments stay visible",
           "Progress is easy to scan"
         ],
-        "tags": [
-          "Priorities",
-          "Assignments",
-          "Progress"
-        ]
+        "tags": ["Priorities", "Assignments", "Progress"]
       },
       "wiki": {
         "title": "Document once",
@@ -743,11 +831,7 @@
           "Permissioned access",
           "Knowledge stays searchable"
         ],
-        "tags": [
-          "Runbooks",
-          "Policies",
-          "Knowledge"
-        ]
+        "tags": ["Runbooks", "Policies", "Knowledge"]
       },
       "messenger": {
         "title": "Fast team alignment",
@@ -757,11 +841,7 @@
           "Message history keeps teams aligned",
           "Feedback loops stay lightweight"
         ],
-        "tags": [
-          "Channels",
-          "Updates",
-          "Feedback"
-        ]
+        "tags": ["Channels", "Updates", "Feedback"]
       },
       "billing": {
         "title": "Licenses and payments",
@@ -771,11 +851,7 @@
           "Renewals and upgrades tracked",
           "Billing history in one place"
         ],
-        "tags": [
-          "Licensing",
-          "Renewals",
-          "Billing"
-        ]
+        "tags": ["Licensing", "Renewals", "Billing"]
       }
     },
     "cta": {
@@ -814,31 +890,19 @@
           "name": "Workspace Monthly",
           "price": "$12",
           "period": "per member / month",
-          "includes": [
-            "Full workspace access",
-            "Monthly billing",
-            "Cancel anytime"
-          ]
+          "includes": ["Full workspace access", "Monthly billing", "Cancel anytime"]
         },
         "yearly": {
           "name": "Workspace Yearly",
           "price": "$120",
           "period": "per member / year",
-          "includes": [
-            "Save with annual billing",
-            "Priority support",
-            "Ready for team growth"
-          ]
+          "includes": ["Save with annual billing", "Priority support", "Ready for team growth"]
         },
         "lifetime": {
           "name": "Workspace Lifetime",
           "price": "$420",
           "period": "per member / lifetime",
-          "includes": [
-            "One-time purchase",
-            "Long-term team access",
-            "No renewals"
-          ]
+          "includes": ["One-time purchase", "Long-term team access", "No renewals"]
         }
       },
       "project": {
@@ -846,31 +910,19 @@
           "name": "Project Monthly",
           "price": "$6",
           "period": "per member / month",
-          "includes": [
-            "Per-project access",
-            "Scale by team size",
-            "Upgrade to workspace anytime"
-          ]
+          "includes": ["Per-project access", "Scale by team size", "Upgrade to workspace anytime"]
         },
         "yearly": {
           "name": "Project Yearly",
           "price": "$60",
           "period": "per member / year",
-          "includes": [
-            "Lower annual cost",
-            "Bundle multiple projects",
-            "Shared billing history"
-          ]
+          "includes": ["Lower annual cost", "Bundle multiple projects", "Shared billing history"]
         },
         "lifetime": {
           "name": "Project Lifetime",
           "price": "$240",
           "period": "per member / lifetime",
-          "includes": [
-            "One-time purchase",
-            "Ideal for long-term clients",
-            "Keep access long-term"
-          ]
+          "includes": ["One-time purchase", "Ideal for long-term clients", "Keep access long-term"]
         }
       }
     },

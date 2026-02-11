@@ -250,6 +250,7 @@ create table session
     created_at timestamp with time zone default CURRENT_TIMESTAMP
 );
 create index idx_session_expire on session (expire);
+create index idx_session_user_id on session ((sess ->> 'userId'));
 
 -- 19. Workspace (워크스페이스)
 create table workspace

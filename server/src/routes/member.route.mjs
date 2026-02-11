@@ -5,6 +5,31 @@ import pool from "../db.mjs"; // DB connection config.
 
 const router = express.Router();
 const SALT_ROUNDS = 10; // Hash cost (higher is more secure but slower).
+const MAX_CONCURRENT_SESSIONS = 4;
+
+const enforceSessionLimit = async (userId, currentSid) => {
+  const sessionsResult = await pool.query(
+    `SELECT sid
+     FROM session
+     WHERE sess ->> 'userId' = $1
+     ORDER BY created_at ASC, sid ASC`,
+    [String(userId)]
+  );
+
+  const overflowCount = sessionsResult.rows.length - MAX_CONCURRENT_SESSIONS;
+  if (overflowCount <= 0) return;
+
+  const deleteSids = [];
+  for (const row of sessionsResult.rows) {
+    if (row.sid === currentSid) continue;
+    deleteSids.push(row.sid);
+    if (deleteSids.length === overflowCount) break;
+  }
+
+  if (deleteSids.length === 0) return;
+
+  await pool.query("DELETE FROM session WHERE sid = ANY($1::varchar[])", [deleteSids]);
+};
 
 /**
  * @swagger
@@ -159,7 +184,7 @@ router.post("/signup", isGuest, async (req, res) => {
  *       500:
  *         $ref: "#/components/responses/ErrorResponse"
  */
-router.post("/login", isGuest, async (req, res) => {
+router.post("/login", async (req, res) => {
   const { email, password } = req.body;
 
   try {
@@ -183,6 +208,14 @@ router.post("/login", isGuest, async (req, res) => {
     // 3. Set session.
     req.session.userId = user.id;
     req.session.userName = user.name;
+    await new Promise((resolve, reject) => {
+      req.session.save((err) => {
+        if (err) return reject(err);
+        resolve();
+      });
+    });
+
+    await enforceSessionLimit(user.id, req.sessionID);
 
     res.json({
       success: true,

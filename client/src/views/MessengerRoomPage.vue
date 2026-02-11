@@ -2,33 +2,39 @@
   <hgroup>
     <div>
       <h1>{{ displayRoomTitle }}</h1>
-      <span class="room-status" :class="{ offline: !isConnected }">
-        {{
+      <span
+        class="room-status"
+        :class="{ offline: !isConnected }"
+        role="status"
+        :aria-label="
           isConnected
-            ? t("messenger.room.status.connected")
-            : t("messenger.room.status.disconnected")
-        }}
-      </span>
+            ? t('messenger.room.status.connected')
+            : t('messenger.room.status.disconnected')
+        "
+        :title="
+          isConnected
+            ? t('messenger.room.status.connected')
+            : t('messenger.room.status.disconnected')
+        "
+      ></span>
     </div>
     <div class="actions">
       <button type="button" class="btn btn--sm" @click="openInviteModal">
         {{ t("messenger.room.actions.invite") }}
       </button>
-      <button
-        type="button"
-        class="btn btn--sm btn--danger"
-        :disabled="isDeleting"
-        @click="deletechannel"
-      >
-        {{ isDeleting ? t("messenger.room.actions.deleting") : t("messenger.room.actions.delete") }}
-      </button>
       <button type="button" class="btn btn--sm btn--secondary" @click="openMembersModal">
         {{ t("messenger.room.actions.members") }}
       </button>
+      <router-link
+        class="btn btn--icon"
+        :aria-label="t('messenger.room.actions.settings')"
+        :title="t('messenger.room.actions.settings')"
+        :to="channelSettingsPath"
+      >
+        <MaterialSymbol name="settings" :size="18" />
+      </router-link>
     </div>
   </hgroup>
-
-  <p v-if="deleteError" class="form-error">{{ deleteError }}</p>
 
   <div ref="messagesContainer" class="messages">
     <div
@@ -172,21 +178,18 @@
 <script setup>
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
-import { useRoute, useRouter } from "vue-router";
+import { useRoute } from "vue-router";
 import api from "../lib/axios";
 import BaseModal from "../components/BaseModal.vue";
 import Avatar from "../components/Avatar.vue";
 import MaterialSymbol from "../components/MaterialSymbol.vue";
 import { useProjectMemberStore } from "../stores/projectMemberStore";
-import { useChatStore } from "../stores/chatStore";
 import { useRoleLabels } from "../lib/roleLabels";
 
 const { t, locale } = useI18n();
 const { getRoleLabel } = useRoleLabels();
 const route = useRoute();
-const router = useRouter();
 const projectMemberStore = useProjectMemberStore();
-const chatStore = useChatStore();
 const roomId = computed(() => route.params.roomId);
 const projectId = computed(() => route.params.projectId);
 const workspaceId = computed(() => route.params.workspaceId);
@@ -204,8 +207,6 @@ const isInviting = ref(false);
 const inviteError = ref("");
 const projectMembers = computed(() => projectMemberStore.getProjectMembers(projectId.value));
 const selectedMemberId = ref("");
-const isDeleting = ref(false);
-const deleteError = ref("");
 const isMembersOpen = ref(false);
 const isMembersLoading = ref(false);
 const membersError = ref("");
@@ -455,28 +456,10 @@ const inviteMember = async () => {
   }
 };
 
-const deletechannel = async () => {
-  if (!roomId.value) return;
-  const confirmed = window.confirm(t("messenger.room.confirm.delete"));
-  if (!confirmed) return;
-
-  isDeleting.value = true;
-  deleteError.value = "";
-
-  try {
-    await api.delete(`/channels/${roomId.value}`);
-    if (socket) {
-      socket.close();
-      socket = null;
-    }
-    await chatStore.fetchRooms(projectId.value);
-    await router.push(`/workspace/${workspaceId.value}/project/${projectId.value}/messenger`);
-  } catch (error) {
-    deleteError.value = error?.response?.data?.message || t("messenger.room.status.errorDelete");
-  } finally {
-    isDeleting.value = false;
-  }
-};
+const channelSettingsPath = computed(() => {
+  if (!roomId.value) return "";
+  return `/workspace/${workspaceId.value}/project/${projectId.value}/messenger/${roomId.value}/settings`;
+});
 
 onMounted(async () => {
   await fetchchannelDetail();
@@ -519,12 +502,15 @@ onBeforeUnmount(() => {
 }
 
 .room-status {
-  font-size: 12px;
-  color: var(--color-success);
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background-color: var(--color-success);
 }
 
 .room-status.offline {
-  color: var(--color-danger);
+  background-color: var(--color-danger);
 }
 
 .messages {
@@ -535,7 +521,7 @@ onBeforeUnmount(() => {
   flex-direction: column;
   /* gap: 16px; */
   background-color: var(--color-card-bg);
-  height: calc(100vh - 318px);
+  height: calc(100vh - 268px);
   overflow-y: scroll;
 }
 
