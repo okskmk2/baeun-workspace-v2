@@ -5,7 +5,7 @@
   <p v-if="isLoading" class="status">불러오는 중...</p>
   <p v-else-if="errorMessage" class="status error">{{ errorMessage }}</p>
   <p v-else-if="messages.length === 0" class="status">메시지가 없습니다.</p>
-  <FeedList v-else :groups="messageGroups" item-key="itemKey">
+  <FeedList v-else :groups="messageGroups" item-key="itemKey" :item-click="handleItemClick">
     <template #icon>
       <span class="feed-icon">M</span>
     </template>
@@ -23,12 +23,13 @@
 <script setup>
 import { useI18n } from "vue-i18n";
 import { computed, onMounted, ref, watch } from "vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import api from "../lib/axios";
 import FeedList from "../components/FeedList.vue";
 
 const { t } = useI18n();
 const route = useRoute();
+const router = useRouter();
 
 const projectId = computed(() => route.params.projectId);
 const isLoading = ref(false);
@@ -66,6 +67,11 @@ const messageGroups = computed(() => [
     items: messages.value,
   },
 ]);
+
+const handleItemClick = (item) => {
+  if (!projectId.value || !item?.channel_id) return;
+  router.push(`/project/${projectId.value}/messenger/${item.channel_id}`);
+};
 
 onMounted(fetchRecentMessages);
 watch(projectId, fetchRecentMessages);

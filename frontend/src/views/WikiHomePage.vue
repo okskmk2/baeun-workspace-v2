@@ -6,7 +6,7 @@
   <p v-if="isLoading" class="status">불러오는 중...</p>
   <p v-else-if="errorMessage" class="status error">{{ errorMessage }}</p>
   <p v-else-if="activities.length === 0" class="status">최근 페이지 활동이 없습니다.</p>
-  <FeedList v-else :groups="activityGroups" item-key="itemKey">
+  <FeedList v-else :groups="activityGroups" item-key="itemKey" :item-click="handleItemClick">
     <template #icon>
       <span class="feed-icon">W</span>
     </template>
@@ -25,13 +25,14 @@
 <script setup>
 import { useI18n } from "vue-i18n";
 import { computed, onMounted, ref, watch } from "vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import api from "../lib/axios";
 import { usePageStore } from "../stores/pageStore";
 import FeedList from "../components/FeedList.vue";
 
 const { t } = useI18n();
 const route = useRoute();
+const router = useRouter();
 const pageStore = usePageStore();
 
 const projectId = computed(() => route.params.projectId);
@@ -75,6 +76,11 @@ const activityGroups = computed(() => [
     items: activities.value,
   },
 ]);
+
+const handleItemClick = (item) => {
+  if (!projectId.value || !item?.id) return;
+  router.push(`/project/${projectId.value}/wiki/${item.id}`);
+};
 
 onMounted(fetchRecentPages);
 watch(projectId, fetchRecentPages);

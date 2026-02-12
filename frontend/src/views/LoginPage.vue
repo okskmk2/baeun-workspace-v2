@@ -1,62 +1,64 @@
 <template>
   <div class="login">
     <header class="login__header">
-      <h1>Login</h1>
-      <p>Enter your email and password.</p>
+      <h1>{{ t("auth.login.title") }}</h1>
+      <p>{{ t("auth.login.subtitle") }}</p>
     </header>
 
     <form class="login__form" @submit.prevent="onSubmit">
       <div class="login__field">
-        <label for="email">Email</label>
+        <label for="email">{{ t("auth.login.fields.email.label") }}</label>
         <input
           id="email"
           v-model.trim="email"
           type="email"
           autocomplete="email"
-          placeholder="name@company.com"
+          :placeholder="t('auth.login.fields.email.placeholder')"
         />
         <p v-if="errors.email" class="login__error">{{ errors.email }}</p>
       </div>
 
       <div class="login__field">
-        <label for="password">Password</label>
+        <label for="password">{{ t("auth.login.fields.password.label") }}</label>
         <input
           id="password"
           v-model.trim="password"
           type="password"
           autocomplete="current-password"
-          placeholder="Password"
+          :placeholder="t('auth.login.fields.password.placeholder')"
         />
         <p v-if="errors.password" class="login__error">{{ errors.password }}</p>
       </div>
 
       <label class="login__remember">
         <input v-model="remember" type="checkbox" />
-        <span>Remember me</span>
+        <span>{{ t("auth.login.remember") }}</span>
       </label>
 
       <button type="submit" class="btn" :disabled="loading">
-        {{ loading ? "Signing in..." : "Sign in" }}
+        {{ loading ? t("auth.login.actions.signingIn") : t("auth.login.actions.signIn") }}
       </button>
 
       <p v-if="errors.form" class="login__error">{{ errors.form }}</p>
     </form>
 
     <p class="login__signup">
-      Don't have an account?
-      <router-link to="/signup">Sign up</router-link>
+      {{ t("auth.login.signupPrompt") }}
+      <router-link to="/signup">{{ t("auth.login.signupLink") }}</router-link>
     </p>
   </div>
 </template>
 
 <script setup>
 import { reactive, ref } from "vue";
+import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import api from "../lib/axios";
 import { useAppStore } from "../stores/appStore";
 import { useWorkspaceStore } from "../stores/workspaceStore";
 
 const router = useRouter();
+const { t } = useI18n();
 const appStore = useAppStore();
 const workspaceStore = useWorkspaceStore();
 
@@ -78,15 +80,15 @@ const validate = () => {
   errors.form = "";
 
   if (!email.value) {
-    errors.email = "Please enter your email.";
+    errors.email = t("auth.login.errors.emailRequired");
   } else if (!emailPattern.test(email.value)) {
-    errors.email = "Please enter a valid email address.";
+    errors.email = t("auth.login.errors.emailInvalid");
   }
 
   if (!password.value) {
-    errors.password = "Please enter your password.";
+    errors.password = t("auth.login.errors.passwordRequired");
   } else if (password.value.length < 6) {
-    errors.password = "Password must be at least 6 characters.";
+    errors.password = t("auth.login.errors.passwordLength");
   }
 
   return !errors.email && !errors.password;
@@ -105,7 +107,7 @@ const onSubmit = async () => {
     });
 
     if (!response.data?.success) {
-      errors.form = response.data?.message || "Login failed.";
+      errors.form = response.data?.message || t("auth.login.errors.formDefault");
       return;
     }
 
@@ -118,7 +120,7 @@ const onSubmit = async () => {
       router.push("/");
     }
   } catch (error) {
-    errors.form = error?.response?.data?.message || "Login failed.";
+    errors.form = error?.response?.data?.message || t("auth.login.errors.formDefault");
   } finally {
     loading.value = false;
   }

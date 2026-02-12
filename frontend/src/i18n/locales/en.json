@@ -79,6 +79,83 @@
       }
     }
   },
+  "auth": {
+    "login": {
+      "title": "Login",
+      "subtitle": "Enter your email and password.",
+      "fields": {
+        "email": {
+          "label": "Email",
+          "placeholder": "name@company.com"
+        },
+        "password": {
+          "label": "Password",
+          "placeholder": "Password"
+        }
+      },
+      "remember": "Remember me",
+      "actions": {
+        "signIn": "Sign in",
+        "signingIn": "Signing in..."
+      },
+      "errors": {
+        "emailRequired": "Please enter your email.",
+        "emailInvalid": "Please enter a valid email address.",
+        "passwordRequired": "Please enter your password.",
+        "passwordLength": "Password must be at least 6 characters.",
+        "formDefault": "Login failed."
+      },
+      "signupPrompt": "Don't have an account?",
+      "signupLink": "Sign up"
+    },
+    "signup": {
+      "title": "Sign up",
+      "subtitle": "Start your workspace in minutes.",
+      "fields": {
+        "name": {
+          "label": "Name",
+          "placeholder": "Name"
+        },
+        "email": {
+          "label": "Email",
+          "placeholder": "name@company.com"
+        },
+        "password": {
+          "label": "Password",
+          "placeholder": "At least 6 characters"
+        },
+        "confirmPassword": {
+          "label": "Confirm password",
+          "placeholder": "Re-enter your password"
+        }
+      },
+      "actions": {
+        "signUp": "Sign up",
+        "signingUp": "Signing up..."
+      },
+      "errors": {
+        "nameRequired": "Please enter your name.",
+        "emailRequired": "Please enter your email.",
+        "emailInvalid": "Please enter a valid email address.",
+        "passwordRequired": "Please enter your password.",
+        "passwordLength": "Password must be at least 6 characters.",
+        "confirmRequired": "Please confirm your password.",
+        "confirmMismatch": "Passwords do not match.",
+        "formDefault": "Sign up failed.",
+        "autoLoginFailed": "Sign up succeeded but auto-login failed."
+      },
+      "strength": {
+        "summary": "Password strength: {label}",
+        "empty": "Type a password",
+        "weak": "Weak",
+        "medium": "Medium",
+        "strong": "Strong"
+      },
+      "success": "Sign up completed. Redirecting...",
+      "signinPrompt": "Already have an account?",
+      "signinLink": "Sign in"
+    }
+  },
   "settings": {
     "home": {
       "header": {

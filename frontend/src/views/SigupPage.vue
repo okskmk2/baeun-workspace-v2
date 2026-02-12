@@ -1,37 +1,43 @@
 <template>
   <div class="signup">
     <header class="signup__header">
-      <h1>Sign up</h1>
-      <p>Start your workspace in minutes.</p>
+      <h1>{{ t("auth.signup.title") }}</h1>
+      <p>{{ t("auth.signup.subtitle") }}</p>
     </header>
 
     <form class="signup__form" @submit.prevent="onSubmit">
       <div class="signup__field">
-        <label for="name">Name</label>
-        <input id="name" v-model.trim="name" type="text" autocomplete="name" placeholder="Name" />
+        <label for="name">{{ t("auth.signup.fields.name.label") }}</label>
+        <input
+          id="name"
+          v-model.trim="name"
+          type="text"
+          autocomplete="name"
+          :placeholder="t('auth.signup.fields.name.placeholder')"
+        />
         <p v-if="errors.name" class="signup__error">{{ errors.name }}</p>
       </div>
 
       <div class="signup__field">
-        <label for="email">Email</label>
+        <label for="email">{{ t("auth.signup.fields.email.label") }}</label>
         <input
           id="email"
           v-model.trim="email"
           type="email"
           autocomplete="email"
-          placeholder="name@company.com"
+          :placeholder="t('auth.signup.fields.email.placeholder')"
         />
         <p v-if="errors.email" class="signup__error">{{ errors.email }}</p>
       </div>
 
       <div class="signup__field">
-        <label for="password">Password</label>
+        <label for="password">{{ t("auth.signup.fields.password.label") }}</label>
         <input
           id="password"
           v-model.trim="password"
           type="password"
           autocomplete="new-password"
-          placeholder="At least 6 characters"
+          :placeholder="t('auth.signup.fields.password.placeholder')"
         />
         <p v-if="errors.password" class="signup__error">{{ errors.password }}</p>
         <div class="signup__strength">
@@ -42,18 +48,20 @@
               :style="{ width: strength.percent + '%' }"
             ></span>
           </div>
-          <span class="signup__strength-text">Password strength: {{ strength.label }}</span>
+          <span class="signup__strength-text">
+            {{ t("auth.signup.strength.summary", { label: strength.label }) }}
+          </span>
         </div>
       </div>
 
       <div class="signup__field">
-        <label for="confirmPassword">Confirm password</label>
+        <label for="confirmPassword">{{ t("auth.signup.fields.confirmPassword.label") }}</label>
         <input
           id="confirmPassword"
           v-model.trim="confirmPassword"
           type="password"
           autocomplete="new-password"
-          placeholder="Re-enter your password"
+          :placeholder="t('auth.signup.fields.confirmPassword.placeholder')"
         />
         <p v-if="errors.confirmPassword" class="signup__error">
           {{ errors.confirmPassword }}
@@ -61,7 +69,7 @@
       </div>
 
       <button type="submit" class="btn" :disabled="loading">
-        {{ loading ? "Signing up..." : "Sign up" }}
+        {{ loading ? t("auth.signup.actions.signingUp") : t("auth.signup.actions.signUp") }}
       </button>
 
       <p v-if="errors.form" class="signup__error">{{ errors.form }}</p>
@@ -69,19 +77,21 @@
     </form>
 
     <p class="signup__signin">
-      Already have an account?
-      <router-link to="/login">Sign in</router-link>
+      {{ t("auth.signup.signinPrompt") }}
+      <router-link to="/login">{{ t("auth.signup.signinLink") }}</router-link>
     </p>
   </div>
 </template>
 
 <script setup>
 import { computed, reactive, ref } from "vue";
+import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import api from "../lib/axios";
 import { useAppStore } from "../stores/appStore";
 
 const router = useRouter();
+const { t } = useI18n();
 const appStore = useAppStore();
 
 const name = ref("");
@@ -103,7 +113,7 @@ const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const strength = computed(() => {
   const value = password.value;
   if (!value) {
-    return { label: "Type a password", tone: "empty", percent: 0 };
+    return { label: t("auth.signup.strength.empty"), tone: "empty", percent: 0 };
   }
 
   let score = 0;
@@ -114,9 +124,9 @@ const strength = computed(() => {
   if (/[^A-Za-z0-9]/.test(value)) score += 1;
 
   const percent = Math.round((score / 5) * 100);
-  if (score <= 2) return { label: "Weak", tone: "weak", percent };
-  if (score <= 4) return { label: "보통", tone: "medium", percent };
-  return { label: "Strong", tone: "strong", percent };
+  if (score <= 2) return { label: t("auth.signup.strength.weak"), tone: "weak", percent };
+  if (score <= 4) return { label: t("auth.signup.strength.medium"), tone: "medium", percent };
+  return { label: t("auth.signup.strength.strong"), tone: "strong", percent };
 });
 
 const validate = () => {
@@ -127,25 +137,25 @@ const validate = () => {
   errors.form = "";
 
   if (!name.value) {
-    errors.name = "Please enter your name.";
+    errors.name = t("auth.signup.errors.nameRequired");
   }
 
   if (!email.value) {
-    errors.email = "Please enter your email.";
+    errors.email = t("auth.signup.errors.emailRequired");
   } else if (!emailPattern.test(email.value)) {
-    errors.email = "Please enter a valid email address.";
+    errors.email = t("auth.signup.errors.emailInvalid");
   }
 
   if (!password.value) {
-    errors.password = "Please enter your password.";
+    errors.password = t("auth.signup.errors.passwordRequired");
   } else if (password.value.length < 6) {
-    errors.password = "Password must be at least 6 characters.";
+    errors.password = t("auth.signup.errors.passwordLength");
   }
 
   if (!confirmPassword.value) {
-    errors.confirmPassword = "Please confirm your password.";
+    errors.confirmPassword = t("auth.signup.errors.confirmRequired");
   } else if (confirmPassword.value !== password.value) {
-    errors.confirmPassword = "Passwords do not match.";
+    errors.confirmPassword = t("auth.signup.errors.confirmMismatch");
   }
 
   return !errors.name && !errors.email && !errors.password && !errors.confirmPassword;
@@ -166,7 +176,7 @@ const onSubmit = async () => {
     });
 
     if (!response.data?.success) {
-      errors.form = response.data?.message || "Sign up failed.";
+      errors.form = response.data?.message || t("auth.signup.errors.formDefault");
       return;
     }
 
@@ -176,14 +186,14 @@ const onSubmit = async () => {
     });
 
     if (!loginResponse.data?.success) {
-      errors.form = "Sign up succeeded but auto-login failed.";
+      errors.form = t("auth.signup.errors.autoLoginFailed");
       return;
     }
 
     appStore.setCurrentUser(loginResponse.data.data);
     const workspaceRes = await api.get("/workspaces/my");
     const workspaces = workspaceRes.data?.data || [];
-    successMessage.value = "Sign up completed. Redirecting...";
+    successMessage.value = t("auth.signup.success");
 
     if (workspaces.length > 0) {
       router.push(`/workspace/${workspaces[0].id}`);
@@ -191,7 +201,7 @@ const onSubmit = async () => {
       router.push("/");
     }
   } catch (error) {
-    errors.form = error?.response?.data?.message || "Sign up failed.";
+    errors.form = error?.response?.data?.message || t("auth.signup.errors.formDefault");
   } finally {
     loading.value = false;
   }

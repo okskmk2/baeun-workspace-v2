@@ -6,7 +6,7 @@
   <p v-if="isLoading" class="status">불러오는 중...</p>
   <p v-else-if="errorMessage" class="status error">{{ errorMessage }}</p>
   <p v-else-if="activities.length === 0" class="status">최근 이슈 활동이 없습니다.</p>
-  <FeedList v-else :groups="activityGroups" item-key="itemKey">
+  <FeedList v-else :groups="activityGroups" item-key="itemKey" :item-click="handleItemClick">
     <template #icon>
       <span class="feed-icon">B</span>
     </template>
@@ -25,12 +25,13 @@
 <script setup>
 import { useI18n } from "vue-i18n";
 import { computed, onMounted, ref, watch } from "vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import api from "../lib/axios";
 import FeedList from "../components/FeedList.vue";
 
 const { t } = useI18n();
 const route = useRoute();
+const router = useRouter();
 
 const projectId = computed(() => route.params.projectId);
 const isLoading = ref(false);
@@ -72,6 +73,11 @@ const activityGroups = computed(() => [
     items: activities.value,
   },
 ]);
+
+const handleItemClick = (item) => {
+  if (!projectId.value || !item?.board_id || !item?.id) return;
+  router.push(`/project/${projectId.value}/board/${item.board_id}/issue/${item.id}`);
+};
 
 onMounted(fetchRecentIssues);
 watch(projectId, fetchRecentIssues);

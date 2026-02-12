@@ -79,6 +79,83 @@
       }
     }
   },
+  "auth": {
+    "login": {
+      "title": "로그인",
+      "subtitle": "이메일과 비밀번호를 입력하세요.",
+      "fields": {
+        "email": {
+          "label": "이메일",
+          "placeholder": "name@company.com"
+        },
+        "password": {
+          "label": "비밀번호",
+          "placeholder": "비밀번호"
+        }
+      },
+      "remember": "로그인 상태 유지",
+      "actions": {
+        "signIn": "로그인",
+        "signingIn": "로그인 중..."
+      },
+      "errors": {
+        "emailRequired": "이메일을 입력하세요.",
+        "emailInvalid": "유효한 이메일 주소를 입력하세요.",
+        "passwordRequired": "비밀번호를 입력하세요.",
+        "passwordLength": "비밀번호는 최소 6자 이상이어야 합니다.",
+        "formDefault": "로그인에 실패했습니다."
+      },
+      "signupPrompt": "계정이 없으신가요?",
+      "signupLink": "회원가입"
+    },
+    "signup": {
+      "title": "회원가입",
+      "subtitle": "몇 분만에 워크스페이스를 시작하세요.",
+      "fields": {
+        "name": {
+          "label": "이름",
+          "placeholder": "이름"
+        },
+        "email": {
+          "label": "이메일",
+          "placeholder": "name@company.com"
+        },
+        "password": {
+          "label": "비밀번호",
+          "placeholder": "최소 6자 이상"
+        },
+        "confirmPassword": {
+          "label": "비밀번호 확인",
+          "placeholder": "비밀번호를 다시 입력하세요"
+        }
+      },
+      "actions": {
+        "signUp": "회원가입",
+        "signingUp": "가입 중..."
+      },
+      "errors": {
+        "nameRequired": "이름을 입력하세요.",
+        "emailRequired": "이메일을 입력하세요.",
+        "emailInvalid": "유효한 이메일 주소를 입력하세요.",
+        "passwordRequired": "비밀번호를 입력하세요.",
+        "passwordLength": "비밀번호는 최소 6자 이상이어야 합니다.",
+        "confirmRequired": "비밀번호 확인을 입력하세요.",
+        "confirmMismatch": "비밀번호가 일치하지 않습니다.",
+        "formDefault": "회원가입에 실패했습니다.",
+        "autoLoginFailed": "회원가입은 완료됐지만 자동 로그인에 실패했습니다."
+      },
+      "strength": {
+        "summary": "비밀번호 강도: {label}",
+        "empty": "비밀번호를 입력하세요",
+        "weak": "약함",
+        "medium": "보통",
+        "strong": "강함"
+      },
+      "success": "회원가입이 완료되었습니다. 이동 중...",
+      "signinPrompt": "이미 계정이 있으신가요?",
+      "signinLink": "로그인"
+    }
+  },
   "settings": {
     "home": {
       "header": {

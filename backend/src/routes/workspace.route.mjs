@@ -193,6 +193,8 @@ router.get("/my", isAuth, async (req, res) => {
  *                       type: boolean
  *                     role_name:
  *                       type: string
+ *                     owner_name:
+ *                       type: string
  *       403:
  *         $ref: "#/components/responses/ErrorResponse"
  *       404:
@@ -215,7 +217,15 @@ router.get("/:workspaceId", isAuth, async (req, res) => {
     }
 
     const workspaceRes = await pool.query(
-      `SELECT w.*, wm.role_name
+      `SELECT w.*, wm.role_name,
+        (
+          SELECT m.name
+          FROM workspace_member wm_owner
+          JOIN member m ON wm_owner.member_id = m.id
+          WHERE wm_owner.workspace_id = w.id AND wm_owner.role_name = 'OWNER'
+          ORDER BY wm_owner.id ASC
+          LIMIT 1
+        ) AS owner_name
        FROM workspace w
        JOIN workspace_member wm ON w.id = wm.workspace_id
        WHERE w.id = $1 AND wm.member_id = $2`,
