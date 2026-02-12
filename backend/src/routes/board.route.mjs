@@ -113,6 +113,8 @@ router.get("/", isAuth, async (req, res) => {
  *             properties:
  *               name:
  *                 type: string
+ *               summary:
+ *                 type: string
  *               project_id:
  *                 type: integer
  *               type:
@@ -141,7 +143,7 @@ router.get("/", isAuth, async (req, res) => {
  *         $ref: "#/components/responses/ErrorResponse"
  */
 router.post("/", isAuth, async (req, res) => {
-  const { name, project_id, type = "KANBAN" } = req.body;
+  const { name, summary, project_id, type = "KANBAN" } = req.body;
   const userId = req.session.userId;
 
   if (!name || !project_id) {
@@ -167,11 +169,11 @@ router.post("/", isAuth, async (req, res) => {
 
     // 2. 보드 생성
     const boardQuery = `
-        INSERT INTO board (name, project_id, type)
-        VALUES ($1, $2, $3)
-        RETURNING *;
+      INSERT INTO board (name, summary, project_id, type)
+      VALUES ($1, $2, $3, $4)
+      RETURNING *;
     `;
-    const boardRes = await client.query(boardQuery, [name, project_id, type]);
+    const boardRes = await client.query(boardQuery, [name, summary ?? null, project_id, type]);
     const newBoard = boardRes.rows[0];
 
     // 3. 보드 멤버 등록 (생성자를 OWNER로 등록)
@@ -265,8 +267,8 @@ router.get("/:boardId", isAuth, async (req, res) => {
  *             properties:
  *               name:
  *                 type: string
- *             required:
- *               - name
+ *               summary:
+ *                 type: string
  *     responses:
  *       200:
  *         description: 보드 수정 성공
@@ -288,10 +290,14 @@ router.get("/:boardId", isAuth, async (req, res) => {
  */
 router.patch("/:boardId", isAuth, async (req, res) => {
   const { boardId } = req.params;
-  const { name } = req.body;
+  const { name, summary } = req.body;
   const userId = req.session.userId;
 
-  if (!name) {
+  if (name === undefined && summary === undefined) {
+    return res.status(400).json({ success: false, message: "수정할 항목이 필요합니다." });
+  }
+
+  if (name !== undefined && !name) {
     return res.status(400).json({ success: false, message: "보드 이름은 필수입니다." });
   }
 
@@ -305,10 +311,25 @@ router.patch("/:boardId", isAuth, async (req, res) => {
       return res.status(403).json({ success: false, message: "보드 수정 권한이 없습니다." });
     }
 
-    const updateRes = await pool.query(
-      "UPDATE board SET name = $1 WHERE id = $2 RETURNING *",
-      [name, boardId]
-    );
+    const fields = [];
+    const values = [];
+    let paramIndex = 1;
+
+    if (name !== undefined) {
+      fields.push(`name = $${paramIndex}`);
+      values.push(name);
+      paramIndex += 1;
+    }
+
+    if (summary !== undefined) {
+      fields.push(`summary = $${paramIndex}`);
+      values.push(summary);
+      paramIndex += 1;
+    }
+
+    values.push(boardId);
+    const updateQuery = `UPDATE board SET ${fields.join(", ")} WHERE id = $${paramIndex} RETURNING *`;
+    const updateRes = await pool.query(updateQuery, values);
 
     res.json({ success: true, data: updateRes.rows[0] });
   } catch (error) {

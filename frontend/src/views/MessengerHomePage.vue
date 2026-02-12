@@ -2,50 +2,37 @@
   <hgroup>
     <h1>{{ t("messenger.home.header.title") }}</h1>
   </hgroup>
-
-  <p v-if="isLoading" class="status">{{ t("messenger.home.status.loading") }}</p>
-  <p v-else-if="errorMessage" class="status error">{{ errorMessage }}</p>
-
-  <FeedList v-else-if="groupedMessages.length" :groups="groupedMessages" item-key="message_id">
-    <template #icon>
-      <div class="feed-icon">M</div>
-    </template>
-    <template #item="{ item }">
-      <div class="feed-title">
-        {{ item.channel_name || t("messenger.home.feed.channelFallback") }} ·
-        {{ item.content || t("messenger.home.feed.messageFallback") }}
-      </div>
-      <div class="feed-meta">
-        {{ item.creator_name || t("messenger.home.feed.creatorFallback") }} ·
-        {{ formatTime(item.created_at) }}
-      </div>
-    </template>
-  </FeedList>
-
-  <div v-else class="empty" aria-live="polite">
-    <div class="empty-card">
-      <h1>{{ t("messenger.home.empty.title") }}</h1>
-      <p class="empty-desc">{{ t("messenger.home.empty.description") }}</p>
-      <button type="button" class="btn">{{ t("messenger.home.actions.createChannel") }}</button>
-    </div>
-  </div>
+  <section class="activity-card" aria-live="polite">
+    <h2>채널 액티비티</h2>
+    <p v-if="isLoading" class="status">불러오는 중...</p>
+    <p v-else-if="errorMessage" class="status error">{{ errorMessage }}</p>
+    <p v-else-if="messages.length === 0" class="status">메시지가 없습니다.</p>
+    <ul v-else>
+      <li v-for="message in messages" :key="message.message_id">
+        <span class="item-title">
+          {{ message.channel_name || "채널" }} · {{ message.content || "(내용 없음)" }}
+        </span>
+        <span class="item-meta">
+          {{ message.creator_name || "알 수 없음" }} · {{ formatTime(message.created_at) }}
+        </span>
+      </li>
+    </ul>
+  </section>
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
+import { computed, onMounted, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import api from "../lib/axios";
-import FeedList from "../components/FeedList.vue";
 
-const { t, locale } = useI18n();
+const { t } = useI18n();
 const route = useRoute();
 
+const projectId = computed(() => route.params.projectId);
 const isLoading = ref(false);
 const errorMessage = ref("");
 const messages = ref([]);
-
-const projectId = computed(() => route.params.projectId);
 
 const fetchRecentMessages = async () => {
   if (!projectId.value) return;
@@ -59,130 +46,73 @@ const fetchRecentMessages = async () => {
     messages.value = res.data?.data || [];
   } catch (error) {
     messages.value = [];
-    errorMessage.value = t("messenger.home.status.errorLoad");
+    errorMessage.value = "최근 메시지를 불러오지 못했습니다.";
   } finally {
     isLoading.value = false;
   }
 };
 
-const formatDateLabel = (value) => {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "";
-  const now = new Date();
-  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const startOfYesterday = new Date(startOfToday.getTime() - 24 * 60 * 60 * 1000);
-
-  if (date >= startOfToday) return t("messenger.home.date.today");
-  if (date >= startOfYesterday) return t("messenger.home.date.yesterday");
-  const localeMap = {
-    ko: "ko-KR",
-    en: "en-US",
-    id: "id-ID",
-  };
-  const dateLocale = localeMap[locale.value] || "en-US";
-  return date.toLocaleDateString(dateLocale, { month: "2-digit", day: "2-digit" });
-};
-
 const formatTime = (value) => {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "";
-  const localeMap = {
-    ko: "ko-KR",
-    en: "en-US",
-    id: "id-ID",
-  };
-  const timeLocale = localeMap[locale.value] || "en-US";
-  return date.toLocaleTimeString(timeLocale, {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  return date.toLocaleString();
 };
-
-const groupedMessages = computed(() => {
-  const buckets = new Map();
-  messages.value.forEach((item) => {
-    const label = formatDateLabel(item.created_at);
-    if (!label) return;
-    if (!buckets.has(label)) {
-      buckets.set(label, []);
-    }
-    buckets.get(label).push(item);
-  });
-
-  const order = Array.from(buckets.keys());
-  const todayLabel = t("messenger.home.date.today");
-  const yesterdayLabel = t("messenger.home.date.yesterday");
-  const priority = (label) => (label === todayLabel ? 0 : label === yesterdayLabel ? 1 : 2);
-  order.sort((a, b) => priority(a) - priority(b));
-
-  return order.map((label) => ({
-    label,
-    items: buckets.get(label) || [],
-  }));
-});
 
 onMounted(fetchRecentMessages);
 watch(projectId, fetchRecentMessages);
 </script>
 
 <style scoped>
-.status {
-  color: var(--color-text-muted);
-  font-size: 14px;
-}
-
-.status.error {
-  color: var(--color-danger);
-}
-
-.section-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 12px;
-}
-
-.section-header h2 {
-  margin: 0;
-  font-size: 18px;
-}
-
-.feed-icon {
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: var(--color-text);
-  color: var(--color-text-inverse);
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.empty {
-  display: flex;
-  justify-content: center;
-}
-
-.empty-card {
+.activity-card {
   max-width: 520px;
   width: 100%;
   padding: 20px 24px;
   border-radius: 12px;
   border: 1px dashed var(--color-border);
-  text-align: center;
+  background-color: var(--color-surface);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.empty-card h1 {
-  margin: 0 0 8px;
+.activity-card h2 {
+  margin: 0 0 12px;
   font-size: 18px;
   color: var(--color-text);
 }
 
-.empty-desc {
-  margin: 0 0 16px;
-  color: var(--color-text-muted);
+.activity-card ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.activity-card li {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.item-title {
   font-size: 14px;
+  color: var(--color-text);
+}
+
+.item-meta {
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.status {
+  margin: 0;
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.status.error {
+  color: var(--color-danger);
 }
 </style>

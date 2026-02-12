@@ -5,10 +5,10 @@
         {{ t("board.layout.actions.create") }}
       </button>
       <nav>
-        <span class="lnb-item">
+        <!-- <span class="lnb-item">
           <MaterialSymbol name="view_kanban" :size="18" alt="" />
           보드 목록
-        </span>
+        </span> -->
         <p v-if="isLoading">{{ t("board.layout.status.loading") }}</p>
         <p v-else-if="errorMessage">{{ errorMessage }}</p>
         <p v-else-if="boards.length === 0">{{ t("board.layout.empty.boards") }}</p>
@@ -22,10 +22,12 @@
           </router-link>
         </template>
         <router-link
+          style="border-top: 1px solid #ddd; padding-top: 8px"
           class="lnb-item"
           :to="`/workspace/${workspaceId}/project/${projectId}/board/backlog`"
         >
-          <MaterialSymbol name="low_priority" size="18" />{{ t("backlog.page.header.title") }}
+          <!-- <MaterialSymbol name="low_priority" size="18" /> -->
+          {{ t("backlog.page.header.title") }}
         </router-link>
       </nav>
     </aside>
@@ -42,6 +44,14 @@
         v-model.trim="form.name"
         type="text"
         :placeholder="t('board.layout.modal.namePlaceholder')"
+      />
+      <label for="board-summary">{{ t("board.layout.modal.summaryLabel") }}</label>
+      <input
+        id="board-summary"
+        v-model.trim="form.summary"
+        type="text"
+        maxlength="80"
+        :placeholder="t('board.layout.modal.summaryPlaceholder')"
       />
       <p v-if="formError" class="form-error">{{ formError }}</p>
       <div class="modal-actions">
@@ -74,7 +84,7 @@ const errorMessage = ref("");
 const isModalOpen = ref(false);
 const isCreating = ref(false);
 const formError = ref("");
-const form = ref({ name: "" });
+const form = ref({ name: "", summary: "" });
 
 const workspaceId = computed(() => route.params.workspaceId);
 const projectId = computed(() => route.params.projectId);
@@ -101,7 +111,7 @@ const openModal = () => {
     formError.value = t("board.layout.validation.noProject");
     return;
   }
-  form.value = { name: "" };
+  form.value = { name: "", summary: "" };
   formError.value = "";
   isModalOpen.value = true;
 };
@@ -122,6 +132,7 @@ const createBoard = async () => {
   try {
     await api.post("/boards", {
       name: form.value.name,
+      summary: form.value.summary,
       project_id: projectId.value,
       type: "KANBAN",
     });
@@ -138,6 +149,9 @@ onMounted(fetchBoards);
 watch(projectId, fetchBoards);
 </script>
 <style scoped>
+.BoardLayout aside {
+  width: 13rem;
+}
 .BoardLayout aside nav {
   /* font-size: 14px; */
   gap: 4px;

@@ -6,6 +6,127 @@ const router = express.Router();
 
 /**
  * @swagger
+ * /api/issues/recent:
+ *   get:
+ *     summary: 최근 이슈 활동 조회
+ *     description: 최근 24시간 이슈 활동 목록 조회
+ *     tags:
+ *       - Issue
+ *     parameters:
+ *       - in: query
+ *         name: project_id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: 최근 이슈 활동 조회 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     items:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           id:
+ *                             type: integer
+ *                           title:
+ *                             type: string
+ *                           board_id:
+ *                             type: integer
+ *                           board_name:
+ *                             type: string
+ *                           created_at:
+ *                             type: string
+ *                             format: date-time
+ *                           updated_at:
+ *                             type: string
+ *                             format: date-time
+ *                           event_type:
+ *                             type: string
+ *                             enum: [CREATED, UPDATED]
+ *                           occurred_at:
+ *                             type: string
+ *                             format: date-time
+ *       400:
+ *         $ref: "#/components/responses/ErrorResponse"
+ *       403:
+ *         $ref: "#/components/responses/ErrorResponse"
+ *       500:
+ *         $ref: "#/components/responses/ErrorResponse"
+ */
+router.get("/recent", isAuth, async (req, res) => {
+  const projectId = req.query.project_id;
+  const userId = req.session.userId;
+
+  if (!projectId) {
+    return res.status(400).json({ success: false, message: "project_id is required" });
+  }
+
+  try {
+    const memberCheck = await pool.query(
+      "SELECT id FROM project_member WHERE project_id = $1 AND member_id = $2",
+      [projectId, userId]
+    );
+
+    if (memberCheck.rows.length === 0) {
+      return res.status(403).json({ success: false, message: "접근 권한이 없습니다." });
+    }
+
+    const recentRes = await pool.query(
+      `SELECT
+        i.id,
+        i.title,
+        i.board_id,
+        b.name as board_name,
+        i.created_at,
+        i.updated_at,
+        'CREATED' as event_type,
+        i.created_at as occurred_at
+       FROM issue i
+       JOIN board b ON i.board_id = b.id
+       WHERE b.project_id = $1
+         AND i.created_at >= NOW() - INTERVAL '24 hours'
+       UNION ALL
+       SELECT
+        i.id,
+        i.title,
+        i.board_id,
+        b.name as board_name,
+        i.created_at,
+        i.updated_at,
+        'UPDATED' as event_type,
+        i.updated_at as occurred_at
+       FROM issue i
+       JOIN board b ON i.board_id = b.id
+       WHERE b.project_id = $1
+         AND i.updated_at >= NOW() - INTERVAL '24 hours'
+         AND i.updated_at > i.created_at
+       ORDER BY occurred_at DESC`,
+      [projectId]
+    );
+
+    res.json({
+      success: true,
+      data: {
+        items: recentRes.rows,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * @swagger
  * /api/issues:
  *   post:
  *     summary: 이슈 생성
@@ -174,10 +295,11 @@ router.get("/:issueId/members", isAuth, async (req, res) => {
   const { issueId } = req.params;
   try {
     const membersRes = await pool.query(
-      `SELECT im.id as issue_member_id, m.id as member_id, m.name, m.email, im.role_name
+      `SELECT im.id as issue_member_id, m.id as member_id, m.name, m.email, im.role_name, im.created_at
        FROM issue_member im
        JOIN member m ON im.member_id = m.id
-       WHERE im.issue_id = $1`,
+       WHERE im.issue_id = $1
+       ORDER BY im.created_at ASC`,
       [issueId]
     );
 

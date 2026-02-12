@@ -51,6 +51,7 @@ const swaggerDefinition = {
         properties: {
           id: { type: "integer" },
           name: { type: "string" },
+          summary: { type: "string", nullable: true },
           project_id: { type: "integer" },
           type: { type: "string" },
           is_active: { type: "integer" },
@@ -102,6 +103,7 @@ const swaggerDefinition = {
           content: { type: "string", nullable: true },
           sort_order: { type: "integer" },
           created_at: { type: "string", format: "date-time" },
+          updated_at: { type: "string", format: "date-time" },
           children: {
             type: "array",
             items: { $ref: "#/components/schemas/Page" },
@@ -126,6 +128,7 @@ const swaggerDefinition = {
           name: { type: "string" },
           email: { type: "string" },
           role_name: { type: "string" },
+          created_at: { type: "string", format: "date-time" },
         },
       },
       Channel: {

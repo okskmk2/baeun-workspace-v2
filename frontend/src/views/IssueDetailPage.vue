@@ -75,6 +75,21 @@
         />
         <p v-if="relatedError" class="role-error">{{ relatedError }}</p>
       </div>
+      <div class="member-history">
+        <h3>{{ t("issue.detail.sections.memberHistory") }}</h3>
+        <p v-if="issueMembers.length === 0" class="member-history-empty">
+          {{ t("issue.detail.empty.memberHistory") }}
+        </p>
+        <ul v-else class="member-history-list">
+          <li v-for="member in issueMembers" :key="member.issue_member_id">
+            <span class="history-date">{{ formatDate(member.created_at) }}</span>
+            <span class="history-meta">
+              {{ member.name }}
+              <span class="history-role">{{ member.role_name }}</span>
+            </span>
+          </li>
+        </ul>
+      </div>
     </aside>
   </section>
 </template>
@@ -158,6 +173,13 @@ const canDeleteIssue = computed(() => ["REPORTER", "REVIEWER"].includes(userIssu
 const roleMembers = (role) => {
   const key = (role || "").toUpperCase();
   return issueMembers.value.filter((member) => (member.role_name || "").toUpperCase() === key);
+};
+
+const formatDate = (value) => {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+  return date.toLocaleString();
 };
 
 const hasMemberInRole = (role, memberId) => {
@@ -410,6 +432,7 @@ const addRelatedMemberByRole = async (role, memberId) => {
   font-size: 18px;
   font-weight: 600;
   margin-right: 8px;
+  width: 30rem;
 }
 
 .issue-status-select {
@@ -435,6 +458,57 @@ const addRelatedMemberByRole = async (role, memberId) => {
 .issue-meta h2 {
   margin: 0 0 12px 0;
   font-size: 16px;
+}
+
+.member-history {
+  margin-top: 20px;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-border);
+}
+
+.member-history h3 {
+  margin: 0 0 10px 0;
+  font-size: 14px;
+}
+
+.member-history-empty {
+  margin: 0;
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.member-history-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  font-size: 12px;
+  color: var(--color-text);
+}
+
+.member-history-list li {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.history-date {
+  color: var(--color-text-muted);
+}
+
+.history-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.history-role {
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: var(--color-border);
+  font-size: 11px;
 }
 
 @media (max-width: 900px) {

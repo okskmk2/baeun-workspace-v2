@@ -93,6 +93,127 @@ router.get("/", isAuth, async (req, res) => {
 
 /**
  * @swagger
+ * /api/pages/recent:
+ *   get:
+ *     summary: 최근 페이지 활동 조회
+ *     description: 최근 24시간 페이지 활동 목록 조회
+ *     tags:
+ *       - Page
+ *     parameters:
+ *       - in: query
+ *         name: project_id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: 최근 페이지 활동 조회 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     items:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           id:
+ *                             type: integer
+ *                           title:
+ *                             type: string
+ *                           project_id:
+ *                             type: integer
+ *                           parent_id:
+ *                             type: integer
+ *                             nullable: true
+ *                           created_at:
+ *                             type: string
+ *                             format: date-time
+ *                           updated_at:
+ *                             type: string
+ *                             format: date-time
+ *                           event_type:
+ *                             type: string
+ *                             enum: [CREATED, UPDATED]
+ *                           occurred_at:
+ *                             type: string
+ *                             format: date-time
+ *       400:
+ *         $ref: "#/components/responses/ErrorResponse"
+ *       403:
+ *         $ref: "#/components/responses/ErrorResponse"
+ *       500:
+ *         $ref: "#/components/responses/ErrorResponse"
+ */
+router.get("/recent", isAuth, async (req, res) => {
+  const projectId = getProjectId(req, res);
+  if (!projectId) return;
+  const userId = req.session.userId;
+
+  try {
+    const memberCheck = await pool.query(
+      "SELECT id FROM project_member WHERE project_id = $1 AND member_id = $2",
+      [projectId, userId]
+    );
+
+    if (memberCheck.rows.length === 0) {
+      return res.status(403).json({ success: false, message: "접근 권한이 없습니다." });
+    }
+
+    const recentRes = await pool.query(
+      `SELECT
+        id,
+        title,
+        project_id,
+        parent_id,
+        created_at,
+        updated_at,
+        'CREATED' as event_type,
+        created_at as occurred_at
+       FROM page
+       WHERE project_id = $1
+         AND created_at >= NOW() - INTERVAL '24 hours'
+       UNION ALL
+       SELECT
+        id,
+        title,
+        project_id,
+        parent_id,
+        created_at,
+        updated_at,
+        'UPDATED' as event_type,
+        updated_at as occurred_at
+       FROM page
+       WHERE project_id = $1
+         AND updated_at >= NOW() - INTERVAL '24 hours'
+         AND updated_at > created_at
+       ORDER BY occurred_at DESC`,
+      [projectId]
+    );
+
+    res.json({
+      success: true,
+      data: {
+        items: recentRes.rows,
+      },
+    });
+  } catch (error) {
+    logger.error("recent pages error", {
+      err: error?.message,
+      stack: error?.stack,
+    });
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+/**
+ * @swagger
  * /api/pages/{pageId}:
  *   get:
  *     summary: 페이지 상세 조회
@@ -147,10 +268,10 @@ router.get("/:pageId", isAuth, async (req, res) => {
       return res.status(403).json({ success: false, message: "접근 권한이 없습니다." });
     }
 
-    const pageRes = await pool.query(
-      "SELECT * FROM page WHERE id = $1 AND project_id = $2",
-      [pageId, projectId]
-    );
+    const pageRes = await pool.query("SELECT * FROM page WHERE id = $1 AND project_id = $2", [
+      pageId,
+      projectId,
+    ]);
 
     if (pageRes.rows.length === 0) {
       return res.status(404).json({ success: false, message: "페이지를 찾을 수 없습니다." });
@@ -244,7 +365,7 @@ router.patch("/:pageId", isAuth, async (req, res) => {
 
     const updateRes = await pool.query(
       `UPDATE page
-       SET title = COALESCE($1, title), content = COALESCE($2, content)
+       SET title = COALESCE($1, title), content = COALESCE($2, content), updated_at = CURRENT_TIMESTAMP
        WHERE id = $3 AND project_id = $4
        RETURNING *`,
       [title, content, pageId, projectId]
@@ -309,10 +430,7 @@ router.delete("/:pageId", isAuth, async (req, res) => {
       return res.status(403).json({ success: false, message: "페이지 삭제 권한이 없습니다." });
     }
 
-    await pool.query(
-      "DELETE FROM page WHERE id = $1 AND project_id = $2",
-      [pageId, projectId]
-    );
+    await pool.query("DELETE FROM page WHERE id = $1 AND project_id = $2", [pageId, projectId]);
 
     res.json({ success: true, message: "페이지가 삭제되었습니다." });
   } catch (error) {
@@ -474,10 +592,10 @@ router.post("/:pageId/members", isAuth, async (req, res) => {
       return res.status(403).json({ success: false, message: "권한이 없습니다." });
     }
 
-    await pool.query(
-      "DELETE FROM page_member WHERE page_id = $1 AND member_id = $2",
-      [pageId, member_id]
-    );
+    await pool.query("DELETE FROM page_member WHERE page_id = $1 AND member_id = $2", [
+      pageId,
+      member_id,
+    ]);
 
     const insertRes = await pool.query(
       "INSERT INTO page_member (page_id, member_id, role_name) VALUES ($1, $2, $3) RETURNING id",
@@ -662,10 +780,11 @@ router.post("/reorder", isAuth, async (req, res) => {
 
     await client.query("BEGIN");
     for (let index = 0; index < ids.length; index += 1) {
-      await client.query(
-        "UPDATE page SET sort_order = $1 WHERE id = $2 AND project_id = $3",
-        [index, ids[index], projectId]
-      );
+      await client.query("UPDATE page SET sort_order = $1 WHERE id = $2 AND project_id = $3", [
+        index,
+        ids[index],
+        projectId,
+      ]);
     }
     await client.query("COMMIT");
 

@@ -261,7 +261,9 @@
       "modal": {
         "title": "보드 만들기",
         "nameLabel": "보드 이름",
-        "namePlaceholder": "보드 이름"
+        "namePlaceholder": "보드 이름",
+        "summaryLabel": "요약",
+        "summaryPlaceholder": "한 줄 설명"
       },
       "validation": {
         "noProject": "프로젝트가 선택되지 않았습니다.",
@@ -340,7 +342,9 @@
       },
       "form": {
         "nameLabel": "보드 이름",
-        "namePlaceholder": "보드 이름"
+        "namePlaceholder": "보드 이름",
+        "summaryLabel": "요약",
+        "summaryPlaceholder": "한 줄 설명"
       },
       "actions": {
         "back": "보드로 돌아가기",
@@ -398,10 +402,12 @@
         "descriptionPlaceholder": "설명을 입력하세요"
       },
       "empty": {
-        "description": "설명 없음."
+        "description": "설명 없음.",
+        "memberHistory": "멤버 이력이 없습니다."
       },
       "sections": {
-        "assignees": "담당자"
+        "assignees": "담당자",
+        "memberHistory": "멤버 이력"
       },
       "roles": {
         "assignee": "담당자",

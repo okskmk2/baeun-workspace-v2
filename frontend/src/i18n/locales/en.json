@@ -261,7 +261,9 @@
       "modal": {
         "title": "Create Board",
         "nameLabel": "Board Name",
-        "namePlaceholder": "Board name"
+        "namePlaceholder": "Board name",
+        "summaryLabel": "Summary",
+        "summaryPlaceholder": "One-line summary"
       },
       "validation": {
         "noProject": "No project selected.",
@@ -340,7 +342,9 @@
       },
       "form": {
         "nameLabel": "Board Name",
-        "namePlaceholder": "Board name"
+        "namePlaceholder": "Board name",
+        "summaryLabel": "Summary",
+        "summaryPlaceholder": "One-line summary"
       },
       "actions": {
         "back": "Back to board",
@@ -398,10 +402,12 @@
         "descriptionPlaceholder": "Enter a description"
       },
       "empty": {
-        "description": "No description."
+        "description": "No description.",
+        "memberHistory": "No member history yet."
       },
       "sections": {
-        "assignees": "Assignees"
+        "assignees": "Assignees",
+        "memberHistory": "Member history"
       },
       "roles": {
         "assignee": "Assignee",

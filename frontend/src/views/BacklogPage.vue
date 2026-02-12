@@ -2,11 +2,11 @@
   <hgroup>
     <div>
       <h1>{{ t("backlog.page.header.title") }}</h1>
-      <p class="subtitle">드래그 앤 드롭으로 이슈를 프로젝트에 할당할 수 있습니다.</p>
+      <p class="subtitle">미할당된 이슈를 드래그 앤 드롭으로 보드에 할당할 수 있습니다.</p>
     </div>
     <div class="actions">
       <button type="button" class="btn btn--sm" @click="openModal" :disabled="!backlogBoardId">
-        {{ t("backlog.page.actions.createIssue") }}
+        백로그 만들기
       </button>
     </div>
   </hgroup>
@@ -59,6 +59,7 @@
           @click="$router.push(`/workspace/${workspaceId}/project/${projectId}/board/${board.id}`)"
         >
           <h3>{{ board.name }}</h3>
+          <p v-if="board.summary" class="board-card-summary">{{ board.summary }}</p>
           <div class="issue-counts">
             <div v-for="(count, status) in board.issue_counts" :key="status" class="status-count">
               <span>{{ t(`issue.status.${convertSnakeToCamel(status)}`) }}:</span>
@@ -70,7 +71,12 @@
     </div>
   </div>
 
-  <BaseModal :open="isModalOpen" :title="t('backlog.page.modal.title')" @close="closeModal">
+  <BaseModal
+    :open="isModalOpen"
+    :title="t('backlog.page.modal.title')"
+    :closeOnBackdrop="false"
+    @close="closeModal"
+  >
     <form class="modal-form" @submit.prevent="createIssue">
       <label for="issue-title">{{ t("backlog.page.modal.titleLabel") }}</label>
       <input
@@ -84,7 +90,7 @@
       <textarea
         id="issue-content"
         v-model.trim="form.content"
-        rows="4"
+        rows="10"
         :placeholder="t('backlog.page.modal.descriptionPlaceholder')"
       ></textarea>
 
@@ -328,7 +334,7 @@ watch(projectId, async (nextId, prevId) => {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  height: calc(100vh - 180px); /* Adjust height to fit layout */
+  height: calc(100vh - 238px); /* Adjust height to fit layout */
   overflow-y: auto;
   padding-right: 12px; /* Add some padding for scrollbar */
 }
@@ -421,6 +427,16 @@ watch(projectId, async (nextId, prevId) => {
   font-weight: 600;
   margin: 0;
   color: var(--color-text);
+}
+
+.board-card-summary {
+  margin: 0;
+  font-size: 12px;
+  color: var(--color-text-muted);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .issue-counts {

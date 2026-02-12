@@ -1,5 +1,5 @@
 <template>
-  <div v-if="open" class="modal-backdrop" @click="onClose">
+  <div v-if="open" class="modal-backdrop" @click="onBackdropClick">
     <div class="modal" @click.stop>
       <div class="modal-header">
         <h1>{{ title }}</h1>
@@ -28,12 +28,18 @@ const { t } = useI18n();
 const props = defineProps({
   open: { type: Boolean, default: false },
   title: { type: String, default: "" },
+  closeOnBackdrop: { type: Boolean, default: true },
 });
 
 const emit = defineEmits(["close"]);
 
 const onClose = () => {
   emit("close");
+};
+
+const onBackdropClick = () => {
+  if (!props.closeOnBackdrop) return;
+  onClose();
 };
 </script>
 

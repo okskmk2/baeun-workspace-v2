@@ -107,11 +107,12 @@ router.get("/recent", isAuth, async (req, res) => {
         cr.name as channel_name
       FROM message c
       JOIN channel cr ON c.channel_id = cr.id
+      JOIN channel_member cm ON cm.channel_id = cr.id AND cm.member_id = $2
       LEFT JOIN member m ON c.created_by = m.id
       WHERE cr.project_id = $1
         AND c.created_at >= NOW() - INTERVAL '24 hours'
       ORDER BY c.created_at DESC`,
-      [projectId]
+      [projectId, userId]
     );
 
     res.json({ success: true, data: recentRes.rows });

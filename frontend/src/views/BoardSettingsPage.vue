@@ -12,13 +12,21 @@
   <p v-if="isLoading" class="status">{{ t("board.settings.status.loading") }}</p>
   <p v-else-if="errorMessage" class="status error">{{ errorMessage }}</p>
 
-  <form v-else class="settings-form" @submit.prevent="saveBoardName">
+  <form v-else class="settings-form" @submit.prevent="saveBoard">
     <label for="board-name">{{ t("board.settings.form.nameLabel") }}</label>
     <input
       id="board-name"
       v-model.trim="form.name"
       type="text"
       :placeholder="t('board.settings.form.namePlaceholder')"
+    />
+    <label for="board-summary">{{ t("board.settings.form.summaryLabel") }}</label>
+    <input
+      id="board-summary"
+      v-model.trim="form.summary"
+      type="text"
+      maxlength="80"
+      :placeholder="t('board.settings.form.summaryPlaceholder')"
     />
 
     <p v-if="formError" class="status error">{{ formError }}</p>
@@ -69,6 +77,7 @@ const formError = ref("");
 const deleteError = ref("");
 const form = ref({
   name: "",
+  summary: "",
 });
 
 const fetchBoard = async () => {
@@ -80,6 +89,7 @@ const fetchBoard = async () => {
     const res = await api.get(`/boards/${boardId.value}`);
     const data = res.data?.data || {};
     form.value.name = data.name || "";
+    form.value.summary = data.summary || "";
   } catch (error) {
     errorMessage.value = t("board.settings.status.errorLoad");
   } finally {
@@ -87,7 +97,7 @@ const fetchBoard = async () => {
   }
 };
 
-const saveBoardName = async () => {
+const saveBoard = async () => {
   if (!form.value.name) {
     formError.value = t("board.settings.validation.nameRequired");
     return;
@@ -99,13 +109,17 @@ const saveBoardName = async () => {
   try {
     const res = await api.patch(`/boards/${boardId.value}`, {
       name: form.value.name,
+      summary: form.value.summary,
     });
     const updated = res.data?.data;
     if (projectId.value) {
-      boardStore.updateBoardName(
+      boardStore.updateBoardDetails(
         boardId.value,
         projectId.value,
-        updated?.name || form.value.name
+        {
+          name: updated?.name ?? form.value.name,
+          summary: updated?.summary ?? form.value.summary,
+        }
       );
     }
   } catch (error) {

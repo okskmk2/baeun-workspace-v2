@@ -1,6 +1,9 @@
 <template>
   <hgroup>
-    <h1>{{ board.name || t("board.page.header.fallbackTitle") }}</h1>
+    <div>
+      <h1>{{ board.name || t("board.page.header.fallbackTitle") }}</h1>
+      <p v-if="board.summary" class="subtitle">{{ board.summary }}</p>
+    </div>
     <div class="actions">
       <button type="button" class="btn btn--sm" @click="openModal">
         {{ t("board.page.actions.createIssue") }}
@@ -60,7 +63,12 @@
     </section>
   </div>
 
-  <BaseModal :open="isModalOpen" :title="t('board.page.modal.title')" @close="closeModal">
+  <BaseModal
+    :open="isModalOpen"
+    :title="t('board.page.modal.title')"
+    :closeOnBackdrop="false"
+    @close="closeModal"
+  >
     <form class="modal-form" @submit.prevent="createIssue">
       <label for="issue-title">{{ t("board.page.modal.titleLabel") }}</label>
       <input
@@ -74,7 +82,7 @@
       <textarea
         id="issue-content"
         v-model.trim="form.content"
-        rows="4"
+        rows="10"
         :placeholder="t('board.page.modal.descriptionPlaceholder')"
       ></textarea>
 
@@ -198,7 +206,7 @@ const openModal = () => {
     formError.value = t("board.page.validation.noBoard");
     return;
   }
-  form.value = { title: "", content: "", status: "BACKLOG" };
+  form.value = { title: "", content: "", status: "PENDING" };
   formError.value = "";
   isModalOpen.value = true;
 };
@@ -232,7 +240,6 @@ const createIssue = async () => {
   }
 };
 
-
 const loadBoardData = async () => {
   await Promise.all([fetchBoard(), fetchIssues()]);
 };
@@ -258,6 +265,12 @@ watch(boardId, async (nextId, prevId) => {
 .actions {
   display: inline-flex;
   gap: 8px;
+}
+
+.board-summary {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--color-text-muted);
 }
 
 /* .kanban-column + .kanban-column {
