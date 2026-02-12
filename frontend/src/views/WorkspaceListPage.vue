@@ -40,7 +40,7 @@
           {{ t("workspaceList.empty.projects") }}
         </li>
         <li v-for="project in getProjects(workspace.id)" :key="project.id">
-          <router-link :to="`/workspace/${workspace.id}/project/${project.id}`">
+          <router-link :to="`/project/${project.id}`">
             {{ project.name }}
           </router-link>
         </li>

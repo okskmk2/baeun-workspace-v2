@@ -16,7 +16,7 @@
           <router-link
             v-for="board in boards.filter((b) => b.type !== 'BACKLOG')"
             :key="board.id"
-            :to="`/workspace/${workspaceId}/project/${projectId}/board/${board.id}`"
+            :to="`/project/${projectId}/board/${board.id}`"
           >
             {{ board.name }}
           </router-link>
@@ -24,7 +24,7 @@
         <router-link
           style="border-top: 1px solid #ddd; padding-top: 8px"
           class="lnb-item"
-          :to="`/workspace/${workspaceId}/project/${projectId}/board/backlog`"
+          :to="`/project/${projectId}/board/backlog`"
         >
           <!-- <MaterialSymbol name="low_priority" size="18" /> -->
           {{ t("backlog.page.header.title") }}
@@ -73,7 +73,6 @@ import { useRoute } from "vue-router";
 import api from "../lib/axios";
 import BaseModal from "../components/BaseModal.vue";
 import { useBoardStore } from "../stores/boardStore";
-import MaterialSymbol from "../components/MaterialSymbol.vue";
 
 const { t } = useI18n();
 const route = useRoute();
@@ -86,7 +85,7 @@ const isCreating = ref(false);
 const formError = ref("");
 const form = ref({ name: "", summary: "" });
 
-const workspaceId = computed(() => route.params.workspaceId);
+
 const projectId = computed(() => route.params.projectId);
 
 const fetchBoards = async () => {

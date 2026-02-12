@@ -6,6 +6,7 @@ export const useWorkspaceStore = defineStore("workspace", {
     workspaces: [],
     workspaceById: {},
     projectsByWorkspace: {},
+    projectById: {},
   }),
   actions: {
     async fetchWorkspaces() {
@@ -30,10 +31,17 @@ export const useWorkspaceStore = defineStore("workspace", {
       const res = await api.get(`/projects?workspaceId=${workspaceId}`);
       const projects = res.data?.data || [];
       this.projectsByWorkspace[workspaceId] = projects;
+      projects.forEach((project) => {
+        this.projectById[project.id] = project;
+      });
       return projects;
     },
     getProjects(workspaceId) {
       return this.projectsByWorkspace[workspaceId] || [];
+    },
+    getProject(projectId) {
+      if (!projectId) return null;
+      return this.projectById[projectId] || null;
     },
     getWorkspaceName(workspaceId) {
       return this.workspaceById[workspaceId]?.name || "";
@@ -63,6 +71,16 @@ export const useWorkspaceStore = defineStore("workspace", {
       if (project) {
         const current = this.projectsByWorkspace[workspaceId] || [];
         this.projectsByWorkspace[workspaceId] = [...current, project];
+        this.projectById[project.id] = project;
+      }
+      return project;
+    },
+    async fetchProjectDetail(projectId) {
+      if (!projectId) return null;
+      const res = await api.get(`/projects/${projectId}`);
+      const project = res.data?.data || null;
+      if (project) {
+        this.projectById[projectId] = project;
       }
       return project;
     },

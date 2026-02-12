@@ -16,7 +16,7 @@
     <p v-else-if="projects.length === 0">{{ t("workspace.home.empty.projects") }}</p>
     <ul v-else>
       <li v-for="project in projects" :key="project.id">
-        <router-link :to="`/workspace/${workspaceId}/project/${project.id}`">
+        <router-link :to="`/project/${project.id}`">
           {{ project.name }}
         </router-link>
         <button
@@ -116,7 +116,7 @@ const formError = ref("");
 const form = ref({ name: "" });
 const memberError = ref("");
 const memberForm = ref({ email: "", role: "MEMBER" });
-const workspaceId = computed(() => route.params.workspaceId);
+
 const projects = computed(() => workspaceStore.getProjects(workspaceId.value));
 
 const fetchProjects = async () => {

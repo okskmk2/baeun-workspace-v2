@@ -65,7 +65,7 @@ const route = useRoute();
 const router = useRouter();
 const boardStore = useBoardStore();
 
-const workspaceId = computed(() => route.params.workspaceId);
+
 const projectId = computed(() => route.params.projectId);
 const boardId = computed(() => route.params.boardId);
 
@@ -139,7 +139,7 @@ const deleteBoard = async () => {
 
   try {
     await boardStore.deleteBoard(boardId.value, projectId.value);
-    router.push(`/workspace/${workspaceId.value}/project/${projectId.value}/board`);
+    router.push(`/project/${projectId.value}/board`);
   } catch (error) {
     deleteError.value = error?.response?.data?.message || t("board.settings.status.errorDelete");
   } finally {

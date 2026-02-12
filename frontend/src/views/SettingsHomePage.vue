@@ -63,7 +63,7 @@ import { useWorkspaceStore } from "../stores/workspaceStore";
 
 const { t } = useI18n();
 const route = useRoute();
-const workspaceId = computed(() => route.params.workspaceId);
+
 const projectId = computed(() => route.params.projectId);
 const appStore = useAppStore();
 const workspaceStore = useWorkspaceStore();
@@ -145,22 +145,18 @@ const saveSettings = async () => {
         },
       },
     });
-    if (workspaceId.value && projectId.value) {
-      const list = workspaceStore.getProjects(workspaceId.value);
-      const updated = list.map((project) => {
-        if (String(project.id) !== String(projectId.value)) return project;
-        return {
-          ...project,
-          name: form.value.name,
-          theme_json: {
-            ...(project.theme_json || {}),
-            gnb: {
-              themeId: selected,
-            },
+    if (projectId.value) {
+      const current = workspaceStore.getProject(projectId.value) || {};
+      workspaceStore.projectById[projectId.value] = {
+        ...current,
+        name: form.value.name,
+        theme_json: {
+          ...(current.theme_json || {}),
+          gnb: {
+            themeId: selected,
           },
-        };
-      });
-      workspaceStore.projectsByWorkspace[workspaceId.value] = updated;
+        },
+      };
     }
     addToast({ message: t("settings.home.toast.updated"), type: "success" });
   } catch (error) {

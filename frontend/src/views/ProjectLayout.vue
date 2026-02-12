@@ -9,21 +9,21 @@
           <nav class="mainnav">
             <router-link
               class="mainnav-link"
-              :to="`/workspace/${workspaceId}/project/${projectId}/wiki`"
+              :to="`/project/${projectId}/wiki`"
             >
               <MaterialSymbol name="menu_book" :size="20" alt="" />
               <span>{{ t("layout.project.nav.wiki") }}</span>
             </router-link>
             <router-link
               class="mainnav-link"
-              :to="`/workspace/${workspaceId}/project/${projectId}/board`"
+              :to="`/project/${projectId}/board`"
             >
               <MaterialSymbol name="view_kanban" :size="20" alt="" />
               <span>{{ t("layout.project.nav.board") }}</span>
             </router-link>
             <router-link
               class="mainnav-link"
-              :to="`/workspace/${workspaceId}/project/${projectId}/messenger`"
+              :to="`/project/${projectId}/messenger`"
             >
               <MaterialSymbol name="chat_bubble" :size="20" alt="" />
               <span>{{ t("layout.project.nav.messenger") }}</span>
@@ -36,7 +36,7 @@
         <SearchInput :placeholder="t('layout.project.search.placeholder')" />
         <router-link
           v-if="canAccessProjectSettings"
-          :to="`/workspace/${workspaceId}/project/${projectId}/settings`"
+          :to="`/project/${projectId}/settings`"
           class="btn btn--icon"
           :aria-label="t('layout.project.util.settings')"
           :title="t('layout.project.util.settings')"
@@ -71,14 +71,12 @@ const workspaceStore = useWorkspaceStore();
 const appStore = useAppStore();
 const { gnbPreviewTheme, currentUser } = storeToRefs(appStore);
 
-const workspaceId = computed(() => route.params.workspaceId);
+
 const projectId = computed(() => route.params.projectId);
-const projects = computed(() => workspaceStore.getProjects(workspaceId.value));
 const projectMembers = computed(() => projectMemberStore.getProjectMembers(projectId.value));
 const currentProject = computed(() => {
-  if (!projectId.value) return "";
-  const list = projects.value || [];
-  return list.find((project) => String(project.id) === String(projectId.value)) || null;
+  if (!projectId.value) return null;
+  return workspaceStore.getProject(projectId.value);
 });
 const projectName = computed(() => currentProject.value?.name || "");
 const accountInitials = computed(() => {
@@ -161,6 +159,7 @@ watch(
   projectId,
   (value) => {
     if (!value) return;
+    workspaceStore.fetchProjectDetail(value);
     projectMemberStore.fetchProjectMembers(value);
   },
   { immediate: true }

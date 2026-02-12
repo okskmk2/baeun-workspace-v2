@@ -23,7 +23,7 @@
     >
       <RouterLink
         class="page-link"
-        :to="`/workspace/${workspaceId}/project/${projectId}/wiki/${node.id}`"
+        :to="`/project/${projectId}/wiki/${node.id}`"
       >
         {{ node.title }}
       </RouterLink>
@@ -32,7 +32,6 @@
         v-if="node.children && node.children.length"
         :nodes="node.children"
         :project-id="projectId"
-        :workspace-id="workspaceId"
         :parent-id="node.id"
         :level="level + 1"
         @reorder="emitReorder"
@@ -51,7 +50,6 @@ const props = defineProps({
   nodes: { type: Array, default: () => [] },
   level: { type: Number, default: 0 },
   projectId: { type: [String, Number], required: true },
-  workspaceId: { type: [String, Number], required: true },
   parentId: { type: [String, Number, null], default: null },
 });
 

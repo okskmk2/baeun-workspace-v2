@@ -8,13 +8,7 @@
         <p v-if="isLoading">{{ t("wiki.layout.status.loading") }}</p>
         <p v-else-if="errorMessage">{{ errorMessage }}</p>
         <p v-else-if="pages.length === 0">{{ t("wiki.layout.empty.pages") }}</p>
-        <PageTree
-          v-else
-          :nodes="pages"
-          :project-id="projectId"
-          :workspace-id="workspaceId"
-          @reorder="handleReorder"
-        />
+        <PageTree v-else :nodes="pages" :project-id="projectId" @reorder="handleReorder" />
       </nav>
     </aside>
     <main>
@@ -55,7 +49,7 @@ import { usePageStore } from "../stores/pageStore";
 
 const { t } = useI18n();
 const route = useRoute();
-const workspaceId = computed(() => route.params.workspaceId);
+
 const projectId = computed(() => route.params.projectId);
 const currentPageId = computed(() => route.params.pageId);
 
@@ -193,7 +187,6 @@ const createPage = async () => {
 
 onMounted(fetchPages);
 watch(projectId, fetchPages);
-watch(workspaceId, fetchPages);
 </script>
 
 <style>

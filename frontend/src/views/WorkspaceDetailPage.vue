@@ -8,7 +8,7 @@
       <router-link class="btn btn--secondary" to="/account/workspaces">
         {{ t("workspace.detail.actions.back") }}
       </router-link>
-      <router-link class="btn" :to="`/workspace/${workspaceId}`">
+      <router-link class="btn" :to="``">
         {{ t("workspace.detail.actions.open") }}
       </router-link>
     </div>
@@ -85,7 +85,7 @@
         </p>
         <ul v-else class="project-list">
           <li v-for="project in projects" :key="project.id" class="project-item">
-            <router-link :to="`/workspace/${workspaceId}/project/${project.id}`">
+            <router-link :to="`/project/${project.id}`">
               {{ project.name }}
             </router-link>
           </li>
@@ -189,6 +189,8 @@ const route = useRoute();
 const workspaceStore = useWorkspaceStore();
 const appStore = useAppStore();
 
+const workspaceId = computed(() => route.params.workspaceId);
+
 const isLoading = ref(false);
 const errorMessage = ref("");
 const isMembersLoading = ref(false);
@@ -210,7 +212,7 @@ const removingMemberId = ref(null);
 const memberActionError = ref("");
 const memberActionSuccess = ref("");
 
-const workspaceId = computed(() => route.params.workspaceId);
+
 const workspace = computed(() => workspaceStore.workspaceById[workspaceId.value] || null);
 const projects = computed(() => workspaceStore.getProjects(workspaceId.value));
 

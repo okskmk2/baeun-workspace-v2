@@ -192,7 +192,7 @@ const route = useRoute();
 const projectMemberStore = useProjectMemberStore();
 const roomId = computed(() => route.params.roomId);
 const projectId = computed(() => route.params.projectId);
-const workspaceId = computed(() => route.params.workspaceId);
+
 
 const messages = ref([]);
 const messagesContainer = ref(null);
@@ -459,7 +459,7 @@ const inviteMember = async () => {
 
 const channelSettingsPath = computed(() => {
   if (!roomId.value) return "";
-  return `/workspace/${workspaceId.value}/project/${projectId.value}/messenger/${roomId.value}/settings`;
+  return `/project/${projectId.value}/messenger/${roomId.value}/settings`;
 });
 
 onMounted(async () => {

@@ -56,7 +56,7 @@
           class="board-card"
           @dragover.prevent
           @drop="onDropToBoard(board.id)"
-          @click="$router.push(`/workspace/${workspaceId}/project/${projectId}/board/${board.id}`)"
+          @click="$router.push(`/project/${projectId}/board/${board.id}`)"
         >
           <h3>{{ board.name }}</h3>
           <p v-if="board.summary" class="board-card-summary">{{ board.summary }}</p>
@@ -141,7 +141,7 @@ const isLoadingBoards = ref(false);
 const boardListError = ref("");
 const draggingIssueId = ref(null); // To store the ID of the dragged issue
 
-const workspaceId = computed(() => route.params.workspaceId);
+
 const projectId = computed(() => route.params.projectId);
 
 const fetchBacklogBoard = async () => {
@@ -205,7 +205,7 @@ const fetchBoardsForDisplay = async () => {
 };
 
 const issueDetailPath = (issueId) =>
-  `/workspace/${workspaceId.value}/project/${projectId.value}/board/${backlogBoardId.value}/issue/${issueId}`;
+  `/project/${projectId.value}/board/${backlogBoardId.value}/issue/${issueId}`;
 
 const roleVariant = (role) => {
   const key = (role || "").toUpperCase();

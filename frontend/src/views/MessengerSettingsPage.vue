@@ -65,7 +65,7 @@ const route = useRoute();
 const router = useRouter();
 const chatStore = useChatStore();
 
-const workspaceId = computed(() => route.params.workspaceId);
+
 const projectId = computed(() => route.params.projectId);
 const roomId = computed(() => route.params.roomId);
 
@@ -134,7 +134,7 @@ const deleteChannel = async () => {
   try {
     await api.delete(`/channels/${roomId.value}`);
     await chatStore.fetchRooms(projectId.value);
-    router.push(`/workspace/${workspaceId.value}/project/${projectId.value}/messenger`);
+    router.push(`/project/${projectId.value}/messenger`);
   } catch (error) {
     deleteError.value = error?.response?.data?.message || t("messenger.settings.status.errorDelete");
   } finally {

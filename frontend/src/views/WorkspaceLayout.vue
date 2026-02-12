@@ -12,7 +12,6 @@ const router = useRouter();
 const selectedProjectId = ref("");
 const workspaceStore = useWorkspaceStore();
 
-const workspaceId = computed(() => route.params.workspaceId);
 const projectId = computed(() => route.params.projectId);
 
 const fetchWorkspace = async () => {

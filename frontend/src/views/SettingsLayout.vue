@@ -2,10 +2,10 @@
   <div class="LnbLayout">
     <aside>
       <nav>
-        <router-link :to="`/workspace/${workspaceId}/project/${projectId}/settings`"
+        <router-link :to="`/project/${projectId}/settings`"
           >{{ t("layout.settings.nav.general") }}</router-link
         >
-        <router-link :to="`/workspace/${workspaceId}/project/${projectId}/settings/member`"
+        <router-link :to="`/project/${projectId}/settings/member`"
           >{{ t("layout.settings.nav.members") }}</router-link
         >
       </nav>
@@ -23,6 +23,6 @@ import { useRoute } from "vue-router";
 const { t } = useI18n();
 const route = useRoute();
 
-const workspaceId = computed(() => route.params.workspaceId);
+
 const projectId = computed(() => route.params.projectId);
 </script>

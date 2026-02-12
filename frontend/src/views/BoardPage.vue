@@ -141,7 +141,7 @@ const statusLabels = computed(() => ({
   DONE: t("issue.status.done"),
 }));
 
-const workspaceId = computed(() => route.params.workspaceId);
+
 const projectId = computed(() => route.params.projectId);
 const boardId = computed(() => route.params.boardId);
 
@@ -160,9 +160,9 @@ const fetchIssues = async () => {
 const issuesByStatus = (status) =>
   issues.value.filter((issue) => (issue.status || "BACKLOG") === status);
 const issueDetailPath = (issueId) =>
-  `/workspace/${workspaceId.value}/project/${projectId.value}/board/${boardId.value}/issue/${issueId}`;
+  `/project/${projectId.value}/board/${boardId.value}/issue/${issueId}`;
 const boardSettingsPath = computed(
-  () => `/workspace/${workspaceId.value}/project/${projectId.value}/board/${boardId.value}/settings`
+  () => `/project/${projectId.value}/board/${boardId.value}/settings`
 );
 
 const roleVariant = (role) => {

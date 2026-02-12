@@ -82,91 +82,91 @@ const routes = [
         path: "",
         component: WorkspaceHomePage,
       },
+    ],
+  },
+  {
+    path: "/project/:projectId",
+    component: ProjectLayout,
+    children: [
       {
-        path: "project/:projectId",
-        component: ProjectLayout,
+        path: "",
+        beforeEnter: async (to, from) => {
+          const { projectId } = to.params;
+          return `/project/${projectId}/board`;
+        },
+        component: BlankPage,
+      },
+      {
+        path: "board",
+        component: BoardLayout,
         children: [
           {
             path: "",
-            beforeEnter: async (to, from) => {
-              const { workspaceId, projectId } = to.params;
-              return `/workspace/${workspaceId}/project/${projectId}/board`;
-            },
-            component: BlankPage,
+            component: BoardHomePage,
           },
           {
-            path: "board",
-            component: BoardLayout,
-            children: [
-              {
-                path: "",
-                component: BoardHomePage,
-              },
-              {
-                path: ":boardId",
-                component: BoardPage,
-              },
-              {
-                path: ":boardId/settings",
-                component: BoardSettingsPage,
-              },
-              {
-                path: ":boardId/issue/:issueId",
-                component: IssueDetailPage,
-              },
-              {
-                path: "backlog",
-                component: BacklogPage,
-              },
-            ],
+            path: ":boardId",
+            component: BoardPage,
           },
+          {
+            path: ":boardId/settings",
+            component: BoardSettingsPage,
+          },
+          {
+            path: ":boardId/issue/:issueId",
+            component: IssueDetailPage,
+          },
+          {
+            path: "backlog",
+            component: BacklogPage,
+          },
+        ],
+      },
 
+      {
+        path: "wiki",
+        component: WikiLayout,
+        children: [
           {
-            path: "wiki",
-            component: WikiLayout,
-            children: [
-              {
-                path: "",
-                component: WikiHomePage,
-              },
-              {
-                path: ":pageId",
-                component: WikiPage,
-              },
-            ],
+            path: "",
+            component: WikiHomePage,
           },
           {
-            path: "messenger",
-            component: MessengerLayout,
-            children: [
-              {
-                path: "",
-                component: MessengerHomePage,
-              },
-              {
-                path: ":roomId/settings",
-                component: MessengerSettingsPage,
-              },
-              {
-                path: ":roomId",
-                component: MessengerRoomPage,
-              },
-            ],
+            path: ":pageId",
+            component: WikiPage,
+          },
+        ],
+      },
+      {
+        path: "messenger",
+        component: MessengerLayout,
+        children: [
+          {
+            path: "",
+            component: MessengerHomePage,
           },
           {
-            path: "settings",
-            meta: { requiresProjectAdmin: true },
-            component: SettingsLayout,
-            children: [
-              {
-                path: "",
-                component: SettingsHomePage,
-              },
-              {
-                path: "member",
-                component: SettingsMemberPage,
-              },
-            ],
+            path: ":roomId/settings",
+            component: MessengerSettingsPage,
+          },
+          {
+            path: ":roomId",
+            component: MessengerRoomPage,
+          },
+        ],
+      },
+      {
+        path: "settings",
+        meta: { requiresProjectAdmin: true },
+        component: SettingsLayout,
+        children: [
+          {
+            path: "",
+            component: SettingsHomePage,
+          },
+          {
+            path: "member",
+            component: SettingsMemberPage,
           },
         ],
       },
@@ -191,8 +191,8 @@ router.beforeEach(async (to, from, next) => {
   isAuthenticated = Boolean(appStore.currentUser);
   const requiresProjectAdmin = to.matched.some((record) => record.meta?.requiresProjectAdmin);
   if (requiresProjectAdmin && isAuthenticated) {
-    const { workspaceId, projectId } = to.params;
-    if (!projectId || !workspaceId) {
+    const { projectId } = to.params;
+    if (!projectId) {
       return next({ path: "/account" });
     }
 
@@ -203,10 +203,10 @@ router.beforeEach(async (to, from, next) => {
       const role = String(currentMember?.role_name || "").toUpperCase();
 
       if (!["OWNER", "ADMIN"].includes(role)) {
-        return next({ path: `/workspace/${workspaceId}/project/${projectId}/board` });
+        return next({ path: `/project/${projectId}/board` });
       }
     } catch (error) {
-      return next({ path: `/workspace/${workspaceId}/project/${projectId}/board` });
+      return next({ path: `/project/${projectId}/board` });
     }
   }
 

@@ -12,7 +12,7 @@
           <router-link
             v-for="room in rooms"
             :key="room.id"
-            :to="`/workspace/${workspaceId}/project/${projectId}/messenger/${room.id}`"
+            :to="`/project/${projectId}/messenger/${room.id}`"
           >
             {{ room.name || t("messenger.layout.fallback.channelName") }}
           </router-link>
@@ -63,7 +63,7 @@ const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const chatStore = useChatStore();
-const workspaceId = computed(() => route.params.workspaceId);
+
 const projectId = computed(() => route.params.projectId);
 
 const isModalOpen = ref(false);
@@ -132,7 +132,7 @@ const createChannel = async () => {
     const newRoomId = res.data?.data?.id;
     if (newRoomId) {
       await router.push(
-        `/workspace/${workspaceId.value}/project/${projectId.value}/messenger/${newRoomId}`
+        `/project/${projectId.value}/messenger/${newRoomId}`
       );
     }
   } catch (error) {

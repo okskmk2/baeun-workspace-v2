@@ -346,7 +346,7 @@ const deletePage = async () => {
       params: { project_id: projectId.value },
     });
     await pageStore.fetchPages(projectId.value);
-    await router.push(`/workspace/${route.params.workspaceId}/project/${projectId.value}/wiki`);
+    await router.push(`/project/${projectId.value}/wiki`);
   } catch (error) {
     errorMessage.value = error?.response?.data?.message || t("wiki.page.status.errorDelete");
   } finally {

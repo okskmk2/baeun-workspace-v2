@@ -132,7 +132,6 @@ const allStatuses = ["BACKLOG", "PENDING", "IN_PROGRESS", "IN_REVIEW", "DONE"]; 
 
 const roleOptions = ["ASSIGNEE", "REPORTER", "REVIEWER", "WATCHER"];
 
-const workspaceId = computed(() => route.params.workspaceId);
 const projectId = computed(() => route.params.projectId);
 const boardId = computed(() => route.params.boardId);
 const issueId = computed(() => route.params.issueId);
@@ -293,10 +292,8 @@ const deleteIssue = async () => {
   try {
     await api.delete(`/issues/${issueId.value}`);
     addToast({ message: t("issue.detail.toast.deleted"), type: "success" });
-    if (workspaceId.value && projectId.value && boardId.value) {
-      router.push(
-        `/workspace/${workspaceId.value}/project/${projectId.value}/board/${boardId.value}`
-      );
+    if (projectId.value && boardId.value) {
+      router.push(`/project/${projectId.value}/board/${boardId.value}`);
       return;
     }
     router.back();

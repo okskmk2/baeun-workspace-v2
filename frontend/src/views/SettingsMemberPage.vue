@@ -75,14 +75,20 @@ import { useRoute } from "vue-router";
 import api from "../lib/axios";
 import BaseModal from "../components/BaseModal.vue";
 import { useProjectMemberStore } from "../stores/projectMemberStore";
+import { useWorkspaceStore } from "../stores/workspaceStore";
 import { useRoleLabels } from "../lib/roleLabels";
 
 const { t } = useI18n();
 const { getRoleLabel } = useRoleLabels();
 const route = useRoute();
-const workspaceId = computed(() => route.params.workspaceId);
+
 const projectId = computed(() => route.params.projectId);
 const projectMemberStore = useProjectMemberStore();
+const workspaceStore = useWorkspaceStore();
+
+const workspaceId = computed(() =>
+  workspaceStore.getProject(projectId.value)?.workspace_id
+);
 
 const projectMembers = computed(() => projectMemberStore.getProjectMembers(projectId.value));
 const workspaceMembers = ref([]);
