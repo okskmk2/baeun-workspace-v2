@@ -85,8 +85,7 @@
       "subtitle": "이메일과 비밀번호를 입력하세요.",
       "fields": {
         "email": {
-          "label": "이메일",
-          "placeholder": "name@company.com"
+          "label": "이메일"
         },
         "password": {
           "label": "비밀번호",
@@ -117,8 +116,7 @@
           "placeholder": "이름"
         },
         "email": {
-          "label": "이메일",
-          "placeholder": "name@company.com"
+          "label": "이메일"
         },
         "password": {
           "label": "비밀번호",

@@ -13,7 +13,7 @@
           v-model.trim="email"
           type="email"
           autocomplete="email"
-          :placeholder="t('auth.login.fields.email.placeholder')"
+          placeholder="name@company.com"
         />
         <p v-if="errors.email" class="login__error">{{ errors.email }}</p>
       </div>

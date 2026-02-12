@@ -85,8 +85,7 @@
       "subtitle": "Enter your email and password.",
       "fields": {
         "email": {
-          "label": "Email",
-          "placeholder": "name@company.com"
+          "label": "Email"
         },
         "password": {
           "label": "Password",
@@ -117,8 +116,7 @@
           "placeholder": "Name"
         },
         "email": {
-          "label": "Email",
-          "placeholder": "name@company.com"
+          "label": "Email"
         },
         "password": {
           "label": "Password",

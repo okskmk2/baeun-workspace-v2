@@ -25,7 +25,7 @@
           v-model.trim="email"
           type="email"
           autocomplete="email"
-          :placeholder="t('auth.signup.fields.email.placeholder')"
+          placeholder="name@company.com"
         />
         <p v-if="errors.email" class="signup__error">{{ errors.email }}</p>
       </div>
