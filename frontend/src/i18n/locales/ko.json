@@ -275,7 +275,7 @@
     },
     "home": {
       "header": {
-        "title": "활성 보드"
+        "title": "최근 이슈 활동"
       },
       "actions": {
         "filter": "필터"
@@ -505,7 +505,7 @@
     },
     "home": {
       "header": {
-        "title": "활동 피드"
+        "title": "최근 페이지 활동"
       },
       "actions": {
         "filter": "필터"

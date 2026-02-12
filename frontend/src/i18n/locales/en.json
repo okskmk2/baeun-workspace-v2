@@ -275,7 +275,7 @@
     },
     "home": {
       "header": {
-        "title": "Active Boards"
+        "title": "Recent Issue Activity"
       },
       "actions": {
         "filter": "Filter"
@@ -505,7 +505,7 @@
     },
     "home": {
       "header": {
-        "title": "Activity Feed"
+        "title": "Recent Page Activity"
       },
       "actions": {
         "filter": "Filter"

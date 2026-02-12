@@ -2,25 +2,24 @@
   <hgroup>
     <h1>{{ t("board.home.header.title") }}</h1>
   </hgroup>
-  <section class="activity-card" aria-live="polite">
-    <h2>보드 액티비티</h2>
-    <p v-if="isLoading" class="status">불러오는 중...</p>
-    <p v-else-if="errorMessage" class="status error">{{ errorMessage }}</p>
-    <p v-else-if="activities.length === 0" class="status">최근 이슈 활동이 없습니다.</p>
-    <ul v-else class="activity-list">
-      <li v-for="activity in activities" :key="`${activity.event_type}-${activity.id}-${activity.occurred_at}`">
-        <span class="item-title">
-          <span class="event-badge" :class="badgeClass(activity.event_type)">
-            {{ eventLabel(activity.event_type) }}
-          </span>
-          {{ activity.title }}
+
+  <p v-if="isLoading" class="status">불러오는 중...</p>
+  <p v-else-if="errorMessage" class="status error">{{ errorMessage }}</p>
+  <p v-else-if="activities.length === 0" class="status">최근 이슈 활동이 없습니다.</p>
+  <FeedList v-else :groups="activityGroups" item-key="itemKey">
+    <template #icon>
+      <span class="feed-icon">B</span>
+    </template>
+    <template #item="{ item }">
+      <div class="item-title">
+        <span class="event-badge" :class="badgeClass(item.event_type)">
+          {{ eventLabel(item.event_type) }}
         </span>
-        <span class="item-meta">
-          {{ activity.board_name }} · {{ formatTime(activity.occurred_at) }}
-        </span>
-      </li>
-    </ul>
-  </section>
+        {{ item.title }}
+      </div>
+      <div class="item-meta">{{ item.board_name }} · {{ formatTime(item.occurred_at) }}</div>
+    </template>
+  </FeedList>
 </template>
 
 <script setup>
@@ -28,6 +27,7 @@ import { useI18n } from "vue-i18n";
 import { computed, onMounted, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import api from "../lib/axios";
+import FeedList from "../components/FeedList.vue";
 
 const { t } = useI18n();
 const route = useRoute();
@@ -64,6 +64,14 @@ const formatTime = (value) => {
 
 const eventLabel = (value) => (value === "UPDATED" ? "수정" : "등록");
 const badgeClass = (value) => (value === "UPDATED" ? "is-updated" : "is-created");
+const itemKey = (item, index) => `${item.event_type}-${item.id}-${item.occurred_at || index}`;
+
+const activityGroups = computed(() => [
+  {
+    label: "최근 24시간",
+    items: activities.value,
+  },
+]);
 
 onMounted(fetchRecentIssues);
 watch(projectId, fetchRecentIssues);
@@ -83,21 +91,6 @@ watch(projectId, fetchRecentIssues);
   margin: 0 0 12px;
   font-size: 18px;
   color: var(--color-text);
-}
-
-.activity-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.activity-list li {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
 }
 
 .item-title {
@@ -142,4 +135,16 @@ watch(projectId, fetchRecentIssues);
   color: var(--color-success);
 }
 
+.feed-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-text);
+  color: var(--color-text-inverse);
+  font-size: 12px;
+  font-weight: 700;
+}
 </style>

@@ -414,6 +414,7 @@ const addRelatedMemberByRole = async (role, memberId) => {
 
 .issue-main p {
   white-space: pre-wrap;
+  line-height: 1.5;
 }
 
 .issue-meta {

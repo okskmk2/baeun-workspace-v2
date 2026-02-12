@@ -63,6 +63,23 @@
         <div class="card__header">
           <h2>{{ t("workspace.detail.sections.projects") }}</h2>
         </div>
+        <form v-if="canManageWorkspace" class="inline-form" @submit.prevent="createProject">
+          <label for="project-name-input">Project Name</label>
+          <div class="inline-form__row">
+            <input
+              id="project-name-input"
+              v-model.trim="projectForm"
+              type="text"
+              :disabled="isCreatingProject"
+              placeholder="Enter project name"
+            />
+            <button type="submit" class="btn" :disabled="isCreatingProject">
+              {{ isCreatingProject ? "Creating..." : "Create" }}
+            </button>
+          </div>
+          <p v-if="projectError" class="status error">{{ projectError }}</p>
+          <p v-else-if="projectSuccess" class="status success">{{ projectSuccess }}</p>
+        </form>
         <p v-if="!projects.length" class="empty">
           {{ t("workspace.detail.empty.projects") }}
         </p>
@@ -182,6 +199,11 @@ const isUpdatingName = ref(false);
 const nameError = ref("");
 const nameSuccess = ref("");
 
+const projectForm = ref("");
+const isCreatingProject = ref(false);
+const projectError = ref("");
+const projectSuccess = ref("");
+
 const inviteForm = ref({ email: "", role: "MEMBER" });
 const isInvitingMember = ref(false);
 const removingMemberId = ref(null);
@@ -276,6 +298,35 @@ const updateWorkspaceName = async () => {
     nameError.value = error?.response?.data?.message || "Failed to update workspace name.";
   } finally {
     isUpdatingName.value = false;
+  }
+};
+
+const createProject = async () => {
+  if (!canManageWorkspace.value) return;
+  const nextName = String(projectForm.value || "").trim();
+  projectError.value = "";
+  projectSuccess.value = "";
+
+  if (!nextName) {
+    projectError.value = "Project name is required.";
+    return;
+  }
+
+  if (!workspaceId.value) {
+    projectError.value = "Workspace is required.";
+    return;
+  }
+
+  isCreatingProject.value = true;
+  try {
+    await workspaceStore.createProject(workspaceId.value, nextName);
+    projectSuccess.value = "Project created.";
+    projectForm.value = "";
+    await workspaceStore.fetchProjects(workspaceId.value);
+  } catch (error) {
+    projectError.value = error?.response?.data?.message || "Failed to create project.";
+  } finally {
+    isCreatingProject.value = false;
   }
 };
 

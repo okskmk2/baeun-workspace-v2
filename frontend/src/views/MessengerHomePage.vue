@@ -2,22 +2,22 @@
   <hgroup>
     <h1>{{ t("messenger.home.header.title") }}</h1>
   </hgroup>
-  <section class="activity-card" aria-live="polite">
-    <h2>채널 액티비티</h2>
-    <p v-if="isLoading" class="status">불러오는 중...</p>
-    <p v-else-if="errorMessage" class="status error">{{ errorMessage }}</p>
-    <p v-else-if="messages.length === 0" class="status">메시지가 없습니다.</p>
-    <ul v-else>
-      <li v-for="message in messages" :key="message.message_id">
-        <span class="item-title">
-          {{ message.channel_name || "채널" }} · {{ message.content || "(내용 없음)" }}
-        </span>
-        <span class="item-meta">
-          {{ message.creator_name || "알 수 없음" }} · {{ formatTime(message.created_at) }}
-        </span>
-      </li>
-    </ul>
-  </section>
+  <p v-if="isLoading" class="status">불러오는 중...</p>
+  <p v-else-if="errorMessage" class="status error">{{ errorMessage }}</p>
+  <p v-else-if="messages.length === 0" class="status">메시지가 없습니다.</p>
+  <FeedList v-else :groups="messageGroups" item-key="itemKey">
+    <template #icon>
+      <span class="feed-icon">M</span>
+    </template>
+    <template #item="{ item }">
+      <div class="item-title">
+        {{ item.channel_name || "채널" }} · {{ item.content || "(내용 없음)" }}
+      </div>
+      <div class="item-meta">
+        {{ item.creator_name || "알 수 없음" }} · {{ formatTime(item.created_at) }}
+      </div>
+    </template>
+  </FeedList>
 </template>
 
 <script setup>
@@ -25,6 +25,7 @@ import { useI18n } from "vue-i18n";
 import { computed, onMounted, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import api from "../lib/axios";
+import FeedList from "../components/FeedList.vue";
 
 const { t } = useI18n();
 const route = useRoute();
@@ -58,6 +59,14 @@ const formatTime = (value) => {
   return date.toLocaleString();
 };
 
+const itemKey = (item, index) => item.message_id || index;
+const messageGroups = computed(() => [
+  {
+    label: "최근 24시간",
+    items: messages.value,
+  },
+]);
+
 onMounted(fetchRecentMessages);
 watch(projectId, fetchRecentMessages);
 </script>
@@ -81,21 +90,6 @@ watch(projectId, fetchRecentMessages);
   color: var(--color-text);
 }
 
-.activity-card ul {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.activity-card li {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
 .item-title {
   font-size: 14px;
   color: var(--color-text);
@@ -114,5 +108,18 @@ watch(projectId, fetchRecentMessages);
 
 .status.error {
   color: var(--color-danger);
+}
+
+.feed-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-text);
+  color: var(--color-text-inverse);
+  font-size: 12px;
+  font-weight: 700;
 }
 </style>
