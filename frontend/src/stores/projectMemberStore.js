@@ -14,7 +14,7 @@ export const useProjectMemberStore = defineStore('projectMember', {
       }
       try{
         const res = await api.get(`/projects/${projectId}/members`)
-        const members = res.data?.data || []
+        const members = res.data || []
         this.membersByProject[projectId] = members
         return members
       }catch(e){

@@ -129,7 +129,7 @@ const createChannel = async () => {
     await fetchRooms();
     closeModal();
     addToast({ message: t("messenger.layout.toast.created"), type: "success" });
-    const newRoomId = res.data?.data?.id;
+    const newRoomId = res.data?.id;
     if (newRoomId) {
       await router.push(
         `/project/${projectId.value}/messenger/${newRoomId}`

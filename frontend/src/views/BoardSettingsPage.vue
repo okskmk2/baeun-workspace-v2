@@ -87,7 +87,7 @@ const fetchBoard = async () => {
 
   try {
     const res = await api.get(`/boards/${boardId.value}`);
-    const data = res.data?.data || {};
+    const data = res.data || {};
     form.value.name = data.name || "";
     form.value.summary = data.summary || "";
   } catch (error) {
@@ -111,7 +111,7 @@ const saveBoard = async () => {
       name: form.value.name,
       summary: form.value.summary,
     });
-    const updated = res.data?.data;
+    const updated = res.data;
     if (projectId.value) {
       boardStore.updateBoardDetails(
         boardId.value,

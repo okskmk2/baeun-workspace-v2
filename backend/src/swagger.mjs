@@ -224,14 +224,17 @@ const swaggerDefinition = {
       ErrorResponse: {
         type: "object",
         properties: {
-          success: { type: "boolean" },
+          name: { type: "string" },
           message: { type: "string" },
+          details: {
+            type: "array",
+            items: { type: "string" },
+          },
         },
       },
       SimpleSuccessResponse: {
         type: "object",
         properties: {
-          success: { type: "boolean" },
           message: { type: "string" },
         },
       },

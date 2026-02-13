@@ -148,13 +148,13 @@ const boardId = computed(() => route.params.boardId);
 const fetchBoard = async () => {
   if (!boardId.value) return;
   const res = await api.get(`/boards/${boardId.value}`);
-  board.value = res.data?.data || {};
+  board.value = res.data || {};
 };
 
 const fetchIssues = async () => {
   if (!boardId.value) return;
   const res = await api.get(`/boards/${boardId.value}/issues`);
-  issues.value = res.data?.data || [];
+  issues.value = res.data || [];
 };
 
 const issuesByStatus = (status) =>
@@ -190,7 +190,7 @@ const onDrop = async (status) => {
 
   try {
     const res = await api.patch(`/issues/${issueId}`, { status });
-    const updated = res.data?.data;
+    const updated = res.data;
     issues.value = issues.value.map((item) =>
       item.id === issueId ? { ...item, ...updated } : item
     );

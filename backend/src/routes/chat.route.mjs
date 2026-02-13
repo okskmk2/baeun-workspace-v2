@@ -84,7 +84,7 @@ router.get("/recent", isAuth, async (req, res) => {
   const userId = req.session.userId;
 
   if (!projectId) {
-    return res.status(400).json({ success: false, message: "project_id is required" });
+    return res.status(400).json({ name: "BadRequest", message: "project_id is required" });
   }
 
   try {
@@ -93,7 +93,7 @@ router.get("/recent", isAuth, async (req, res) => {
       [projectId, userId]
     );
     if (memberCheck.rows.length === 0) {
-      return res.status(403).json({ success: false, message: "접근 권한이 없습니다." });
+      return res.status(403).json({ name: "Forbidden", message: "접근 권한이 없습니다." });
     }
 
     const recentRes = await pool.query(
@@ -115,13 +115,13 @@ router.get("/recent", isAuth, async (req, res) => {
       [projectId, userId]
     );
 
-    res.json({ success: true, data: recentRes.rows });
+    res.json(recentRes.rows);
   } catch (error) {
     logger.error("recent chat messages error", {
       err: error?.message,
       stack: error?.stack,
     });
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ name: "InternalServerError", message: error.message });
   }
 });
 
@@ -189,14 +189,14 @@ router.post("/", isAuth, async (req, res) => {
     await client.query(insertMember, [newRoom.id, userId]);
 
     await client.query("COMMIT");
-    res.status(201).json({ success: true, data: { id: newRoom.id } });
+    res.status(201).json({ id: newRoom.id });
   } catch (error) {
     await client.query("ROLLBACK");
     logger.error("channel create error", {
       err: error?.message,
       stack: error?.stack,
     });
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ name: "InternalServerError", message: error.message });
   } finally {
     client.release();
   }
@@ -243,7 +243,7 @@ router.get("/:channelId", isAuth, async (req, res) => {
 
   // 추가 보안: channelId가 숫자인지 확인 (필요한 경우)
   if (isNaN(parseInt(channelId))) {
-    return res.status(400).json({ success: false, message: "유효하지 않은 채널 ID입니다." });
+    return res.status(400).json({ name: "BadRequest", message: "유효하지 않은 채널 ID입니다." });
   }
 
   try {
@@ -252,22 +252,22 @@ router.get("/:channelId", isAuth, async (req, res) => {
       [channelId, userId]
     );
     if (memberCheck.rows.length === 0) {
-      return res.status(403).json({ success: false, message: "접근 권한이 없습니다." });
+      return res.status(403).json({ name: "Forbidden", message: "접근 권한이 없습니다." });
     }
 
     const chatRes = await pool.query("SELECT * FROM channel WHERE id = $1", [channelId]);
 
     if (chatRes.rows.length === 0) {
-      return res.status(404).json({ success: false, message: "채널을 찾을 수 없습니다." });
+      return res.status(404).json({ name: "NotFound", message: "채널을 찾을 수 없습니다." });
     }
 
-    res.json({ success: true, data: chatRes.rows[0] });
+    res.json(chatRes.rows[0]);
   } catch (error) {
     logger.error("channel detail error", {
       err: error?.message,
       stack: error?.stack,
     });
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ name: "InternalServerError", message: error.message });
   }
 });
 
@@ -321,7 +321,7 @@ router.patch("/:channelId", isAuth, async (req, res) => {
   const userId = req.session.userId;
 
   if (!name) {
-    return res.status(400).json({ success: false, message: "채널 이름은 필수입니다." });
+    return res.status(400).json({ name: "BadRequest", message: "채널 이름은 필수입니다." });
   }
 
   try {
@@ -331,7 +331,7 @@ router.patch("/:channelId", isAuth, async (req, res) => {
     );
 
     if (!authCheck.rows[0] || authCheck.rows[0].role_name !== "OWNER") {
-      return res.status(403).json({ success: false, message: "채널 수정 권한이 없습니다." });
+      return res.status(403).json({ name: "Forbidden", message: "채널 수정 권한이 없습니다." });
     }
 
     const updateRes = await pool.query(
@@ -339,13 +339,13 @@ router.patch("/:channelId", isAuth, async (req, res) => {
       [name, channelId]
     );
 
-    res.json({ success: true, data: updateRes.rows[0] });
+    res.json(updateRes.rows[0]);
   } catch (error) {
     logger.error("channel update error", {
       err: error?.message,
       stack: error?.stack,
     });
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ name: "InternalServerError", message: error.message });
   }
 });
 
@@ -392,7 +392,7 @@ router.get("/:channelId/messages", isAuth, async (req, res) => {
       [channelId, userId]
     );
     if (memberCheck.rows.length === 0) {
-      return res.status(403).json({ success: false, message: "접근 권한이 없습니다." });
+      return res.status(403).json({ name: "Forbidden", message: "접근 권한이 없습니다." });
     }
 
     const msgsRes = await pool.query(
@@ -441,13 +441,13 @@ router.get("/:channelId/messages", isAuth, async (req, res) => {
       feedback_mine: mineByMessage[String(message.id)] || [],
     }));
 
-    res.json({ success: true, data });
+    res.json(data);
   } catch (error) {
     logger.error("channel messages error", {
       err: error?.message,
       stack: error?.stack,
     });
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ name: "InternalServerError", message: error.message });
   }
 });
 
@@ -497,7 +497,7 @@ router.post("/:channelId/messages/:messageId/feedback", isAuth, async (req, res)
   const userId = req.session.userId;
 
   if (!feedbackKey || !FEEDBACK_KEYS.includes(feedbackKey)) {
-    return res.status(400).json({ success: false, message: "invalid feedback_key" });
+    return res.status(400).json({ name: "BadRequest", message: "invalid feedback_key" });
   }
 
   try {
@@ -506,7 +506,7 @@ router.post("/:channelId/messages/:messageId/feedback", isAuth, async (req, res)
       [channelId, userId]
     );
     if (memberCheck.rows.length === 0) {
-      return res.status(403).json({ success: false, message: "접근 권한이 없습니다." });
+      return res.status(403).json({ name: "Forbidden", message: "접근 권한이 없습니다." });
     }
 
     const messageCheck = await pool.query(
@@ -514,7 +514,7 @@ router.post("/:channelId/messages/:messageId/feedback", isAuth, async (req, res)
       [messageId, channelId]
     );
     if (messageCheck.rows.length === 0) {
-      return res.status(404).json({ success: false, message: "메시지를 찾을 수 없습니다." });
+      return res.status(404).json({ name: "NotFound", message: "메시지를 찾을 수 없습니다." });
     }
 
     const feedbackId = await ensureFeedbackId(feedbackKey);
@@ -570,19 +570,16 @@ router.post("/:channelId/messages/:messageId/feedback", isAuth, async (req, res)
     });
 
     res.json({
-      success: true,
-      data: {
-        message_id: Number(messageId),
-        feedback_counts: feedbackCounts,
-        feedback_mine: feedbackMine,
-      },
+      message_id: Number(messageId),
+      feedback_counts: feedbackCounts,
+      feedback_mine: feedbackMine,
     });
   } catch (error) {
     logger.error("message feedback error", {
       err: error?.message,
       stack: error?.stack,
     });
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ name: "InternalServerError", message: error.message });
   }
 });
 
@@ -629,7 +626,7 @@ router.get("/:channelId/members", isAuth, async (req, res) => {
       [channelId, userId]
     );
     if (memberCheck.rows.length === 0) {
-      return res.status(403).json({ success: false, message: "접근 권한이 없습니다." });
+      return res.status(403).json({ name: "Forbidden", message: "접근 권한이 없습니다." });
     }
 
     const membersRes = await pool.query(
@@ -646,13 +643,13 @@ router.get("/:channelId/members", isAuth, async (req, res) => {
       [channelId]
     );
 
-    res.json({ success: true, data: membersRes.rows });
+    res.json(membersRes.rows);
   } catch (error) {
     logger.error("channel members error", {
       err: error?.message,
       stack: error?.stack,
     });
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ name: "InternalServerError", message: error.message });
   }
 });
 
@@ -710,7 +707,7 @@ router.post("/:channelId/invite", isAuth, async (req, res) => {
   const userId = req.session.userId;
 
   if (!member_id) {
-    return res.status(400).json({ success: false, message: "member_id is required" });
+    return res.status(400).json({ name: "BadRequest", message: "member_id is required" });
   }
 
   try {
@@ -719,7 +716,7 @@ router.post("/:channelId/invite", isAuth, async (req, res) => {
       [channelId]
     );
     if (chatRes.rows.length === 0) {
-      return res.status(404).json({ success: false, message: "채널을 찾을 수 없습니다." });
+      return res.status(404).json({ name: "NotFound", message: "채널을 찾을 수 없습니다." });
     }
 
     const projectId = chatRes.rows[0].project_id;
@@ -729,7 +726,7 @@ router.post("/:channelId/invite", isAuth, async (req, res) => {
       [channelId, userId]
     );
     if (memberCheck.rows.length === 0) {
-      return res.status(403).json({ success: false, message: "접근 권한이 없습니다." });
+      return res.status(403).json({ name: "Forbidden", message: "접근 권한이 없습니다." });
     }
 
     const projectMemberCheck = await pool.query(
@@ -737,7 +734,7 @@ router.post("/:channelId/invite", isAuth, async (req, res) => {
       [projectId, member_id]
     );
     if (projectMemberCheck.rows.length === 0) {
-      return res.status(400).json({ success: false, message: "프로젝트 멤버가 아닙니다." });
+      return res.status(400).json({ name: "BadRequest", message: "프로젝트 멤버가 아닙니다." });
     }
 
     const alreadyMember = await pool.query(
@@ -745,7 +742,7 @@ router.post("/:channelId/invite", isAuth, async (req, res) => {
       [channelId, member_id]
     );
     if (alreadyMember.rows.length > 0) {
-      return res.status(200).json({ success: true, message: "이미 참여 중입니다." });
+      return res.status(200).json({ message: "이미 참여 중입니다." });
     }
 
     const memberInsertRes = await pool.query(
@@ -781,19 +778,16 @@ router.post("/:channelId/invite", isAuth, async (req, res) => {
     broadcastToRoom(channelId, broadcastPayload);
 
     res.status(201).json({
-      success: true,
       message: "초대되었습니다.",
-      data: {
-        channel_member_id: channelMemberId,
-        message_id: newMessage.id,
-      },
+      channel_member_id: channelMemberId,
+      message_id: newMessage.id,
     });
   } catch (error) {
     logger.error("channel invite error", {
       err: error?.message,
       stack: error?.stack,
     });
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ name: "InternalServerError", message: error.message });
   }
 });
 
@@ -837,7 +831,7 @@ router.get("/", isAuth, async (req, res) => {
   const userId = req.session.userId;
 
   if (!projectId) {
-    return res.status(400).json({ success: false, message: "project_id is required" });
+    return res.status(400).json({ name: "BadRequest", message: "project_id is required" });
   }
 
   try {
@@ -846,7 +840,7 @@ router.get("/", isAuth, async (req, res) => {
       [projectId, userId]
     );
     if (memberCheck.rows.length === 0) {
-      return res.status(403).json({ success: false, message: "접근 권한이 없습니다." });
+      return res.status(403).json({ name: "Forbidden", message: "접근 권한이 없습니다." });
     }
 
     const roomsRes = await pool.query(
@@ -861,13 +855,13 @@ router.get("/", isAuth, async (req, res) => {
       [projectId, userId]
     );
 
-    res.json({ success: true, data: roomsRes.rows });
+    res.json(roomsRes.rows);
   } catch (error) {
     logger.error("channel list error", {
       err: error?.message,
       stack: error?.stack,
     });
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ name: "InternalServerError", message: error.message });
   }
 });
 
@@ -904,18 +898,18 @@ router.delete("/:channelId", isAuth, async (req, res) => {
     );
 
     if (!authCheck.rows[0] || authCheck.rows[0].role_name !== "OWNER") {
-      return res.status(403).json({ success: false, message: "채널 삭제 권한이 없습니다." });
+      return res.status(403).json({ name: "Forbidden", message: "채널 삭제 권한이 없습니다." });
     }
 
     await pool.query("DELETE FROM channel WHERE id = $1", [channelId]);
 
-    res.json({ success: true, message: "채널이 삭제되었습니다." });
+    res.json({ message: "채널이 삭제되었습니다." });
   } catch (error) {
     logger.error("channel delete error", {
       err: error?.message,
       stack: error?.stack,
     });
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ name: "InternalServerError", message: error.message });
   }
 });
 

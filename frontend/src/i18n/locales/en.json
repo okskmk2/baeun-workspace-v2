@@ -45,7 +45,14 @@
       "util": {
         "signup": "Sign up",
         "login": "Login",
-        "account": "Account"
+        "account": "Account",
+        "accountMenu": "Account menu",
+        "quickMove": "Quick move",
+        "settings": "Settings",
+        "loading": "Loading...",
+        "errorLoad": "Failed to load workspace list.",
+        "emptyWorkspaces": "No workspaces available.",
+        "emptyProjects": "No projects available."
       }
     },
     "account": {
@@ -820,7 +827,8 @@
   },
   "workspaceList": {
     "header": {
-      "title": "Workspaces"
+      "title": "Workspaces",
+      "subtitle": "Create workspaces and launch projects quickly."
     },
     "actions": {
       "add": "Add Workspace",
@@ -837,8 +845,10 @@
       "errorDelete": "Failed to delete workspace."
     },
     "empty": {
+      "title": "No workspace yet",
       "workspaces": "No workspaces yet.",
-      "projects": "No projects yet."
+      "projects": "No projects yet.",
+      "cta": "Create your first workspace"
     },
     "modal": {
       "title": "Add Workspace",
@@ -847,6 +857,15 @@
     },
     "validation": {
       "nameRequired": "Please enter a workspace name."
+    },
+    "deleteModal": {
+      "title": "Delete workspace",
+      "description": "Delete {name}?",
+      "warning": "This action cannot be undone."
+    },
+    "toast": {
+      "created": "Workspace created.",
+      "deleted": "Workspace deleted."
     },
     "confirm": {
       "delete": "Delete this workspace?"
@@ -1049,11 +1068,13 @@
     "status": {
       "loading": "Loading...",
       "error": "Failed to load profile.",
-      "logoutError": "Failed to log out."
+      "logoutError": "Failed to log out.",
+      "withdrawError": "Failed to withdraw account."
     },
     "actions": {
       "logout": "Log out",
-      "loggingOut": "Logging out..."
+      "loggingOut": "Logging out...",
+      "withdraw": "Withdraw account"
     },
     "fields": {
       "name": "Name",
@@ -1074,6 +1095,46 @@
         "kr": "Korea",
         "us": "United States"
       }
+    },
+    "danger": {
+      "title": "Danger zone",
+      "description": "Withdrawing your account removes access and limits data recovery.",
+      "checklist": {
+        "transferOwnership": "Transfer ownership of any owned workspace, project, page, board, or channel before withdrawal.",
+        "confirmScope": "After withdrawal, sign-in and account recovery are restricted.",
+        "dataAnonymized": "Personal data will be anonymized."
+      },
+      "actions": {
+        "guide": "Ownership transfer guide"
+      },
+      "guide": {
+        "title": "Resources requiring ownership transfer",
+        "description": "Transfer ownership of the resources below to another member before withdrawing.",
+        "loading": "Loading owned resources...",
+        "error": "Failed to load owned resources.",
+        "empty": "No owned resources are currently identified. Try withdrawal again and recheck.",
+        "open": "Open settings",
+        "close": "Close"
+      }
+    },
+    "withdraw": {
+      "title": "Withdraw Account",
+      "description": "Withdrawing disables your account and anonymizes personal data. Enter your password to continue.",
+      "password": "Password",
+      "passwordPlaceholder": "Current password",
+      "passwordRequired": "Please enter your password.",
+      "ownerBlocked": "Transfer ownership of the following before withdrawal: {resources}",
+      "ownerBlockedDefault": "Transfer ownership of your owned resources before withdrawal.",
+      "ownerResources": {
+        "workspace": "Workspace",
+        "project": "Project",
+        "page": "Page",
+        "board": "Board",
+        "channel": "Channel"
+      },
+      "cancel": "Cancel",
+      "confirm": "Withdraw",
+      "withdrawing": "Withdrawing..."
     }
   }
 }

@@ -11,7 +11,7 @@ export const useWorkspaceStore = defineStore("workspace", {
   actions: {
     async fetchWorkspaces() {
       const res = await api.get("/workspaces/my");
-      this.workspaces = res.data?.data || [];
+      this.workspaces = res.data || [];
       this.workspaces.forEach((workspace) => {
         this.workspaceById[workspace.id] = workspace;
       });
@@ -20,7 +20,7 @@ export const useWorkspaceStore = defineStore("workspace", {
     async fetchWorkspace(workspaceId) {
       if (!workspaceId) return null;
       const res = await api.get(`/workspaces/${workspaceId}`);
-      const workspace = res.data?.data || null;
+      const workspace = res.data || null;
       if (workspace) {
         this.workspaceById[workspaceId] = workspace;
       }
@@ -29,7 +29,7 @@ export const useWorkspaceStore = defineStore("workspace", {
     async fetchProjects(workspaceId) {
       if (!workspaceId) return [];
       const res = await api.get(`/projects?workspaceId=${workspaceId}`);
-      const projects = res.data?.data || [];
+      const projects = res.data || [];
       this.projectsByWorkspace[workspaceId] = projects;
       projects.forEach((project) => {
         this.projectById[project.id] = project;
@@ -48,12 +48,7 @@ export const useWorkspaceStore = defineStore("workspace", {
     },
     async createWorkspace(payload) {
       const res = await api.post("/workspaces", payload);
-      const workspace = res.data?.data;
-      if (workspace) {
-        this.workspaces = [workspace, ...this.workspaces];
-        this.workspaceById[workspace.id] = workspace;
-      }
-      return workspace;
+      return res.data || null;
     },
     async deleteWorkspace(workspaceId) {
       if (!workspaceId) return;
@@ -67,18 +62,12 @@ export const useWorkspaceStore = defineStore("workspace", {
         name,
         workspace_id: workspaceId,
       });
-      const project = res.data?.data;
-      if (project) {
-        const current = this.projectsByWorkspace[workspaceId] || [];
-        this.projectsByWorkspace[workspaceId] = [...current, project];
-        this.projectById[project.id] = project;
-      }
-      return project;
+      return res.data || null;
     },
     async fetchProjectDetail(projectId) {
       if (!projectId) return null;
       const res = await api.get(`/projects/${projectId}`);
-      const project = res.data?.data || null;
+      const project = res.data || null;
       if (project) {
         this.projectById[projectId] = project;
       }
@@ -87,7 +76,7 @@ export const useWorkspaceStore = defineStore("workspace", {
     async updateWorkspaceName(workspaceId, name) {
       if (!workspaceId) return null;
       const res = await api.put(`/workspaces/${workspaceId}`, { name });
-      const updated = res.data?.data || null;
+      const updated = res.data || null;
       if (updated) {
         const current = this.workspaceById[workspaceId] || {};
         this.workspaceById[workspaceId] = { ...current, ...updated };
@@ -100,12 +89,12 @@ export const useWorkspaceStore = defineStore("workspace", {
     async fetchWorkspaceMembers(workspaceId) {
       if (!workspaceId) return [];
       const res = await api.get(`/workspaces/${workspaceId}/members`);
-      return res.data?.data || [];
+      return res.data || [];
     },
     async inviteWorkspaceMember(workspaceId, payload) {
       if (!workspaceId) return null;
       const res = await api.post(`/workspaces/${workspaceId}/members`, payload);
-      return res.data?.data || null;
+      return res.data || null;
     },
     async removeWorkspaceMember(workspaceId, memberId) {
       if (!workspaceId || !memberId) return;

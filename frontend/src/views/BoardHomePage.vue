@@ -47,8 +47,7 @@ const fetchRecentIssues = async () => {
     const res = await api.get("/issues/recent", {
       params: { project_id: projectId.value },
     });
-    const data = res.data?.data || {};
-    activities.value = data.items || [];
+    activities.value = res.data || [];
   } catch (error) {
     activities.value = [];
     errorMessage.value = "최근 활동을 불러오지 못했습니다.";

@@ -111,7 +111,7 @@ const fetchProject = async () => {
 
   try {
     const res = await api.get(`/projects/${projectId.value}`);
-    const data = res.data?.data || {};
+    const data = res.data || {};
     form.value.name = data.name || "";
     form.value.themeId = resolveThemeId(data.theme_json?.gnb);
   } catch (error) {

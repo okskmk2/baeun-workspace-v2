@@ -68,7 +68,7 @@ router.get("/recent", isAuth, async (req, res) => {
   const userId = req.session.userId;
 
   if (!projectId) {
-    return res.status(400).json({ success: false, message: "project_id is required" });
+    return res.status(400).json({ name: "BadRequest", message: "project_id is required" });
   }
 
   try {
@@ -78,7 +78,7 @@ router.get("/recent", isAuth, async (req, res) => {
     );
 
     if (memberCheck.rows.length === 0) {
-      return res.status(403).json({ success: false, message: "접근 권한이 없습니다." });
+      return res.status(403).json({ name: "Forbidden", message: "접근 권한이 없습니다." });
     }
 
     const recentRes = await pool.query(
@@ -114,14 +114,9 @@ router.get("/recent", isAuth, async (req, res) => {
       [projectId]
     );
 
-    res.json({
-      success: true,
-      data: {
-        items: recentRes.rows,
-      },
-    });
+    res.json(recentRes.rows);
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ name: "InternalServerError", message: error.message });
   }
 });
 
@@ -184,7 +179,7 @@ router.post("/", isAuth, async (req, res) => {
     );
 
     if (authCheck.rows.length === 0) {
-      return res.status(403).json({ success: false, message: "이슈 생성 권한이 없습니다." });
+      return res.status(403).json({ name: "Forbidden", message: "이슈 생성 권한이 없습니다." });
     }
 
     await client.query("BEGIN");
@@ -203,10 +198,10 @@ router.post("/", isAuth, async (req, res) => {
     );
 
     await client.query("COMMIT");
-    res.status(201).json({ success: true, data: { id: newIssue.id } });
+    res.status(201).json({ id: newIssue.id });
   } catch (error) {
     await client.query("ROLLBACK");
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ name: "InternalServerError", message: error.message });
   } finally {
     client.release();
   }
@@ -248,15 +243,12 @@ router.get("/:issueId", isAuth, async (req, res) => {
   try {
     const issueRes = await pool.query(`SELECT * FROM issue WHERE id = $1`, [issueId]);
     if (issueRes.rows.length === 0) {
-      return res.status(404).json({ success: false, message: "이슈를 찾을 수 없습니다." });
+      return res.status(404).json({ name: "NotFound", message: "이슈를 찾을 수 없습니다." });
     }
 
-    res.json({
-      success: true,
-      data: issueRes.rows[0],
-    });
+    res.json(issueRes.rows[0]);
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ name: "InternalServerError", message: error.message });
   }
 });
 
@@ -303,12 +295,9 @@ router.get("/:issueId/members", isAuth, async (req, res) => {
       [issueId]
     );
 
-    res.json({
-      success: true,
-      data: membersRes.rows,
-    });
+    res.json(membersRes.rows);
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ name: "InternalServerError", message: error.message });
   }
 });
 
@@ -394,10 +383,10 @@ router.patch("/:issueId", isAuth, async (req, res) => {
     );
 
     if (result.rows.length === 0)
-      return res.status(404).json({ success: false, message: "이슈 없음" });
-    res.json({ success: true, data: result.rows[0] });
+      return res.status(404).json({ name: "NotFound", message: "이슈 없음" });
+    res.json(result.rows[0]);
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ name: "InternalServerError", message: error.message });
   }
 });
 
@@ -466,13 +455,9 @@ router.post("/:issueId/members", isAuth, async (req, res) => {
       issueMemberId = existingRes.rows[0]?.id;
     }
 
-    res.json({
-      success: true,
-      message: "담당자가 추가되었습니다.",
-      data: { id: issueMemberId },
-    });
+    res.json({ id: issueMemberId, message: "담당자가 추가되었습니다." });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ name: "InternalServerError", message: error.message });
   }
 });
 
@@ -534,7 +519,7 @@ router.patch("/members/:issueMemberId", isAuth, async (req, res) => {
   const { role_name } = req.body;
 
   if (!role_name) {
-    return res.status(400).json({ success: false, message: "역할이 필요합니다." });
+    return res.status(400).json({ name: "BadRequest", message: "역할이 필요합니다." });
   }
 
   try {
@@ -544,12 +529,12 @@ router.patch("/members/:issueMemberId", isAuth, async (req, res) => {
     );
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ success: false, message: "관련자를 찾을 수 없습니다." });
+      return res.status(404).json({ name: "NotFound", message: "관련자를 찾을 수 없습니다." });
     }
 
-    res.json({ success: true, data: result.rows[0] });
+    res.json(result.rows[0]);
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ name: "InternalServerError", message: error.message });
   }
 });
 
@@ -576,9 +561,9 @@ router.patch("/members/:issueMemberId", isAuth, async (req, res) => {
 router.delete("/members/:issueMemberId", isAuth, async (req, res) => {
   try {
     await pool.query(`DELETE FROM issue_member WHERE id = $1`, [req.params.issueMemberId]);
-    res.json({ success: true, message: "멤버가 제외되었습니다." });
+    res.json({ message: "멤버가 제외되었습니다." });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ name: "InternalServerError", message: error.message });
   }
 });
 
@@ -605,9 +590,9 @@ router.delete("/members/:issueMemberId", isAuth, async (req, res) => {
 router.delete("/:issueId", isAuth, async (req, res) => {
   try {
     await pool.query(`DELETE FROM issue WHERE id = $1`, [req.params.issueId]);
-    res.json({ success: true, message: "이슈가 삭제되었습니다." });
+    res.json({ message: "이슈가 삭제되었습니다." });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ name: "InternalServerError", message: error.message });
   }
 });
 

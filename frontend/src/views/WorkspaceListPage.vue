@@ -1,13 +1,22 @@
 <template>
   <hgroup>
-    <h1>{{ t("workspaceList.header.title") }}</h1>
+    <div>
+      <h1>{{ t("workspaceList.header.title") }}</h1>
+      <p class="subtitle">{{ t("workspaceList.header.subtitle") }}</p>
+    </div>
     <div>
       <button type="button" class="btn" @click="openModal">{{ t("workspaceList.actions.add") }}</button>
     </div>
   </hgroup>
   <p v-if="isLoading">{{ t("workspaceList.status.loading") }}</p>
-  <p v-else-if="errorMessage">{{ errorMessage }}</p>
-  <p v-else-if="workspaces.length === 0">{{ t("workspaceList.empty.workspaces") }}</p>
+  <p v-else-if="errorMessage" class="status-error">{{ errorMessage }}</p>
+  <section v-else-if="workspaces.length === 0" class="empty-state">
+    <h2>{{ t("workspaceList.empty.title") }}</h2>
+    <p>{{ t("workspaceList.empty.workspaces") }}</p>
+    <button type="button" class="btn btn--secondary" @click="openModal">
+      {{ t("workspaceList.empty.cta") }}
+    </button>
+  </section>
   <ul v-else class="workspace-list">
     <li v-for="workspace in workspaces" :key="workspace.id" class="workspace-item">
       <div class="workspace-header">
@@ -24,7 +33,7 @@
         <button
           type="button"
           class="btn btn--danger btn--sm"
-          @click="deleteWorkspace(workspace.id)"
+          @click="openDeleteModal(workspace)"
           :disabled="deletingWorkspaceId === workspace.id"
         >
           {{
@@ -68,15 +77,40 @@
       </div>
     </form>
   </BaseModal>
+
+  <BaseModal
+    :open="isDeleteModalOpen"
+    :title="t('workspaceList.deleteModal.title')"
+    :close-on-backdrop="!isDeleting"
+    @close="closeDeleteModal"
+  >
+    <div class="delete-modal-body">
+      <p>{{ t("workspaceList.deleteModal.description", { name: deleteTargetName }) }}</p>
+      <p class="delete-warning">{{ t("workspaceList.deleteModal.warning") }}</p>
+      <div class="modal-actions">
+        <button type="button" class="btn btn--secondary" @click="closeDeleteModal" :disabled="isDeleting">
+          {{ t("workspaceList.actions.cancel") }}
+        </button>
+        <button type="button" class="btn btn--danger" @click="confirmDeleteWorkspace" :disabled="isDeleting">
+          {{
+            isDeleting
+              ? t("workspaceList.actions.deleting")
+              : t("workspaceList.actions.delete")
+          }}
+        </button>
+      </div>
+    </div>
+  </BaseModal>
 </template>
 
 <script setup>
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import BaseModal from "../components/BaseModal.vue";
 import { useWorkspaceStore } from "../stores/workspaceStore";
 import Tag from "../components/Tag.vue";
 import { useRoleLabels } from "../lib/roleLabels";
+import { addToast } from "../lib/toast";
 
 const { t } = useI18n();
 const { getRoleLabel } = useRoleLabels();
@@ -89,6 +123,13 @@ const isCreating = ref(false);
 const formError = ref("");
 const form = ref({ name: "" });
 const deletingWorkspaceId = ref(null);
+const isDeleteModalOpen = ref(false);
+const deleteTarget = ref(null);
+
+const deleteTargetName = computed(() => deleteTarget.value?.name || "");
+const isDeleting = computed(
+  () => !!deleteTarget.value && deletingWorkspaceId.value === deleteTarget.value.id
+);
 
 const fetchWorkspaces = async () => {
   isLoading.value = true;
@@ -131,19 +172,32 @@ const createWorkspace = async () => {
   try {
     await workspaceStore.createWorkspace({ name: form.value.name });
     await fetchWorkspaces();
+    addToast({ message: t("workspaceList.toast.created"), type: "success" });
     closeModal();
   } catch (error) {
-    formError.value =
-      error?.response?.data?.message || t("workspaceList.status.errorCreate");
+    const message = error?.response?.data?.message || t("workspaceList.status.errorCreate");
+    formError.value = message;
+    addToast({ message, type: "error" });
   } finally {
     isCreating.value = false;
   }
 };
 
-const deleteWorkspace = async (workspaceId) => {
+const openDeleteModal = (workspace) => {
+  if (!workspace?.id) return;
+  deleteTarget.value = workspace;
+  isDeleteModalOpen.value = true;
+};
+
+const closeDeleteModal = () => {
+  if (isDeleting.value) return;
+  isDeleteModalOpen.value = false;
+  deleteTarget.value = null;
+};
+
+const confirmDeleteWorkspace = async () => {
+  const workspaceId = deleteTarget.value?.id;
   if (!workspaceId) return;
-  const confirmed = window.confirm(t("workspaceList.confirm.delete"));
-  if (!confirmed) return;
 
   deletingWorkspaceId.value = workspaceId;
   errorMessage.value = "";
@@ -151,9 +205,12 @@ const deleteWorkspace = async (workspaceId) => {
   try {
     await workspaceStore.deleteWorkspace(workspaceId);
     await fetchWorkspaces();
+    addToast({ message: t("workspaceList.toast.deleted"), type: "success" });
+    closeDeleteModal();
   } catch (error) {
-    errorMessage.value =
-      error?.response?.data?.message || t("workspaceList.status.errorDelete");
+    const message = error?.response?.data?.message || t("workspaceList.status.errorDelete");
+    errorMessage.value = message;
+    addToast({ message, type: "error" });
   } finally {
     deletingWorkspaceId.value = null;
   }
@@ -169,12 +226,14 @@ const getProjects = (workspaceId) => workspaceStore.getProjects(workspaceId);
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
 }
 
 .workspace-item {
   padding: 16px;
-  border-bottom: 1px solid #ddd;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background-color: var(--color-card-bg);
 }
 
 .workspace-item h2 {
@@ -194,6 +253,10 @@ const getProjects = (workspaceId) => workspaceStore.getProjects(workspaceId);
   margin-right: 8px;
 }
 
+.workspace-link:hover {
+  text-decoration: underline;
+}
+
 .project-list {
   list-style: none;
   padding-left: 8px;
@@ -204,13 +267,57 @@ const getProjects = (workspaceId) => workspaceStore.getProjects(workspaceId);
 }
 
 .project-list li a {
-  /* color: #374151; */
-  /* text-decoration: none; */
-  /* font-size: 14px; */
+  color: var(--color-text);
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.project-list li a:hover {
+  text-decoration: underline;
 }
 
 .project-empty {
-  color: #9ca3af;
+  color: var(--color-text-muted);
+  font-size: 13px;
+}
+
+.empty-state {
+  border: 1px dashed var(--color-border);
+  border-radius: 12px;
+  padding: 28px;
+  background-color: var(--color-surface);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.empty-state h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.empty-state p {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+.status-error {
+  color: var(--color-danger);
+}
+
+.delete-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.delete-modal-body p {
+  margin: 0;
+}
+
+.delete-warning {
+  color: var(--color-danger);
   font-size: 13px;
 }
 </style>

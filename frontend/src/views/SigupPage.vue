@@ -169,30 +169,20 @@ const onSubmit = async () => {
   loading.value = true;
   successMessage.value = "";
   try {
-    const response = await api.post("/members/signup", {
+    await api.post("/members/signup", {
       name: name.value,
       email: email.value,
       password: password.value,
     });
-
-    if (!response.data?.success) {
-      errors.form = response.data?.message || t("auth.signup.errors.formDefault");
-      return;
-    }
 
     const loginResponse = await api.post("/members/login", {
       email: email.value,
       password: password.value,
     });
 
-    if (!loginResponse.data?.success) {
-      errors.form = t("auth.signup.errors.autoLoginFailed");
-      return;
-    }
-
-    appStore.setCurrentUser(loginResponse.data.data);
+    appStore.setCurrentUser(loginResponse.data);
     const workspaceRes = await api.get("/workspaces/my");
-    const workspaces = workspaceRes.data?.data || [];
+    const workspaces = workspaceRes.data || [];
     successMessage.value = t("auth.signup.success");
 
     if (workspaces.length > 0) {

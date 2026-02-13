@@ -73,7 +73,7 @@ router.get("/", isAuth, async (req, res) => {
   const userId = req.session.userId;
 
   if (!workspaceId) {
-    return res.status(400).json({ success: false, message: "workspaceId is required." });
+    return res.status(400).json({ name: "BadRequest", message: "workspaceId is required." });
   }
 
   try {
@@ -83,7 +83,7 @@ router.get("/", isAuth, async (req, res) => {
     );
 
     if (memberCheck.rows.length === 0) {
-      return res.status(403).json({ success: false, message: "Access denied." });
+      return res.status(403).json({ name: "Forbidden", message: "Access denied." });
     }
 
     const projectsRes = await pool.query(
@@ -96,9 +96,9 @@ router.get("/", isAuth, async (req, res) => {
       theme_json: normalizeThemeJsonOutput(project.theme_json),
     }));
 
-    res.json({ success: true, data });
+    res.json(data);
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ name: "InternalServerError", message: error.message });
   }
 });
 
@@ -154,7 +154,7 @@ router.post("/", isAuth, async (req, res) => {
     );
 
     if (authCheck.rows.length === 0) {
-      return res.status(403).json({ success: false, message: "Not a workspace member." });
+      return res.status(403).json({ name: "Forbidden", message: "Not a workspace member." });
     }
 
     await client.query("BEGIN");
@@ -184,8 +184,7 @@ router.post("/", isAuth, async (req, res) => {
     await client.query("COMMIT");
 
     res.status(201).json({
-      success: true,
-      data: { id: newProject.id },
+      id: newProject.id,
     });
   } catch (error) {
     await client.query("ROLLBACK");
@@ -193,7 +192,7 @@ router.post("/", isAuth, async (req, res) => {
       err: error?.message,
       stack: error?.stack,
     });
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ name: "InternalServerError", message: error.message });
   } finally {
     client.release();
   }
@@ -237,7 +236,7 @@ router.delete("/:projectId/members/:memberId", isAuth, async (req, res) => {
     );
 
     if (!authCheck.rows[0] || authCheck.rows[0].role_name !== "OWNER") {
-      return res.status(403).json({ success: false, message: "No permission to remove member." });
+      return res.status(403).json({ name: "Forbidden", message: "No permission to remove member." });
     }
 
     await pool.query("DELETE FROM project_member WHERE project_id = $1 AND member_id = $2", [
@@ -245,9 +244,9 @@ router.delete("/:projectId/members/:memberId", isAuth, async (req, res) => {
       memberId,
     ]);
 
-    res.json({ success: true, message: "Member removed." });
+    res.json({ message: "Member removed." });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ name: "InternalServerError", message: error.message });
   }
 });
 
@@ -288,19 +287,16 @@ router.get("/:projectId", isAuth, async (req, res) => {
     const result = await pool.query("SELECT * FROM project WHERE id = $1", [projectId]);
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ success: false, message: "Project not found." });
+      return res.status(404).json({ name: "NotFound", message: "Project not found." });
     }
 
     const project = result.rows[0];
     res.json({
-      success: true,
-      data: {
-        ...project,
-        theme_json: normalizeThemeJsonOutput(project.theme_json),
-      },
+      ...project,
+      theme_json: normalizeThemeJsonOutput(project.theme_json),
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ name: "InternalServerError", message: error.message });
   }
 });
 
@@ -362,7 +358,7 @@ router.patch("/:projectId", isAuth, async (req, res) => {
     );
 
     if (!authCheck.rows[0] || authCheck.rows[0].role_name !== "OWNER") {
-      return res.status(403).json({ success: false, message: "No permission to update project." });
+      return res.status(403).json({ name: "Forbidden", message: "No permission to update project." });
     }
 
     const result = await pool.query(
@@ -373,19 +369,16 @@ router.patch("/:projectId", isAuth, async (req, res) => {
     );
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ success: false, message: "Project not found." });
+      return res.status(404).json({ name: "NotFound", message: "Project not found." });
     }
 
     const project = result.rows[0];
     res.json({
-      success: true,
-      data: {
-        ...project,
-        theme_json: normalizeThemeJsonOutput(project.theme_json),
-      },
+      ...project,
+      theme_json: normalizeThemeJsonOutput(project.theme_json),
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ name: "InternalServerError", message: error.message });
   }
 });
 
@@ -430,37 +423,34 @@ router.delete("/:projectId", isAuth, async (req, res) => {
 
     if (!target) {
       return res.status(404).json({
-        success: false,
+        name: "NotFound",
         message: "Project not found or access denied.",
       });
     }
 
     if (target.role_name !== "OWNER") {
       return res.status(403).json({
-        success: false,
+        name: "Forbidden",
         message: "No permission to delete project. (Owner only.)",
       });
     }
 
     if (target.is_default) {
       return res.status(403).json({
-        success: false,
+        name: "Forbidden",
         message: "Default project cannot be deleted.",
       });
     }
 
     await pool.query("DELETE FROM project WHERE id = $1", [projectId]);
 
-    res.json({
-      success: true,
-      message: "Project deleted.",
-    });
+    res.json({ message: "Project deleted." });
   } catch (error) {
     logger.error("Project delete error", {
       err: error?.message,
       stack: error?.stack,
     });
-    res.status(500).json({ success: false, message: "Server error. Delete failed." });
+    res.status(500).json({ name: "InternalServerError", message: "Server error. Delete failed." });
   }
 });
 
@@ -515,9 +505,9 @@ router.get("/:projectId/members", isAuth, async (req, res) => {
       ORDER BY m.name ASC
     `;
     const result = await pool.query(query, [projectId]);
-    res.json({ success: true, data: result.rows });
+    res.json(result.rows);
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ name: "InternalServerError", message: error.message });
   }
 });
 
@@ -580,7 +570,7 @@ router.post("/:projectId/members", isAuth, async (req, res) => {
     );
 
     if (!authCheck.rows[0] || authCheck.rows[0].role_name !== "OWNER") {
-      return res.status(403).json({ success: false, message: "No permission to add member." });
+      return res.status(403).json({ name: "Forbidden", message: "No permission to add member." });
     }
 
     const duplicateCheck = await pool.query(
@@ -590,7 +580,7 @@ router.post("/:projectId/members", isAuth, async (req, res) => {
 
     if (duplicateCheck.rows.length > 0) {
       return res.status(400).json({
-        success: false,
+        name: "BadRequest",
         message: "Already a project member.",
       });
     }
@@ -601,12 +591,11 @@ router.post("/:projectId/members", isAuth, async (req, res) => {
     );
 
     res.status(201).json({
-      success: true,
       message: "Member added.",
-      data: { id: insertRes.rows[0].id },
+      id: insertRes.rows[0].id,
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ name: "InternalServerError", message: error.message });
   }
 });
 

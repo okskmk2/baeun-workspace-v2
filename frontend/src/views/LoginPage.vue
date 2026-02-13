@@ -106,12 +106,7 @@ const onSubmit = async () => {
       password: password.value,
     });
 
-    if (!response.data?.success) {
-      errors.form = response.data?.message || t("auth.login.errors.formDefault");
-      return;
-    }
-
-    appStore.setCurrentUser(response.data.data);
+    appStore.setCurrentUser(response.data);
 
     const workspaces = await workspaceStore.fetchWorkspaces();
     if (workspaces.length > 0) {

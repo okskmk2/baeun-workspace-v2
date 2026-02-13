@@ -45,7 +45,7 @@ const fetchRecentMessages = async () => {
     const res = await api.get("/channels/recent", {
       params: { project_id: projectId.value },
     });
-    messages.value = res.data?.data || [];
+    messages.value = res.data || [];
   } catch (error) {
     messages.value = [];
     errorMessage.value = "최근 메시지를 불러오지 못했습니다.";

@@ -109,7 +109,7 @@ const fetchWorkspaceMembers = async () => {
 
   try {
     const res = await api.get(`/workspaces/${workspaceId.value}/members`);
-    workspaceMembers.value = res.data?.data || [];
+    workspaceMembers.value = res.data || [];
   } catch (error) {
     workspaceMembers.value = [];
   }

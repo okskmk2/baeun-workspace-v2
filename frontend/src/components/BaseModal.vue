@@ -1,6 +1,6 @@
 <template>
   <div v-if="open" class="modal-backdrop" @click="onBackdropClick">
-    <div class="modal" @click.stop>
+    <div class="modal" :style="modalStyle" @click.stop>
       <div class="modal-header">
         <h1>{{ title }}</h1>
         <button
@@ -20,6 +20,7 @@
 </template>
 
 <script setup>
+import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import MaterialSymbol from "./MaterialSymbol.vue";
 
@@ -29,7 +30,12 @@ const props = defineProps({
   open: { type: Boolean, default: false },
   title: { type: String, default: "" },
   closeOnBackdrop: { type: Boolean, default: true },
+  maxWidth: { type: String, default: "420px" },
 });
+
+const modalStyle = computed(() => ({
+  maxWidth: props.maxWidth,
+}));
 
 const emit = defineEmits(["close"]);
 
@@ -58,7 +64,6 @@ const onBackdropClick = () => {
   background-color: var(--color-page-bg);
   border: 1px solid var(--color-border);
   padding: 16px 24px 18px;
-  max-width: 420px;
   width: 100%;
   border-radius: 8px;
 }

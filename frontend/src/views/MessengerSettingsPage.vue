@@ -86,7 +86,7 @@ const fetchChannel = async () => {
 
   try {
     const res = await api.get(`/channels/${roomId.value}`);
-    const data = res.data?.data || {};
+    const data = res.data || {};
     form.value.name = data.name || "";
   } catch (error) {
     errorMessage.value = t("messenger.settings.status.errorLoad");
@@ -108,7 +108,7 @@ const saveChannelName = async () => {
     const res = await api.patch(`/channels/${roomId.value}`, {
       name: form.value.name,
     });
-    const updated = res.data?.data;
+    const updated = res.data;
     if (projectId.value) {
       chatStore.updateRoomName(
         roomId.value,

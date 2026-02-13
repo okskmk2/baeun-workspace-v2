@@ -45,7 +45,14 @@
       "util": {
         "signup": "회원가입",
         "login": "로그인",
-        "account": "계정"
+        "account": "계정",
+        "accountMenu": "계정 메뉴",
+        "quickMove": "빠른 이동",
+        "settings": "설정",
+        "loading": "불러오는 중...",
+        "errorLoad": "워크스페이스 목록을 불러오지 못했습니다.",
+        "emptyWorkspaces": "워크스페이스가 없습니다.",
+        "emptyProjects": "프로젝트가 없습니다."
       }
     },
     "account": {
@@ -820,7 +827,8 @@
   },
   "workspaceList": {
     "header": {
-      "title": "워크스페이스"
+      "title": "워크스페이스",
+      "subtitle": "워크스페이스를 만들고 프로젝트를 빠르게 시작하세요."
     },
     "actions": {
       "add": "워크스페이스 추가",
@@ -837,8 +845,10 @@
       "errorDelete": "워크스페이스를 삭제하지 못했습니다."
     },
     "empty": {
+      "title": "워크스페이스가 비어 있습니다",
       "workspaces": "아직 워크스페이스가 없습니다.",
-      "projects": "아직 프로젝트가 없습니다."
+      "projects": "아직 프로젝트가 없습니다.",
+      "cta": "첫 워크스페이스 만들기"
     },
     "modal": {
       "title": "워크스페이스 추가",
@@ -847,6 +857,15 @@
     },
     "validation": {
       "nameRequired": "워크스페이스 이름을 입력하세요."
+    },
+    "deleteModal": {
+      "title": "워크스페이스 삭제",
+      "description": "{name} 워크스페이스를 삭제할까요?",
+      "warning": "삭제 후에는 되돌릴 수 없습니다."
+    },
+    "toast": {
+      "created": "워크스페이스가 생성되었습니다.",
+      "deleted": "워크스페이스가 삭제되었습니다."
     },
     "confirm": {
       "delete": "이 워크스페이스를 삭제할까요?"
@@ -1025,11 +1044,13 @@
     "status": {
       "loading": "불러오는 중...",
       "error": "프로필을 불러오지 못했습니다.",
-      "logoutError": "로그아웃에 실패했습니다."
+      "logoutError": "로그아웃에 실패했습니다.",
+      "withdrawError": "회원 탈퇴에 실패했습니다."
     },
     "actions": {
       "logout": "로그아웃",
-      "loggingOut": "로그아웃 중..."
+      "loggingOut": "로그아웃 중...",
+      "withdraw": "회원 탈퇴"
     },
     "fields": {
       "name": "이름",
@@ -1050,6 +1071,46 @@
         "kr": "대한민국",
         "us": "미국"
       }
+    },
+    "danger": {
+      "title": "주의 구역",
+      "description": "회원 탈퇴를 진행하면 계정 접근이 종료되고 데이터 복구가 제한됩니다.",
+      "checklist": {
+        "transferOwnership": "탈퇴 전 소유 중인 워크스페이스/프로젝트/페이지/보드/채널의 소유권을 이전하세요.",
+        "confirmScope": "회원 탈퇴 후에는 로그인 및 계정 복구가 제한됩니다.",
+        "dataAnonymized": "개인정보는 익명화 처리됩니다."
+      },
+      "actions": {
+        "guide": "소유권 이전 가이드"
+      },
+      "guide": {
+        "title": "소유권 이전이 필요한 리소스",
+        "description": "아래 리소스의 소유권을 다른 멤버에게 이전한 뒤 탈퇴를 진행할 수 있습니다.",
+        "loading": "소유 리소스를 조회하는 중...",
+        "error": "소유 리소스를 불러오지 못했습니다.",
+        "empty": "현재 확인된 소유 리소스가 없습니다. 탈퇴 시도 후 다시 확인하세요.",
+        "open": "설정으로 이동",
+        "close": "닫기"
+      }
+    },
+    "withdraw": {
+      "title": "회원 탈퇴",
+      "description": "탈퇴하면 계정이 비활성화되고 개인정보가 익명화됩니다. 계속하려면 비밀번호를 입력하세요.",
+      "password": "비밀번호",
+      "passwordPlaceholder": "현재 비밀번호",
+      "passwordRequired": "비밀번호를 입력하세요.",
+      "ownerBlocked": "다음 항목의 소유권을 먼저 이전해야 탈퇴할 수 있습니다: {resources}",
+      "ownerBlockedDefault": "소유 중인 항목의 소유권을 먼저 이전해야 탈퇴할 수 있습니다.",
+      "ownerResources": {
+        "workspace": "워크스페이스",
+        "project": "프로젝트",
+        "page": "페이지",
+        "board": "보드",
+        "channel": "채널"
+      },
+      "cancel": "취소",
+      "confirm": "탈퇴",
+      "withdrawing": "탈퇴 처리 중..."
     }
   }
 }

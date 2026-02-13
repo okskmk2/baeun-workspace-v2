@@ -210,7 +210,7 @@ const fetchIssue = async (options = {}) => {
 
   try {
     const res = await api.get(`/issues/${issueId.value}`);
-    issue.value = res.data?.data || {};
+    issue.value = res.data || {};
     if (!isEditing.value) {
       editForm.value = {
         title: issue.value.title || "",
@@ -320,7 +320,7 @@ const fetchIssueMembers = async (options = {}) => {
 
   try {
     const res = await api.get(`/issues/${issueId.value}/members`);
-    updateIssueMembers(res.data?.data || []);
+    updateIssueMembers(res.data || []);
   } catch (error) {
     relatedError.value = t("issue.detail.related.errorLoad");
   } finally {

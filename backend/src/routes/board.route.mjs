@@ -45,7 +45,7 @@ router.get("/", isAuth, async (req, res) => {
   const userId = req.session.userId;
 
   if (!projectId) {
-    return res.status(400).json({ success: false, message: "projectId가 필요합니다." });
+    return res.status(400).json({ name: "BadRequest", message: "projectId가 필요합니다." });
   }
 
   try {
@@ -55,7 +55,7 @@ router.get("/", isAuth, async (req, res) => {
     );
 
     if (memberCheck.rows.length === 0) {
-      return res.status(403).json({ success: false, message: "접근 권한이 없습니다." });
+      return res.status(403).json({ name: "Forbidden", message: "접근 권한이 없습니다." });
     }
 
     const boards = await pool.query(
@@ -90,9 +90,9 @@ router.get("/", isAuth, async (req, res) => {
       [projectId]
     );
 
-    res.json({ success: true, data: boards.rows });
+    res.json(boards.rows);
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ name: "InternalServerError", message: error.message });
   }
 });
 
@@ -149,7 +149,7 @@ router.post("/", isAuth, async (req, res) => {
   if (!name || !project_id) {
     return res
       .status(400)
-      .json({ success: false, message: "보드 이름과 프로젝트 ID는 필수입니다." });
+      .json({ name: "BadRequest", message: "보드 이름과 프로젝트 ID는 필수입니다." });
   }
 
   const client = await pool.connect();
@@ -162,7 +162,7 @@ router.post("/", isAuth, async (req, res) => {
     );
 
     if (authCheck.rows.length === 0) {
-      return res.status(403).json({ success: false, message: "프로젝트 멤버가 아닙니다." });
+      return res.status(403).json({ name: "Forbidden", message: "프로젝트 멤버가 아닙니다." });
     }
 
     await client.query("BEGIN");
@@ -185,14 +185,14 @@ router.post("/", isAuth, async (req, res) => {
 
     await client.query("COMMIT");
 
-    res.status(201).json({ success: true, data: { id: newBoard.id } });
+    res.status(201).json({ id: newBoard.id });
   } catch (error) {
     await client.query("ROLLBACK");
     logger.error("Board create error", {
       err: error?.message,
       stack: error?.stack,
     });
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ name: "InternalServerError", message: error.message });
   } finally {
     client.release();
   }
@@ -235,12 +235,12 @@ router.get("/:boardId", isAuth, async (req, res) => {
     const result = await pool.query("SELECT * FROM board WHERE id = $1", [boardId]);
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ success: false, message: "보드를 찾을 수 없습니다." });
+      return res.status(404).json({ name: "NotFound", message: "보드를 찾을 수 없습니다." });
     }
 
-    res.json({ success: true, data: result.rows[0] });
+    res.json(result.rows[0]);
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ name: "InternalServerError", message: error.message });
   }
 });
 
@@ -294,11 +294,11 @@ router.patch("/:boardId", isAuth, async (req, res) => {
   const userId = req.session.userId;
 
   if (name === undefined && summary === undefined) {
-    return res.status(400).json({ success: false, message: "수정할 항목이 필요합니다." });
+    return res.status(400).json({ name: "BadRequest", message: "수정할 항목이 필요합니다." });
   }
 
   if (name !== undefined && !name) {
-    return res.status(400).json({ success: false, message: "보드 이름은 필수입니다." });
+    return res.status(400).json({ name: "BadRequest", message: "보드 이름은 필수입니다." });
   }
 
   try {
@@ -308,7 +308,7 @@ router.patch("/:boardId", isAuth, async (req, res) => {
     );
 
     if (!authCheck.rows[0] || authCheck.rows[0].role_name !== "OWNER") {
-      return res.status(403).json({ success: false, message: "보드 수정 권한이 없습니다." });
+      return res.status(403).json({ name: "Forbidden", message: "보드 수정 권한이 없습니다." });
     }
 
     const fields = [];
@@ -331,9 +331,9 @@ router.patch("/:boardId", isAuth, async (req, res) => {
     const updateQuery = `UPDATE board SET ${fields.join(", ")} WHERE id = $${paramIndex} RETURNING *`;
     const updateRes = await pool.query(updateQuery, values);
 
-    res.json({ success: true, data: updateRes.rows[0] });
+    res.json(updateRes.rows[0]);
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ name: "InternalServerError", message: error.message });
   }
 });
 
@@ -371,7 +371,7 @@ router.delete("/:boardId", isAuth, async (req, res) => {
     );
 
     if (!authCheck.rows[0] || authCheck.rows[0].role_name !== "OWNER") {
-      return res.status(403).json({ success: false, message: "보드 삭제 권한이 없습니다." });
+      return res.status(403).json({ name: "Forbidden", message: "보드 삭제 권한이 없습니다." });
     }
 
     // 추가: 보드가 기본 백로그 보드인지 확인 (type으로 구분)
@@ -381,19 +381,19 @@ router.delete("/:boardId", isAuth, async (req, res) => {
     );
 
     if (boardCheck.rows.length === 0) {
-      return res.status(404).json({ success: false, message: "보드를 찾을 수 없습니다." });
+      return res.status(404).json({ name: "NotFound", message: "보드를 찾을 수 없습니다." });
     }
 
     if (boardCheck.rows[0].type === 'BACKLOG') {
-      return res.status(403).json({ success: false, message: "백로그 보드는 삭제할 수 없습니다." });
+      return res.status(403).json({ name: "Forbidden", message: "백로그 보드는 삭제할 수 없습니다." });
     }
 
     // ON DELETE CASCADE에 의해 관련 issue, board_member 자동 삭제됨
     await pool.query("DELETE FROM board WHERE id = $1", [boardId]);
 
-    res.json({ success: true, message: "보드가 삭제되었습니다." });
+    res.json({ message: "보드가 삭제되었습니다." });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ name: "InternalServerError", message: error.message });
   }
 });
 
@@ -450,9 +450,9 @@ router.get("/:boardId/issues", isAuth, async (req, res) => {
       ORDER BY i.updated_at ASC;
     `;
     const result = await pool.query(query, [boardId]);
-    res.json({ success: true, data: result.rows });
+    res.json(result.rows);
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ name: "InternalServerError", message: error.message });
   }
 });
 

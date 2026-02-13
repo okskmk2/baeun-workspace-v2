@@ -7,7 +7,7 @@ export const isAuth = (req, res, next) => {
     next();
   } else {
     res.status(401).json({
-      success: false,
+      name: "Unauthorized",
       message: "Login is required.",
     });
   }
@@ -21,7 +21,7 @@ export const isGuest = (req, res, next) => {
     next();
   } else {
     res.status(400).json({
-      success: false,
+      name: "BadRequest",
       message: "You are already logged in.",
     });
   }

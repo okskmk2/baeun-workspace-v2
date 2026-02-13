@@ -4,15 +4,16 @@
       <h1>{{ t("backlog.page.header.title") }}</h1>
       <p class="subtitle">미할당된 이슈를 드래그 앤 드롭으로 보드에 할당할 수 있습니다.</p>
     </div>
-    <div class="actions">
-      <button type="button" class="btn btn--sm" @click="openModal" :disabled="!backlogBoardId">
-        백로그 만들기
-      </button>
-    </div>
   </hgroup>
 
   <div class="backlog-layout">
     <div class="backlog-issues">
+      <div class="column-header">
+        <h2>{{ t("backlog.page.header.title") }}</h2>
+        <button type="button" class="btn btn--sm" @click="openModal" :disabled="!backlogBoardId">
+          백로그 만들기
+        </button>
+      </div>
       <p v-if="isLoadingIssues">{{ t("backlog.page.status.loading") }}</p>
       <p v-else-if="errorMessage">{{ errorMessage }}</p>
       <p v-else-if="issues.length === 0">{{ t("backlog.page.empty.issues") }}</p>
@@ -45,7 +46,12 @@
     </div>
 
     <div class="project-boards">
-      <h2>{{ t("backlog.page.boardList.title") }}</h2>
+      <div class="column-header">
+        <h2>{{ t("backlog.page.boardList.title") }}</h2>
+        <button type="button" class="btn btn--sm" @click="openBoardModal" :disabled="!projectId">
+          보드 만들기
+        </button>
+      </div>
       <p v-if="isLoadingBoards">{{ t("backlog.page.status.loadingBoards") }}</p>
       <p v-else-if="boardListError">{{ boardListError }}</p>
       <p v-else-if="boardsForDisplay.length === 0">{{ t("backlog.page.boardList.empty") }}</p>
@@ -105,6 +111,37 @@
       </div>
     </form>
   </BaseModal>
+
+  <BaseModal :open="isBoardModalOpen" :title="t('board.layout.modal.title')" @close="closeBoardModal">
+    <form class="modal-form" @submit.prevent="createBoard">
+      <label for="board-name">{{ t("board.layout.modal.nameLabel") }}</label>
+      <input
+        id="board-name"
+        v-model.trim="boardForm.name"
+        type="text"
+        :placeholder="t('board.layout.modal.namePlaceholder')"
+      />
+
+      <label for="board-summary">{{ t("board.layout.modal.summaryLabel") }}</label>
+      <input
+        id="board-summary"
+        v-model.trim="boardForm.summary"
+        type="text"
+        maxlength="80"
+        :placeholder="t('board.layout.modal.summaryPlaceholder')"
+      />
+
+      <p v-if="boardFormError" class="form-error">{{ boardFormError }}</p>
+      <div class="modal-actions">
+        <button type="button" class="btn btn--secondary" @click="closeBoardModal">
+          {{ t("board.layout.actions.cancel") }}
+        </button>
+        <button type="submit" class="btn" :disabled="isBoardCreating">
+          {{ isBoardCreating ? t("board.layout.actions.creating") : t("board.layout.actions.submit") }}
+        </button>
+      </div>
+    </form>
+  </BaseModal>
 </template>
 
 <script setup>
@@ -140,6 +177,10 @@ const boardsForDisplay = ref([]);
 const isLoadingBoards = ref(false);
 const boardListError = ref("");
 const draggingIssueId = ref(null); // To store the ID of the dragged issue
+const isBoardModalOpen = ref(false);
+const isBoardCreating = ref(false);
+const boardFormError = ref("");
+const boardForm = ref({ name: "", summary: "" });
 
 
 const projectId = computed(() => route.params.projectId);
@@ -176,7 +217,7 @@ const fetchIssues = async () => {
   errorMessage.value = "";
   try {
     const res = await api.get(`/boards/${backlogBoardId.value}/issues`);
-    issues.value = res.data?.data || [];
+    issues.value = res.data || [];
   } catch (error) {
     errorMessage.value = t("backlog.page.status.errorLoad");
   } finally {
@@ -235,7 +276,7 @@ const onDropToBoard = async (targetBoardId) => {
       board_id: targetBoardId,
       status: "PENDING", // Set status to PENDING when dropped onto a board
     });
-    const updated = res.data?.data;
+    const updated = res.data;
 
     // Remove issue from backlog list
     issues.value = issues.value.filter((issue) => issue.id !== issueId);
@@ -284,6 +325,46 @@ const closeModal = () => {
   isModalOpen.value = false;
 };
 
+const openBoardModal = () => {
+  if (!projectId.value) {
+    boardFormError.value = t("board.layout.validation.noProject");
+    return;
+  }
+  boardForm.value = { name: "", summary: "" };
+  boardFormError.value = "";
+  isBoardModalOpen.value = true;
+};
+
+const closeBoardModal = () => {
+  isBoardModalOpen.value = false;
+};
+
+const createBoard = async () => {
+  if (!boardForm.value.name) {
+    boardFormError.value = t("board.layout.validation.nameRequired");
+    return;
+  }
+
+  isBoardCreating.value = true;
+  boardFormError.value = "";
+
+  try {
+    await api.post("/boards", {
+      name: boardForm.value.name,
+      summary: boardForm.value.summary,
+      project_id: projectId.value,
+      type: "KANBAN",
+    });
+    await boardStore.fetchBoards(projectId.value);
+    await fetchBoardsForDisplay();
+    closeBoardModal();
+  } catch (error) {
+    boardFormError.value = error?.response?.data?.message || t("board.layout.status.errorCreate");
+  } finally {
+    isBoardCreating.value = false;
+  }
+};
+
 const createIssue = async () => {
   if (!form.value.title) {
     formError.value = t("backlog.page.validation.titleRequired");
@@ -327,6 +408,18 @@ watch(projectId, async (nextId, prevId) => {
   display: grid;
   grid-template-columns: 3fr 9fr; /* 3/9 column ratio */
   gap: 24px;
+}
+
+.column-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.column-header h2 {
+  margin: 0;
+  font-size: 18px;
 }
 
 .backlog-issues {
@@ -392,7 +485,7 @@ watch(projectId, async (nextId, prevId) => {
 
 .project-boards h2 {
   font-size: 18px;
-  margin-bottom: 12px;
+  margin-bottom: 0;
 }
 
 .board-cards-grid {
@@ -433,6 +526,7 @@ watch(projectId, async (nextId, prevId) => {
   margin: 0;
   font-size: 12px;
   color: var(--color-text-muted);
+  line-clamp: 2;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;

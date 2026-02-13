@@ -7,24 +7,15 @@
         }}</span>
         <template v-if="projectId">
           <nav class="mainnav">
-            <router-link
-              class="mainnav-link"
-              :to="`/project/${projectId}/wiki`"
-            >
+            <router-link class="mainnav-link" :to="`/project/${projectId}/wiki`">
               <MaterialSymbol name="menu_book" :size="20" alt="" />
               <span>{{ t("layout.project.nav.wiki") }}</span>
             </router-link>
-            <router-link
-              class="mainnav-link"
-              :to="`/project/${projectId}/board`"
-            >
+            <router-link class="mainnav-link" :to="`/project/${projectId}/board`">
               <MaterialSymbol name="view_kanban" :size="20" alt="" />
               <span>{{ t("layout.project.nav.board") }}</span>
             </router-link>
-            <router-link
-              class="mainnav-link"
-              :to="`/project/${projectId}/messenger`"
-            >
+            <router-link class="mainnav-link" :to="`/project/${projectId}/messenger`">
               <MaterialSymbol name="chat_bubble" :size="20" alt="" />
               <span>{{ t("layout.project.nav.messenger") }}</span>
             </router-link>
@@ -43,9 +34,7 @@
         >
           <MaterialSymbol name="settings" :size="18" alt="" />
         </router-link>
-        <router-link to="/account">
-          <Avatar :text="accountInitials" :label="accountLabel" :size="32" />
-        </router-link>
+        <AccountWorkspaceDropdown />
       </nav>
     </header>
     <router-view />
@@ -61,8 +50,8 @@ import { useProjectMemberStore } from "../stores/projectMemberStore";
 import { useWorkspaceStore } from "../stores/workspaceStore";
 import { useAppStore } from "../stores/appStore";
 import MaterialSymbol from "../components/MaterialSymbol.vue";
-import Avatar from "../components/Avatar.vue";
 import SearchInput from "../components/SearchInput.vue";
+import AccountWorkspaceDropdown from "../components/AccountWorkspaceDropdown.vue";
 
 const { t } = useI18n();
 const route = useRoute();
@@ -71,7 +60,6 @@ const workspaceStore = useWorkspaceStore();
 const appStore = useAppStore();
 const { gnbPreviewTheme, currentUser } = storeToRefs(appStore);
 
-
 const projectId = computed(() => route.params.projectId);
 const projectMembers = computed(() => projectMemberStore.getProjectMembers(projectId.value));
 const currentProject = computed(() => {
@@ -79,12 +67,6 @@ const currentProject = computed(() => {
   return workspaceStore.getProject(projectId.value);
 });
 const projectName = computed(() => currentProject.value?.name || "");
-const accountInitials = computed(() => {
-  const name = currentUser.value?.name || "";
-  if (!name) return "?";
-  return name.slice(0, 2).toUpperCase();
-});
-const accountLabel = computed(() => currentUser.value?.name || t("layout.project.util.account"));
 const currentUserId = computed(() => currentUser.value?.id);
 const currentProjectRole = computed(() => {
   if (!currentUserId.value) return "";

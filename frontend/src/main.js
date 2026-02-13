@@ -13,8 +13,8 @@ const bootstrapAuthState = async () => {
   const appStore = useAppStore(pinia);
   try {
     const res = await api.get("/members/me");
-    if (res.data?.success && res.data?.data) {
-      appStore.setCurrentUser(res.data.data);
+    if (res.data) {
+      appStore.setCurrentUser(res.data);
       return;
     }
   } catch (error) {

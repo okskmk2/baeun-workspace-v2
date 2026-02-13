@@ -82,9 +82,8 @@ router.post("/", isAuth, async (req, res) => {
     await client.query("COMMIT");
 
     res.status(201).json({
-      success: true,
       message: "Workspace created.",
-      data: { id: newWorkspace.id },
+      id: newWorkspace.id,
     });
   } catch (error) {
     await client.query("ROLLBACK");
@@ -92,7 +91,7 @@ router.post("/", isAuth, async (req, res) => {
       err: error?.message,
       stack: error?.stack,
     });
-    res.status(500).json({ success: false, message: "Server error. Workspace create failed." });
+    res.status(500).json({ name: "InternalServerError", message: "Server error. Workspace create failed." });
   } finally {
     client.release();
   }
@@ -146,12 +145,9 @@ router.get("/my", isAuth, async (req, res) => {
         `;
     const result = await pool.query(query, [req.session.userId]);
 
-    res.json({
-      success: true,
-      data: result.rows,
-    });
+    res.json(result.rows);
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ name: "InternalServerError", message: error.message });
   }
 });
 
@@ -213,7 +209,7 @@ router.get("/:workspaceId", isAuth, async (req, res) => {
     );
 
     if (memberCheck.rows.length === 0) {
-      return res.status(403).json({ success: false, message: "Access denied." });
+      return res.status(403).json({ name: "Forbidden", message: "Access denied." });
     }
 
     const workspaceRes = await pool.query(
@@ -234,12 +230,12 @@ router.get("/:workspaceId", isAuth, async (req, res) => {
 
     const workspace = workspaceRes.rows[0];
     if (!workspace) {
-      return res.status(404).json({ success: false, message: "Workspace not found." });
+      return res.status(404).json({ name: "NotFound", message: "Workspace not found." });
     }
 
-    res.json({ success: true, data: workspace });
+    res.json(workspace);
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ name: "InternalServerError", message: error.message });
   }
 });
 
@@ -250,16 +246,16 @@ router.put("/:workspaceId", isAuth, async (req, res) => {
 
   const nextName = String(name || "").trim();
   if (!nextName) {
-    return res.status(400).json({ success: false, message: "Workspace name is required." });
+    return res.status(400).json({ name: "BadRequest", message: "Workspace name is required." });
   }
 
   try {
     const roleName = await getWorkspaceMemberRole(workspaceId, userId);
     if (!roleName) {
-      return res.status(404).json({ success: false, message: "Workspace not found or access denied." });
+      return res.status(404).json({ name: "NotFound", message: "Workspace not found or access denied." });
     }
     if (!["OWNER", "ADMIN"].includes(roleName)) {
-      return res.status(403).json({ success: false, message: "No permission to update workspace." });
+      return res.status(403).json({ name: "Forbidden", message: "No permission to update workspace." });
     }
 
     const updateRes = await pool.query(
@@ -268,16 +264,15 @@ router.put("/:workspaceId", isAuth, async (req, res) => {
     );
 
     if (updateRes.rows.length === 0) {
-      return res.status(404).json({ success: false, message: "Workspace not found." });
+      return res.status(404).json({ name: "NotFound", message: "Workspace not found." });
     }
 
     res.json({
-      success: true,
       message: "Workspace name updated.",
-      data: updateRes.rows[0],
+      ...updateRes.rows[0],
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ name: "InternalServerError", message: error.message });
   }
 });
 
@@ -350,14 +345,14 @@ router.post("/:workspaceId/members", isAuth, async (req, res) => {
     );
 
     if (!adminCheck.rows[0] || !["OWNER", "ADMIN"].includes(adminCheck.rows[0].role_name)) {
-      return res.status(403).json({ success: false, message: "No permission to invite members." });
+      return res.status(403).json({ name: "Forbidden", message: "No permission to invite members." });
     }
 
     // 2. Check user exists by email.
     const userRes = await pool.query("SELECT id FROM member WHERE email = $1", [email]);
     if (userRes.rows.length === 0) {
       return res.status(404).json({
-        success: false,
+        name: "NotFound",
         message: "No user with that email.",
       });
     }
@@ -370,7 +365,7 @@ router.post("/:workspaceId/members", isAuth, async (req, res) => {
     );
     if (duplicateCheck.rows.length > 0) {
       return res.status(400).json({
-        success: false,
+        name: "BadRequest",
         message: "User is already a workspace member.",
       });
     }
@@ -382,12 +377,11 @@ router.post("/:workspaceId/members", isAuth, async (req, res) => {
     );
 
     res.json({
-      success: true,
       message: "Member added.",
-      data: { id: insertRes.rows[0].id },
+      id: insertRes.rows[0].id,
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ name: "InternalServerError", message: error.message });
   }
 });
 
@@ -443,7 +437,7 @@ router.get("/:workspaceId/members", isAuth, async (req, res) => {
   try {
     const roleName = await getWorkspaceMemberRole(workspaceId, userId);
     if (!roleName) {
-      return res.status(403).json({ success: false, message: "Access denied." });
+      return res.status(403).json({ name: "Forbidden", message: "Access denied." });
     }
 
     const query = `
@@ -454,41 +448,79 @@ router.get("/:workspaceId/members", isAuth, async (req, res) => {
             ORDER BY m.name ASC;
         `;
     const result = await pool.query(query, [workspaceId]);
-    res.json({ success: true, data: result.rows });
+    res.json(result.rows);
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ name: "InternalServerError", message: error.message });
   }
 });
 
+/**
+ * @swagger
+ * /api/workspaces/{workspaceId}/members/{memberId}:
+ *   delete:
+ *     summary: Workspace member remove
+ *     description: Remove a member from workspace (OWNER/ADMIN only)
+ *     tags:
+ *       - Workspace
+ *     parameters:
+ *       - in: path
+ *         name: workspaceId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *       - in: path
+ *         name: memberId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Member removed
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       400:
+ *         $ref: "#/components/responses/ErrorResponse"
+ *       403:
+ *         $ref: "#/components/responses/ErrorResponse"
+ *       404:
+ *         $ref: "#/components/responses/ErrorResponse"
+ *       500:
+ *         $ref: "#/components/responses/ErrorResponse"
+ */
 router.delete("/:workspaceId/members/:memberId", isAuth, async (req, res) => {
   const { workspaceId, memberId } = req.params;
   const actorId = req.session.userId;
   const targetMemberId = Number(memberId);
 
   if (!Number.isInteger(targetMemberId) || targetMemberId <= 0) {
-    return res.status(400).json({ success: false, message: "Invalid member id." });
+    return res.status(400).json({ name: "BadRequest", message: "Invalid member id." });
   }
 
   try {
     const actorRole = await getWorkspaceMemberRole(workspaceId, actorId);
     if (!actorRole) {
-      return res.status(403).json({ success: false, message: "Access denied." });
+      return res.status(403).json({ name: "Forbidden", message: "Access denied." });
     }
     if (!["OWNER", "ADMIN"].includes(actorRole)) {
-      return res.status(403).json({ success: false, message: "No permission to remove member." });
+      return res.status(403).json({ name: "Forbidden", message: "No permission to remove member." });
     }
 
     if (String(actorId) === String(targetMemberId)) {
-      return res.status(400).json({ success: false, message: "You cannot remove yourself." });
+      return res.status(400).json({ name: "BadRequest", message: "You cannot remove yourself." });
     }
 
     const targetRole = await getWorkspaceMemberRole(workspaceId, targetMemberId);
     if (!targetRole) {
-      return res.status(404).json({ success: false, message: "Member not found in workspace." });
+      return res.status(404).json({ name: "NotFound", message: "Member not found in workspace." });
     }
 
     if (actorRole === "ADMIN" && ["OWNER", "ADMIN"].includes(targetRole)) {
-      return res.status(403).json({ success: false, message: "Admin can remove MEMBER only." });
+      return res.status(403).json({ name: "Forbidden", message: "Admin can remove MEMBER only." });
     }
 
     if (targetRole === "OWNER") {
@@ -497,7 +529,7 @@ router.delete("/:workspaceId/members/:memberId", isAuth, async (req, res) => {
         [workspaceId]
       );
       if ((ownerCountRes.rows[0]?.count || 0) <= 1) {
-        return res.status(403).json({ success: false, message: "Cannot remove the last OWNER." });
+        return res.status(403).json({ name: "Forbidden", message: "Cannot remove the last OWNER." });
       }
     }
 
@@ -506,9 +538,9 @@ router.delete("/:workspaceId/members/:memberId", isAuth, async (req, res) => {
       targetMemberId,
     ]);
 
-    res.json({ success: true, message: "Member removed." });
+    res.json({ message: "Member removed." });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ name: "InternalServerError", message: error.message });
   }
 });
 
@@ -560,7 +592,7 @@ router.delete("/:workspaceId", isAuth, async (req, res) => {
     // Not a member or no matching workspace.
     if (!target) {
       return res.status(404).json({
-        success: false,
+        name: "NotFound",
         message: "Workspace not found or access denied.",
       });
     }
@@ -568,7 +600,7 @@ router.delete("/:workspaceId", isAuth, async (req, res) => {
     // Permission check: OWNER only.
     if (target.role_name !== "OWNER") {
       return res.status(403).json({
-        success: false,
+        name: "Forbidden",
         message: "No permission to delete workspace. (Owner only.)",
       });
     }
@@ -576,7 +608,7 @@ router.delete("/:workspaceId", isAuth, async (req, res) => {
     // Policy check: default (personal) workspace cannot be deleted.
     if (target.is_default) {
       return res.status(403).json({
-        success: false,
+        name: "Forbidden",
         message: "Default personal workspace cannot be deleted.",
       });
     }
@@ -585,16 +617,13 @@ router.delete("/:workspaceId", isAuth, async (req, res) => {
     // ON DELETE CASCADE removes related projects, members, and boards.
     await pool.query("DELETE FROM workspace WHERE id = $1", [workspaceId]);
 
-    res.json({
-      success: true,
-      message: "Workspace and related data deleted.",
-    });
+    res.json({ message: "Workspace and related data deleted." });
   } catch (error) {
     logger.error("Workspace delete error", {
       err: error?.message,
       stack: error?.stack,
     });
-    res.status(500).json({ success: false, message: "Server error. Delete failed." });
+    res.status(500).json({ name: "InternalServerError", message: "Server error. Delete failed." });
   }
 });
 

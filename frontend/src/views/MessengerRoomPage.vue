@@ -230,7 +230,7 @@ const fetchchannelDetail = async () => {
 
   try {
     const res = await api.get(`/channels/${roomId.value}`);
-    roomTitle.value = res.data?.data?.name || "";
+    roomTitle.value = res.data?.name || "";
   } catch (error) {
     roomTitle.value = "";
   }
@@ -239,7 +239,7 @@ const fetchchannelDetail = async () => {
 const fetchMessages = async () => {
   if (!roomId.value) return;
   const res = await api.get(`/channels/${roomId.value}/messages`);
-  messages.value = res.data?.data || [];
+  messages.value = res.data || [];
 };
 
 const scrollMessagesToBottom = async () => {
@@ -259,7 +259,7 @@ const fetchChatMembers = async () => {
 
   try {
     const res = await api.get(`/channels/${roomId.value}/members`);
-    chatMembers.value = res.data?.data || [];
+    chatMembers.value = res.data || [];
   } catch (error) {
     chatMembers.value = [];
     membersError.value = t("messenger.room.members.status.errorLoad");
@@ -387,8 +387,8 @@ const selectFeedback = (key) => {
       feedback_key: key,
     })
     .then((res) => {
-      const counts = res.data?.data?.feedback_counts || {};
-      const mine = res.data?.data?.feedback_mine || [];
+      const counts = res.data?.feedback_counts || {};
+      const mine = res.data?.feedback_mine || [];
       messages.value = messages.value.map((message) =>
         String(message.id) === String(messageId)
           ? { ...message, feedback_counts: counts, feedback_mine: mine }

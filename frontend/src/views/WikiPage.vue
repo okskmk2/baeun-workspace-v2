@@ -215,7 +215,7 @@ const fetchPage = async () => {
     const res = await api.get(`/pages/${pageId.value}`, {
       params: { project_id: projectId.value },
     });
-    page.value = res.data?.data || {};
+    page.value = res.data || {};
   } catch (error) {
     page.value = {};
     errorMessage.value = t("wiki.page.status.errorLoad");
@@ -259,7 +259,7 @@ const savePage = async () => {
         params: { project_id: projectId.value },
       }
     );
-    page.value = res.data?.data || page.value;
+    page.value = res.data || page.value;
     originalForm.value = {
       title: page.value.title || "",
       content: page.value.content || "",
@@ -280,7 +280,7 @@ const fetchPageMembers = async () => {
   const res = await api.get(`/pages/${pageId.value}/members`, {
     params: { project_id: projectId.value },
   });
-  pageMembers.value = res.data?.data || [];
+  pageMembers.value = res.data || [];
 };
 
 const openPermissionModal = async () => {

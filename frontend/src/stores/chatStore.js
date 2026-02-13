@@ -14,7 +14,7 @@ export const useChatStore = defineStore('chat', {
       if(!projectId) return
       try{
         const res = await api.get("/channels", { params: { project_id: projectId } })
-        this.roomsByProject[projectId] = res.data?.data || []
+        this.roomsByProject[projectId] = res.data || []
       }catch(e){
         this.roomsByProject[projectId] = []
         throw e
@@ -24,7 +24,7 @@ export const useChatStore = defineStore('chat', {
       if(!roomId) return
       try{
         const res = await api.get(`/channels/${roomId}/messages`)
-        this.messagesByRoom[roomId] = res.data?.data || []
+        this.messagesByRoom[roomId] = res.data || []
       }catch(e){
         this.messagesByRoom[roomId] = []
         throw e

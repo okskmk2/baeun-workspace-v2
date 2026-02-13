@@ -20,7 +20,7 @@ export const useBoardStore = defineStore("board", {
       const fetchPromise = (async () => {
         try {
           const res = await api.get(`/boards`, { params: { projectId } });
-          this.boardsByProject[projectId] = res.data?.data || [];
+          this.boardsByProject[projectId] = res.data || [];
           return this.boardsByProject[projectId]; // Return fetched data
         } catch (e) {
           this.boardsByProject[projectId] = [];
