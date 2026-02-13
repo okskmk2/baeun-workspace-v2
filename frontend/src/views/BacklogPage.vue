@@ -173,7 +173,6 @@ const form = ref({
   status: "BACKLOG", // Default to BACKLOG status
 });
 
-const boardsForDisplay = ref([]);
 const isLoadingBoards = ref(false);
 const boardListError = ref("");
 const draggingIssueId = ref(null); // To store the ID of the dragged issue
@@ -184,6 +183,11 @@ const boardForm = ref({ name: "", summary: "" });
 
 
 const projectId = computed(() => route.params.projectId);
+
+const boardsForDisplay = computed(() => {
+  const allBoards = boardStore.getBoards(projectId.value);
+  return allBoards.filter((board) => board.type !== "BACKLOG");
+});
 
 const fetchBacklogBoard = async () => {
   if (!projectId.value) return;
@@ -230,14 +234,11 @@ const fetchBoardsForDisplay = async () => {
   isLoadingBoards.value = true;
   boardListError.value = "";
   try {
-    let boardsFromStore = boardStore.getBoards(projectId.value);
+    const boardsFromStore = boardStore.getBoards(projectId.value);
     if (boardsFromStore.length === 0) {
       // If boards are not yet loaded in the store for this project
       await boardStore.fetchBoards(projectId.value);
-      boardsFromStore = boardStore.getBoards(projectId.value);
     }
-
-    boardsForDisplay.value = boardsFromStore.filter((board) => board.type !== "BACKLOG");
   } catch (error) {
     boardListError.value = error?.response?.data?.message || t("backlog.page.boardList.errorLoad");
   } finally {
@@ -281,25 +282,16 @@ const onDropToBoard = async (targetBoardId) => {
     // Remove issue from backlog list
     issues.value = issues.value.filter((issue) => issue.id !== issueId);
 
-    // Update counts on the target board
-    const targetBoardIndex = boardsForDisplay.value.findIndex(
+    // Update counts on the target board via store
+    const targetBoard = boardStore.getBoards(projectId.value).find(
       (board) => board.id === targetBoardId
     );
-    if (targetBoardIndex !== -1) {
-      const board = boardsForDisplay.value[targetBoardIndex];
-      const newIssueCounts = { ...board.issue_counts };
-
-      // Decrement BACKLOG count from the original board (if it was from the backlog board)
-      // This is implicit, as we filter issues out of the backlog issues list
-      // So no need to decrease backlog counts, as this issue was originally a backlog issue
-
-      // Increment PENDING count for the target board
+    if (targetBoard) {
+      const newIssueCounts = { ...(targetBoard.issue_counts || {}) };
       newIssueCounts.PENDING = (newIssueCounts.PENDING || 0) + 1;
-
-      boardsForDisplay.value[targetBoardIndex] = {
-        ...board,
+      boardStore.updateBoardDetails(targetBoardId, projectId.value, {
         issue_counts: newIssueCounts,
-      };
+      });
     }
   } catch (error) {
     console.error("Failed to move issue:", error);
@@ -356,7 +348,6 @@ const createBoard = async () => {
       type: "KANBAN",
     });
     await boardStore.fetchBoards(projectId.value);
-    await fetchBoardsForDisplay();
     closeBoardModal();
   } catch (error) {
     boardFormError.value = error?.response?.data?.message || t("board.layout.status.errorCreate");
