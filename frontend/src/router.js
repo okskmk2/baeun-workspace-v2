@@ -5,7 +5,7 @@ import StorePage from "./views/StorePage.vue";
 import NotFoundPage from "./views/NotFoundPage.vue";
 import LoginPage from "./views/LoginPage.vue";
 import SigupPage from "./views/SigupPage.vue";
-import AccountLayout from "./views/AccountLayout.vue";
+import SettingsLayout from "./views/SettingsLayout.vue";
 import ProfilePage from "./views/ProfilePage.vue";
 import SecurityPage from "./views/SecurityPage.vue";
 import PlanLicensePage from "./views/PlanLicensePage.vue";
@@ -27,9 +27,9 @@ import WikiPage from "./views/WikiPage.vue";
 import MessengerHomePage from "./views/MessengerHomePage.vue";
 import MessengerRoomPage from "./views/MessengerRoomPage.vue";
 import MessengerSettingsPage from "./views/MessengerSettingsPage.vue";
-import SettingsLayout from "./views/SettingsLayout.vue";
-import SettingsHomePage from "./views/SettingsHomePage.vue";
-import SettingsMemberPage from "./views/SettingsMemberPage.vue";
+import ProjectSettingsLayout from "./views/ProjectSettingsLayout.vue";
+import ProjectSettingsHomePage from "./views/ProjectSettingsHomePage.vue";
+import ProjectSettingsMemberPage from "./views/ProjectSettingsMemberPage.vue";
 import BlankPage from "./views/BlankPage.vue";
 import BacklogPage from "./views/BacklogPage.vue";
 import { useAppStore } from "./stores/appStore";
@@ -63,14 +63,14 @@ const routes = [
         component: SigupPage,
       },
       {
-        path: "account",
+        path: "settings",
         meta: { requiresAuth: true },
-        component: AccountLayout,
+        component: SettingsLayout,
         children: [
-          { path: "", redirect: "/account/profile" },
+          { path: "", redirect: "/settings/profile" },
           { path: "profile", component: ProfilePage },
           { path: "security", component: SecurityPage },
-          { path: "plan", component: PlanLicensePage }, // 구독+?�이?�스 ?�합
+          { path: "plan", component: PlanLicensePage }, // 구독 + 라이선스 통합
           { path: "billing", component: BillingPage },
           { path: "workspaces", component: WorkspaceListPage },
           { path: "workspaces/:workspaceId", component: WorkspaceDetailPage },
@@ -163,15 +163,15 @@ const routes = [
       {
         path: "settings",
         meta: { requiresProjectAdmin: true },
-        component: SettingsLayout,
+        component: ProjectSettingsLayout,
         children: [
           {
             path: "",
-            component: SettingsHomePage,
+            component: ProjectSettingsHomePage,
           },
           {
             path: "member",
-            component: SettingsMemberPage,
+            component: ProjectSettingsMemberPage,
           },
         ],
       },
@@ -198,7 +198,7 @@ router.beforeEach(async (to, from, next) => {
   if (requiresProjectAdmin && isAuthenticated) {
     const { projectId } = to.params;
     if (!projectId) {
-      return next({ path: "/account" });
+      return next({ path: "/settings" });
     }
 
     try {

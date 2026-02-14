@@ -12,7 +12,7 @@
 
     <div v-if="isMenuOpen" class="account-menu__panel" role="menu">
       <div class="account-menu__header">
-        <router-link class="account-menu__profile-link" to="/account/profile" @click="closeMenu">
+        <router-link class="account-menu__profile-link" to="/settings/profile" @click="closeMenu">
           {{ t("layout.default.util.profile") }}
         </router-link>
       </div>
@@ -29,7 +29,7 @@
         <li v-for="workspace in workspaceItems" :key="workspace.id" class="account-menu__workspace">
           <router-link
             class="account-menu__workspace-link"
-            :to="`/account/workspaces/${workspace.id}`"
+            :to="`/settings/workspaces/${workspace.id}`"
             @click="closeMenu"
           >
             {{ workspace.name }}
@@ -52,7 +52,7 @@
         <p class="account-menu__status">
           {{ t("layout.default.util.emptyWorkspaces") }}
         </p>
-        <router-link class="account-menu__empty-link" to="/account/workspaces" @click="closeMenu">
+        <router-link class="account-menu__empty-link" to="/settings/workspaces" @click="closeMenu">
           {{ t("layout.account.nav.workspaces") }}
         </router-link>
       </div>
@@ -240,7 +240,7 @@ watch(
 
 .account-menu__profile-link {
   font-size: 14px;
-  color: var(--color-text);
+  color: var(--color-text)!important;
   text-decoration: none;
 }
 

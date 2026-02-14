@@ -233,9 +233,9 @@ const confirmDeleteProject = async () => {
     isDeleteModalOpen.value = false;
 
     if (projectWorkspaceId.value) {
-      await router.push(`/account/workspaces/${projectWorkspaceId.value}`);
+      await router.push(`/settings/workspaces/${projectWorkspaceId.value}`);
     } else {
-      await router.push("/account/workspaces");
+      await router.push("/settings/workspaces");
     }
   } catch (error) {
     const message = error?.response?.data?.message || t("settings.home.status.errorDelete");

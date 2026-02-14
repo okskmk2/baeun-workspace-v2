@@ -71,7 +71,7 @@ const ownershipItems = computed(() => {
 
     if (resource.type === "workspace") {
       typeLabel = t("profile.danger.guide.types.workspace");
-      route = `/account/workspaces/${resource.id}`;
+      route = `/settings/workspaces/${resource.id}`;
     } else if (resource.type === "project") {
       typeLabel = t("profile.danger.guide.types.project");
       route = `/project/${resource.id}`;

@@ -3,7 +3,7 @@
     <h1>{{ t("notFound.project.title") }}</h1>
     <p class="subtitle">{{ t("notFound.project.description") }}</p>
     <div class="actions">
-      <router-link class="btn btn--secondary" to="/account/workspaces">
+      <router-link class="btn btn--secondary" to="/settings/workspaces">
         {{ t("notFound.project.actions.workspaces") }}
       </router-link>
       <router-link class="btn" to="/">

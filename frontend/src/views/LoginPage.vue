@@ -110,7 +110,7 @@ const onSubmit = async () => {
 
     const workspaces = await workspaceStore.fetchWorkspaces();
     if (workspaces.length > 0) {
-      router.push("/account/workspaces");
+      router.push("/settings/workspaces");
     } else {
       router.push("/");
     }

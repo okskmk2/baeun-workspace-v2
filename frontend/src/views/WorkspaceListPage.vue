@@ -22,7 +22,7 @@
       <div class="workspace-header">
         <div>
           <h2>
-            <router-link :to="`/account/workspaces/${workspace.id}`" class="workspace-link">
+            <router-link :to="`/settings/workspaces/${workspace.id}`" class="workspace-link">
               {{ workspace.name }}
             </router-link>
           </h2>

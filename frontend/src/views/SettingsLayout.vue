@@ -2,12 +2,11 @@
   <div class="LnbLayout">
     <aside>
       <nav>
-        <router-link :to="`/project/${projectId}/settings`"
-          >{{ t("layout.settings.nav.general") }}</router-link
-        >
-        <router-link :to="`/project/${projectId}/settings/member`"
-          >{{ t("layout.settings.nav.members") }}</router-link
-        >
+        <router-link to="/settings/profile">{{ t("layout.account.nav.profile") }}</router-link>
+        <router-link to="/settings/security">{{ t("layout.account.nav.security") }}</router-link>
+        <router-link to="/settings/plan">{{ t("layout.account.nav.plan") }}</router-link>
+        <router-link to="/settings/billing">{{ t("layout.account.nav.billing") }}</router-link>
+        <router-link to="/settings/workspaces">{{ t("layout.account.nav.workspaces") }}</router-link>
       </nav>
     </aside>
     <main>
@@ -15,14 +14,9 @@
     </main>
   </div>
 </template>
+
 <script setup>
-import { computed } from "vue";
 import { useI18n } from "vue-i18n";
-import { useRoute } from "vue-router";
 
 const { t } = useI18n();
-const route = useRoute();
-
-
-const projectId = computed(() => route.params.projectId);
 </script>

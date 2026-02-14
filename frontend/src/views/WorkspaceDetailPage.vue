@@ -5,7 +5,7 @@
       <p class="subtitle">{{ t("workspace.detail.header.subtitle") }}</p>
     </div>
     <div class="actions">
-      <router-link class="btn btn--secondary" to="/account/workspaces">
+      <router-link class="btn btn--secondary" to="/settings/workspaces">
         {{ t("workspace.detail.actions.back") }}
       </router-link>
       <router-link class="btn" :to="``">
