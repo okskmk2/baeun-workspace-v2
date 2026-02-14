@@ -84,10 +84,12 @@ import MaterialSymbol from "../components/MaterialSymbol.vue";
 import Tag from "../components/Tag.vue";
 import { useRoleLabels } from "../lib/roleLabels";
 import { convertSnakeToCamel } from "../lib/utils";
+import { useProjectSearchStore } from "../stores/projectSearchStore";
 
 const { t } = useI18n();
 const { getRoleLabel } = useRoleLabels();
 const route = useRoute();
+const projectSearchStore = useProjectSearchStore();
 
 const board = ref({});
 const issues = ref([]);
@@ -118,6 +120,7 @@ const fetchIssues = async () => {
   if (!boardId.value) return;
   const res = await api.get(`/boards/${boardId.value}/issues`);
   issues.value = res.data || [];
+  projectSearchStore.upsertIssues(projectId.value, issues.value);
 };
 
 const issuesByStatus = (status) =>

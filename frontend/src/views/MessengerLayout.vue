@@ -38,11 +38,13 @@ import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 import CreateChannelModal from "../components/modals/CreateChannelModal.vue";
 import { useChatStore } from "../stores/chatStore";
+import { useProjectSearchStore } from "../stores/projectSearchStore";
 
 const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const chatStore = useChatStore();
+const projectSearchStore = useProjectSearchStore();
 
 const projectId = computed(() => route.params.projectId);
 
@@ -53,7 +55,6 @@ const errorMessage = ref("");
 
 const fetchRooms = async () => {
   if (!projectId.value) {
-    rooms.value = [];
     return;
   }
 
@@ -62,7 +63,12 @@ const fetchRooms = async () => {
 
   try {
     await chatStore.fetchRooms(projectId.value);
+    projectSearchStore.upsertChannels(projectId.value, chatStore.getRooms(projectId.value));
   } catch (error) {
+    if (error?.response?.status === 404) {
+      router.push("/not-found");
+      return;
+    }
     errorMessage.value = t("messenger.layout.status.errorLoad");
   } finally {
     isLoading.value = false;
@@ -78,7 +84,7 @@ const closeModal = () => {
 };
 
 const onChannelCreated = async () => {
-  await chatStore.fetchRooms(projectId.value);
+  await fetchRooms();
 };
 
 onMounted(fetchRooms);

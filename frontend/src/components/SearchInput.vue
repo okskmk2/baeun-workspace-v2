@@ -6,6 +6,8 @@
       :placeholder="placeholder"
       :aria-label="ariaLabel || placeholder"
       :disabled="disabled"
+      @focus="onFocus"
+      @blur="onBlur"
       @input="onInput"
     />
     <span class="search-input__icon" aria-hidden="true">
@@ -36,10 +38,18 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(["update:modelValue"]);
+const emit = defineEmits(["update:modelValue", "focus", "blur"]);
 
 const onInput = (event) => {
   emit("update:modelValue", event.target.value);
+};
+
+const onFocus = () => {
+  emit("focus");
+};
+
+const onBlur = () => {
+  emit("blur");
 };
 </script>
 

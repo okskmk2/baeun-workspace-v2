@@ -73,7 +73,14 @@
         "messenger": "Messenger"
       },
       "search": {
-        "placeholder": "Search in project"
+        "placeholder": "Search in project",
+        "empty": "No search results.",
+        "types": {
+          "board": "Board",
+          "page": "Page",
+          "channel": "Channel",
+          "issue": "Issue"
+        }
       },
       "util": {
         "settings": "Settings",

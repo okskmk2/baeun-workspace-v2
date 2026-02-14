@@ -103,11 +103,13 @@ import CreateBoardModal from "../components/modals/CreateBoardModal.vue";
 import { useRoleLabels } from "../lib/roleLabels";
 import { useBoardStore } from "../stores/boardStore";
 import { convertSnakeToCamel } from "../lib/utils";
+import { useProjectSearchStore } from "../stores/projectSearchStore";
 
 const { t } = useI18n();
 const { getRoleLabel } = useRoleLabels();
 const route = useRoute();
 const boardStore = useBoardStore();
+const projectSearchStore = useProjectSearchStore();
 
 const issues = ref([]);
 const backlogBoardId = ref(null);
@@ -160,6 +162,7 @@ const fetchIssues = async () => {
   try {
     const res = await api.get(`/boards/${backlogBoardId.value}/issues`);
     issues.value = res.data || [];
+    projectSearchStore.upsertIssues(projectId.value, issues.value);
   } catch (error) {
     errorMessage.value = t("backlog.page.status.errorLoad");
   } finally {

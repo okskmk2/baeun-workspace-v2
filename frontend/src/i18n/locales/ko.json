@@ -73,7 +73,14 @@
         "messenger": "메신저"
       },
       "search": {
-        "placeholder": "프로젝트에서 검색"
+        "placeholder": "프로젝트에서 검색",
+        "empty": "검색 결과가 없습니다.",
+        "types": {
+          "board": "보드",
+          "page": "페이지",
+          "channel": "채널",
+          "issue": "이슈"
+        }
       },
       "util": {
         "settings": "설정",

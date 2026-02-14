@@ -55,11 +55,13 @@ import { useRoute, useRouter } from "vue-router";
 import api from "../lib/axios";
 import CreateBoardModal from "../components/modals/CreateBoardModal.vue";
 import { useBoardStore } from "../stores/boardStore";
+import { useProjectSearchStore } from "../stores/projectSearchStore";
 
 const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const boardStore = useBoardStore();
+const projectSearchStore = useProjectSearchStore();
 const boards = computed(() => boardStore.getBoards(projectId.value));
 const backlogBoard = computed(() => boards.value.find((board) => board.type === "BACKLOG") || null);
 const isLoading = ref(false);
@@ -79,6 +81,7 @@ const fetchBoards = async () => {
 
   try {
     await boardStore.fetchBoards(projectId.value);
+    projectSearchStore.upsertBoards(projectId.value, boardStore.getBoards(projectId.value));
   } catch (error) {
     if (error?.response?.status === 404) {
       router.push("/not-found");
@@ -99,7 +102,7 @@ const closeModal = () => {
 };
 
 const onBoardCreated = async () => {
-  await boardStore.fetchBoards(projectId.value);
+  await fetchBoards();
 };
 
 const getDraggedIssueId = (event) => {

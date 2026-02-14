@@ -28,10 +28,12 @@ import { computed, onMounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import api from "../lib/axios";
 import FeedList from "../components/FeedList.vue";
+import { useProjectSearchStore } from "../stores/projectSearchStore";
 
 const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
+const projectSearchStore = useProjectSearchStore();
 
 const projectId = computed(() => route.params.projectId);
 const isLoading = ref(false);
@@ -48,6 +50,7 @@ const fetchRecentIssues = async () => {
       params: { project_id: projectId.value },
     });
     activities.value = res.data || [];
+    projectSearchStore.upsertIssues(projectId.value, activities.value);
   } catch (error) {
     if (error?.response?.status === 404) {
       router.push("/not-found");

@@ -33,6 +33,7 @@ import api from "../lib/axios";
 import CreatePageModal from "../components/modals/CreatePageModal.vue";
 import PageTree from "../components/PageTree.vue";
 import { usePageStore } from "../stores/pageStore";
+import { useProjectSearchStore } from "../stores/projectSearchStore";
 
 const { t } = useI18n();
 const route = useRoute();
@@ -42,6 +43,7 @@ const projectId = computed(() => route.params.projectId);
 const currentPageId = computed(() => route.params.pageId);
 
 const pageStore = usePageStore();
+const projectSearchStore = useProjectSearchStore();
 const pages = computed(() => pageStore.getPages(projectId.value));
 const isLoading = ref(false);
 const errorMessage = ref("");
@@ -58,6 +60,7 @@ const fetchPages = async () => {
 
   try {
     await pageStore.fetchPages(projectId.value);
+    projectSearchStore.upsertPages(projectId.value, pageStore.getPages(projectId.value));
   } catch (error) {
     if (error?.response?.status === 404) {
       router.push("/not-found");
@@ -79,7 +82,7 @@ const closeModal = () => {
 };
 
 const onPageCreated = async () => {
-  await pageStore.fetchPages(projectId.value);
+  await fetchPages();
 };
 
 const resolveParentId = async () => {
