@@ -33,47 +33,22 @@
     </li>
   </ul>
 
-  <BaseModal
+  <AddProjectMemberModal
     :open="isInviteOpen"
-    :title="t('settings.member.modal.title')"
+    :project-id="projectId"
+    :workspace-members="workspaceMembers"
+    :project-members="projectMembers"
     @close="closeInviteModal"
-  >
-    <form class="modal-form" @submit.prevent="inviteMember">
-      <label for="workspace-member">{{ t("settings.member.modal.membersLabel") }}</label>
-      <select id="workspace-member" v-model="selectedMemberId">
-        <option value="">{{ t("settings.member.modal.selectPlaceholder") }}</option>
-        <option
-          v-for="member in workspaceMembers"
-          :key="member.id"
-          :value="member.id"
-          :disabled="isAlreadyProjectMember(member.id)"
-        >
-          {{ member.name }} ({{ member.email }})
-        </option>
-      </select>
-      <p v-if="inviteError" class="form-error">{{ inviteError }}</p>
-      <div class="modal-actions">
-        <button type="button" class="btn btn--secondary" @click="closeInviteModal">
-          {{ t("settings.member.actions.cancel") }}
-        </button>
-        <button type="submit" class="btn" :disabled="isInviting">
-          {{
-            isInviting
-              ? t("settings.member.actions.inviting")
-              : t("settings.member.actions.submitInvite")
-          }}
-        </button>
-      </div>
-    </form>
-  </BaseModal>
+    @invited="onMemberInvited"
+  />
 </template>
 
 <script setup>
-import { computed, ref } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 import api from "../lib/axios";
-import BaseModal from "../components/BaseModal.vue";
+import AddProjectMemberModal from "../components/modals/AddProjectMemberModal.vue";
 import { useProjectMemberStore } from "../stores/projectMemberStore";
 import { useWorkspaceStore } from "../stores/workspaceStore";
 import { useRoleLabels } from "../lib/roleLabels";
@@ -93,13 +68,24 @@ const workspaceId = computed(() =>
 const projectMembers = computed(() => projectMemberStore.getProjectMembers(projectId.value));
 const workspaceMembers = ref([]);
 const isLoading = ref(false);
+const isInviteOpen = ref(false);
 const errorMessage = ref("");
 const removingMemberId = ref(null);
 
-const isInviteOpen = ref(false);
-const isInviting = ref(false);
-const inviteError = ref("");
-const selectedMemberId = ref("");
+const fetchProjectMembers = async () => {
+  if (!projectId.value) return;
+
+  isLoading.value = true;
+  errorMessage.value = "";
+  try {
+    await projectMemberStore.fetchProjectMembers(projectId.value);
+  } catch (error) {
+    errorMessage.value =
+      error?.response?.data?.message || t("settings.member.status.errorLoad");
+  } finally {
+    isLoading.value = false;
+  }
+};
 
 const fetchWorkspaceMembers = async () => {
   if (!workspaceId.value) {
@@ -115,17 +101,12 @@ const fetchWorkspaceMembers = async () => {
   }
 };
 
-const isAlreadyProjectMember = (memberId) =>
-  projectMembers.value.some((member) => String(member.id) === String(memberId));
-
 const isRemoveDisabled = (member) => {
   if (removingMemberId.value === member.id) return true;
   return String(member.role_name || "").toUpperCase() === "OWNER";
 };
 
 const openInviteModal = async () => {
-  inviteError.value = "";
-  selectedMemberId.value = "";
   isInviteOpen.value = true;
   await fetchWorkspaceMembers();
 };
@@ -134,41 +115,17 @@ const closeInviteModal = () => {
   isInviteOpen.value = false;
 };
 
-const inviteMember = async () => {
-  if (!selectedMemberId.value) {
-    inviteError.value = t("settings.member.validation.selectMember");
-    return;
-  }
-
-  if (!projectId.value) {
-    inviteError.value = t("settings.member.validation.noProject");
-    return;
-  }
-
-  isInviting.value = true;
-  inviteError.value = "";
-
-  try {
-    await api.post(`/projects/${projectId.value}/members`, {
-      member_id: selectedMemberId.value,
-    });
-    const invited = workspaceMembers.value.find(
-      (member) => String(member.id) === String(selectedMemberId.value)
-    );
-    if (invited) {
-      const current = projectMemberStore.getProjectMembers(projectId.value);
-      projectMemberStore.setProjectMembers(projectId.value, [
-        ...current,
-        { ...invited, role_name: "MEMBER" },
-      ]);
-    }
-    closeInviteModal();
-  } catch (error) {
-    inviteError.value = error?.response?.data?.message || t("settings.member.status.errorInvite");
-  } finally {
-    isInviting.value = false;
-  }
+const onMemberInvited = async () => {
+  await projectMemberStore.fetchProjectMembers(projectId.value);
 };
+
+watch(projectId, () => {
+  fetchProjectMembers();
+});
+
+onMounted(() => {
+  fetchProjectMembers();
+});
 
 const removeMember = async (memberId) => {
   if (!projectId.value || !memberId) return;

@@ -48,6 +48,7 @@
         "account": "Account",
         "accountMenu": "Account menu",
         "quickMove": "Quick move",
+        "profile": "My Profile",
         "settings": "Settings",
         "loading": "Loading...",
         "errorLoad": "Failed to load workspace list.",
@@ -170,7 +171,8 @@
       "status": {
         "loading": "Loading...",
         "errorLoad": "Failed to load project details.",
-        "errorUpdate": "Failed to update project settings."
+        "errorUpdate": "Failed to update project settings.",
+        "errorDelete": "Failed to delete project."
       },
       "form": {
         "nameLabel": "Project Name",
@@ -194,14 +196,27 @@
       },
       "actions": {
         "save": "Save",
-        "saving": "Saving..."
+        "saving": "Saving...",
+        "delete": "Delete Project",
+        "deleting": "Deleting...",
+        "cancel": "Cancel"
+      },
+      "danger": {
+        "title": "Danger zone",
+        "description": "Deleting this project removes related data including boards, wiki pages, and messenger channels permanently."
+      },
+      "deleteModal": {
+        "title": "Delete Project",
+        "description": "Are you sure you want to delete '{name}'?",
+        "warning": "This action cannot be undone."
       },
       "validation": {
         "nameRequired": "Please enter a project name.",
         "themeRequired": "Please select a theme."
       },
       "toast": {
-        "updated": "Project settings updated."
+        "updated": "Project settings updated.",
+        "deleted": "Project deleted."
       }
     },
     "member": {
@@ -1112,9 +1127,17 @@
         "description": "Transfer ownership of the resources below to another member before withdrawing.",
         "loading": "Loading owned resources...",
         "error": "Failed to load owned resources.",
+        "errorLoad": "Failed to load owned resources.",
         "empty": "No owned resources are currently identified. Try withdrawal again and recheck.",
         "open": "Open settings",
-        "close": "Close"
+        "close": "Close",
+        "types": {
+          "workspace": "Workspace",
+          "project": "Project",
+          "page": "Page",
+          "board": "Board",
+          "channel": "Channel"
+        }
       }
     },
     "withdraw": {
@@ -1135,6 +1158,16 @@
       "cancel": "Cancel",
       "confirm": "Withdraw",
       "withdrawing": "Withdrawing..."
+    }
+  },
+  "notFound": {
+    "project": {
+      "title": "Project does not exist.",
+      "description": "The requested project could not be found or has already been deleted.",
+      "actions": {
+        "workspaces": "Go to workspaces",
+        "home": "Go home"
+      }
     }
   }
 }

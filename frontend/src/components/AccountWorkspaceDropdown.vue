@@ -12,11 +12,12 @@
 
     <div v-if="isMenuOpen" class="account-menu__panel" role="menu">
       <div class="account-menu__header">
-        <p class="account-menu__title">{{ t("layout.default.util.quickMove") }}</p>
-        <button type="button" class="btn btn--secondary btn--sm" @click="goToAccountSettings">
-          {{ t("layout.default.util.settings") }}
-        </button>
+        <router-link class="account-menu__profile-link" to="/account/profile" @click="closeMenu">
+          {{ t("layout.default.util.profile") }}
+        </router-link>
       </div>
+
+      <p class="account-menu__caption">{{ t("layout.default.util.quickMove") }}</p>
 
       <p v-if="isMenuLoading" class="account-menu__status">
         {{ t("layout.default.util.loading") }}
@@ -62,13 +63,11 @@
 <script setup>
 import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
-import { useRouter } from "vue-router";
 import { useAppStore } from "../stores/appStore";
 import api from "../lib/axios";
 import Avatar from "./Avatar.vue";
 
 const { t } = useI18n();
-const router = useRouter();
 const appStore = useAppStore();
 const isAuthenticated = computed(() => Boolean(appStore.currentUser));
 const currentMemberId = computed(() => appStore.currentUser?.id || null);
@@ -164,11 +163,6 @@ const toggleMenu = async () => {
   document.addEventListener("click", onDocumentClick);
 };
 
-const goToAccountSettings = async () => {
-  closeMenu();
-  await router.push("/account");
-};
-
 onBeforeUnmount(() => {
   document.removeEventListener("click", onDocumentClick);
 });
@@ -232,17 +226,26 @@ watch(
 
 .account-menu__header {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
   gap: 8px;
   padding: 4px 2px 10px;
   border-bottom: 1px solid var(--color-divider);
 }
 
-.account-menu__title {
+.account-menu__caption {
   margin: 0;
   font-size: 13px;
   color: var(--color-text-muted);
+  padding: 8px 2px 2px;
+}
+
+.account-menu__profile-link {
+  font-size: 14px;
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.account-menu__profile-link:hover {
+  text-decoration: underline;
 }
 
 .account-menu__status {

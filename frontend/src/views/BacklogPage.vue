@@ -22,7 +22,7 @@
         :key="issue.id"
         class="issue-card"
         draggable="true"
-        @dragstart="onDragStart(issue)"
+        @dragstart="onDragStart($event, issue)"
       >
         <h3>
           <router-link :to="issueDetailPath(issue.id)">{{ issue.title }}</router-link>
@@ -77,71 +77,19 @@
     </div>
   </div>
 
-  <BaseModal
+  <CreateIssueModal
     :open="isModalOpen"
-    :title="t('backlog.page.modal.title')"
-    :closeOnBackdrop="false"
+    :board-id="backlogBoardId"
     @close="closeModal"
-  >
-    <form class="modal-form" @submit.prevent="createIssue">
-      <label for="issue-title">{{ t("backlog.page.modal.titleLabel") }}</label>
-      <input
-        id="issue-title"
-        v-model.trim="form.title"
-        type="text"
-        :placeholder="t('backlog.page.modal.titlePlaceholder')"
-      />
+    @created="onIssueCreated"
+  />
 
-      <label for="issue-content">{{ t("backlog.page.modal.descriptionLabel") }}</label>
-      <textarea
-        id="issue-content"
-        v-model.trim="form.content"
-        rows="10"
-        :placeholder="t('backlog.page.modal.descriptionPlaceholder')"
-      ></textarea>
-
-      <p v-if="formError" class="form-error">{{ formError }}</p>
-      <div class="modal-actions">
-        <button type="button" class="btn btn--secondary" @click="closeModal">
-          {{ t("backlog.page.actions.cancel") }}
-        </button>
-        <button type="submit" class="btn" :disabled="isCreating">
-          {{ isCreating ? t("backlog.page.actions.creating") : t("backlog.page.actions.create") }}
-        </button>
-      </div>
-    </form>
-  </BaseModal>
-
-  <BaseModal :open="isBoardModalOpen" :title="t('board.layout.modal.title')" @close="closeBoardModal">
-    <form class="modal-form" @submit.prevent="createBoard">
-      <label for="board-name">{{ t("board.layout.modal.nameLabel") }}</label>
-      <input
-        id="board-name"
-        v-model.trim="boardForm.name"
-        type="text"
-        :placeholder="t('board.layout.modal.namePlaceholder')"
-      />
-
-      <label for="board-summary">{{ t("board.layout.modal.summaryLabel") }}</label>
-      <input
-        id="board-summary"
-        v-model.trim="boardForm.summary"
-        type="text"
-        maxlength="80"
-        :placeholder="t('board.layout.modal.summaryPlaceholder')"
-      />
-
-      <p v-if="boardFormError" class="form-error">{{ boardFormError }}</p>
-      <div class="modal-actions">
-        <button type="button" class="btn btn--secondary" @click="closeBoardModal">
-          {{ t("board.layout.actions.cancel") }}
-        </button>
-        <button type="submit" class="btn" :disabled="isBoardCreating">
-          {{ isBoardCreating ? t("board.layout.actions.creating") : t("board.layout.actions.submit") }}
-        </button>
-      </div>
-    </form>
-  </BaseModal>
+  <CreateBoardModal
+    :open="isBoardModalOpen"
+    :project-id="projectId"
+    @close="closeBoardModal"
+    @created="onBoardCreated"
+  />
 </template>
 
 <script setup>
@@ -149,8 +97,9 @@ import { computed, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 import api from "../lib/axios";
-import BaseModal from "../components/BaseModal.vue";
 import Tag from "../components/Tag.vue";
+import CreateIssueModal from "../components/modals/CreateIssueModal.vue";
+import CreateBoardModal from "../components/modals/CreateBoardModal.vue";
 import { useRoleLabels } from "../lib/roleLabels";
 import { useBoardStore } from "../stores/boardStore";
 import { convertSnakeToCamel } from "../lib/utils";
@@ -164,23 +113,12 @@ const issues = ref([]);
 const backlogBoardId = ref(null);
 const isLoadingIssues = ref(false);
 const errorMessage = ref("");
-const isModalOpen = ref(false);
-const isCreating = ref(false);
-const formError = ref("");
-const form = ref({
-  title: "",
-  content: "",
-  status: "BACKLOG", // Default to BACKLOG status
-});
 
 const isLoadingBoards = ref(false);
 const boardListError = ref("");
 const draggingIssueId = ref(null); // To store the ID of the dragged issue
+const isModalOpen = ref(false);
 const isBoardModalOpen = ref(false);
-const isBoardCreating = ref(false);
-const boardFormError = ref("");
-const boardForm = ref({ name: "", summary: "" });
-
 
 const projectId = computed(() => route.params.projectId);
 
@@ -258,8 +196,13 @@ const roleVariant = (role) => {
   return "default";
 };
 
-const onDragStart = (issue) => {
+const onDragStart = (event, issue) => {
   draggingIssueId.value = issue.id;
+  if (event?.dataTransfer) {
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/issue-id", String(issue.id));
+    event.dataTransfer.setData("text/issue-origin", "backlog");
+  }
 };
 
 const onDropToBoard = async (targetBoardId) => {
@@ -304,12 +247,6 @@ const onDropToBoard = async (targetBoardId) => {
 };
 
 const openModal = () => {
-  if (!backlogBoardId.value) {
-    formError.value = t("backlog.page.validation.noBoard");
-    return;
-  }
-  form.value = { title: "", content: "", status: "BACKLOG" };
-  formError.value = "";
   isModalOpen.value = true;
 };
 
@@ -318,12 +255,6 @@ const closeModal = () => {
 };
 
 const openBoardModal = () => {
-  if (!projectId.value) {
-    boardFormError.value = t("board.layout.validation.noProject");
-    return;
-  }
-  boardForm.value = { name: "", summary: "" };
-  boardFormError.value = "";
   isBoardModalOpen.value = true;
 };
 
@@ -331,66 +262,30 @@ const closeBoardModal = () => {
   isBoardModalOpen.value = false;
 };
 
-const createBoard = async () => {
-  if (!boardForm.value.name) {
-    boardFormError.value = t("board.layout.validation.nameRequired");
-    return;
-  }
-
-  isBoardCreating.value = true;
-  boardFormError.value = "";
-
-  try {
-    await api.post("/boards", {
-      name: boardForm.value.name,
-      summary: boardForm.value.summary,
-      project_id: projectId.value,
-      type: "KANBAN",
-    });
-    await boardStore.fetchBoards(projectId.value);
-    closeBoardModal();
-  } catch (error) {
-    boardFormError.value = error?.response?.data?.message || t("board.layout.status.errorCreate");
-  } finally {
-    isBoardCreating.value = false;
-  }
+const onIssueCreated = async () => {
+  await fetchIssues();
 };
 
-const createIssue = async () => {
-  if (!form.value.title) {
-    formError.value = t("backlog.page.validation.titleRequired");
-    return;
-  }
-
-  isCreating.value = true;
-  formError.value = "";
-
-  try {
-    await api.post("/issues", {
-      title: form.value.title,
-      content: form.value.content,
-      board_id: backlogBoardId.value,
-      status: form.value.status,
-    });
-    await fetchIssues(); // Re-fetch issues after creation
-    closeModal();
-  } catch (error) {
-    formError.value = error?.response?.data?.message || t("backlog.page.status.errorCreate");
-  } finally {
-    isCreating.value = false;
-  }
+const onBoardCreated = async () => {
+  await boardStore.fetchBoards(projectId.value);
+  await fetchBacklogBoard();
+  await fetchBoardsForDisplay();
 };
 
-onMounted(async () => {
-  await Promise.all([fetchBacklogBoard(), fetchBoardsForDisplay()]);
-  await fetchIssues(); // Fetch issues after backlogBoardId is set
-});
+const initializePage = async () => {
+  if (!projectId.value) return;
 
-watch(projectId, async (nextId, prevId) => {
-  if (nextId && nextId !== prevId) {
-    await Promise.all([fetchBacklogBoard(), fetchBoardsForDisplay()]);
-    await fetchIssues();
-  }
+  await fetchBoardsForDisplay();
+  await fetchBacklogBoard();
+  await fetchIssues();
+};
+
+onMounted(initializePage);
+
+watch(projectId, async () => {
+  backlogBoardId.value = null;
+  issues.value = [];
+  await initializePage();
 });
 </script>
 

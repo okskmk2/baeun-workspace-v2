@@ -2,6 +2,7 @@ import { createWebHistory, createRouter } from "vue-router";
 import DefaultLayout from "./views/DefaultLayout.vue";
 import HomePage from "./views/HomePage.vue";
 import StorePage from "./views/StorePage.vue";
+import NotFoundPage from "./views/NotFoundPage.vue";
 import LoginPage from "./views/LoginPage.vue";
 import SigupPage from "./views/SigupPage.vue";
 import AccountLayout from "./views/AccountLayout.vue";
@@ -48,6 +49,10 @@ const routes = [
       {
         path: "store",
         component: StorePage,
+      },
+      {
+        path: "not-found",
+        component: NotFoundPage,
       },
       {
         path: "login",

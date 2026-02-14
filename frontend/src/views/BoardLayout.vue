@@ -17,6 +17,8 @@
             v-for="board in boards.filter((b) => b.type !== 'BACKLOG')"
             :key="board.id"
             :to="`/project/${projectId}/board/${board.id}`"
+            @dragover.prevent
+            @drop.prevent.stop="moveIssueToBoard($event, board.id)"
           >
             {{ board.name }}
           </router-link>
@@ -25,6 +27,8 @@
           style="border-top: 1px solid #ddd; padding-top: 8px"
           class="lnb-item"
           :to="`/project/${projectId}/board/backlog`"
+          @dragover.prevent
+          @drop.prevent.stop="moveIssueToBacklog"
         >
           <!-- <MaterialSymbol name="low_priority" size="18" /> -->
           {{ t("backlog.page.header.title") }}
@@ -36,54 +40,31 @@
     </main>
   </div>
 
-  <BaseModal :open="isModalOpen" :title="t('board.layout.modal.title')" @close="closeModal">
-    <form class="modal-form" @submit.prevent="createBoard">
-      <label for="board-name">{{ t("board.layout.modal.nameLabel") }}</label>
-      <input
-        id="board-name"
-        v-model.trim="form.name"
-        type="text"
-        :placeholder="t('board.layout.modal.namePlaceholder')"
-      />
-      <label for="board-summary">{{ t("board.layout.modal.summaryLabel") }}</label>
-      <input
-        id="board-summary"
-        v-model.trim="form.summary"
-        type="text"
-        maxlength="80"
-        :placeholder="t('board.layout.modal.summaryPlaceholder')"
-      />
-      <p v-if="formError" class="form-error">{{ formError }}</p>
-      <div class="modal-actions">
-        <button type="button" class="btn btn--secondary" @click="closeModal">
-          {{ t("board.layout.actions.cancel") }}
-        </button>
-        <button type="submit" class="btn" :disabled="isCreating">
-          {{ isCreating ? t("board.layout.actions.creating") : t("board.layout.actions.submit") }}
-        </button>
-      </div>
-    </form>
-  </BaseModal>
+  <CreateBoardModal
+    :open="isModalOpen"
+    :project-id="projectId"
+    @close="closeModal"
+    @created="onBoardCreated"
+  />
 </template>
 
 <script setup>
 import { computed, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import api from "../lib/axios";
-import BaseModal from "../components/BaseModal.vue";
+import CreateBoardModal from "../components/modals/CreateBoardModal.vue";
 import { useBoardStore } from "../stores/boardStore";
 
 const { t } = useI18n();
 const route = useRoute();
+const router = useRouter();
 const boardStore = useBoardStore();
 const boards = computed(() => boardStore.getBoards(projectId.value));
+const backlogBoard = computed(() => boards.value.find((board) => board.type === "BACKLOG") || null);
 const isLoading = ref(false);
 const errorMessage = ref("");
 const isModalOpen = ref(false);
-const isCreating = ref(false);
-const formError = ref("");
-const form = ref({ name: "", summary: "" });
 
 
 const projectId = computed(() => route.params.projectId);
@@ -99,6 +80,10 @@ const fetchBoards = async () => {
   try {
     await boardStore.fetchBoards(projectId.value);
   } catch (error) {
+    if (error?.response?.status === 404) {
+      router.push("/not-found");
+      return;
+    }
     errorMessage.value = t("board.layout.status.errorLoad");
   } finally {
     isLoading.value = false;
@@ -106,12 +91,6 @@ const fetchBoards = async () => {
 };
 
 const openModal = () => {
-  if (!projectId.value) {
-    formError.value = t("board.layout.validation.noProject");
-    return;
-  }
-  form.value = { name: "", summary: "" };
-  formError.value = "";
   isModalOpen.value = true;
 };
 
@@ -119,28 +98,58 @@ const closeModal = () => {
   isModalOpen.value = false;
 };
 
-const createBoard = async () => {
-  if (!form.value.name) {
-    formError.value = t("board.layout.validation.nameRequired");
-    return;
+const onBoardCreated = async () => {
+  await boardStore.fetchBoards(projectId.value);
+};
+
+const getDraggedIssueId = (event) => {
+  const value = event?.dataTransfer?.getData("text/issue-id");
+  if (!value) return null;
+  const parsed = Number(value);
+  return Number.isNaN(parsed) ? null : parsed;
+};
+
+const getDraggedIssueOrigin = (event) => {
+  return event?.dataTransfer?.getData("text/issue-origin") || "";
+};
+
+const moveIssueToBoard = async (event, targetBoardId) => {
+  const issueId = getDraggedIssueId(event);
+  if (!issueId || !targetBoardId) return;
+
+  const origin = getDraggedIssueOrigin(event);
+  const payload = { board_id: targetBoardId };
+  if (origin === "backlog") {
+    payload.status = "PENDING";
   }
 
-  isCreating.value = true;
-  formError.value = "";
+  try {
+    await api.patch(`/issues/${issueId}`, payload);
+    await boardStore.fetchBoards(projectId.value);
+    window.dispatchEvent(
+      new CustomEvent("issue:moved", {
+        detail: { issueId, boardId: targetBoardId, status: payload.status },
+      })
+    );
+  } catch (error) {
+    errorMessage.value = error?.response?.data?.message || t("board.layout.status.errorLoad");
+  }
+};
+
+const moveIssueToBacklog = async (event) => {
+  const issueId = getDraggedIssueId(event);
+  if (!issueId) return;
 
   try {
-    await api.post("/boards", {
-      name: form.value.name,
-      summary: form.value.summary,
-      project_id: projectId.value,
-      type: "KANBAN",
-    });
-    await fetchBoards();
-    closeModal();
+    await api.patch(`/issues/${issueId}`, { status: "BACKLOG" });
+    await boardStore.fetchBoards(projectId.value);
+    window.dispatchEvent(
+      new CustomEvent("issue:moved", {
+        detail: { issueId, boardId: backlogBoard.value?.id || null, status: "BACKLOG" },
+      })
+    );
   } catch (error) {
-    formError.value = error?.response?.data?.message || t("board.layout.status.errorCreate");
-  } finally {
-    isCreating.value = false;
+    errorMessage.value = error?.response?.data?.message || t("board.layout.status.errorLoad");
   }
 };
 

@@ -38,7 +38,7 @@
           :key="issue.id"
           class="kanban-card"
           draggable="true"
-          @dragstart="onDragStart(issue)"
+          @dragstart="onDragStart($event, issue)"
         >
           <h3>
             <router-link :to="issueDetailPath(issue.id)">{{ issue.title }}</router-link>
@@ -63,58 +63,27 @@
     </section>
   </div>
 
-  <BaseModal
+  <CreateIssueModal
     :open="isModalOpen"
-    :title="t('board.page.modal.title')"
-    :closeOnBackdrop="false"
+    :board-id="boardId"
+    :show-status-select="true"
+    :statuses="statuses"
+    :default-status="'PENDING'"
     @close="closeModal"
-  >
-    <form class="modal-form" @submit.prevent="createIssue">
-      <label for="issue-title">{{ t("board.page.modal.titleLabel") }}</label>
-      <input
-        id="issue-title"
-        v-model.trim="form.title"
-        type="text"
-        :placeholder="t('board.page.modal.titlePlaceholder')"
-      />
-
-      <label for="issue-content">{{ t("board.page.modal.descriptionLabel") }}</label>
-      <textarea
-        id="issue-content"
-        v-model.trim="form.content"
-        rows="10"
-        :placeholder="t('board.page.modal.descriptionPlaceholder')"
-      ></textarea>
-
-      <label for="issue-status">{{ t("board.page.modal.statusLabel") }}</label>
-      <select id="issue-status" v-model="form.status">
-        <option v-for="status in statuses" :key="status" :value="status">
-          {{ statusLabels[status] }}
-        </option>
-      </select>
-
-      <p v-if="formError" class="form-error">{{ formError }}</p>
-      <div class="modal-actions">
-        <button type="button" class="btn btn--secondary" @click="closeModal">
-          {{ t("board.page.actions.cancel") }}
-        </button>
-        <button type="submit" class="btn" :disabled="isCreating">
-          {{ isCreating ? t("board.page.actions.creating") : t("board.page.actions.create") }}
-        </button>
-      </div>
-    </form>
-  </BaseModal>
+    @created="onIssueCreated"
+  />
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 import api from "../lib/axios";
-import BaseModal from "../components/BaseModal.vue";
+import CreateIssueModal from "../components/modals/CreateIssueModal.vue";
 import MaterialSymbol from "../components/MaterialSymbol.vue";
 import Tag from "../components/Tag.vue";
 import { useRoleLabels } from "../lib/roleLabels";
+import { convertSnakeToCamel } from "../lib/utils";
 
 const { t } = useI18n();
 const { getRoleLabel } = useRoleLabels();
@@ -124,23 +93,17 @@ const board = ref({});
 const issues = ref([]);
 const draggingIssueId = ref(null);
 const isModalOpen = ref(false);
-const isCreating = ref(false);
-const formError = ref("");
-const form = ref({
-  title: "",
-  content: "",
-  status: "BACKLOG",
-});
 
 const statuses = ["PENDING", "IN_PROGRESS", "IN_REVIEW", "DONE"];
-const statusLabels = computed(() => ({
-  BACKLOG: t("issue.status.backlog"),
-  PENDING: t("issue.status.pending"),
-  IN_PROGRESS: t("issue.status.inProgress"),
-  IN_REVIEW: t("issue.status.inReview"),
-  DONE: t("issue.status.done"),
-}));
 
+const statusLabels = computed(() => {
+  const labels = {};
+  statuses.forEach((status) => {
+    const key = convertSnakeToCamel(status);
+    labels[status] = t(`issue.status.${key}`);
+  });
+  return labels;
+});
 
 const projectId = computed(() => route.params.projectId);
 const boardId = computed(() => route.params.boardId);
@@ -174,8 +137,13 @@ const roleVariant = (role) => {
   return "default";
 };
 
-const onDragStart = (issue) => {
+const onDragStart = (event, issue) => {
   draggingIssueId.value = issue.id;
+  if (event?.dataTransfer) {
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/issue-id", String(issue.id));
+    event.dataTransfer.setData("text/issue-origin", "board");
+  }
 };
 
 const onDrop = async (status) => {
@@ -202,12 +170,6 @@ const onDrop = async (status) => {
 };
 
 const openModal = () => {
-  if (!boardId.value) {
-    formError.value = t("board.page.validation.noBoard");
-    return;
-  }
-  form.value = { title: "", content: "", status: "PENDING" };
-  formError.value = "";
   isModalOpen.value = true;
 };
 
@@ -215,29 +177,8 @@ const closeModal = () => {
   isModalOpen.value = false;
 };
 
-const createIssue = async () => {
-  if (!form.value.title) {
-    formError.value = t("board.page.validation.titleRequired");
-    return;
-  }
-
-  isCreating.value = true;
-  formError.value = "";
-
-  try {
-    await api.post("/issues", {
-      title: form.value.title,
-      content: form.value.content,
-      board_id: boardId.value,
-      status: form.value.status,
-    });
-    await fetchIssues();
-    closeModal();
-  } catch (error) {
-    formError.value = error?.response?.data?.message || t("board.page.status.errorCreate");
-  } finally {
-    isCreating.value = false;
-  }
+const onIssueCreated = async () => {
+  await fetchIssues();
 };
 
 const loadBoardData = async () => {
@@ -246,10 +187,22 @@ const loadBoardData = async () => {
 
 onMounted(loadBoardData);
 
+const handleExternalIssueMove = async () => {
+  await fetchIssues();
+};
+
 watch(boardId, async (nextId, prevId) => {
   if (nextId && nextId !== prevId) {
     await loadBoardData();
   }
+});
+
+onMounted(() => {
+  window.addEventListener("issue:moved", handleExternalIssueMove);
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener("issue:moved", handleExternalIssueMove);
 });
 </script>
 

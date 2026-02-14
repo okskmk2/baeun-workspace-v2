@@ -102,77 +102,28 @@
     </button>
   </form>
 
-  <BaseModal
+  <AddChannelMemberModal
     :open="isInviteOpen"
-    :title="t('messenger.room.invite.modal.title')"
+    :channel-id="roomId"
+    :project-members="projectMembers"
     @close="closeInviteModal"
-  >
-    <form class="modal-form" @submit.prevent="inviteMember">
-      <label for="invite-member">{{ t("messenger.room.invite.modal.membersLabel") }}</label>
-      <select id="invite-member" v-model="selectedMemberId">
-        <option value="">{{ t("messenger.room.invite.modal.selectPlaceholder") }}</option>
-        <option v-for="member in projectMembers" :key="member.id" :value="member.id">
-          {{ member.name }} ({{ member.email }})
-        </option>
-      </select>
-      <p v-if="inviteError" class="form-error">{{ inviteError }}</p>
-      <div class="modal-actions">
-        <button type="button" class="btn btn--secondary" @click="closeInviteModal">
-          {{ t("messenger.room.actions.cancel") }}
-        </button>
-        <button type="submit" class="btn" :disabled="isInviting">
-          {{
-            isInviting
-              ? t("messenger.room.actions.inviting")
-              : t("messenger.room.actions.inviteSubmit")
-          }}
-        </button>
-      </div>
-    </form>
-  </BaseModal>
+    @invited="onMemberInvited"
+  />
 
-  <BaseModal
+  <ChannelMembersListModal
     :open="isMembersOpen"
-    :title="t('messenger.room.members.modal.title')"
+    :channel-id="roomId"
     @close="closeMembersModal"
-  >
-    <div class="member-list">
-      <p v-if="isMembersLoading" class="status">{{ t("messenger.room.members.status.loading") }}</p>
-      <p v-else-if="membersError" class="status error">{{ membersError }}</p>
-      <p v-else-if="!chatMembers.length" class="status">
-        {{ t("messenger.room.members.empty") }}
-      </p>
-      <ul v-else>
-        <li v-for="member in chatMembers" :key="member.id">
-          <span class="member-name">{{ member.name }}</span>
-          <span class="member-meta">{{ member.email }}</span>
-          <span class="member-role">
-            {{ getRoleLabel("channel_member", member.role_name) }}
-          </span>
-        </li>
-      </ul>
-    </div>
-  </BaseModal>
+  />
 
-  <BaseModal
+  <MessageFeedbackModal
     :open="isFeedbackOpen"
-    :title="t('messenger.room.feedback.modal.title')"
+    :channel-id="roomId"
+    :message-id="activeFeedbackMessageId"
+    :current-feedback="activeMessageFeedback"
     @close="closeFeedbackModal"
-  >
-    <div class="feedback-modal">
-      <button
-        v-for="option in feedbackOptions"
-        :key="option.key"
-        type="button"
-        class="feedback-option"
-        :class="{ 'is-active': isActiveFeedbackOption(option.key) }"
-        @click="selectFeedback(option.key)"
-      >
-        <MaterialSymbol :name="option.icon" :size="20" />
-        <span>{{ t(option.labelKey) }}</span>
-      </button>
-    </div>
-  </BaseModal>
+    @selected="onFeedbackSelected"
+  />
 </template>
 
 <script setup>
@@ -180,9 +131,11 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue"
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 import api from "../lib/axios";
-import BaseModal from "../components/BaseModal.vue";
 import Avatar from "../components/Avatar.vue";
 import MaterialSymbol from "../components/MaterialSymbol.vue";
+import AddChannelMemberModal from "../components/modals/AddChannelMemberModal.vue";
+import ChannelMembersListModal from "../components/modals/ChannelMembersListModal.vue";
+import MessageFeedbackModal from "../components/modals/MessageFeedbackModal.vue";
 import { useProjectMemberStore } from "../stores/projectMemberStore";
 import { useRoleLabels } from "../lib/roleLabels";
 
@@ -203,14 +156,8 @@ const roomTitle = ref("");
 const displayRoomTitle = computed(() => roomTitle.value || t("messenger.room.fallback.roomTitle"));
 let socket = null;
 const isInviteOpen = ref(false);
-const isInviting = ref(false);
-const inviteError = ref("");
 const projectMembers = computed(() => projectMemberStore.getProjectMembers(projectId.value));
-const selectedMemberId = ref("");
 const isMembersOpen = ref(false);
-const isMembersLoading = ref(false);
-const membersError = ref("");
-const chatMembers = ref([]);
 const isFeedbackOpen = ref(false);
 const activeFeedbackMessageId = ref(null);
 const feedbackOptions = [
@@ -246,26 +193,6 @@ const scrollMessagesToBottom = async () => {
   await nextTick();
   if (!messagesContainer.value) return;
   messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
-};
-
-const fetchChatMembers = async () => {
-  if (!roomId.value) {
-    chatMembers.value = [];
-    return;
-  }
-
-  isMembersLoading.value = true;
-  membersError.value = "";
-
-  try {
-    const res = await api.get(`/channels/${roomId.value}/members`);
-    chatMembers.value = res.data || [];
-  } catch (error) {
-    chatMembers.value = [];
-    membersError.value = t("messenger.room.members.status.errorLoad");
-  } finally {
-    isMembersLoading.value = false;
-  }
 };
 
 const connectSocket = () => {
@@ -359,14 +286,13 @@ const isFeedbackMine = (message, key) => {
   return mine.includes(key);
 };
 
-const isActiveFeedbackOption = (key) => {
-  if (!activeFeedbackMessageId.value) return false;
+const activeMessageFeedback = computed(() => {
+  if (!activeFeedbackMessageId.value) return [];
   const target = messages.value.find(
     (message) => String(message.id) === String(activeFeedbackMessageId.value)
   );
-  if (!target) return false;
-  return isFeedbackMine(target, key);
-};
+  return target?.feedback_mine || [];
+});
 
 const openFeedbackModal = (message) => {
   activeFeedbackMessageId.value = message?.id || null;
@@ -379,26 +305,12 @@ const closeFeedbackModal = () => {
   activeFeedbackMessageId.value = null;
 };
 
-const selectFeedback = (key) => {
-  const messageId = activeFeedbackMessageId.value;
-  if (!messageId || !roomId.value) return;
-  api
-    .post(`/channels/${roomId.value}/messages/${messageId}/feedback`, {
-      feedback_key: key,
-    })
-    .then((res) => {
-      const counts = res.data?.feedback_counts || {};
-      const mine = res.data?.feedback_mine || [];
-      messages.value = messages.value.map((message) =>
-        String(message.id) === String(messageId)
-          ? { ...message, feedback_counts: counts, feedback_mine: mine }
-          : message
-      );
-      closeFeedbackModal();
-    })
-    .catch(() => {
-      // keep modal open on error
-    });
+const onFeedbackSelected = ({ messageId, feedbackCounts, feedbackMine }) => {
+  messages.value = messages.value.map((message) =>
+    String(message.id) === String(messageId)
+      ? { ...message, feedback_counts: feedbackCounts, feedback_mine: feedbackMine }
+      : message
+  );
 };
 
 const getInitials = (name) => {
@@ -413,8 +325,6 @@ const getInitials = (name) => {
 };
 
 const openInviteModal = () => {
-  inviteError.value = "";
-  selectedMemberId.value = "";
   isInviteOpen.value = true;
 };
 
@@ -422,39 +332,16 @@ const closeInviteModal = () => {
   isInviteOpen.value = false;
 };
 
-const openMembersModal = async () => {
+const onMemberInvited = () => {
+  // Member invited successfully
+};
+
+const openMembersModal = () => {
   isMembersOpen.value = true;
-  await fetchChatMembers();
 };
 
 const closeMembersModal = () => {
   isMembersOpen.value = false;
-};
-
-const inviteMember = async () => {
-  if (!selectedMemberId.value) {
-    inviteError.value = t("messenger.room.invite.validation.selectMember");
-    return;
-  }
-
-  if (!roomId.value) {
-    inviteError.value = t("messenger.room.invite.validation.noChannel");
-    return;
-  }
-
-  isInviting.value = true;
-  inviteError.value = "";
-
-  try {
-    await api.post(`/channels/${roomId.value}/invite`, {
-      member_id: selectedMemberId.value,
-    });
-    closeInviteModal();
-  } catch (error) {
-    inviteError.value = error?.response?.data?.message || t("messenger.room.invite.status.error");
-  } finally {
-    isInviting.value = false;
-  }
 };
 
 const channelSettingsPath = computed(() => {

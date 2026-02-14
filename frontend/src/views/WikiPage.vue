@@ -63,58 +63,22 @@
     </template>
   </article>
 
-  <BaseModal
+  <PagePermissionModal
     :open="isPermissionOpen"
-    :title="t('wiki.page.permissions.modal.title')"
+    :page-id="pageId"
+    :project-id="projectId"
+    :project-members="projectMembers"
+    :page-members="pageMembers"
+    :permission-role-options="permissionRoleOptions"
     @close="closePermissionModal"
-  >
-    <form class="modal-form" @submit.prevent="savePermission">
-      <label for="permission-member">{{ t("wiki.page.permissions.membersLabel") }}</label>
-      <select id="permission-member" v-model="permissionForm.memberId">
-        <option value="">{{ t("wiki.page.permissions.selectPlaceholder") }}</option>
-        <option v-for="member in projectMembers" :key="member.id" :value="member.id">
-          {{ member.name }} ({{ member.email }})
-        </option>
-      </select>
-      <label for="permission-role">{{ t("wiki.page.permissions.roleLabel") }}</label>
-      <select id="permission-role" v-model="permissionForm.roleName">
-        <option v-for="option in permissionRoleOptions" :key="option.value" :value="option.value">
-          {{ option.label }}
-        </option>
-      </select>
-      <p v-if="permissionError" class="form-error">{{ permissionError }}</p>
-      <div class="modal-actions">
-        <button type="button" class="btn btn--secondary" @click="closePermissionModal">
-          {{ t("wiki.page.actions.cancel") }}
-        </button>
-        <button type="submit" class="btn" :disabled="isPermissionSaving">
-          {{ isPermissionSaving ? t("wiki.page.actions.saving") : t("wiki.page.actions.save") }}
-        </button>
-      </div>
-    </form>
-    <div v-if="pageMembers.length" class="permission-list">
-      <div v-for="member in pageMembers" :key="member.member_id" class="permission-row">
-        <span>{{ member.name }}</span>
-        <span class="role">{{ getRoleLabel("page_member", member.role_name) }}</span>
-      </div>
-    </div>
-  </BaseModal>
+    @saved="onPermissionSaved"
+  />
 
-  <BaseModal
+  <ConfirmCancelEditModal
     :open="isCancelOpen"
-    :title="t('wiki.page.confirm.cancel.title')"
     @close="closeCancelModal"
-  >
-    <p>{{ t("wiki.page.confirm.cancel.message") }}</p>
-    <div class="modal-actions">
-      <button type="button" class="btn btn--secondary" @click="closeCancelModal">
-        {{ t("wiki.page.confirm.cancel.keepEditing") }}
-      </button>
-      <button type="button" class="btn" @click="confirmCancelEdit">
-        {{ t("wiki.page.confirm.cancel.discard") }}
-      </button>
-    </div>
-  </BaseModal>
+    @confirm="confirmCancelEdit"
+  />
 </template>
 
 <script setup>
@@ -122,7 +86,8 @@ import { computed, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 import api from "../lib/axios";
-import BaseModal from "../components/BaseModal.vue";
+import PagePermissionModal from "../components/modals/PagePermissionModal.vue";
+import ConfirmCancelEditModal from "../components/modals/ConfirmCancelEditModal.vue";
 import { useAppStore } from "../stores/appStore";
 import { useProjectMemberStore } from "../stores/projectMemberStore";
 import { usePageStore } from "../stores/pageStore";
@@ -147,10 +112,7 @@ const originalForm = ref({ title: "", content: "" });
 const isDeleting = ref(false);
 
 const isPermissionOpen = ref(false);
-const isPermissionSaving = ref(false);
-const permissionError = ref("");
 const pageMembers = ref([]);
-const permissionForm = ref({ memberId: "", roleName: "VIEWER" });
 const isCancelOpen = ref(false);
 const permissionRoleOptions = computed(() => [
   { value: "OWNER", label: t("wiki.page.permissions.roles.owner") },
@@ -284,15 +246,16 @@ const fetchPageMembers = async () => {
 };
 
 const openPermissionModal = async () => {
-  if (!projectId.value || !pageId.value) return;
-  permissionForm.value = { memberId: "", roleName: "VIEWER" };
-  permissionError.value = "";
   isPermissionOpen.value = true;
   await fetchPageMembers();
 };
 
 const closePermissionModal = () => {
   isPermissionOpen.value = false;
+};
+
+const onPermissionSaved = async () => {
+  await fetchPageMembers();
 };
 
 const closeCancelModal = () => {
@@ -302,35 +265,6 @@ const closeCancelModal = () => {
 const confirmCancelEdit = () => {
   isEditing.value = false;
   isCancelOpen.value = false;
-};
-
-const savePermission = async () => {
-  if (!permissionForm.value.memberId) {
-    permissionError.value = t("wiki.page.permissions.validation.selectMember");
-    return;
-  }
-  if (!projectId.value || !pageId.value) return;
-
-  isPermissionSaving.value = true;
-  permissionError.value = "";
-  try {
-    await api.post(
-      `/pages/${pageId.value}/members`,
-      {
-        member_id: permissionForm.value.memberId,
-        role_name: permissionForm.value.roleName,
-      },
-      {
-        params: { project_id: projectId.value },
-      }
-    );
-    await fetchPageMembers();
-  } catch (error) {
-    permissionError.value =
-      error?.response?.data?.message || t("wiki.page.permissions.status.errorUpdate");
-  } finally {
-    isPermissionSaving.value = false;
-  }
 };
 
 const deletePage = async () => {

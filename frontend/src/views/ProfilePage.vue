@@ -32,7 +32,7 @@
       <button
         class="btn btn--secondary"
         type="button"
-        :disabled="isLoggingOut || isWithdrawing"
+        :disabled="isLoggingOut"
         @click="logout"
       >
         {{ isLoggingOut ? t("profile.actions.loggingOut") : t("profile.actions.logout") }}
@@ -40,40 +40,7 @@
       <p v-if="logoutError" class="status error">{{ logoutError }}</p>
     </div>
 
-    <BaseModal
-      :open="isWithdrawOpen"
-      :title="t('profile.withdraw.title')"
-      @close="closeWithdrawModal"
-    >
-      <form class="withdraw-form" @submit.prevent="withdrawAccount">
-        <p class="withdraw-description">{{ t("profile.withdraw.description") }}</p>
-        <label for="withdraw-password" class="control-label">{{
-          t("profile.withdraw.password")
-        }}</label>
-        <input
-          id="withdraw-password"
-          v-model.trim="withdrawPassword"
-          class="control-input"
-          type="password"
-          autocomplete="current-password"
-          :placeholder="t('profile.withdraw.passwordPlaceholder')"
-        />
-        <p v-if="withdrawError" class="status error">{{ withdrawError }}</p>
-        <div class="withdraw-actions">
-          <button
-            type="button"
-            class="btn btn--secondary"
-            :disabled="isWithdrawing"
-            @click="closeWithdrawModal"
-          >
-            {{ t("profile.withdraw.cancel") }}
-          </button>
-          <button type="submit" class="btn btn--danger" :disabled="isWithdrawing">
-            {{ isWithdrawing ? t("profile.withdraw.withdrawing") : t("profile.withdraw.confirm") }}
-          </button>
-        </div>
-      </form>
-    </BaseModal>
+    <WithdrawAccountModal :open="isWithdrawOpen" @close="closeWithdrawModal" />
 
     <div class="locale-card" aria-label="Locale settings">
       <div class="locale-header">
@@ -113,7 +80,7 @@
         <button
           class="btn btn--danger"
           type="button"
-          :disabled="isLoggingOut || isWithdrawing"
+          :disabled="isLoggingOut"
           @click="openWithdrawModal"
         >
           {{ t("profile.actions.withdraw") }}
@@ -125,46 +92,7 @@
     </section>
   </div>
 
-  <BaseModal
-    :open="isOwnershipGuideOpen"
-    :title="t('profile.danger.guide.title')"
-    max-width="760px"
-    @close="closeOwnershipGuideModal"
-  >
-    <div class="ownership-guide">
-      <p class="ownership-guide__desc">{{ t("profile.danger.guide.description") }}</p>
-      <p v-if="isOwnershipGuideLoading" class="ownership-guide__empty">
-        {{ t("profile.danger.guide.loading") }}
-      </p>
-      <p v-else-if="ownershipGuideError" class="status error">{{ ownershipGuideError }}</p>
-      <ul v-else-if="ownershipGuideItems.length" class="ownership-guide__list">
-        <li
-          v-for="item in ownershipGuideItems"
-          :key="`${item.type}-${item.id}`"
-          class="ownership-guide__item"
-        >
-          <div class="ownership-guide__item-main">
-            <Tag variant="danger">{{ item.typeLabel }}</Tag>
-            <span class="title">{{ item.name }}</span>
-          </div>
-          <router-link
-            v-if="item.route"
-            class="ownership-guide__link"
-            :to="item.route"
-            @click="closeOwnershipGuideModal"
-          >
-            {{ t("profile.danger.guide.open") }}
-          </router-link>
-        </li>
-      </ul>
-      <p v-else class="ownership-guide__empty">{{ t("profile.danger.guide.empty") }}</p>
-      <div class="withdraw-actions">
-        <button type="button" class="btn btn--secondary" @click="closeOwnershipGuideModal">
-          {{ t("profile.danger.guide.close") }}
-        </button>
-      </div>
-    </div>
-  </BaseModal>
+  <OwnershipGuideModal :open="isOwnershipGuideOpen" @close="closeOwnershipGuideModal" />
 </template>
 
 <script setup>
@@ -175,8 +103,8 @@ import api from "../lib/axios";
 import { persistLocale, supportedLocales } from "../i18n";
 import { useAppStore } from "../stores/appStore";
 import Avatar from "../components/Avatar.vue";
-import BaseModal from "../components/BaseModal.vue";
-import Tag from "../components/Tag.vue";
+import WithdrawAccountModal from "../components/modals/WithdrawAccountModal.vue";
+import OwnershipGuideModal from "../components/modals/OwnershipGuideModal.vue";
 
 const { t, locale } = useI18n();
 const router = useRouter();
@@ -189,13 +117,7 @@ const region = ref("kr");
 const isLoggingOut = ref(false);
 const logoutError = ref("");
 const isWithdrawOpen = ref(false);
-const isWithdrawing = ref(false);
-const withdrawPassword = ref("");
-const withdrawError = ref("");
 const isOwnershipGuideOpen = ref(false);
-const ownershipResources = ref([]);
-const isOwnershipGuideLoading = ref(false);
-const ownershipGuideError = ref("");
 
 const fetchProfile = async () => {
   isLoading.value = true;
@@ -257,103 +179,19 @@ const logout = async () => {
 };
 
 const openWithdrawModal = () => {
-  withdrawPassword.value = "";
-  withdrawError.value = "";
   isWithdrawOpen.value = true;
 };
 
 const closeWithdrawModal = () => {
-  if (isWithdrawing.value) return;
   isWithdrawOpen.value = false;
 };
 
-const fetchOwnershipResources = async () => {
-  isOwnershipGuideLoading.value = true;
-  ownershipGuideError.value = "";
-  try {
-    const res = await api.get("/members/me/owned-resources");
-    ownershipResources.value = Array.isArray(res.data?.resources) ? res.data.resources : [];
-  } catch (error) {
-    ownershipResources.value = [];
-    ownershipGuideError.value = error?.response?.data?.message || t("profile.danger.guide.error");
-  } finally {
-    isOwnershipGuideLoading.value = false;
-  }
-};
-
-const openOwnershipGuideModal = async () => {
+const openOwnershipGuideModal = () => {
   isOwnershipGuideOpen.value = true;
-  await fetchOwnershipResources();
 };
 
 const closeOwnershipGuideModal = () => {
   isOwnershipGuideOpen.value = false;
-};
-
-const mapOwnerResourceLabel = (resourceKey) => {
-  const normalized = String(resourceKey || "")
-    .trim()
-    .toLowerCase();
-  if (!normalized) return "";
-  return t(`profile.withdraw.ownerResources.${normalized}`);
-};
-
-const buildOwnershipRoute = (resource) => {
-  const type = String(resource?.type || "").toLowerCase();
-  if (type === "workspace") return `/account/workspaces/${resource.id}`;
-  if (type === "project") return `/project/${resource.id}/settings`;
-  if (type === "page") {
-    if (!resource.project_id) return "";
-    return `/project/${resource.project_id}/wiki/${resource.id}`;
-  }
-  if (type === "board") {
-    if (!resource.project_id) return "";
-    return `/project/${resource.project_id}/board/${resource.id}/settings`;
-  }
-  if (type === "channel") {
-    if (!resource.project_id) return "";
-    return `/project/${resource.project_id}/messenger/${resource.id}/settings`;
-  }
-  return "";
-};
-
-const ownershipGuideItems = computed(() => {
-  const rows = Array.isArray(ownershipResources.value) ? ownershipResources.value : [];
-  return rows
-    .filter((row) => row && row.type && row.id)
-    .map((row) => ({
-      ...row,
-      typeLabel: mapOwnerResourceLabel(row.type),
-      name: row.name || `${mapOwnerResourceLabel(row.type)} #${row.id}`,
-      route: buildOwnershipRoute(row),
-    }));
-});
-
-const withdrawAccount = async () => {
-  if (!withdrawPassword.value) {
-    withdrawError.value = t("profile.withdraw.passwordRequired");
-    return;
-  }
-
-  isWithdrawing.value = true;
-  withdrawError.value = "";
-
-  try {
-    await api.delete("/members/me", {
-      data: { password: withdrawPassword.value },
-    });
-    appStore.setCurrentUser(null);
-    isWithdrawOpen.value = false;
-    await router.push("/login");
-  } catch (error) {
-    const rawMessage = error?.response?.data?.message;
-    if (error?.response?.status === 403) {
-      await openOwnershipGuideModal();
-    }
-    withdrawError.value = String(rawMessage || t("profile.status.withdrawError"));
-  } finally {
-    isWithdrawing.value = false;
-  }
 };
 
 onMounted(fetchProfile);

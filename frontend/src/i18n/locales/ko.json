@@ -48,6 +48,7 @@
         "account": "계정",
         "accountMenu": "계정 메뉴",
         "quickMove": "빠른 이동",
+        "profile": "내 프로필",
         "settings": "설정",
         "loading": "불러오는 중...",
         "errorLoad": "워크스페이스 목록을 불러오지 못했습니다.",
@@ -170,7 +171,8 @@
       "status": {
         "loading": "불러오는 중...",
         "errorLoad": "프로젝트 정보를 불러오지 못했습니다.",
-        "errorUpdate": "프로젝트 설정을 업데이트하지 못했습니다."
+        "errorUpdate": "프로젝트 설정을 업데이트하지 못했습니다.",
+        "errorDelete": "프로젝트를 삭제하지 못했습니다."
       },
       "form": {
         "nameLabel": "프로젝트 이름",
@@ -194,14 +196,27 @@
       },
       "actions": {
         "save": "저장",
-        "saving": "저장 중..."
+        "saving": "저장 중...",
+        "delete": "프로젝트 삭제",
+        "deleting": "삭제 중...",
+        "cancel": "취소"
+      },
+      "danger": {
+        "title": "주의 구역",
+        "description": "프로젝트를 삭제하면 보드, 위키, 메신저를 포함한 관련 데이터가 제거되며 복구할 수 없습니다."
+      },
+      "deleteModal": {
+        "title": "프로젝트 삭제",
+        "description": "정말 '{name}' 프로젝트를 삭제하시겠습니까?",
+        "warning": "이 작업은 되돌릴 수 없습니다."
       },
       "validation": {
         "nameRequired": "프로젝트 이름을 입력하세요.",
         "themeRequired": "테마를 선택하세요."
       },
       "toast": {
-        "updated": "프로젝트 설정이 업데이트되었습니다."
+        "updated": "프로젝트 설정이 업데이트되었습니다.",
+        "deleted": "프로젝트가 삭제되었습니다."
       }
     },
     "member": {
@@ -1088,9 +1103,17 @@
         "description": "아래 리소스의 소유권을 다른 멤버에게 이전한 뒤 탈퇴를 진행할 수 있습니다.",
         "loading": "소유 리소스를 조회하는 중...",
         "error": "소유 리소스를 불러오지 못했습니다.",
+        "errorLoad": "소유 리소스를 불러오지 못했습니다.",
         "empty": "현재 확인된 소유 리소스가 없습니다. 탈퇴 시도 후 다시 확인하세요.",
         "open": "설정으로 이동",
-        "close": "닫기"
+        "close": "닫기",
+        "types": {
+          "workspace": "워크스페이스",
+          "project": "프로젝트",
+          "page": "페이지",
+          "board": "보드",
+          "channel": "채널"
+        }
       }
     },
     "withdraw": {
@@ -1111,6 +1134,16 @@
       "cancel": "취소",
       "confirm": "탈퇴",
       "withdrawing": "탈퇴 처리 중..."
+    }
+  },
+  "notFound": {
+    "project": {
+      "title": "프로젝트가 존재하지 않습니다.",
+      "description": "요청하신 프로젝트를 찾을 수 없거나 이미 삭제되었습니다.",
+      "actions": {
+        "workspaces": "워크스페이스 목록으로",
+        "home": "홈으로"
+      }
     }
   }
 }

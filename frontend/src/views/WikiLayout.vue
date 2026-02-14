@@ -16,39 +16,27 @@
     </main>
   </div>
 
-  <BaseModal :open="isModalOpen" :title="t('wiki.layout.modal.title')" @close="closeModal">
-    <form class="modal-form" @submit.prevent="createPage">
-      <label for="page-title">{{ t("wiki.layout.modal.titleLabel") }}</label>
-      <input
-        id="page-title"
-        v-model.trim="form.title"
-        type="text"
-        :placeholder="t('wiki.layout.modal.titlePlaceholder')"
-      />
-      <p v-if="formError" class="form-error">{{ formError }}</p>
-      <div class="modal-actions">
-        <button type="button" class="btn btn--secondary" @click="closeModal">
-          {{ t("wiki.layout.actions.cancel") }}
-        </button>
-        <button type="submit" class="btn" :disabled="isCreating">
-          {{ isCreating ? t("wiki.layout.actions.creating") : t("wiki.layout.actions.submit") }}
-        </button>
-      </div>
-    </form>
-  </BaseModal>
+  <CreatePageModal
+    :open="isModalOpen"
+    :project-id="projectId"
+    :parent-page-id="currentPageId"
+    @close="closeModal"
+    @created="onPageCreated"
+  />
 </template>
 
 <script setup>
 import { computed, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import api from "../lib/axios";
-import BaseModal from "../components/BaseModal.vue";
+import CreatePageModal from "../components/modals/CreatePageModal.vue";
 import PageTree from "../components/PageTree.vue";
 import { usePageStore } from "../stores/pageStore";
 
 const { t } = useI18n();
 const route = useRoute();
+const router = useRouter();
 
 const projectId = computed(() => route.params.projectId);
 const currentPageId = computed(() => route.params.pageId);
@@ -57,11 +45,7 @@ const pageStore = usePageStore();
 const pages = computed(() => pageStore.getPages(projectId.value));
 const isLoading = ref(false);
 const errorMessage = ref("");
-
 const isModalOpen = ref(false);
-const isCreating = ref(false);
-const formError = ref("");
-const form = ref({ title: "" });
 
 const fetchPages = async () => {
   if (!projectId.value) {
@@ -75,6 +59,10 @@ const fetchPages = async () => {
   try {
     await pageStore.fetchPages(projectId.value);
   } catch (error) {
+    if (error?.response?.status === 404) {
+      router.push("/not-found");
+      return;
+    }
     pageStore.pagesByProject[projectId.value] = [];
     errorMessage.value = t("wiki.layout.status.errorLoad");
   } finally {
@@ -83,17 +71,15 @@ const fetchPages = async () => {
 };
 
 const openModal = () => {
-  if (!projectId.value) {
-    formError.value = t("wiki.layout.validation.noProject");
-    return;
-  }
-  form.value = { title: "" };
-  formError.value = "";
   isModalOpen.value = true;
 };
 
 const closeModal = () => {
   isModalOpen.value = false;
+};
+
+const onPageCreated = async () => {
+  await pageStore.fetchPages(projectId.value);
 };
 
 const resolveParentId = async () => {
@@ -146,42 +132,6 @@ const handleReorder = async ({ parentId, orderedIds }) => {
   } catch (error) {
     errorMessage.value = t("wiki.layout.status.errorReorder");
     await fetchPages();
-  }
-};
-
-const createPage = async () => {
-  if (!form.value.title) {
-    formError.value = t("wiki.layout.validation.titleRequired");
-    return;
-  }
-
-  if (!projectId.value) {
-    formError.value = t("wiki.layout.validation.noProject");
-    return;
-  }
-
-  isCreating.value = true;
-  formError.value = "";
-
-  try {
-    const parentId = await resolveParentId();
-    await api.post(
-      "/pages",
-      {
-        title: form.value.title,
-        content: null,
-        parent_id: parentId,
-      },
-      {
-        params: { project_id: projectId.value },
-      }
-    );
-    await pageStore.fetchPages(projectId.value);
-    closeModal();
-  } catch (error) {
-    formError.value = error?.response?.data?.message || t("wiki.layout.status.errorCreate");
-  } finally {
-    isCreating.value = false;
   }
 };
 

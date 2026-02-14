@@ -4,6 +4,15 @@ import { isAuth } from "../middlewares/auth.middleware.mjs";
 
 const router = express.Router();
 
+const ensureProjectExists = async (projectId, res) => {
+  const projectRes = await pool.query("SELECT id FROM project WHERE id = $1", [projectId]);
+  if (projectRes.rows.length === 0) {
+    res.status(404).json({ name: "NotFound", message: "프로젝트를 찾을 수 없습니다." });
+    return false;
+  }
+  return true;
+};
+
 /**
  * @swagger
  * /api/issues/recent:
@@ -72,6 +81,9 @@ router.get("/recent", isAuth, async (req, res) => {
   }
 
   try {
+    const projectExists = await ensureProjectExists(projectId, res);
+    if (!projectExists) return;
+
     const memberCheck = await pool.query(
       "SELECT id FROM project_member WHERE project_id = $1 AND member_id = $2",
       [projectId, userId]

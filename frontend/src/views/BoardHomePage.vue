@@ -49,6 +49,10 @@ const fetchRecentIssues = async () => {
     });
     activities.value = res.data || [];
   } catch (error) {
+    if (error?.response?.status === 404) {
+      router.push("/not-found");
+      return;
+    }
     activities.value = [];
     errorMessage.value = "최근 활동을 불러오지 못했습니다.";
   } finally {

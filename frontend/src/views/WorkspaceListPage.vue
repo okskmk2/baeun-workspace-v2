@@ -57,26 +57,11 @@
     </li>
   </ul>
 
-  <BaseModal :open="isModalOpen" :title="t('workspaceList.modal.title')" @close="closeModal">
-    <form class="modal-form" @submit.prevent="createWorkspace">
-      <label for="workspace-name">{{ t("workspaceList.modal.nameLabel") }}</label>
-      <input
-        id="workspace-name"
-        v-model.trim="form.name"
-        type="text"
-        :placeholder="t('workspaceList.modal.namePlaceholder')"
-      />
-      <p v-if="formError" class="form-error">{{ formError }}</p>
-      <div class="modal-actions">
-        <button type="button" class="btn btn--secondary" @click="closeModal">
-          {{ t("workspaceList.actions.cancel") }}
-        </button>
-        <button type="submit" class="btn" :disabled="isCreating">
-          {{ isCreating ? t("workspaceList.actions.creating") : t("workspaceList.actions.create") }}
-        </button>
-      </div>
-    </form>
-  </BaseModal>
+  <CreateWorkspaceModal
+    :open="isModalOpen"
+    @close="closeModal"
+    @created="onWorkspaceCreated"
+  />
 
   <BaseModal
     :open="isDeleteModalOpen"
@@ -106,6 +91,7 @@
 <script setup>
 import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
+import CreateWorkspaceModal from "../components/modals/CreateWorkspaceModal.vue";
 import BaseModal from "../components/BaseModal.vue";
 import { useWorkspaceStore } from "../stores/workspaceStore";
 import Tag from "../components/Tag.vue";
@@ -119,9 +105,6 @@ const workspaces = ref([]);
 const isLoading = ref(false);
 const errorMessage = ref("");
 const isModalOpen = ref(false);
-const isCreating = ref(false);
-const formError = ref("");
-const form = ref({ name: "" });
 const deletingWorkspaceId = ref(null);
 const isDeleteModalOpen = ref(false);
 const deleteTarget = ref(null);
@@ -151,8 +134,6 @@ const fetchWorkspaces = async () => {
 onMounted(fetchWorkspaces);
 
 const openModal = () => {
-  form.value = { name: "" };
-  formError.value = "";
   isModalOpen.value = true;
 };
 
@@ -160,27 +141,9 @@ const closeModal = () => {
   isModalOpen.value = false;
 };
 
-const createWorkspace = async () => {
-  if (!form.value.name) {
-    formError.value = t("workspaceList.validation.nameRequired");
-    return;
-  }
-
-  isCreating.value = true;
-  formError.value = "";
-
-  try {
-    await workspaceStore.createWorkspace({ name: form.value.name });
-    await fetchWorkspaces();
-    addToast({ message: t("workspaceList.toast.created"), type: "success" });
-    closeModal();
-  } catch (error) {
-    const message = error?.response?.data?.message || t("workspaceList.status.errorCreate");
-    formError.value = message;
-    addToast({ message, type: "error" });
-  } finally {
-    isCreating.value = false;
-  }
+const onWorkspaceCreated = async () => {
+  await fetchWorkspaces();
+  addToast({ message: t("workspaceList.toast.created"), type: "success" });
 };
 
 const openDeleteModal = (workspace) => {
@@ -206,6 +169,7 @@ const confirmDeleteWorkspace = async () => {
     await workspaceStore.deleteWorkspace(workspaceId);
     await fetchWorkspaces();
     addToast({ message: t("workspaceList.toast.deleted"), type: "success" });
+    deletingWorkspaceId.value = null;
     closeDeleteModal();
   } catch (error) {
     const message = error?.response?.data?.message || t("workspaceList.status.errorDelete");
