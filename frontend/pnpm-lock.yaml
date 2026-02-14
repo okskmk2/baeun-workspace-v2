@@ -29,6 +29,9 @@ importers:
       vue-router:
         specifier: ^4.1.6
         version: 4.6.4(vue@3.5.28)
+      yosie:
+        specifier: ^2.0.1
+        version: 2.0.1
     devDependencies:
       '@vitejs/plugin-vue':
         specifier: ^4.2.0
@@ -624,6 +627,9 @@ packages:
       typescript:
         optional: true
 
+  yosie@2.0.1:
+    resolution: {integrity: sha512-4j2teye9Rh1NW8hnduLHME2bxcA/RMybRMLQWyPCxKOxe5YAPrpn8itUVpMDculLNfC2LmYi6rguKb8JcYq3wA==}
+
 snapshots:
 
   '@babel/helper-string-parser@7.27.1': {}
@@ -1100,3 +1106,5 @@ snapshots:
       '@vue/runtime-dom': 3.5.28
       '@vue/server-renderer': 3.5.28(vue@3.5.28)
       '@vue/shared': 3.5.28
+
+  yosie@2.0.1: {}

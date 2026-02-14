@@ -1,9 +1,33 @@
 import { defineStore } from "pinia";
+import { connectDB } from "yosie";
 
 const DEFAULT_TYPES = ["board", "page", "channel", "issue"];
+const CACHE_DB_NAME = "baeun_workspace_cache";
+const CACHE_STORE_NAME = "project_search";
+
+let cacheStorePromise = null;
+
+const getCacheStore = async () => {
+  if (!cacheStorePromise) {
+    cacheStorePromise = connectDB(CACHE_DB_NAME)
+      .then((db) => db.connectStore(CACHE_STORE_NAME))
+      .catch((error) => {
+        cacheStorePromise = null;
+        throw error;
+      });
+  }
+  return cacheStorePromise;
+};
 
 const normalizeString = (value) => String(value || "").trim();
 const normalizeSearchText = (value) => normalizeString(value).toLowerCase();
+const toPlainObject = (value) => {
+  try {
+    return JSON.parse(JSON.stringify(value));
+  } catch (error) {
+    return null;
+  }
+};
 
 const toTimestamp = (value) => {
   if (!value) return 0;
@@ -59,8 +83,67 @@ export const useProjectSearchStore = defineStore("projectSearch", {
     resourcesByProject: {},
     lastSyncedAtByProject: {},
     refreshPromises: {},
+    isHydrated: false,
+    hydrationPromise: null,
+    persistPromise: null,
   }),
   actions: {
+    async hydrateFromCache() {
+      if (this.isHydrated) return;
+      if (this.hydrationPromise) {
+        await this.hydrationPromise;
+        return;
+      }
+
+      this.hydrationPromise = (async () => {
+        try {
+          const store = await getCacheStore();
+          const cachedResources = await store.get("resourcesByProject");
+          const cachedSynced = await store.get("lastSyncedAtByProject");
+
+          if (cachedResources && typeof cachedResources === "object") {
+            this.resourcesByProject = cachedResources;
+          }
+
+          if (cachedSynced && typeof cachedSynced === "object") {
+            this.lastSyncedAtByProject = cachedSynced;
+          }
+        } catch (error) {
+          console.warn("[projectSearchStore] hydrateFromCache failed", error);
+        } finally {
+          this.isHydrated = true;
+          this.hydrationPromise = null;
+        }
+      })();
+
+      await this.hydrationPromise;
+    },
+
+    schedulePersistSnapshot() {
+      if (this.persistPromise) return;
+
+      this.persistPromise = Promise.resolve()
+        .then(async () => {
+          try {
+            const store = await getCacheStore();
+            const resourcesSnapshot = toPlainObject(this.resourcesByProject);
+            const syncedSnapshot = toPlainObject(this.lastSyncedAtByProject);
+
+            if (!resourcesSnapshot || !syncedSnapshot) {
+              throw new Error("Failed to serialize search cache snapshot");
+            }
+
+            await store.set("resourcesByProject", resourcesSnapshot);
+            await store.set("lastSyncedAtByProject", syncedSnapshot);
+          } catch (error) {
+            console.warn("[projectSearchStore] persistSnapshot failed", error);
+          }
+        })
+        .finally(() => {
+          this.persistPromise = null;
+        });
+    },
+
     ensureProject(projectId) {
       if (!projectId) return;
 
@@ -93,6 +176,7 @@ export const useProjectSearchStore = defineStore("projectSearch", {
         .filter((item) => item.id && item.name);
 
       this.lastSyncedAtByProject[projectId][type] = syncedAt;
+      this.schedulePersistSnapshot();
     },
 
     upsertBoards(projectId, boards) {
@@ -131,6 +215,7 @@ export const useProjectSearchStore = defineStore("projectSearch", {
 
     async refreshStaleTypes(projectId, options = {}) {
       if (!projectId) return;
+      await this.hydrateFromCache();
       this.ensureProject(projectId);
 
       const now = Date.now();

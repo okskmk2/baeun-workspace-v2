@@ -193,6 +193,7 @@ const refreshSearchSources = async () => {
 
 const onSearchFocus = async () => {
   isSearchOpen.value = true;
+  await projectSearchStore.hydrateFromCache();
   await refreshSearchSources();
 };
 
