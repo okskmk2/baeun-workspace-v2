@@ -1,7 +1,7 @@
 <template>
   <BaseModal
     :open="open"
-    :title="t('backlog.page.modal.title')"
+    :title="t('board.page.modal.title')"
     :closeOnBackdrop="false"
     @close="handleClose"
   >

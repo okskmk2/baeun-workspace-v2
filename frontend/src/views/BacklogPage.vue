@@ -11,7 +11,7 @@
       <div class="column-header">
         <h2>{{ t("backlog.page.header.title") }}</h2>
         <button type="button" class="btn btn--sm" @click="openModal" :disabled="!backlogBoardId">
-          백로그 만들기
+          {{ t("backlog.page.actions.createIssue") }}
         </button>
       </div>
       <p v-if="isLoadingIssues">{{ t("backlog.page.status.loading") }}</p>
@@ -49,7 +49,7 @@
       <div class="column-header">
         <h2>{{ t("backlog.page.boardList.title") }}</h2>
         <button type="button" class="btn btn--sm" @click="openBoardModal" :disabled="!projectId">
-          보드 만들기
+          {{ t("board.layout.actions.create") }}
         </button>
       </div>
       <p v-if="isLoadingBoards">{{ t("backlog.page.status.loadingBoards") }}</p>
