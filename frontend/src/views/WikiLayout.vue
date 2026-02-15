@@ -143,9 +143,9 @@ watch(projectId, fetchPages);
 </script>
 
 <style>
-.page-nav {
+/* .page-nav {
   font-size: 14px;
-}
+} */
 .WikiLayout aside {
   width: 15rem;
 }

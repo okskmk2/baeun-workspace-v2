@@ -23,16 +23,19 @@
             {{ board.name }}
           </router-link>
         </template>
+        <hr/>
         <router-link
-          style="border-top: 1px solid #ddd; padding-top: 8px"
-          class="lnb-item"
-          :to="`/project/${projectId}/board/backlog`"
-          @dragover.prevent
-          @drop.prevent.stop="moveIssueToBacklog"
+        class="lnb-item"
+        :to="`/project/${projectId}/board/backlog`"
+        @dragover.prevent
+        @drop.prevent.stop="moveIssueToBacklog"
         >
-          <!-- <MaterialSymbol name="low_priority" size="18" /> -->
-          {{ t("backlog.page.header.title") }}
-        </router-link>
+        <!-- <MaterialSymbol name="low_priority" size="18" /> -->
+        {{ t("backlog.page.header.title") }}
+      </router-link>
+      <router-link class="lnb-item" :to="`/project/${projectId}/board/gantt`">
+        간트차트
+      </router-link>
       </nav>
     </aside>
     <main>

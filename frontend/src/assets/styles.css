@@ -67,22 +67,25 @@ nav a:hover {
   line-height: 1;
 }
 
-.DefaultLayout > header {
+.DefaultLayout>header {
   display: flex;
   justify-content: space-between;
   padding: 20px 40px;
   background-color: var(--dl-gnb-bg);
   color: var(--dl-gnb-text);
 }
-.DefaultLayout > header > nav {
+
+.DefaultLayout>header>nav {
   display: flex;
   align-items: center;
 }
+
 .DefaultLayout .mainnav {
   font-size: 18px;
   gap: 60px;
   font-weight: 600;
 }
+
 .DefaultLayout .utilnav {
   font-size: 15px;
   gap: 20px;
@@ -125,7 +128,7 @@ nav a:hover {
   }
 }
 
-.DefaultLayout > header .projectselect {
+.DefaultLayout>header .projectselect {
   margin-left: 2rem;
   padding: 4px;
 }
@@ -144,7 +147,7 @@ nav a:hover {
   color: inherit;
 }
 
-.ProjectLayout > header {
+.ProjectLayout>header {
   display: flex;
   justify-content: space-between;
   padding: 16px 40px;
@@ -152,7 +155,8 @@ nav a:hover {
   background-color: var(--gnb-bg);
   /* background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 8 8'%3E%3Cg fill='%23000000' fill-opacity='0.03'%3E%3Cpath fill-rule='evenodd' d='M0 0h4v4H0V0zm4 4h4v4H4V4z'/%3E%3C/g%3E%3C/svg%3E"); */
 }
-.ProjectLayout > header > nav {
+
+.ProjectLayout>header>nav {
   display: flex;
   align-items: center;
 }
@@ -168,13 +172,15 @@ nav a:hover {
   gap: 24px;
   display: flex;
 }
-.ProjectLayout > header a {
+
+.ProjectLayout>header a {
   color: var(--gnb-fg);
 }
 
-.ProjectLayout > header .utilnav a {
+.ProjectLayout>header .utilnav a {
   color: var(--gnb-fg);
 }
+
 .ProjectLayout .utilnav {
   font-size: 15px;
   gap: 20px;
@@ -194,7 +200,7 @@ nav a:hover {
   flex-grow: 1;
 }
 
-.LnbLayout > aside {
+.LnbLayout>aside {
   background-color: var(--color-page-bg);
   padding: 18px 20px;
   width: 10rem;
@@ -202,31 +208,39 @@ nav a:hover {
   border-radius: 8px;
 }
 
-.LnbLayout > aside > nav {
+.LnbLayout>aside>nav {
   gap: 8px;
   display: flex;
   flex-direction: column;
 }
-.LnbLayout > aside > nav a {
+
+.LnbLayout>aside>nav a {
   padding: 6px 8px;
 }
 
-.LnbLayout > aside > nav .lnb-item {
+.LnbLayout>aside>nav hr {
+  width: 100%;
+  background-color: var(--color-border);
+  height: 1px;
+  border: 0;
+}
+
+.LnbLayout>aside>nav .lnb-item {
   padding: 6px 8px;
   display: inline-flex;
   align-items: center;
   gap: 6px;
 }
 
-.LnbLayout > aside > button + nav {
+.LnbLayout>aside>button+nav {
   margin-top: 1rem;
 }
 
-.LnbLayout > aside > button {
+.LnbLayout>aside>button {
   width: 100%;
 }
 
-.LnbLayout > main {
+.LnbLayout>main {
   flex-grow: 1;
   background-color: var(--color-page-bg);
   padding: 2rem 3rem 4rem;
@@ -234,38 +248,38 @@ nav a:hover {
   border-radius: 8px;
 }
 
-main > hgroup {
+main>hgroup {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   margin-bottom: 24px;
 }
 
-main > hgroup h1 {
+main>hgroup h1 {
   font-size: 24px;
   margin: 0;
   font-weight: 700;
 }
 
-main > hgroup div:has(h1) {
+main>hgroup div:has(h1) {
   display: flex;
   gap: 8px;
   align-items: center;
 }
 
-main > hgroup div:has(.subtitle) {
+main>hgroup div:has(.subtitle) {
   flex-direction: column;
   gap: 2px;
   align-items: flex-start;
 }
 
-main > hgroup .subtitle {
+main>hgroup .subtitle {
   margin: 0;
   font-size: 14px;
   color: var(--color-text-muted);
 }
 
-main > hgroup .actions {
+main>hgroup .actions {
   display: flex;
   gap: 6px;
 }

@@ -22,6 +22,7 @@ import MessengerLayout from "./views/MessengerLayout.vue";
 import ProjectLayout from "./views/ProjectLayout.vue";
 import BoardPage from "./views/BoardPage.vue";
 import BoardSettingsPage from "./views/BoardSettingsPage.vue";
+import GanttChartPage from "./views/GanttChartPage.vue";
 import WikiHomePage from "./views/WikiHomePage.vue";
 import WikiPage from "./views/WikiPage.vue";
 import MessengerHomePage from "./views/MessengerHomePage.vue";
@@ -124,6 +125,10 @@ const routes = [
           {
             path: "backlog",
             component: BacklogPage,
+          },
+          {
+            path: "gantt",
+            component: GanttChartPage,
           },
         ],
       },
