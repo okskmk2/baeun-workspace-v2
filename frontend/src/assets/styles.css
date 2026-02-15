@@ -177,13 +177,13 @@ nav a:hover {
   color: var(--gnb-fg);
 }
 
-.ProjectLayout>header .utilnav a {
+.ProjectLayout>header .utilnav a, button.btn--icon {
   color: var(--gnb-fg);
 }
 
 .ProjectLayout .utilnav {
   font-size: 15px;
-  gap: 20px;
+  gap: 8px;
   display: flex;
 }
 
