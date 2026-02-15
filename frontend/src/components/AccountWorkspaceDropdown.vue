@@ -240,7 +240,7 @@ watch(
 
 .account-menu__profile-link {
   font-size: 14px;
-  color: var(--color-text)!important;
+  color: var(--color-text) !important;
   text-decoration: none;
 }
 

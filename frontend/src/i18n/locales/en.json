@@ -84,7 +84,9 @@
       },
       "util": {
         "settings": "Settings",
-        "account": "Account"
+        "account": "Account",
+        "notifications": "Notifications",
+        "notificationsEmpty": "No new notifications."
       }
     },
     "settings": {

@@ -61,6 +61,7 @@
         >
           <MaterialSymbol name="settings" :size="18" alt="" />
         </router-link>
+        <ProjectNotificationDropdown />
         <AccountWorkspaceDropdown />
       </nav>
     </header>
@@ -84,6 +85,7 @@ import { useProjectSearchStore } from "../stores/projectSearchStore";
 import { convertSnakeToCamel } from "../lib/utils";
 import MaterialSymbol from "../components/MaterialSymbol.vue";
 import SearchInput from "../components/SearchInput.vue";
+import ProjectNotificationDropdown from "../components/ProjectNotificationDropdown.vue";
 import AccountWorkspaceDropdown from "../components/AccountWorkspaceDropdown.vue";
 
 const { t } = useI18n();

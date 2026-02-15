@@ -84,7 +84,9 @@
       },
       "util": {
         "settings": "설정",
-        "account": "계정"
+        "account": "계정",
+        "notifications": "알림",
+        "notificationsEmpty": "새 알림이 없습니다."
       }
     },
     "settings": {
