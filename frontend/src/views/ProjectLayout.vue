@@ -2,9 +2,17 @@
   <div class="ProjectLayout">
     <header :style="gnbStyle">
       <div class="left">
-        <span class="projectName">{{
-          projectName || t("layout.project.projectNameFallback")
-        }}</span>
+        <div class="project-title-wrap">
+          <Avatar
+            :text="workspaceInitials"
+            :label="workspaceName || t('workspace.detail.fallback.name')"
+            :image-url="workspaceImageUrl"
+            :size="28"
+          />
+          <span class="projectName">{{
+            projectName || t("layout.project.projectNameFallback")
+          }}</span>
+        </div>
         <template v-if="projectId">
           <nav class="mainnav">
             <router-link class="mainnav-link" :to="`/project/${projectId}/wiki`">
@@ -84,6 +92,7 @@ import { useChatStore } from "../stores/chatStore";
 import { useProjectSearchStore } from "../stores/projectSearchStore";
 import { convertSnakeToCamel } from "../lib/utils";
 import MaterialSymbol from "../components/MaterialSymbol.vue";
+import Avatar from "../components/Avatar.vue";
 import SearchInput from "../components/SearchInput.vue";
 import ProjectNotificationDropdown from "../components/ProjectNotificationDropdown.vue";
 import AccountWorkspaceDropdown from "../components/AccountWorkspaceDropdown.vue";
@@ -115,7 +124,19 @@ const currentProject = computed(() => {
   if (!projectId.value) return null;
   return workspaceStore.getProject(projectId.value);
 });
+const currentWorkspaceId = computed(() => currentProject.value?.workspace_id || null);
+const currentWorkspace = computed(() => {
+  if (!currentWorkspaceId.value) return null;
+  return workspaceStore.workspaceById[currentWorkspaceId.value] || null;
+});
 const projectName = computed(() => currentProject.value?.name || "");
+const workspaceName = computed(() => currentWorkspace.value?.name || "");
+const workspaceImageUrl = computed(() => String(currentWorkspace.value?.img_url || ""));
+const workspaceInitials = computed(() => {
+  const name = workspaceName.value || "";
+  if (!name) return "W";
+  return name.slice(0, 2).toUpperCase();
+});
 const currentUserId = computed(() => currentUser.value?.id);
 const currentProjectRole = computed(() => {
   if (!currentUserId.value) return "";
@@ -253,12 +274,25 @@ watch(
 
 watch(
   projectId,
-  (value) => {
+  async (value) => {
     searchQuery.value = "";
     isSearchOpen.value = false;
     if (!value) return;
-    workspaceStore.fetchProjectDetail(value);
+    await workspaceStore.fetchProjectDetail(value);
+    if (workspaceStore.getProject(value)?.workspace_id) {
+      await workspaceStore.fetchWorkspace(workspaceStore.getProject(value).workspace_id);
+    }
     projectMemberStore.fetchProjectMembers(value);
+  },
+  { immediate: true }
+);
+
+watch(
+  currentWorkspaceId,
+  async (value) => {
+    if (!value) return;
+    if (workspaceStore.workspaceById[value]) return;
+    await workspaceStore.fetchWorkspace(value);
   },
   { immediate: true }
 );
@@ -269,6 +303,12 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
+.project-title-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .projectName {
   font-weight: 600;
   font-size: 20px;

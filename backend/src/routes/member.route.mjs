@@ -1,12 +1,36 @@
 import express from "express";
 import bcrypt from "bcrypt"; // bcrypt module.
 import { randomUUID } from "crypto";
+import multer from "multer";
+import { Storage } from "@google-cloud/storage";
 import { isAuth, isGuest } from "../middlewares/auth.middleware.mjs";
 import pool from "../db.mjs"; // DB connection config.
 
 const router = express.Router();
 const SALT_ROUNDS = 10; // Hash cost (higher is more secure but slower).
 const MAX_CONCURRENT_SESSIONS = 4;
+const PROFILE_IMAGE_BUCKET = "workspace.baeun.com";
+const PROFILE_IMAGE_MAX_SIZE = 5 * 1024 * 1024;
+const storage = new Storage();
+const bucket = storage.bucket(PROFILE_IMAGE_BUCKET);
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: PROFILE_IMAGE_MAX_SIZE },
+});
+
+const ALLOWED_IMAGE_MIME_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+]);
+
+const MIME_TO_EXTENSION = {
+  "image/jpeg": "jpg",
+  "image/png": "png",
+  "image/webp": "webp",
+  "image/gif": "gif",
+};
 
 const getOwnedResourceItems = async (client, userId) => {
   const [workspaceRes, projectRes, pageRes, boardRes, channelRes] = await Promise.all([
@@ -92,6 +116,39 @@ const getOwnedResourceItems = async (client, userId) => {
 const getOwnedResourceTypes = (items = []) => {
   const types = [...new Set(items.map((item) => item?.type).filter(Boolean))];
   return types;
+};
+
+const getGcsPublicUrl = (bucketName, objectPath) => {
+  const encodedPath = objectPath
+    .split("/")
+    .map((segment) => encodeURIComponent(segment))
+    .join("/");
+  return `https://storage.googleapis.com/${bucketName}/${encodedPath}`;
+};
+
+const getObjectPathFromGcsUrl = (url, bucketName) => {
+  if (!url) return null;
+
+  const normalizedUrl = String(url).trim();
+  if (!normalizedUrl) return null;
+
+  const publicPrefix = `https://storage.googleapis.com/${bucketName}/`;
+  const virtualHostPrefix = `https://${bucketName}.storage.googleapis.com/`;
+
+  let rawPath = "";
+  if (normalizedUrl.startsWith(publicPrefix)) {
+    rawPath = normalizedUrl.slice(publicPrefix.length);
+  } else if (normalizedUrl.startsWith(virtualHostPrefix)) {
+    rawPath = normalizedUrl.slice(virtualHostPrefix.length);
+  } else {
+    return null;
+  }
+
+  if (!rawPath) return null;
+  return rawPath
+    .split("/")
+    .map((segment) => decodeURIComponent(segment))
+    .join("/");
 };
 
 const enforceSessionLimit = async (userId, currentSid) => {
@@ -428,6 +485,179 @@ router.put("/profile", isAuth, async (req, res) => {
     const result = await pool.query(query, [name, img_url, req.session.userId]);
 
     res.json({ message: "Profile updated.", ...result.rows[0] });
+  } catch (error) {
+    res.status(500).json({ name: "InternalServerError", message: error.message });
+  }
+});
+
+/**
+ * @swagger
+ * /api/members/profile/image:
+ *   post:
+ *     summary: Upload profile image
+ *     description: Upload profile image to Google Cloud Storage and update img_url
+ *     tags:
+ *       - Member
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               image:
+ *                 type: string
+ *                 format: binary
+ *             required:
+ *               - image
+ *     responses:
+ *       200:
+ *         description: Profile image uploaded
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 id:
+ *                   type: integer
+ *                 name:
+ *                   type: string
+ *                 email:
+ *                   type: string
+ *                 img_url:
+ *                   type: string
+ *       400:
+ *         $ref: "#/components/responses/ErrorResponse"
+ *       500:
+ *         $ref: "#/components/responses/ErrorResponse"
+ */
+router.post(
+  "/profile/image",
+  isAuth,
+  (req, res, next) => {
+    upload.single("image")(req, res, (error) => {
+      if (!error) return next();
+      if (error instanceof multer.MulterError && error.code === "LIMIT_FILE_SIZE") {
+        return res.status(400).json({
+          name: "BadRequest",
+          message: `Image size must be ${Math.floor(PROFILE_IMAGE_MAX_SIZE / (1024 * 1024))}MB or less.`,
+        });
+      }
+      return res.status(400).json({ name: "BadRequest", message: "Invalid upload request." });
+    });
+  },
+  async (req, res) => {
+    const userId = req.session.userId;
+    const file = req.file;
+
+    if (!file) {
+      return res.status(400).json({ name: "BadRequest", message: "image is required." });
+    }
+
+    if (!ALLOWED_IMAGE_MIME_TYPES.has(file.mimetype)) {
+      return res.status(400).json({
+        name: "BadRequest",
+        message: "Only jpg, png, webp, gif images are allowed.",
+      });
+    }
+
+    try {
+      const currentMember = await pool.query("SELECT img_url FROM member WHERE id = $1", [userId]);
+      const previousImageUrl = currentMember.rows[0]?.img_url || "";
+      const previousObjectPath = getObjectPathFromGcsUrl(previousImageUrl, PROFILE_IMAGE_BUCKET);
+
+      const extension = MIME_TO_EXTENSION[file.mimetype] || "bin";
+      const objectPath = `members/${userId}/${Date.now()}-${randomUUID()}.${extension}`;
+      const gcsFile = bucket.file(objectPath);
+
+      await gcsFile.save(file.buffer, {
+        metadata: {
+          contentType: file.mimetype,
+          cacheControl: "public, max-age=31536000, immutable",
+        },
+      });
+
+      const imageUrl = getGcsPublicUrl(PROFILE_IMAGE_BUCKET, objectPath);
+
+      const updatedMember = await pool.query(
+        `UPDATE member
+         SET img_url = $1
+         WHERE id = $2
+         RETURNING id, name, email, img_url`,
+        [imageUrl, userId]
+      );
+
+      if (updatedMember.rows.length === 0) {
+        await gcsFile.delete({ ignoreNotFound: true });
+        return res.status(404).json({ name: "NotFound", message: "Member not found." });
+      }
+
+      if (previousObjectPath && previousObjectPath !== objectPath) {
+        try {
+          await bucket.file(previousObjectPath).delete({ ignoreNotFound: true });
+        } catch (error) {
+          await gcsFile.delete({ ignoreNotFound: true });
+          return res.status(500).json({
+            name: "InternalServerError",
+            message: "Failed to replace previous profile image.",
+          });
+        }
+      }
+
+      res.json({ message: "Profile image uploaded.", ...updatedMember.rows[0] });
+    } catch (error) {
+      res.status(500).json({ name: "InternalServerError", message: error.message });
+    }
+  }
+);
+
+/**
+ * @swagger
+ * /api/members/profile/image:
+ *   delete:
+ *     summary: Delete profile image
+ *     description: Delete profile image from Google Cloud Storage and clear img_url
+ *     tags:
+ *       - Member
+ *     responses:
+ *       200:
+ *         description: Profile image deleted
+ *       404:
+ *         $ref: "#/components/responses/ErrorResponse"
+ *       500:
+ *         $ref: "#/components/responses/ErrorResponse"
+ */
+router.delete("/profile/image", isAuth, async (req, res) => {
+  const userId = req.session.userId;
+
+  try {
+    const currentMember = await pool.query("SELECT img_url FROM member WHERE id = $1", [userId]);
+    if (currentMember.rows.length === 0) {
+      return res.status(404).json({ name: "NotFound", message: "Member not found." });
+    }
+
+    const currentImageUrl = currentMember.rows[0]?.img_url || "";
+    const objectPath = getObjectPathFromGcsUrl(currentImageUrl, PROFILE_IMAGE_BUCKET);
+
+    if (objectPath) {
+      await bucket.file(objectPath).delete({ ignoreNotFound: true });
+    }
+
+    const updatedMember = await pool.query(
+      `UPDATE member
+       SET img_url = NULL
+       WHERE id = $1
+       RETURNING id, name, email, img_url`,
+      [userId]
+    );
+
+    if (updatedMember.rows.length === 0) {
+      return res.status(404).json({ name: "NotFound", message: "Member not found." });
+    }
+
+    res.json({ message: "Profile image removed.", ...updatedMember.rows[0] });
   } catch (error) {
     res.status(500).json({ name: "InternalServerError", message: error.message });
   }

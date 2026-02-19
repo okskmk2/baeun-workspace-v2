@@ -7,7 +7,12 @@
       :aria-expanded="isMenuOpen ? 'true' : 'false'"
       @click="toggleMenu"
     >
-      <Avatar :text="accountInitials" :label="accountLabel" :size="32" />
+      <Avatar
+        :text="accountInitials"
+        :label="accountLabel"
+        :image-url="accountImageUrl"
+        :size="32"
+      />
     </button>
 
     <div v-if="isMenuOpen" class="account-menu__panel" role="menu">
@@ -27,13 +32,21 @@
       </p>
       <ul v-else-if="workspaceItems.length" class="account-menu__tree">
         <li v-for="workspace in workspaceItems" :key="workspace.id" class="account-menu__workspace">
-          <router-link
-            class="account-menu__workspace-link"
-            :to="`/settings/workspaces/${workspace.id}`"
-            @click="closeMenu"
-          >
-            {{ workspace.name }}
-          </router-link>
+          <div class="account-menu__workspace-head">
+            <Avatar
+              :text="getWorkspaceInitials(workspace)"
+              :label="workspace.name || 'Workspace'"
+              :image-url="workspace.img_url || ''"
+              :size="24"
+            />
+            <router-link
+              class="account-menu__workspace-link"
+              :to="`/settings/workspaces/${workspace.id}`"
+              @click="closeMenu"
+            >
+              {{ workspace.name }}
+            </router-link>
+          </div>
           <ul v-if="workspace.projects.length" class="account-menu__projects">
             <li v-for="project in workspace.projects" :key="project.id">
               <router-link
@@ -88,6 +101,13 @@ const accountInitials = computed(() => {
 });
 
 const accountLabel = computed(() => appStore.currentUser?.name || t("layout.default.util.account"));
+const accountImageUrl = computed(() => String(appStore.currentUser?.img_url || ""));
+
+const getWorkspaceInitials = (workspace) => {
+  const name = String(workspace?.name || "").trim();
+  if (!name) return "W";
+  return name.slice(0, 2).toUpperCase();
+};
 
 const closeMenu = () => {
   isMenuOpen.value = false;
@@ -284,11 +304,16 @@ watch(
 
 .account-menu__workspace-link {
   display: inline-flex;
-  margin-bottom: 4px;
   font-size: 14px;
   font-weight: 600;
   color: var(--color-text) !important;
   text-decoration: none;
+}
+
+.account-menu__workspace-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .account-menu__workspace-link:hover,
@@ -299,6 +324,7 @@ watch(
 .account-menu__projects {
   list-style: none;
   margin: 0;
+  margin-top: 4px;
   padding: 0 0 0 10px;
   display: flex;
   flex-direction: column;

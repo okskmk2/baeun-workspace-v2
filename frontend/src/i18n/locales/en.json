@@ -1184,6 +1184,22 @@
       "loggingOut": "Logging out...",
       "withdraw": "Withdraw account"
     },
+    "image": {
+      "actions": {
+        "change": "Change profile image",
+        "uploading": "Uploading...",
+        "remove": "Remove profile image",
+        "removing": "Removing..."
+      },
+      "status": {
+        "success": "Profile image updated.",
+        "error": "Failed to upload profile image.",
+        "removed": "Profile image removed.",
+        "removeError": "Failed to remove profile image.",
+        "invalidType": "Only jpg, png, webp, gif files are allowed.",
+        "sizeLimit": "Image size must be 5MB or less."
+      }
+    },
     "fields": {
       "name": "Name",
       "email": "Email",

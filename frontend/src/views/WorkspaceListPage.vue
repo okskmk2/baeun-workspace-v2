@@ -20,7 +20,14 @@
   <ul v-else class="workspace-list">
     <li v-for="workspace in workspaces" :key="workspace.id" class="workspace-item">
       <div class="workspace-header">
-        <div>
+        <div class="workspace-main">
+          <Avatar
+            :text="getWorkspaceInitials(workspace)"
+            :label="workspace.name || 'Workspace'"
+            :image-url="workspace.img_url || ''"
+            :size="40"
+          />
+          <div>
           <h2>
             <router-link :to="`/settings/workspaces/${workspace.id}`" class="workspace-link">
               {{ workspace.name }}
@@ -29,6 +36,7 @@
           <Tag v-if="workspace.role_name">
             {{ getRoleLabel("workspace_member", workspace.role_name) }}
           </Tag>
+          </div>
         </div>
         <button
           type="button"
@@ -95,6 +103,7 @@ import CreateWorkspaceModal from "../components/modals/CreateWorkspaceModal.vue"
 import BaseModal from "../components/BaseModal.vue";
 import { useWorkspaceStore } from "../stores/workspaceStore";
 import Tag from "../components/Tag.vue";
+import Avatar from "../components/Avatar.vue";
 import { useRoleLabels } from "../lib/roleLabels";
 import { addToast } from "../lib/toast";
 
@@ -181,6 +190,12 @@ const confirmDeleteWorkspace = async () => {
 };
 
 const getProjects = (workspaceId) => workspaceStore.getProjects(workspaceId);
+
+const getWorkspaceInitials = (workspace) => {
+  const name = String(workspace?.name || "").trim();
+  if (!name) return "W";
+  return name.slice(0, 2).toUpperCase();
+};
 </script>
 
 <style scoped>
@@ -211,6 +226,12 @@ const getProjects = (workspaceId) => workspaceStore.getProjects(workspaceId);
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+}
+
+.workspace-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .workspace-link {

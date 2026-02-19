@@ -1160,6 +1160,22 @@
       "loggingOut": "로그아웃 중...",
       "withdraw": "회원 탈퇴"
     },
+    "image": {
+      "actions": {
+        "change": "대표 이미지 변경",
+        "uploading": "업로드 중...",
+        "remove": "대표 이미지 삭제",
+        "removing": "삭제 중..."
+      },
+      "status": {
+        "success": "대표 이미지가 업데이트되었습니다.",
+        "error": "대표 이미지 업로드에 실패했습니다.",
+        "removed": "대표 이미지가 삭제되었습니다.",
+        "removeError": "대표 이미지 삭제에 실패했습니다.",
+        "invalidType": "jpg, png, webp, gif 파일만 업로드할 수 있습니다.",
+        "sizeLimit": "이미지 크기는 5MB 이하여야 합니다."
+      }
+    },
     "fields": {
       "name": "이름",
       "email": "이메일",

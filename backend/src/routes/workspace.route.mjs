@@ -1,9 +1,33 @@
 import express from "express";
+import multer from "multer";
+import { Storage } from "@google-cloud/storage";
 import pool from "../db.mjs";
 import { isAuth } from "../middlewares/auth.middleware.mjs";
 import logger from "../logger.mjs";
 
 const router = express.Router();
+const WORKSPACE_IMAGE_BUCKET = "workspace.baeun.com";
+const WORKSPACE_IMAGE_MAX_SIZE = 5 * 1024 * 1024;
+const storage = new Storage();
+const bucket = storage.bucket(WORKSPACE_IMAGE_BUCKET);
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: WORKSPACE_IMAGE_MAX_SIZE },
+});
+
+const ALLOWED_IMAGE_MIME_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+]);
+
+const MIME_TO_EXTENSION = {
+  "image/jpeg": "jpg",
+  "image/png": "png",
+  "image/webp": "webp",
+  "image/gif": "gif",
+};
 
 const getWorkspaceMemberRole = async (workspaceId, memberId) => {
   const result = await pool.query(
@@ -11,6 +35,39 @@ const getWorkspaceMemberRole = async (workspaceId, memberId) => {
     [workspaceId, memberId]
   );
   return result.rows[0]?.role_name || null;
+};
+
+const getGcsPublicUrl = (bucketName, objectPath) => {
+  const encodedPath = objectPath
+    .split("/")
+    .map((segment) => encodeURIComponent(segment))
+    .join("/");
+  return `https://storage.googleapis.com/${bucketName}/${encodedPath}`;
+};
+
+const getObjectPathFromGcsUrl = (url, bucketName) => {
+  if (!url) return null;
+
+  const normalizedUrl = String(url).trim();
+  if (!normalizedUrl) return null;
+
+  const publicPrefix = `https://storage.googleapis.com/${bucketName}/`;
+  const virtualHostPrefix = `https://${bucketName}.storage.googleapis.com/`;
+
+  let rawPath = "";
+  if (normalizedUrl.startsWith(publicPrefix)) {
+    rawPath = normalizedUrl.slice(publicPrefix.length);
+  } else if (normalizedUrl.startsWith(virtualHostPrefix)) {
+    rawPath = normalizedUrl.slice(virtualHostPrefix.length);
+  } else {
+    return null;
+  }
+
+  if (!rawPath) return null;
+  return rawPath
+    .split("/")
+    .map((segment) => decodeURIComponent(segment))
+    .join("/");
 };
 
 /**
@@ -277,6 +334,206 @@ router.put("/:workspaceId", isAuth, async (req, res) => {
       message: "Workspace name updated.",
       ...updateRes.rows[0],
     });
+  } catch (error) {
+    res.status(500).json({ name: "InternalServerError", message: error.message });
+  }
+});
+
+/**
+ * @swagger
+ * /api/workspaces/{workspaceId}/image:
+ *   post:
+ *     summary: Upload workspace image
+ *     description: Upload workspace representative image to Google Cloud Storage and update img_url
+ *     tags:
+ *       - Workspace
+ *     parameters:
+ *       - in: path
+ *         name: workspaceId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               image:
+ *                 type: string
+ *                 format: binary
+ *             required:
+ *               - image
+ *     responses:
+ *       200:
+ *         description: Workspace image uploaded
+ *       400:
+ *         $ref: "#/components/responses/ErrorResponse"
+ *       403:
+ *         $ref: "#/components/responses/ErrorResponse"
+ *       404:
+ *         $ref: "#/components/responses/ErrorResponse"
+ *       500:
+ *         $ref: "#/components/responses/ErrorResponse"
+ */
+router.post(
+  "/:workspaceId/image",
+  isAuth,
+  (req, res, next) => {
+    upload.single("image")(req, res, (error) => {
+      if (!error) return next();
+      if (error instanceof multer.MulterError && error.code === "LIMIT_FILE_SIZE") {
+        return res.status(400).json({
+          name: "BadRequest",
+          message: `Image size must be ${Math.floor(WORKSPACE_IMAGE_MAX_SIZE / (1024 * 1024))}MB or less.`,
+        });
+      }
+      return res.status(400).json({ name: "BadRequest", message: "Invalid upload request." });
+    });
+  },
+  async (req, res) => {
+    const { workspaceId } = req.params;
+    const userId = req.session.userId;
+    const file = req.file;
+
+    if (!file) {
+      return res.status(400).json({ name: "BadRequest", message: "image is required." });
+    }
+
+    if (!ALLOWED_IMAGE_MIME_TYPES.has(file.mimetype)) {
+      return res.status(400).json({
+        name: "BadRequest",
+        message: "Only jpg, png, webp, gif images are allowed.",
+      });
+    }
+
+    try {
+      const roleName = await getWorkspaceMemberRole(workspaceId, userId);
+      if (!roleName) {
+        return res.status(404).json({ name: "NotFound", message: "Workspace not found or access denied." });
+      }
+      if (![
+        "OWNER",
+        "ADMIN",
+      ].includes(String(roleName || "").toUpperCase())) {
+        return res.status(403).json({ name: "Forbidden", message: "No permission to update workspace." });
+      }
+
+      const currentWorkspace = await pool.query("SELECT img_url FROM workspace WHERE id = $1", [workspaceId]);
+      if (currentWorkspace.rows.length === 0) {
+        return res.status(404).json({ name: "NotFound", message: "Workspace not found." });
+      }
+
+      const previousImageUrl = currentWorkspace.rows[0]?.img_url || "";
+      const previousObjectPath = getObjectPathFromGcsUrl(previousImageUrl, WORKSPACE_IMAGE_BUCKET);
+
+      const extension = MIME_TO_EXTENSION[file.mimetype] || "bin";
+      const objectPath = `workspaces/${workspaceId}/${Date.now()}-${userId}.${extension}`;
+      const gcsFile = bucket.file(objectPath);
+
+      await gcsFile.save(file.buffer, {
+        metadata: {
+          contentType: file.mimetype,
+          cacheControl: "public, max-age=31536000, immutable",
+        },
+      });
+
+      const imageUrl = getGcsPublicUrl(WORKSPACE_IMAGE_BUCKET, objectPath);
+
+      const updateRes = await pool.query(
+        `UPDATE workspace
+         SET img_url = $1
+         WHERE id = $2
+         RETURNING id, name, img_url`,
+        [imageUrl, workspaceId]
+      );
+
+      if (updateRes.rows.length === 0) {
+        await gcsFile.delete({ ignoreNotFound: true });
+        return res.status(404).json({ name: "NotFound", message: "Workspace not found." });
+      }
+
+      if (previousObjectPath && previousObjectPath !== objectPath) {
+        try {
+          await bucket.file(previousObjectPath).delete({ ignoreNotFound: true });
+        } catch (error) {
+          await gcsFile.delete({ ignoreNotFound: true });
+          return res.status(500).json({
+            name: "InternalServerError",
+            message: "Failed to replace previous workspace image.",
+          });
+        }
+      }
+
+      res.json({ message: "Workspace image uploaded.", ...updateRes.rows[0] });
+    } catch (error) {
+      res.status(500).json({ name: "InternalServerError", message: error.message });
+    }
+  }
+);
+
+/**
+ * @swagger
+ * /api/workspaces/{workspaceId}/image:
+ *   delete:
+ *     summary: Delete workspace image
+ *     description: Delete workspace representative image from Google Cloud Storage and clear img_url
+ *     tags:
+ *       - Workspace
+ *     parameters:
+ *       - in: path
+ *         name: workspaceId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Workspace image deleted
+ *       403:
+ *         $ref: "#/components/responses/ErrorResponse"
+ *       404:
+ *         $ref: "#/components/responses/ErrorResponse"
+ *       500:
+ *         $ref: "#/components/responses/ErrorResponse"
+ */
+router.delete("/:workspaceId/image", isAuth, async (req, res) => {
+  const { workspaceId } = req.params;
+  const userId = req.session.userId;
+
+  try {
+    const roleName = await getWorkspaceMemberRole(workspaceId, userId);
+    if (!roleName) {
+      return res.status(404).json({ name: "NotFound", message: "Workspace not found or access denied." });
+    }
+    if (!["OWNER", "ADMIN"].includes(String(roleName || "").toUpperCase())) {
+      return res.status(403).json({ name: "Forbidden", message: "No permission to update workspace." });
+    }
+
+    const currentWorkspace = await pool.query("SELECT img_url FROM workspace WHERE id = $1", [workspaceId]);
+    if (currentWorkspace.rows.length === 0) {
+      return res.status(404).json({ name: "NotFound", message: "Workspace not found." });
+    }
+
+    const currentImageUrl = currentWorkspace.rows[0]?.img_url || "";
+    const objectPath = getObjectPathFromGcsUrl(currentImageUrl, WORKSPACE_IMAGE_BUCKET);
+    if (objectPath) {
+      await bucket.file(objectPath).delete({ ignoreNotFound: true });
+    }
+
+    const updateRes = await pool.query(
+      `UPDATE workspace
+       SET img_url = NULL
+       WHERE id = $1
+       RETURNING id, name, img_url`,
+      [workspaceId]
+    );
+
+    if (updateRes.rows.length === 0) {
+      return res.status(404).json({ name: "NotFound", message: "Workspace not found." });
+    }
+
+    res.json({ message: "Workspace image removed.", ...updateRes.rows[0] });
   } catch (error) {
     res.status(500).json({ name: "InternalServerError", message: error.message });
   }

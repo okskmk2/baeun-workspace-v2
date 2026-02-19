@@ -96,6 +96,45 @@
         <div class="card__header">
           <h2>Workspace Settings</h2>
         </div>
+        <form class="inline-form" @submit.prevent>
+          <label>Workspace Image</label>
+          <div class="workspace-image-row">
+            <Avatar
+              :text="workspaceImageFallback"
+              :label="workspaceName || 'Workspace'"
+              :image-url="workspaceImageUrl"
+              :size="56"
+            />
+            <input
+              ref="workspaceImageInputRef"
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/gif"
+              class="workspace-image-input"
+              @change="onWorkspaceImageChange"
+            />
+            <button
+              type="button"
+              class="btn btn--secondary"
+              :disabled="!canManageWorkspace || isUploadingWorkspaceImage || isRemovingWorkspaceImage"
+              @click="openWorkspaceImagePicker"
+            >
+              {{ isUploadingWorkspaceImage ? "Uploading..." : "Change Image" }}
+            </button>
+            <button
+              type="button"
+              class="btn btn--secondary"
+              :disabled="!canManageWorkspace || !workspaceImageUrl || isUploadingWorkspaceImage || isRemovingWorkspaceImage"
+              @click="removeWorkspaceImage"
+            >
+              {{ isRemovingWorkspaceImage ? "Removing..." : "Remove Image" }}
+            </button>
+          </div>
+          <p v-if="workspaceImageError" class="status error">{{ workspaceImageError }}</p>
+          <p v-else-if="workspaceImageSuccess" class="status success">{{ workspaceImageSuccess }}</p>
+          <p v-if="!canManageWorkspace" class="status muted">
+            Only OWNER or ADMIN can edit workspace image.
+          </p>
+        </form>
         <form class="inline-form" @submit.prevent="updateWorkspaceName">
           <label for="workspace-name-input">Workspace Name</label>
           <div class="inline-form__row">
@@ -179,6 +218,7 @@ import { computed, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 import Tag from "../components/Tag.vue";
+import Avatar from "../components/Avatar.vue";
 import { useRoleLabels } from "../lib/roleLabels";
 import { useWorkspaceStore } from "../stores/workspaceStore";
 import { useAppStore } from "../stores/appStore";
@@ -200,6 +240,11 @@ const nameForm = ref("");
 const isUpdatingName = ref(false);
 const nameError = ref("");
 const nameSuccess = ref("");
+const workspaceImageInputRef = ref(null);
+const isUploadingWorkspaceImage = ref(false);
+const isRemovingWorkspaceImage = ref(false);
+const workspaceImageError = ref("");
+const workspaceImageSuccess = ref("");
 
 const projectForm = ref("");
 const isCreatingProject = ref(false);
@@ -217,6 +262,12 @@ const workspace = computed(() => workspaceStore.workspaceById[workspaceId.value]
 const projects = computed(() => workspaceStore.getProjects(workspaceId.value));
 
 const workspaceName = computed(() => workspace.value?.name || "");
+const workspaceImageUrl = computed(() => String(workspace.value?.img_url || ""));
+const workspaceImageFallback = computed(() => {
+  const name = workspaceName.value || "";
+  if (!name) return "W";
+  return name.slice(0, 2).toUpperCase();
+});
 const workspaceRole = computed(() => workspace.value?.role_name || "");
 const workspaceRoleUpper = computed(() => String(workspaceRole.value || "").toUpperCase());
 const workspaceRoleLabel = computed(() => getRoleLabel("workspace_member", workspaceRole.value));
@@ -300,6 +351,62 @@ const updateWorkspaceName = async () => {
     nameError.value = error?.response?.data?.message || "Failed to update workspace name.";
   } finally {
     isUpdatingName.value = false;
+  }
+};
+
+const openWorkspaceImagePicker = () => {
+  if (!canManageWorkspace.value || isUploadingWorkspaceImage.value || isRemovingWorkspaceImage.value) return;
+  workspaceImageInputRef.value?.click();
+};
+
+const onWorkspaceImageChange = async (event) => {
+  workspaceImageError.value = "";
+  workspaceImageSuccess.value = "";
+  const selectedFile = event?.target?.files?.[0];
+  if (!selectedFile) return;
+
+  const maxFileSize = 5 * 1024 * 1024;
+  const allowedTypes = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
+
+  if (!allowedTypes.has(selectedFile.type)) {
+    workspaceImageError.value = "Only jpg, png, webp, gif files are allowed.";
+    event.target.value = "";
+    return;
+  }
+
+  if (selectedFile.size > maxFileSize) {
+    workspaceImageError.value = "Image size must be 5MB or less.";
+    event.target.value = "";
+    return;
+  }
+
+  isUploadingWorkspaceImage.value = true;
+  try {
+    const response = await workspaceStore.updateWorkspaceImage(workspaceId.value, selectedFile);
+    workspaceImageSuccess.value = response?.message || "Workspace image updated.";
+  } catch (error) {
+    workspaceImageError.value = error?.response?.data?.message || "Failed to update workspace image.";
+  } finally {
+    isUploadingWorkspaceImage.value = false;
+    event.target.value = "";
+  }
+};
+
+const removeWorkspaceImage = async () => {
+  if (!canManageWorkspace.value || !workspaceImageUrl.value) return;
+  if (isUploadingWorkspaceImage.value || isRemovingWorkspaceImage.value) return;
+
+  workspaceImageError.value = "";
+  workspaceImageSuccess.value = "";
+  isRemovingWorkspaceImage.value = true;
+
+  try {
+    const response = await workspaceStore.removeWorkspaceImage(workspaceId.value);
+    workspaceImageSuccess.value = response?.message || "Workspace image removed.";
+  } catch (error) {
+    workspaceImageError.value = error?.response?.data?.message || "Failed to remove workspace image.";
+  } finally {
+    isRemovingWorkspaceImage.value = false;
   }
 };
 
@@ -558,6 +665,16 @@ watch(() => route.params.workspaceId, fetchWorkspaceData);
   display: grid;
   grid-template-columns: 1.2fr 0.8fr auto;
   gap: 8px;
+}
+
+.workspace-image-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.workspace-image-input {
+  display: none;
 }
 
 .member-list {

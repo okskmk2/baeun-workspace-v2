@@ -86,6 +86,41 @@ export const useWorkspaceStore = defineStore("workspace", {
       }
       return updated;
     },
+    async updateWorkspaceImage(workspaceId, file) {
+      if (!workspaceId || !file) return null;
+      const formData = new FormData();
+      formData.append("image", file);
+
+      const res = await api.post(`/workspaces/${workspaceId}/image`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      const updated = res.data || null;
+
+      if (updated) {
+        const current = this.workspaceById[workspaceId] || {};
+        this.workspaceById[workspaceId] = { ...current, ...updated };
+        this.workspaces = this.workspaces.map((item) =>
+          String(item.id) === String(workspaceId) ? { ...item, ...updated } : item
+        );
+      }
+
+      return updated;
+    },
+    async removeWorkspaceImage(workspaceId) {
+      if (!workspaceId) return null;
+      const res = await api.delete(`/workspaces/${workspaceId}/image`);
+      const updated = res.data || null;
+
+      if (updated) {
+        const current = this.workspaceById[workspaceId] || {};
+        this.workspaceById[workspaceId] = { ...current, ...updated };
+        this.workspaces = this.workspaces.map((item) =>
+          String(item.id) === String(workspaceId) ? { ...item, ...updated } : item
+        );
+      }
+
+      return updated;
+    },
     async fetchWorkspaceMembers(workspaceId) {
       if (!workspaceId) return [];
       const res = await api.get(`/workspaces/${workspaceId}/members`);

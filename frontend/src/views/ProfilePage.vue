@@ -11,7 +11,42 @@
 
   <div v-else class="page-sections">
     <div class="profile-card">
-      <Avatar :text="initials" :label="profile.name" :size="72" />
+      <div class="avatar-panel">
+        <Avatar :text="initials" :label="profile.name" :image-url="profileImageUrl" :size="72" />
+        <input
+          ref="profileImageInputRef"
+          class="profile-image-input"
+          type="file"
+          accept="image/png,image/jpeg,image/webp,image/gif"
+          @change="handleProfileImageChange"
+        />
+        <button
+          class="btn btn--secondary"
+          type="button"
+          :disabled="isUploadingImage || isRemovingImage"
+          @click="openProfileImagePicker"
+        >
+          {{
+            isUploadingImage
+              ? t("profile.image.actions.uploading")
+              : t("profile.image.actions.change")
+          }}
+        </button>
+        <button
+          class="btn btn--secondary"
+          type="button"
+          :disabled="!profileImageUrl || isUploadingImage || isRemovingImage"
+          @click="removeProfileImage"
+        >
+          {{
+            isRemovingImage
+              ? t("profile.image.actions.removing")
+              : t("profile.image.actions.remove")
+          }}
+        </button>
+        <p v-if="uploadImageError" class="status error">{{ uploadImageError }}</p>
+        <p v-else-if="uploadImageMessage" class="status">{{ uploadImageMessage }}</p>
+      </div>
       <div class="details">
         <div class="detail">
           <span class="label">{{ t("profile.fields.name") }}</span>
@@ -118,6 +153,11 @@ const isLoggingOut = ref(false);
 const logoutError = ref("");
 const isWithdrawOpen = ref(false);
 const isOwnershipGuideOpen = ref(false);
+const profileImageInputRef = ref(null);
+const isUploadingImage = ref(false);
+const isRemovingImage = ref(false);
+const uploadImageError = ref("");
+const uploadImageMessage = ref("");
 
 const fetchProfile = async () => {
   isLoading.value = true;
@@ -139,6 +179,8 @@ const initials = computed(() => {
   if (!name) return "?";
   return name.slice(0, 2).toUpperCase();
 });
+
+const profileImageUrl = computed(() => String(profile.value?.img_url || ""));
 
 const formatDate = (value) => {
   if (!value) return "";
@@ -175,6 +217,84 @@ const logout = async () => {
     logoutError.value = error?.response?.data?.message || t("profile.status.logoutError");
   } finally {
     isLoggingOut.value = false;
+  }
+};
+
+const openProfileImagePicker = () => {
+  if (isUploadingImage.value || isRemovingImage.value) return;
+  profileImageInputRef.value?.click();
+};
+
+const handleProfileImageChange = async (event) => {
+  const selectedFile = event?.target?.files?.[0];
+  uploadImageError.value = "";
+  uploadImageMessage.value = "";
+
+  if (!selectedFile) return;
+
+  const maxFileSize = 5 * 1024 * 1024;
+  const allowedTypes = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
+
+  if (!allowedTypes.has(selectedFile.type)) {
+    uploadImageError.value = t("profile.image.status.invalidType");
+    event.target.value = "";
+    return;
+  }
+
+  if (selectedFile.size > maxFileSize) {
+    uploadImageError.value = t("profile.image.status.sizeLimit");
+    event.target.value = "";
+    return;
+  }
+
+  isUploadingImage.value = true;
+  try {
+    const formData = new FormData();
+    formData.append("image", selectedFile);
+
+    const response = await api.post("/members/profile/image", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+
+    const payload = response?.data || {};
+    const { message, ...memberData } = payload;
+    profile.value = { ...profile.value, ...memberData };
+
+    if (appStore.currentUser) {
+      appStore.setCurrentUser({ ...appStore.currentUser, ...memberData });
+    }
+
+    uploadImageMessage.value = message || t("profile.image.status.success");
+  } catch (error) {
+    uploadImageError.value = error?.response?.data?.message || t("profile.image.status.error");
+  } finally {
+    isUploadingImage.value = false;
+    event.target.value = "";
+  }
+};
+
+const removeProfileImage = async () => {
+  if (!profileImageUrl.value || isUploadingImage.value || isRemovingImage.value) return;
+
+  uploadImageError.value = "";
+  uploadImageMessage.value = "";
+  isRemovingImage.value = true;
+
+  try {
+    const response = await api.delete("/members/profile/image");
+    const payload = response?.data || {};
+    const { message, ...memberData } = payload;
+
+    profile.value = { ...profile.value, ...memberData };
+    if (appStore.currentUser) {
+      appStore.setCurrentUser({ ...appStore.currentUser, ...memberData });
+    }
+
+    uploadImageMessage.value = message || t("profile.image.status.removed");
+  } catch (error) {
+    uploadImageError.value = error?.response?.data?.message || t("profile.image.status.removeError");
+  } finally {
+    isRemovingImage.value = false;
   }
 };
 
@@ -216,13 +336,24 @@ onMounted(fetchProfile);
 
 .profile-card {
   display: grid;
-  grid-template-columns: 72px 1fr;
+  grid-template-columns: auto 1fr;
   gap: 16px;
   padding: 16px;
   border: 1px solid var(--color-border);
   border-radius: 12px;
   background-color: var(--color-card-bg);
   align-items: center;
+}
+
+.avatar-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.profile-image-input {
+  display: none;
 }
 
 .profile-actions {
@@ -436,6 +567,10 @@ onMounted(fetchProfile);
   .profile-card {
     grid-template-columns: 1fr;
     text-align: center;
+  }
+
+  .avatar-panel {
+    align-items: center;
   }
 
   .detail {
