@@ -813,6 +813,8 @@
         "archive": "Archive",
         "reopen": "Reopen",
         "updatingStatus": "Updating...",
+        "loadMore": "Load more",
+        "loadingMore": "Loading...",
         "invite": "Invite",
         "settings": "Channel settings",
         "leave": "Leave channel",

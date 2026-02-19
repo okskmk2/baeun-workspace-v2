@@ -813,6 +813,8 @@
         "archive": "보관",
         "reopen": "다시 열기",
         "updatingStatus": "변경 중...",
+        "loadMore": "더 보기",
+        "loadingMore": "불러오는 중...",
         "invite": "초대하기",
         "settings": "채널 설정",
         "leave": "방 나가기",

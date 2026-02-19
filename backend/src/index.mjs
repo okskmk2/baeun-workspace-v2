@@ -136,7 +136,7 @@ wss.on("connection", (ws, request) => {
 
     if (payload?.type === "message") {
       const { channelId, content } = payload;
-      const rawMessageType = String(payload?.messageType || payload?.message_type || "USER").toUpperCase();
+      const rawMessageType = String(payload?.messageType || "USER").toUpperCase();
       const messageType = MESSAGE_TYPES.includes(rawMessageType) ? rawMessageType : "USER";
       if (!channelId || !content) return;
 
@@ -151,7 +151,12 @@ wss.on("connection", (ws, request) => {
         const channelType = String(channel.type || "").toUpperCase();
 
         if (channelType === "NOTICE") {
-          if (String(channel.scope || "").toUpperCase() === "WORKSPACE") {
+          const scope = String(channel.scope || "").toUpperCase();
+          const hasWorkspaceId = Boolean(channel.workspace_id);
+          const hasProjectId = Boolean(channel.project_id);
+          const shouldUseWorkspaceRole = scope === "WORKSPACE" || (hasWorkspaceId && !hasProjectId);
+
+          if (shouldUseWorkspaceRole) {
             const wsRoleRes = await pool.query(
               "SELECT role_name FROM workspace_member WHERE workspace_id = $1 AND member_id = $2",
               [channel.workspace_id, userId]
@@ -160,7 +165,7 @@ wss.on("connection", (ws, request) => {
             if (!["OWNER", "ADMIN"].includes(roleName)) {
               return;
             }
-          } else {
+          } else if (hasProjectId) {
             const projectRoleRes = await pool.query(
               "SELECT role_name FROM project_member WHERE project_id = $1 AND member_id = $2",
               [channel.project_id, userId]
@@ -169,6 +174,8 @@ wss.on("connection", (ws, request) => {
             if (!["OWNER", "ADMIN"].includes(roleName)) {
               return;
             }
+          } else {
+            return;
           }
         } else {
           const memberCheck = await pool.query(
@@ -196,7 +203,6 @@ wss.on("connection", (ws, request) => {
             creator_name: creatorName,
             channel_id: channelId,
             type: message.type || messageType,
-            message_type: message.type || messageType,
           },
         });
       } catch (error) {

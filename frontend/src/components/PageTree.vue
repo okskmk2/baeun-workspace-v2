@@ -21,10 +21,7 @@
       @dragleave="onDragLeave"
       @drop.stop="onDropItem(node.id, $event)"
     >
-      <RouterLink
-        class="page-link"
-        :to="`/project/${projectId}/wiki/${node.id}`"
-      >
+      <RouterLink class="page-link" :to="`/project/${projectId}/wiki/${node.id}`">
         {{ node.title }}
       </RouterLink>
 
@@ -174,8 +171,6 @@ const emitReorder = (payload) => emit("reorder", payload);
 .page-link {
   display: block;
   text-decoration: none;
-  padding: 4px 8px;
-  /* border-radius: 8px; */
   color: var(--color-text);
 }
 

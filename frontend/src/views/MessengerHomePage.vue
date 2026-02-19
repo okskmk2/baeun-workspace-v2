@@ -80,7 +80,7 @@ const handleItemClick = (item) => {
 };
 
 const getMessageType = (message) => {
-  const explicitType = String(message?.type || message?.message_type || "").toUpperCase();
+  const explicitType = String(message?.type || "").toUpperCase();
   if (["SYSTEM", "USER", "AGENT"].includes(explicitType)) {
     return explicitType;
   }

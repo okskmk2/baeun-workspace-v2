@@ -15,16 +15,20 @@ const isNoticeWriterRole = (roleName) =>
 
 const resolveNoticeMemberRole = async (channel, userId) => {
   const scope = String(channel?.scope || "").toUpperCase();
-  if (!NOTICE_SCOPES.includes(scope)) {
-    return "";
-  }
+  const hasWorkspaceId = Boolean(channel?.workspace_id);
+  const hasProjectId = Boolean(channel?.project_id);
+  const shouldUseWorkspaceRole = scope === "WORKSPACE" || (hasWorkspaceId && !hasProjectId);
 
-  if (scope === "WORKSPACE") {
+  if (shouldUseWorkspaceRole) {
     const wsRoleRes = await pool.query(
       "SELECT role_name FROM workspace_member WHERE workspace_id = $1 AND member_id = $2",
       [channel.workspace_id, userId]
     );
     return String(wsRoleRes.rows[0]?.role_name || "").toUpperCase();
+  }
+
+  if (!NOTICE_SCOPES.includes(scope) && !hasProjectId) {
+    return "";
   }
 
   const projectRoleRes = await pool.query(
@@ -139,20 +143,7 @@ router.get("/recent", isAuth, async (req, res) => {
         m.name as creator_name,
         cr.id as channel_id,
         cr.name as channel_name,
-        COALESCE(
-          c.type,
-          CASE
-            WHEN c.content LIKE '%님이 %님을 초대했습니다.%' THEN 'SYSTEM'
-            ELSE 'USER'
-          END
-        ) as type,
-        COALESCE(
-          c.type,
-          CASE
-            WHEN c.content LIKE '%님이 %님을 초대했습니다.%' THEN 'SYSTEM'
-            ELSE 'USER'
-          END
-        ) as message_type
+        c.type as type
       FROM message c
       JOIN channel cr ON c.channel_id = cr.id
       JOIN channel_member cm ON cm.channel_id = cr.id AND cm.member_id = $2
@@ -631,6 +622,16 @@ router.patch("/:channelId", isAuth, async (req, res) => {
 router.get("/:channelId/messages", isAuth, async (req, res) => {
   const { channelId } = req.params;
   const userId = req.session.userId;
+  const parsedLimit = Number.parseInt(String(req.query.limit || ""), 10);
+  const limit = Number.isInteger(parsedLimit) && parsedLimit > 0 ? Math.min(parsedLimit, 100) : 30;
+
+  const rawBeforeId = req.query.before_id;
+  const hasBeforeId = rawBeforeId !== undefined && rawBeforeId !== null && String(rawBeforeId).trim() !== "";
+  const beforeMessageId = hasBeforeId ? Number.parseInt(String(rawBeforeId), 10) : null;
+
+  if (hasBeforeId && (!Number.isInteger(beforeMessageId) || beforeMessageId <= 0)) {
+    return res.status(400).json({ name: "BadRequest", message: "before_id must be a positive integer." });
+  }
 
   try {
     const channelRes = await pool.query(
@@ -659,30 +660,53 @@ router.get("/:channelId/messages", isAuth, async (req, res) => {
       }
     }
 
+    if (beforeMessageId) {
+      const anchorRes = await pool.query(
+        "SELECT id FROM message WHERE id = $1 AND channel_id = $2",
+        [beforeMessageId, channelId]
+      );
+      if (anchorRes.rows.length === 0) {
+        return res.status(400).json({
+          name: "BadRequest",
+          message: "before_id is invalid for this channel.",
+        });
+      }
+    }
+
     const msgsRes = await pool.query(
-      `SELECT 
-        c.id, c.content, c.created_at, c.created_by,
-        m.name as creator_name, m.img_url as creator_img,
-        COALESCE(
-          c.type,
-          CASE
-            WHEN c.content LIKE '%님이 %님을 초대했습니다.%' THEN 'SYSTEM'
-            ELSE 'USER'
-          END
-        ) as type,
-        COALESCE(
-          c.type,
-          CASE
-            WHEN c.content LIKE '%님이 %님을 초대했습니다.%' THEN 'SYSTEM'
-            ELSE 'USER'
-          END
-        ) as message_type
-      FROM message c
-      LEFT JOIN member m ON c.created_by = m.id
-      WHERE c.channel_id = $1
-      ORDER BY c.created_at ASC`,
-      [channelId]
+      `WITH anchor AS (
+         SELECT id, created_at
+         FROM message
+         WHERE id = $2 AND channel_id = $1
+       ),
+       paged AS (
+         SELECT 
+           c.id, c.content, c.created_at, c.created_by,
+           m.name as creator_name, m.img_url as creator_img,
+           c.type as type
+         FROM message c
+         LEFT JOIN member m ON c.created_by = m.id
+         WHERE c.channel_id = $1
+           AND (
+             $2::int IS NULL
+             OR (c.created_at, c.id) < (SELECT created_at, id FROM anchor)
+           )
+         ORDER BY c.created_at DESC, c.id DESC
+         LIMIT $3
+       )
+       SELECT *
+       FROM paged
+       ORDER BY created_at ASC, id ASC`,
+      [channelId, beforeMessageId, limit]
     );
+
+    const messageIds = msgsRes.rows
+      .map((row) => Number.parseInt(String(row.id), 10))
+      .filter((id) => Number.isInteger(id) && id > 0);
+    if (messageIds.length === 0) {
+      return res.json([]);
+    }
+
     const feedbackRes = await pool.query(
       `SELECT
         mf.message_id,
@@ -690,10 +714,9 @@ router.get("/:channelId/messages", isAuth, async (req, res) => {
         COUNT(*)::int as count
       FROM message_feedback mf
       JOIN feedback f ON mf.feedback_id = f.id
-      JOIN message msg ON msg.id = mf.message_id
-      WHERE msg.channel_id = $1
+      WHERE mf.message_id = ANY($1::int[])
       GROUP BY mf.message_id, f.name`,
-      [channelId]
+      [messageIds]
     );
     const mineRes = await pool.query(
       `SELECT
@@ -701,10 +724,9 @@ router.get("/:channelId/messages", isAuth, async (req, res) => {
         f.name as feedback_key
       FROM message_feedback mf
       JOIN feedback f ON mf.feedback_id = f.id
-      JOIN message msg ON msg.id = mf.message_id
-      WHERE msg.channel_id = $1
+      WHERE mf.message_id = ANY($1::int[])
         AND mf.created_by = $2`,
-      [channelId, userId]
+      [messageIds, userId]
     );
 
     const countsByMessage = buildFeedbackCountsMap(feedbackRes.rows);
@@ -1097,7 +1119,6 @@ router.post("/:channelId/invite", isAuth, async (req, res) => {
         creator_name: inviterName,
         channel_id: channelId,
         type: newMessage.type || "SYSTEM",
-        message_type: "SYSTEM",
       },
     };
     broadcastToRoom(channelId, broadcastPayload);

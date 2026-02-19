@@ -44,7 +44,10 @@
     </div>
   </hgroup>
 
-  <div ref="messagesContainer" class="messages">
+  <div ref="messagesContainer" class="messages" @scroll.passive="onMessagesScroll">
+    <p v-if="isLoadingMoreMessages" class="messages-loading-more" role="status" aria-live="polite">
+      {{ t("messenger.room.actions.loadingMore") }}
+    </p>
     <div v-if="isIssueChannel" class="message system issue-notice">
       <div class="message-content">{{ t("messenger.room.system.issueArchiveNotice") }}</div>
     </div>
@@ -167,6 +170,11 @@ const messagesContainer = ref(null);
 const draft = ref("");
 const isSending = ref(false);
 const isConnected = ref(false);
+const MESSAGE_PAGE_SIZE = 30;
+const LOAD_MORE_TOP_THRESHOLD = 24;
+const hasMoreMessages = ref(false);
+const isLoadingMoreMessages = ref(false);
+const isPrependingMessages = ref(false);
 const roomTitle = ref("");
 const channelDetail = ref(null);
 const currentUserId = computed(() => appStore.currentUser?.id);
@@ -238,10 +246,76 @@ const fetchchannelDetail = async () => {
   }
 };
 
-const fetchMessages = async () => {
+const fetchMessages = async ({ loadMore = false } = {}) => {
   if (!roomId.value) return;
-  const res = await api.get(`/channels/${roomId.value}/messages`);
-  messages.value = res.data || [];
+
+  if (loadMore && (isLoadingMoreMessages.value || messages.value.length === 0)) {
+    return;
+  }
+
+  const beforeMessageId = loadMore ? messages.value[0]?.id : null;
+  if (loadMore && !beforeMessageId) return;
+
+  const previousScrollHeight =
+    loadMore && messagesContainer.value ? messagesContainer.value.scrollHeight : 0;
+
+  if (loadMore) {
+    isLoadingMoreMessages.value = true;
+    isPrependingMessages.value = true;
+  }
+
+  try {
+    const res = await api.get(`/channels/${roomId.value}/messages`, {
+      params: {
+        limit: MESSAGE_PAGE_SIZE,
+        ...(beforeMessageId ? { before_id: beforeMessageId } : {}),
+      },
+    });
+    const fetchedMessages = Array.isArray(res.data) ? res.data : [];
+
+    if (loadMore) {
+      const existingIds = new Set(messages.value.map((message) => String(message?.id || "")));
+      const uniqueOlderMessages = fetchedMessages.filter(
+        (message) => !existingIds.has(String(message?.id || ""))
+      );
+
+      if (uniqueOlderMessages.length === 0) {
+        hasMoreMessages.value = false;
+        return;
+      }
+
+      messages.value = [...uniqueOlderMessages, ...messages.value];
+      hasMoreMessages.value = fetchedMessages.length === MESSAGE_PAGE_SIZE;
+    } else {
+      messages.value = fetchedMessages;
+      hasMoreMessages.value = fetchedMessages.length === MESSAGE_PAGE_SIZE;
+      await scrollMessagesToBottom();
+    }
+
+    if (loadMore && messagesContainer.value) {
+      await nextTick();
+      const container = messagesContainer.value;
+      const newScrollHeight = container.scrollHeight;
+      container.scrollTop += newScrollHeight - previousScrollHeight;
+    }
+  } finally {
+    if (loadMore) {
+      isLoadingMoreMessages.value = false;
+      isPrependingMessages.value = false;
+    }
+  }
+};
+
+const loadMoreMessages = async () => {
+  await fetchMessages({ loadMore: true });
+};
+
+const onMessagesScroll = () => {
+  const container = messagesContainer.value;
+  if (!container) return;
+  if (!hasMoreMessages.value || isLoadingMoreMessages.value || isPrependingMessages.value) return;
+  if (container.scrollTop > LOAD_MORE_TOP_THRESHOLD) return;
+  loadMoreMessages();
 };
 
 const scrollMessagesToBottom = async () => {
@@ -304,7 +378,6 @@ const sendMessage = async () => {
       channelId: roomId.value,
       content: draft.value,
       messageType: "USER",
-      message_type: "USER",
     })
   );
   draft.value = "";
@@ -335,7 +408,7 @@ const isAgentMessage = (message) => {
 };
 
 const getMessageType = (message) => {
-  const explicitType = String(message?.type || message?.message_type || "").toUpperCase();
+  const explicitType = String(message?.type || "").toUpperCase();
   if (["SYSTEM", "USER", "AGENT"].includes(explicitType)) {
     return explicitType;
   }
@@ -437,14 +510,14 @@ const channelSettingsPath = computed(() => {
 onMounted(async () => {
   await projectMemberStore.fetchProjectMembers(projectId.value);
   await fetchchannelDetail();
-  await fetchMessages();
+  await fetchMessages({ loadMore: false });
   connectSocket();
 });
 
 watch(roomId, async () => {
   await projectMemberStore.fetchProjectMembers(projectId.value);
   await fetchchannelDetail();
-  await fetchMessages();
+  await fetchMessages({ loadMore: false });
   if (socket && socket.readyState === 1) {
     socket.send(JSON.stringify({ type: "join", channelId: roomId.value }));
   }
@@ -453,6 +526,7 @@ watch(roomId, async () => {
 watch(
   () => messages.value.length,
   (nextLength, previousLength) => {
+    if (isPrependingMessages.value) return;
     if (nextLength > previousLength) {
       scrollMessagesToBottom();
     }
@@ -498,6 +572,14 @@ onBeforeUnmount(() => {
   background-color: var(--color-card-bg);
   height: calc(100vh - 268px);
   overflow-y: scroll;
+}
+
+.messages-loading-more {
+  margin: 0;
+  padding: 10px 12px 4px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--color-text-muted);
 }
 
 .message {
