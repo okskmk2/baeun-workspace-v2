@@ -27,6 +27,7 @@ import chatRouter from "./routes/chat.route.mjs";
 const app = express();
 const pgSession = connectPgSimple(session);
 const isProduction = process.env.NODE_ENV === "production";
+const MESSAGE_TYPES = ["SYSTEM", "USER", "AGENT"];
 
 // Cloud Run and other reverse-proxy platforms
 app.set("trust proxy", 1);
@@ -135,18 +136,51 @@ wss.on("connection", (ws, request) => {
 
     if (payload?.type === "message") {
       const { channelId, content } = payload;
+      const rawMessageType = String(payload?.messageType || payload?.message_type || "USER").toUpperCase();
+      const messageType = MESSAGE_TYPES.includes(rawMessageType) ? rawMessageType : "USER";
       if (!channelId || !content) return;
 
       try {
-        const memberCheck = await pool.query(
-          "SELECT id FROM channel_member WHERE channel_id = $1 AND member_id = $2",
-          [channelId, userId]
+        const channelRes = await pool.query(
+          "SELECT type, scope, project_id, workspace_id FROM channel WHERE id = $1",
+          [channelId]
         );
-        if (memberCheck.rows.length === 0) return;
+        if (channelRes.rows.length === 0) return;
+
+        const channel = channelRes.rows[0];
+        const channelType = String(channel.type || "").toUpperCase();
+
+        if (channelType === "NOTICE") {
+          if (String(channel.scope || "").toUpperCase() === "WORKSPACE") {
+            const wsRoleRes = await pool.query(
+              "SELECT role_name FROM workspace_member WHERE workspace_id = $1 AND member_id = $2",
+              [channel.workspace_id, userId]
+            );
+            const roleName = String(wsRoleRes.rows[0]?.role_name || "").toUpperCase();
+            if (!["OWNER", "ADMIN"].includes(roleName)) {
+              return;
+            }
+          } else {
+            const projectRoleRes = await pool.query(
+              "SELECT role_name FROM project_member WHERE project_id = $1 AND member_id = $2",
+              [channel.project_id, userId]
+            );
+            const roleName = String(projectRoleRes.rows[0]?.role_name || "").toUpperCase();
+            if (!["OWNER", "ADMIN"].includes(roleName)) {
+              return;
+            }
+          }
+        } else {
+          const memberCheck = await pool.query(
+            "SELECT id FROM channel_member WHERE channel_id = $1 AND member_id = $2",
+            [channelId, userId]
+          );
+          if (memberCheck.rows.length === 0) return;
+        }
 
         const insertRes = await pool.query(
-          "INSERT INTO message (channel_id, content, created_by) VALUES ($1, $2, $3) RETURNING id, content, created_at, created_by",
-          [channelId, content, userId]
+          "INSERT INTO message (channel_id, content, created_by, type) VALUES ($1, $2, $3, $4) RETURNING id, content, created_at, created_by, type",
+          [channelId, content, userId, messageType]
         );
         const message = insertRes.rows[0];
         const creatorRes = await pool.query("SELECT name FROM member WHERE id = $1", [userId]);
@@ -161,6 +195,8 @@ wss.on("connection", (ws, request) => {
             created_by: message.created_by,
             creator_name: creatorName,
             channel_id: channelId,
+            type: message.type || messageType,
+            message_type: message.type || messageType,
           },
         });
       } catch (error) {

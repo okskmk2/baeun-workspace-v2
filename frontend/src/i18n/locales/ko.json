@@ -490,6 +490,8 @@
         "fallbackTitle": "이슈"
       },
       "actions": {
+        "enterChat": "채팅방 입장",
+        "enteringChat": "입장 중...",
         "edit": "편집",
         "save": "저장",
         "saving": "저장 중...",
@@ -500,6 +502,7 @@
       "status": {
         "loading": "불러오는 중...",
         "errorLoad": "이슈를 불러오지 못했습니다.",
+        "errorEnterChat": "이슈 채팅방에 입장하지 못했습니다.",
         "errorUpdate": "이슈를 업데이트하지 못했습니다.",
         "errorDelete": "이슈를 삭제하지 못했습니다."
       },
@@ -697,6 +700,10 @@
     "layout": {
       "actions": {
         "createChannel": "채널 만들기",
+        "startDm": "DM 시작",
+        "creatingDm": "생성 중...",
+        "selectDmTarget": "DM 대상을 선택하세요",
+        "archiveInbox": "보관함",
         "cancel": "취소",
         "create": "생성",
         "creating": "생성 중..."
@@ -707,22 +714,64 @@
         "errorCreate": "채널 생성에 실패했습니다."
       },
       "empty": {
-        "channels": "채널이 없습니다."
+        "channels": "채널이 없습니다.",
+        "archived": "보관된 채널이 없습니다."
+      },
+      "sections": {
+        "rooms": "채널 구분",
+        "notice": "공지사항",
+        "general": "일반 채널",
+        "issue": "이슈 채널",
+        "dm": "DM",
+        "agent": "AI Agent",
+        "active": "채널",
+        "archived": "보관함"
       },
       "modal": {
         "title": "채널 만들기",
+        "typeLabel": "채널 종류",
+        "types": {
+          "general": "일반 채널",
+          "dm": "DM",
+          "agent": "AI Agent"
+        },
         "nameLabel": "채널 이름",
-        "namePlaceholder": "채널 이름"
+        "namePlaceholder": "채널 이름",
+        "dmTargetLabel": "DM 대상",
+        "dmTargetPlaceholder": "대상을 선택하세요",
+        "agentKeyLabel": "Agent Key",
+        "agentKeyPlaceholder": "예: support-bot"
       },
       "validation": {
         "noProject": "프로젝트가 선택되지 않았습니다.",
-        "nameRequired": "채널 이름을 입력하세요."
+        "nameRequired": "채널 이름을 입력하세요.",
+        "selectDmTarget": "DM 대상을 선택하세요.",
+        "agentKeyRequired": "Agent Key를 입력하세요."
       },
       "toast": {
         "created": "채널이 생성되었습니다."
       },
       "fallback": {
         "channelName": "이름 없는 채널"
+      }
+    },
+    "archive": {
+      "header": {
+        "title": "채널 보관함"
+      },
+      "status": {
+        "loading": "불러오는 중...",
+        "errorLoad": "보관된 채널 목록을 불러오지 못했습니다."
+      },
+      "fields": {
+        "lastMessageAt": "최근 대화 일자",
+        "totalMessageCount": "총 대화 수",
+        "linkedIssue": "연결된 이슈"
+      },
+      "empty": {
+        "channels": "보관된 채널이 없습니다.",
+        "noMessages": "대화 없음",
+        "noIssue": "연결된 이슈 없음"
       }
     },
     "home": {
@@ -754,18 +803,27 @@
       "status": {
         "connected": "연결됨",
         "disconnected": "연결 끊김",
-        "errorDelete": "채널 삭제에 실패했습니다."
+        "errorDelete": "채널 삭제에 실패했습니다.",
+        "errorLeave": "채널 나가기에 실패했습니다.",
+        "left": "채널에서 나갔습니다.",
+        "readOnlyNotice": "공지 채널은 관리자(OWNER/ADMIN)만 메시지를 작성할 수 있습니다."
       },
       "actions": {
+        "linkedIssue": "연결된 이슈",
+        "archive": "보관",
+        "reopen": "다시 열기",
+        "updatingStatus": "변경 중...",
         "invite": "초대하기",
         "settings": "채널 설정",
+        "leave": "방 나가기",
         "members": "참여자 확인",
         "cancel": "취소",
         "inviteSubmit": "초대",
         "inviting": "초대 중..."
       },
       "empty": {
-        "messages": "메시지가 없습니다."
+        "messages": "아직 대화가 없습니다.",
+        "description": "첫 메시지를 보내 대화를 시작해보세요."
       },
       "composer": {
         "placeholder": "메시지를 입력하세요",
@@ -789,6 +847,9 @@
           "membersLabel": "프로젝트 구성원",
           "selectPlaceholder": "선택하세요"
         },
+        "empty": {
+          "noInviteable": "초대 가능한 멤버가 없습니다."
+        },
         "validation": {
           "selectMember": "초대할 멤버를 선택해 주세요.",
           "noChannel": "채널이 선택되지 않았습니다."
@@ -808,17 +869,34 @@
         "empty": "참여자가 없습니다."
       },
       "confirm": {
+        "leave": "채널에서 나가시겠습니까?",
         "delete": "채널을 삭제할까요? 되돌릴 수 없습니다."
       },
       "fallback": {
         "unknownUser": "알 수 없음",
         "roomTitle": "채널"
+      },
+      "messageType": {
+        "system": "시스템",
+        "user": "사용자",
+        "agent": "에이전트"
+      },
+      "system": {
+        "issueArchiveNotice": "이 대화방은 이슈 대화로 아카이브되고 있습니다."
       }
     },
     "settings": {
       "header": {
         "title": "채널 설정",
         "subtitle": "채널 환경을 관리하세요."
+      },
+      "members": {
+        "title": "채널 참여자",
+        "status": {
+          "loading": "참여자 목록을 불러오는 중...",
+          "errorLoad": "채널 참여자 목록을 불러오지 못했습니다."
+        },
+        "empty": "참여자가 없습니다."
       },
       "form": {
         "nameLabel": "채널 이름",
@@ -828,6 +906,9 @@
         "back": "채널로 돌아가기",
         "save": "저장",
         "saving": "저장 중...",
+        "archive": "채널 보관하기",
+        "reopen": "채널 다시 열기",
+        "archiving": "처리 중...",
         "delete": "채널 삭제",
         "deleting": "삭제 중..."
       },
@@ -835,6 +916,7 @@
         "loading": "불러오는 중...",
         "errorLoad": "채널 정보를 불러오지 못했습니다.",
         "errorUpdate": "채널을 수정하지 못했습니다.",
+        "errorArchive": "채널 보관 상태를 변경하지 못했습니다.",
         "errorDelete": "채널을 삭제하지 못했습니다."
       },
       "validation": {
@@ -845,6 +927,8 @@
         "description": "채널을 삭제하면 복구할 수 없습니다."
       },
       "confirm": {
+        "archive": "이 채널을 보관할까요?",
+        "reopen": "이 채널을 다시 열까요?",
         "delete": "채널을 삭제할까요? 되돌릴 수 없습니다."
       }
     }

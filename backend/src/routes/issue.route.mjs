@@ -264,6 +264,112 @@ router.get("/:issueId", isAuth, async (req, res) => {
   }
 });
 
+router.post("/:issueId/channel", isAuth, async (req, res) => {
+  const { issueId } = req.params;
+  const userId = req.session.userId;
+
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+
+    const issueRes = await client.query(
+      `SELECT i.id, i.title, b.project_id
+       FROM issue i
+       JOIN board b ON b.id = i.board_id
+       WHERE i.id = $1`,
+      [issueId]
+    );
+
+    if (issueRes.rows.length === 0) {
+      await client.query("ROLLBACK");
+      return res.status(404).json({ name: "NotFound", message: "이슈를 찾을 수 없습니다." });
+    }
+
+    const issue = issueRes.rows[0];
+
+    const memberCheck = await client.query(
+      "SELECT id FROM project_member WHERE project_id = $1 AND member_id = $2",
+      [issue.project_id, userId]
+    );
+
+    if (memberCheck.rows.length === 0) {
+      await client.query("ROLLBACK");
+      return res.status(403).json({ name: "Forbidden", message: "접근 권한이 없습니다." });
+    }
+
+    let createdNow = false;
+    let channel;
+
+    const existingChannelRes = await client.query("SELECT * FROM channel WHERE issue_id = $1", [issueId]);
+    if (existingChannelRes.rows.length > 0) {
+      channel = existingChannelRes.rows[0];
+    } else {
+      try {
+        const createChannelRes = await client.query(
+          `INSERT INTO channel (name, project_id, issue_id, type, status)
+           VALUES ($1, $2, $3, 'ISSUE', 'ACTIVE')
+           RETURNING *`,
+          [issue.title || `Issue #${issueId}`, issue.project_id, issueId]
+        );
+        channel = createChannelRes.rows[0];
+        createdNow = true;
+      } catch (error) {
+        if (error?.code !== "23505") {
+          throw error;
+        }
+        const conflictChannelRes = await client.query("SELECT * FROM channel WHERE issue_id = $1", [issueId]);
+        channel = conflictChannelRes.rows[0];
+      }
+    }
+
+    if (createdNow) {
+      await client.query(
+        `INSERT INTO channel_member (channel_id, member_id, role_name)
+         VALUES ($1, $2, 'OWNER')
+         ON CONFLICT (channel_id, member_id) DO NOTHING`,
+        [channel.id, userId]
+      );
+
+      const issueMemberRes = await client.query(
+        "SELECT DISTINCT member_id FROM issue_member WHERE issue_id = $1",
+        [issueId]
+      );
+
+      for (const row of issueMemberRes.rows) {
+        if (String(row.member_id) === String(userId)) {
+          continue;
+        }
+        await client.query(
+          `INSERT INTO channel_member (channel_id, member_id, role_name)
+           VALUES ($1, $2, 'MEMBER')
+           ON CONFLICT (channel_id, member_id) DO NOTHING`,
+          [channel.id, row.member_id]
+        );
+      }
+    }
+
+    await client.query(
+      `INSERT INTO channel_member (channel_id, member_id, role_name)
+       VALUES ($1, $2, 'MEMBER')
+       ON CONFLICT (channel_id, member_id) DO NOTHING`,
+      [channel.id, userId]
+    );
+
+    await client.query("COMMIT");
+    res.json({
+      id: channel.id,
+      name: channel.name,
+      status: channel.status,
+      issue_id: channel.issue_id,
+    });
+  } catch (error) {
+    await client.query("ROLLBACK");
+    res.status(500).json({ name: "InternalServerError", message: error.message });
+  } finally {
+    client.release();
+  }
+});
+
 /**
  * @swagger
  * /api/issues/{issueId}/members:
@@ -359,12 +465,15 @@ router.get("/:issueId/members", isAuth, async (req, res) => {
 router.patch("/:issueId", isAuth, async (req, res) => {
   const { issueId } = req.params;
   let { title, content, status, board_id } = req.body; // Use 'let' for board_id as it might be reassigned
+  const client = await pool.connect();
 
   try {
+    await client.query("BEGIN");
+
     // If status is being set to BACKLOG, automatically move to the project's backlog board
     if (status === 'BACKLOG') {
       // 1. Get the current issue's project_id
-      const currentIssueInfo = await pool.query(
+      const currentIssueInfo = await client.query(
         `SELECT b.project_id
          FROM issue i
          JOIN board b ON i.board_id = b.id
@@ -376,7 +485,7 @@ router.patch("/:issueId", isAuth, async (req, res) => {
         const currentProjectId = currentIssueInfo.rows[0].project_id;
 
         // 2. Find the backlog board for this project
-        const backlogBoard = await pool.query(
+        const backlogBoard = await client.query(
           `SELECT id FROM board WHERE project_id = $1 AND type = 'BACKLOG'`,
           [currentProjectId]
         );
@@ -387,18 +496,44 @@ router.patch("/:issueId", isAuth, async (req, res) => {
       }
     }
 
-    const result = await pool.query(
+    const result = await client.query(
       `UPDATE issue
        SET title = COALESCE($1, title), content = COALESCE($2, content), status = COALESCE($3, status), board_id = COALESCE($4, board_id), updated_at = CURRENT_TIMESTAMP
        WHERE id = $5 RETURNING *`,
       [title, content, status, board_id, issueId]
     );
 
-    if (result.rows.length === 0)
+    if (result.rows.length === 0) {
+      await client.query("ROLLBACK");
       return res.status(404).json({ name: "NotFound", message: "이슈 없음" });
-    res.json(result.rows[0]);
+    }
+
+    const updatedIssue = result.rows[0];
+    if (String(updatedIssue.status || "").toUpperCase() === "DONE") {
+      await client.query(
+        `UPDATE channel
+         SET status = 'ARCHIVED'
+         WHERE issue_id = $1
+           AND type = 'ISSUE'`,
+        [issueId]
+      );
+    } else {
+      await client.query(
+        `UPDATE channel
+         SET status = 'ACTIVE'
+         WHERE issue_id = $1
+           AND type = 'ISSUE'`,
+        [issueId]
+      );
+    }
+
+    await client.query("COMMIT");
+    res.json(updatedIssue);
   } catch (error) {
+    await client.query("ROLLBACK");
     res.status(500).json({ name: "InternalServerError", message: error.message });
+  } finally {
+    client.release();
   }
 });
 

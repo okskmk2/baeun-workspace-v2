@@ -34,20 +34,57 @@
     </div>
   </form>
 
-  <section class="danger-zone">
+  <section class="members-section" v-if="!isLoading && !errorMessage">
+    <h2>{{ t("messenger.settings.members.title") }}</h2>
+    <p v-if="isMembersLoading" class="status">{{ t("messenger.settings.members.status.loading") }}</p>
+    <p v-else-if="membersError" class="status error">{{ membersError }}</p>
+    <p v-else-if="!channelMembers.length" class="status">
+      {{ t("messenger.settings.members.empty") }}
+    </p>
+    <ul v-else class="members-list">
+      <li v-for="member in channelMembers" :key="member.id">
+        <span class="member-name">{{ member.name }}</span>
+        <span class="member-meta">{{ member.email }}</span>
+        <span class="member-role">{{ getRoleLabel("channel_member", member.role_name) }}</span>
+      </li>
+    </ul>
+  </section>
+
+  <section v-if="showDangerZone" class="danger-zone">
     <div>
       <h2>{{ t("messenger.settings.danger.title") }}</h2>
       <p class="danger-desc">{{ t("messenger.settings.danger.description") }}</p>
     </div>
     <div class="danger-actions">
-      <button type="button" class="btn btn--danger" :disabled="isDeleting" @click="deleteChannel">
+      <button
+        type="button"
+        class="btn btn--secondary"
+        :disabled="isArchiving"
+        @click="toggleArchive"
+      >
+        {{
+          isArchiving
+            ? t("messenger.settings.actions.archiving")
+            : isArchived
+            ? t("messenger.settings.actions.reopen")
+            : t("messenger.settings.actions.archive")
+        }}
+      </button>
+      <p v-if="archiveError" class="status error">{{ archiveError }}</p>
+      <button
+        v-if="!isNoticeChannel"
+        type="button"
+        class="btn btn--danger"
+        :disabled="isDeleting"
+        @click="deleteChannel"
+      >
         {{
           isDeleting
             ? t("messenger.settings.actions.deleting")
             : t("messenger.settings.actions.delete")
         }}
       </button>
-      <p v-if="deleteError" class="status error">{{ deleteError }}</p>
+      <p v-if="!isNoticeChannel && deleteError" class="status error">{{ deleteError }}</p>
     </div>
   </section>
 </template>
@@ -59,11 +96,13 @@ import { useRoute, useRouter } from "vue-router";
 import api from "../lib/axios";
 import BackLinkButton from "../components/BackLinkButton.vue";
 import { useChatStore } from "../stores/chatStore";
+import { useRoleLabels } from "../lib/roleLabels";
 
 const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const chatStore = useChatStore();
+const { getRoleLabel } = useRoleLabels();
 
 
 const projectId = computed(() => route.params.projectId);
@@ -71,13 +110,44 @@ const roomId = computed(() => route.params.roomId);
 
 const isLoading = ref(false);
 const isSaving = ref(false);
+const isArchiving = ref(false);
 const isDeleting = ref(false);
 const errorMessage = ref("");
 const formError = ref("");
+const archiveError = ref("");
 const deleteError = ref("");
+const channelStatus = ref("ACTIVE");
+const channelType = ref("GENERAL");
+const channelViewerRole = ref("");
+const channelMembers = ref([]);
+const isMembersLoading = ref(false);
+const membersError = ref("");
 const form = ref({
   name: "",
 });
+
+const isArchived = computed(() => String(channelStatus.value || "") === "ARCHIVED");
+const currentUserRole = computed(() => String(channelViewerRole.value || "").toUpperCase());
+const isDmChannel = computed(() => String(channelType.value || "").toUpperCase() === "DM");
+const isNoticeChannel = computed(() => String(channelType.value || "").toUpperCase() === "NOTICE");
+const showDangerZone = computed(() => isDmChannel.value || currentUserRole.value === "OWNER");
+
+const fetchChannelMembers = async () => {
+  if (!roomId.value) return;
+
+  isMembersLoading.value = true;
+  membersError.value = "";
+
+  try {
+    const res = await api.get(`/channels/${roomId.value}/members`);
+    channelMembers.value = res.data || [];
+  } catch (error) {
+    channelMembers.value = [];
+    membersError.value = t("messenger.settings.members.status.errorLoad");
+  } finally {
+    isMembersLoading.value = false;
+  }
+};
 
 const fetchChannel = async () => {
   if (!roomId.value) return;
@@ -88,10 +158,48 @@ const fetchChannel = async () => {
     const res = await api.get(`/channels/${roomId.value}`);
     const data = res.data || {};
     form.value.name = data.name || "";
+    channelStatus.value = data.status || "ACTIVE";
+    channelType.value = data.type || "GENERAL";
+    channelViewerRole.value = data.viewer_role_name || "";
   } catch (error) {
     errorMessage.value = t("messenger.settings.status.errorLoad");
   } finally {
     isLoading.value = false;
+  }
+};
+
+const toggleArchive = async () => {
+  if (!roomId.value) return;
+
+  const confirmKey = isArchived.value
+    ? "messenger.settings.confirm.reopen"
+    : "messenger.settings.confirm.archive";
+  const confirmed = window.confirm(t(confirmKey));
+  if (!confirmed) return;
+
+  isArchiving.value = true;
+  archiveError.value = "";
+
+  try {
+    const nextStatus = isArchived.value ? "ACTIVE" : "ARCHIVED";
+    const res = await api.patch(`/channels/${roomId.value}/status`, {
+      status: nextStatus,
+    });
+    channelStatus.value = res.data?.status || nextStatus;
+
+    await chatStore.fetchRooms(projectId.value);
+
+    if (nextStatus === "ARCHIVED") {
+      router.push(`/project/${projectId.value}/messenger`);
+      return;
+    }
+
+    router.push(`/project/${projectId.value}/messenger/${roomId.value}`);
+  } catch (error) {
+    archiveError.value =
+      error?.response?.data?.message || t("messenger.settings.status.errorArchive");
+  } finally {
+    isArchiving.value = false;
   }
 };
 
@@ -142,11 +250,14 @@ const deleteChannel = async () => {
   }
 };
 
-onMounted(fetchChannel);
+onMounted(async () => {
+  await Promise.all([fetchChannel(), fetchChannelMembers()]);
+});
 
 watch(roomId, (nextId, prevId) => {
   if (nextId && nextId !== prevId) {
     fetchChannel();
+    fetchChannelMembers();
   }
 });
 </script>
@@ -181,6 +292,50 @@ watch(roomId, (nextId, prevId) => {
 
 .status.error {
   color: var(--color-danger);
+}
+
+.members-section {
+  margin-top: 24px;
+}
+
+.members-section h2 {
+  font-size: 16px;
+  margin: 0 0 8px;
+}
+
+.members-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.members-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background-color: var(--color-card-bg);
+}
+
+.member-name {
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.member-meta {
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.member-role {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text);
 }
 
 .danger-zone {

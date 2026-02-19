@@ -216,35 +216,35 @@ button.btn--icon {
   border-radius: 8px;
 }
 
-.LnbLayout > aside > nav {
+.LnbLayout > aside nav {
   gap: 8px;
   display: flex;
   flex-direction: column;
 }
 
-.LnbLayout > aside > nav a {
+.LnbLayout > aside nav a {
   padding: 6px 8px;
 }
 
-.LnbLayout > aside > nav hr {
+.LnbLayout > aside nav hr {
   width: 100%;
   background-color: var(--color-border);
   height: 1px;
   border: 0;
 }
 
-.LnbLayout > aside > nav .lnb-item {
+.LnbLayout > aside nav .lnb-item {
   padding: 6px 8px;
   display: inline-flex;
   align-items: center;
   gap: 6px;
 }
 
-.LnbLayout > aside > button + nav {
+.LnbLayout > aside button + nav {
   margin-top: 1rem;
 }
 
-.LnbLayout > aside > button {
+.LnbLayout > aside button {
   width: 100%;
 }
 

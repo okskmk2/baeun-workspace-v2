@@ -490,6 +490,8 @@
         "fallbackTitle": "Issue"
       },
       "actions": {
+        "enterChat": "Enter chat room",
+        "enteringChat": "Entering...",
         "edit": "Edit",
         "save": "Save",
         "saving": "Saving...",
@@ -500,6 +502,7 @@
       "status": {
         "loading": "Loading...",
         "errorLoad": "Failed to load issue.",
+        "errorEnterChat": "Failed to enter issue chat room.",
         "errorUpdate": "Failed to update issue.",
         "errorDelete": "Failed to delete issue."
       },
@@ -697,6 +700,10 @@
     "layout": {
       "actions": {
         "createChannel": "Create Channel",
+        "startDm": "Start DM",
+        "creatingDm": "Creating...",
+        "selectDmTarget": "Select DM target",
+        "archiveInbox": "Archive",
         "cancel": "Cancel",
         "create": "Create",
         "creating": "Creating..."
@@ -707,22 +714,64 @@
         "errorCreate": "Failed to create channel."
       },
       "empty": {
-        "channels": "No channels yet."
+        "channels": "No channels yet.",
+        "archived": "No archived channels."
+      },
+      "sections": {
+        "rooms": "Channel sections",
+        "notice": "Notices",
+        "general": "General Channels",
+        "issue": "Issue Channels",
+        "dm": "DM",
+        "agent": "AI Agent",
+        "active": "Channels",
+        "archived": "Archive"
       },
       "modal": {
         "title": "Create Channel",
+        "typeLabel": "Channel Type",
+        "types": {
+          "general": "General Channel",
+          "dm": "DM",
+          "agent": "AI Agent"
+        },
         "nameLabel": "Channel Name",
-        "namePlaceholder": "Channel name"
+        "namePlaceholder": "Channel name",
+        "dmTargetLabel": "DM Target",
+        "dmTargetPlaceholder": "Select a member",
+        "agentKeyLabel": "Agent Key",
+        "agentKeyPlaceholder": "e.g. support-bot"
       },
       "validation": {
         "noProject": "No project selected.",
-        "nameRequired": "Please enter a channel name."
+        "nameRequired": "Please enter a channel name.",
+        "selectDmTarget": "Please select a DM target.",
+        "agentKeyRequired": "Please enter an agent key."
       },
       "toast": {
         "created": "Channel created."
       },
       "fallback": {
         "channelName": "Untitled channel"
+      }
+    },
+    "archive": {
+      "header": {
+        "title": "Channel Archive"
+      },
+      "status": {
+        "loading": "Loading...",
+        "errorLoad": "Failed to load archived channels."
+      },
+      "fields": {
+        "lastMessageAt": "Last message at",
+        "totalMessageCount": "Total messages",
+        "linkedIssue": "Linked issue"
+      },
+      "empty": {
+        "channels": "No archived channels.",
+        "noMessages": "No messages",
+        "noIssue": "No linked issue"
       }
     },
     "home": {
@@ -754,18 +803,27 @@
       "status": {
         "connected": "Connected",
         "disconnected": "Disconnected",
-        "errorDelete": "Failed to delete channel."
+        "errorDelete": "Failed to delete channel.",
+        "errorLeave": "Failed to leave channel.",
+        "left": "You left the channel.",
+        "readOnlyNotice": "Only OWNER/ADMIN can post messages in notice channels."
       },
       "actions": {
+        "linkedIssue": "Linked Issue",
+        "archive": "Archive",
+        "reopen": "Reopen",
+        "updatingStatus": "Updating...",
         "invite": "Invite",
         "settings": "Channel settings",
+        "leave": "Leave channel",
         "members": "Participants",
         "cancel": "Cancel",
         "inviteSubmit": "Invite",
         "inviting": "Inviting..."
       },
       "empty": {
-        "messages": "No messages."
+        "messages": "No conversation yet.",
+        "description": "Send the first message to start chatting."
       },
       "composer": {
         "placeholder": "Type a message",
@@ -789,6 +847,9 @@
           "membersLabel": "Project Members",
           "selectPlaceholder": "Select a member"
         },
+        "empty": {
+          "noInviteable": "There are no members available to invite."
+        },
         "validation": {
           "selectMember": "Please select a member to invite.",
           "noChannel": "No channel selected."
@@ -808,17 +869,34 @@
         "empty": "No participants."
       },
       "confirm": {
+        "leave": "Leave this channel?",
         "delete": "Delete this channel? This cannot be undone."
       },
       "fallback": {
         "unknownUser": "Unknown",
         "roomTitle": "Channel"
+      },
+      "messageType": {
+        "system": "System",
+        "user": "User",
+        "agent": "Agent"
+      },
+      "system": {
+        "issueArchiveNotice": "This chat room is being archived as issue conversation history."
       }
     },
     "settings": {
       "header": {
         "title": "Channel Settings",
         "subtitle": "Manage channel preferences."
+      },
+      "members": {
+        "title": "Channel Members",
+        "status": {
+          "loading": "Loading channel members...",
+          "errorLoad": "Failed to load channel members."
+        },
+        "empty": "No members."
       },
       "form": {
         "nameLabel": "Channel Name",
@@ -828,6 +906,9 @@
         "back": "Back to channel",
         "save": "Save",
         "saving": "Saving...",
+        "archive": "Archive Channel",
+        "reopen": "Reopen Channel",
+        "archiving": "Processing...",
         "delete": "Delete Channel",
         "deleting": "Deleting..."
       },
@@ -835,6 +916,7 @@
         "loading": "Loading...",
         "errorLoad": "Failed to load channel details.",
         "errorUpdate": "Failed to update channel.",
+        "errorArchive": "Failed to update channel archive status.",
         "errorDelete": "Failed to delete channel."
       },
       "validation": {
@@ -845,6 +927,8 @@
         "description": "Deleting a channel is permanent."
       },
       "confirm": {
+        "archive": "Archive this channel?",
+        "reopen": "Reopen this channel?",
         "delete": "Delete this channel? This cannot be undone."
       }
     }

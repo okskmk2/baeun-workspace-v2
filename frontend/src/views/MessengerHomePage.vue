@@ -11,10 +11,16 @@
     </template>
     <template #item="{ item }">
       <div class="item-title">
+        <span v-if="isSystemMessage(item)" class="message-type system">
+          {{ t("messenger.room.messageType.system") }}
+        </span>
+        <span v-else-if="isAgentMessage(item)" class="message-type agent">
+          {{ t("messenger.room.messageType.agent") }}
+        </span>
         {{ item.channel_name || "채널" }} · {{ item.content || "(내용 없음)" }}
       </div>
       <div class="item-meta">
-        {{ item.creator_name || "알 수 없음" }} · {{ formatTime(item.created_at) }}
+        {{ getMessageAuthor(item) }} · {{ formatTime(item.created_at) }}
       </div>
     </template>
   </FeedList>
@@ -73,6 +79,28 @@ const handleItemClick = (item) => {
   router.push(`/project/${projectId.value}/messenger/${item.channel_id}`);
 };
 
+const getMessageType = (message) => {
+  const explicitType = String(message?.type || message?.message_type || "").toUpperCase();
+  if (["SYSTEM", "USER", "AGENT"].includes(explicitType)) {
+    return explicitType;
+  }
+  const content = message?.content || "";
+  if (/님이 .*님을 초대했습니다\.$/.test(content)) {
+    return "SYSTEM";
+  }
+  return "USER";
+};
+
+const isSystemMessage = (message) => getMessageType(message) === "SYSTEM";
+const isAgentMessage = (message) => getMessageType(message) === "AGENT";
+
+const getMessageAuthor = (message) => {
+  if (isAgentMessage(message)) {
+    return message?.creator_name || t("messenger.room.messageType.agent");
+  }
+  return message?.creator_name || t("messenger.room.fallback.unknownUser");
+};
+
 onMounted(fetchRecentMessages);
 watch(projectId, fetchRecentMessages);
 </script>
@@ -99,6 +127,20 @@ watch(projectId, fetchRecentMessages);
 .item-title {
   font-size: 14px;
   color: var(--color-text);
+}
+
+.message-type {
+  margin-right: 6px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.message-type.system {
+  color: var(--color-text-muted);
+}
+
+.message-type.agent {
+  color: var(--color-accent);
 }
 
 .item-meta {

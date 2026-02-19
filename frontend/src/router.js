@@ -26,6 +26,7 @@ import GanttChartPage from "./views/GanttChartPage.vue";
 import WikiHomePage from "./views/WikiHomePage.vue";
 import WikiPage from "./views/WikiPage.vue";
 import MessengerHomePage from "./views/MessengerHomePage.vue";
+import MessengerArchivePage from "./views/MessengerArchivePage.vue";
 import MessengerRoomPage from "./views/MessengerRoomPage.vue";
 import MessengerSettingsPage from "./views/MessengerSettingsPage.vue";
 import ProjectSettingsLayout from "./views/ProjectSettingsLayout.vue";
@@ -154,6 +155,10 @@ const routes = [
           {
             path: "",
             component: MessengerHomePage,
+          },
+          {
+            path: "archive",
+            component: MessengerArchivePage,
           },
           {
             path: ":roomId/settings",

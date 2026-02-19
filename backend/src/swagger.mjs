@@ -152,7 +152,12 @@ const swaggerDefinition = {
           creator_name: { type: "string" },
           creator_img: { type: "string", nullable: true },
           channel_id: { type: "integer" },
-          message_type: { type: "string", nullable: true },
+          type: { type: "string", enum: ["SYSTEM", "USER", "AGENT"] },
+          message_type: {
+            type: "string",
+            enum: ["SYSTEM", "USER", "AGENT"],
+            nullable: true,
+          },
         },
       },
       ChannelMember: {
@@ -198,6 +203,12 @@ const swaggerDefinition = {
           creator_name: { type: "string" },
           channel_id: { type: "integer" },
           channel_name: { type: "string" },
+          type: { type: "string", enum: ["SYSTEM", "USER", "AGENT"] },
+          message_type: {
+            type: "string",
+            enum: ["SYSTEM", "USER", "AGENT"],
+            nullable: true,
+          },
         },
       },
       CreatedId: {

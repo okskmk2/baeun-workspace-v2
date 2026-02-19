@@ -18,6 +18,18 @@
       </select>
     </div>
     <div class="actions">
+      <button
+        v-if="!isEditing"
+        class="btn btn--sm"
+        @click="enterIssueChatRoom"
+        :disabled="isEnteringChat"
+      >
+        {{
+          isEnteringChat
+            ? t("issue.detail.actions.enteringChat")
+            : t("issue.detail.actions.enterChat")
+        }}
+      </button>
       <button v-if="!isEditing" class="btn btn--sm btn--secondary" @click="startEditing">
         {{ t("issue.detail.actions.edit") }}
       </button>
@@ -122,6 +134,7 @@ const errorMessage = ref("");
 const relatedError = ref("");
 const isUpdatingRelated = ref(false);
 const updatingMemberId = ref(null);
+const isEnteringChat = ref(false);
 const editForm = ref({
   title: "",
   content: "",
@@ -303,6 +316,28 @@ const deleteIssue = async () => {
     addToast({ message, type: "error" });
   } finally {
     isDeleting.value = false;
+  }
+};
+
+const enterIssueChatRoom = async () => {
+  if (!issueId.value || !projectId.value) {
+    return;
+  }
+
+  isEnteringChat.value = true;
+
+  try {
+    const res = await api.post(`/issues/${issueId.value}/channel`);
+    const channelId = res.data?.id;
+    if (!channelId) {
+      throw new Error("channel id missing");
+    }
+    router.push(`/project/${projectId.value}/messenger/${channelId}`);
+  } catch (error) {
+    const message = error?.response?.data?.message || t("issue.detail.status.errorEnterChat");
+    addToast({ message, type: "error" });
+  } finally {
+    isEnteringChat.value = false;
   }
 };
 

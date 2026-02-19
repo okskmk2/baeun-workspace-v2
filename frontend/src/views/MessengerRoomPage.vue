@@ -19,11 +19,19 @@
       ></span>
     </div>
     <div class="actions">
+      <router-link v-if="linkedIssuePath" class="btn btn--sm btn--secondary" :to="linkedIssuePath">
+        {{ t("messenger.room.actions.linkedIssue") }}
+      </router-link>
       <button type="button" class="btn btn--sm" @click="openInviteModal">
         {{ t("messenger.room.actions.invite") }}
       </button>
-      <button type="button" class="btn btn--sm btn--secondary" @click="openMembersModal">
-        {{ t("messenger.room.actions.members") }}
+      <button
+        v-if="!isDmChannel && !isNoticeChannel"
+        type="button"
+        class="btn btn--sm btn--secondary"
+        @click="leaveChannel"
+      >
+        {{ t("messenger.room.actions.leave") }}
       </button>
       <router-link
         class="btn btn--icon"
@@ -37,11 +45,18 @@
   </hgroup>
 
   <div ref="messagesContainer" class="messages">
+    <div v-if="isIssueChannel" class="message system issue-notice">
+      <div class="message-content">{{ t("messenger.room.system.issueArchiveNotice") }}</div>
+    </div>
+    <div v-if="!messages.length" class="empty-state" role="status" aria-live="polite">
+      <p class="empty-title">{{ t("messenger.room.empty.messages") }}</p>
+      <p class="empty-description">{{ t("messenger.room.empty.description") }}</p>
+    </div>
     <div
       v-for="message in messages"
       :key="message.id"
       class="message"
-      :class="{ system: isSystemMessage(message) }"
+      :class="{ system: isSystemMessage(message), agent: isAgentMessage(message) }"
     >
       <template v-if="isSystemMessage(message)">
         <div class="message-content">{{ message.content }}</div>
@@ -49,14 +64,17 @@
       <template v-else>
         <Avatar
           class="message-avatar"
-          :text="getInitials(message.creator_name)"
-          :label="message.creator_name || t('messenger.room.fallback.unknownUser')"
+          :text="getInitials(getMessageAuthor(message))"
+          :label="getMessageAuthor(message)"
           :size="36"
         />
         <div class="message-body">
           <div class="message-header">
             <span class="message-author">
-              {{ message.creator_name || t("messenger.room.fallback.unknownUser") }}
+              {{ getMessageAuthor(message) }}
+            </span>
+            <span v-if="isAgentMessage(message)" class="message-type-badge">
+              {{ t("messenger.room.messageType.agent") }}
             </span>
             <span class="message-time">{{ formatTime(message.created_at) }}</span>
           </div>
@@ -87,7 +105,6 @@
         </div>
       </template>
     </div>
-    <p v-if="!messages.length" class="empty">{{ t("messenger.room.empty.messages") }}</p>
   </div>
 
   <form class="composer" @submit.prevent="sendMessage">
@@ -95,12 +112,15 @@
       v-model.trim="draft"
       type="text"
       :placeholder="t('messenger.room.composer.placeholder')"
-      :disabled="isSending"
+      :disabled="isSending || !canPostMessage"
     />
-    <button type="submit" class="btn" :disabled="isSending || !draft">
+    <button type="submit" class="btn" :disabled="isSending || !draft || !canPostMessage">
       {{ t("messenger.room.composer.send") }}
     </button>
   </form>
+  <p v-if="!canPostMessage" class="composer-notice">
+    {{ t("messenger.room.status.readOnlyNotice") }}
+  </p>
 
   <AddChannelMemberModal
     :open="isInviteOpen"
@@ -108,12 +128,6 @@
     :project-members="projectMembers"
     @close="closeInviteModal"
     @invited="onMemberInvited"
-  />
-
-  <ChannelMembersListModal
-    :open="isMembersOpen"
-    :channel-id="roomId"
-    @close="closeMembersModal"
   />
 
   <MessageFeedbackModal
@@ -129,20 +143,21 @@
 <script setup>
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import api from "../lib/axios";
 import Avatar from "../components/Avatar.vue";
 import MaterialSymbol from "../components/MaterialSymbol.vue";
 import AddChannelMemberModal from "../components/modals/AddChannelMemberModal.vue";
-import ChannelMembersListModal from "../components/modals/ChannelMembersListModal.vue";
 import MessageFeedbackModal from "../components/modals/MessageFeedbackModal.vue";
+import { addToast } from "../lib/toast";
 import { useProjectMemberStore } from "../stores/projectMemberStore";
-import { useRoleLabels } from "../lib/roleLabels";
+import { useAppStore } from "../stores/appStore";
 
 const { t, locale } = useI18n();
-const { getRoleLabel } = useRoleLabels();
 const route = useRoute();
+const router = useRouter();
 const projectMemberStore = useProjectMemberStore();
+const appStore = useAppStore();
 const roomId = computed(() => route.params.roomId);
 const projectId = computed(() => route.params.projectId);
 
@@ -153,11 +168,49 @@ const draft = ref("");
 const isSending = ref(false);
 const isConnected = ref(false);
 const roomTitle = ref("");
-const displayRoomTitle = computed(() => roomTitle.value || t("messenger.room.fallback.roomTitle"));
+const channelDetail = ref(null);
+const currentUserId = computed(() => appStore.currentUser?.id);
+const memberNameById = computed(() => {
+  const map = {};
+  (projectMembers.value || []).forEach((member) => {
+    map[String(member.id)] = member.name;
+  });
+  return map;
+});
+const isDmChannel = computed(
+  () => String(channelDetail.value?.type || "").toUpperCase() === "DM"
+);
+const isNoticeChannel = computed(
+  () => String(channelDetail.value?.type || "").toUpperCase() === "NOTICE"
+);
+const canPostMessage = computed(() => {
+  if (!isNoticeChannel.value) return true;
+  return Boolean(channelDetail.value?.can_post_message);
+});
+const dmPeerName = computed(() => {
+  if (!isDmChannel.value) return "";
+  const pairKey = String(channelDetail.value?.dm_pair_key || "");
+  if (!pairKey.includes(":")) return "";
+  const [firstMemberId, secondMemberId] = pairKey.split(":");
+  const currentId = String(currentUserId.value || "");
+  const peerId = currentId === String(firstMemberId) ? String(secondMemberId) : String(firstMemberId);
+  return memberNameById.value[String(peerId)] || "";
+});
+const displayRoomTitle = computed(() => {
+  if (isDmChannel.value && dmPeerName.value) {
+    return dmPeerName.value;
+  }
+  return roomTitle.value || t("messenger.room.fallback.roomTitle");
+});
+const isIssueChannel = computed(() => Boolean(channelDetail.value?.issue_id));
+const linkedIssuePath = computed(() => {
+  if (!projectId.value) return "";
+  if (!channelDetail.value?.issue_id || !channelDetail.value?.board_id) return "";
+  return `/project/${projectId.value}/board/${channelDetail.value.board_id}/issue/${channelDetail.value.issue_id}`;
+});
 let socket = null;
 const isInviteOpen = ref(false);
 const projectMembers = computed(() => projectMemberStore.getProjectMembers(projectId.value));
-const isMembersOpen = ref(false);
 const isFeedbackOpen = ref(false);
 const activeFeedbackMessageId = ref(null);
 const feedbackOptions = [
@@ -177,8 +230,10 @@ const fetchchannelDetail = async () => {
 
   try {
     const res = await api.get(`/channels/${roomId.value}`);
+    channelDetail.value = res.data || null;
     roomTitle.value = res.data?.name || "";
   } catch (error) {
+    channelDetail.value = null;
     roomTitle.value = "";
   }
 };
@@ -248,6 +303,8 @@ const sendMessage = async () => {
       type: "message",
       channelId: roomId.value,
       content: draft.value,
+      messageType: "USER",
+      message_type: "USER",
     })
   );
   draft.value = "";
@@ -270,9 +327,30 @@ const formatTime = (value) => {
 };
 
 const isSystemMessage = (message) => {
-  if (message?.message_type === "SYSTEM") return true;
+  return getMessageType(message) === "SYSTEM";
+};
+
+const isAgentMessage = (message) => {
+  return getMessageType(message) === "AGENT";
+};
+
+const getMessageType = (message) => {
+  const explicitType = String(message?.type || message?.message_type || "").toUpperCase();
+  if (["SYSTEM", "USER", "AGENT"].includes(explicitType)) {
+    return explicitType;
+  }
   const content = message?.content || "";
-  return /님이 .*님을 초대했습니다\.$/.test(content);
+  if (/님이 .*님을 초대했습니다\.$/.test(content)) {
+    return "SYSTEM";
+  }
+  return "USER";
+};
+
+const getMessageAuthor = (message) => {
+  if (isAgentMessage(message)) {
+    return message?.creator_name || t("messenger.room.messageType.agent");
+  }
+  return message?.creator_name || t("messenger.room.fallback.unknownUser");
 };
 
 const getFeedbackCount = (message, key) => {
@@ -336,12 +414,19 @@ const onMemberInvited = () => {
   // Member invited successfully
 };
 
-const openMembersModal = () => {
-  isMembersOpen.value = true;
-};
+const leaveChannel = async () => {
+  if (!roomId.value) return;
+  const confirmed = window.confirm(t("messenger.room.confirm.leave"));
+  if (!confirmed) return;
 
-const closeMembersModal = () => {
-  isMembersOpen.value = false;
+  try {
+    await api.post(`/channels/${roomId.value}/leave`);
+    addToast({ message: t("messenger.room.status.left"), type: "success" });
+    router.push(`/project/${projectId.value}/messenger`);
+  } catch (error) {
+    const message = error?.response?.data?.message || t("messenger.room.status.errorLeave");
+    addToast({ message, type: "error" });
+  }
 };
 
 const channelSettingsPath = computed(() => {
@@ -350,12 +435,14 @@ const channelSettingsPath = computed(() => {
 });
 
 onMounted(async () => {
+  await projectMemberStore.fetchProjectMembers(projectId.value);
   await fetchchannelDetail();
   await fetchMessages();
   connectSocket();
 });
 
 watch(roomId, async () => {
+  await projectMemberStore.fetchProjectMembers(projectId.value);
   await fetchchannelDetail();
   await fetchMessages();
   if (socket && socket.readyState === 1) {
@@ -431,6 +518,16 @@ onBeforeUnmount(() => {
   background-color: var(--color-surface-alt);
 }
 
+.message.agent {
+  background-color: var(--color-surface-alt);
+}
+
+.issue-notice {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
 .message-avatar {
   flex-shrink: 0;
 }
@@ -458,6 +555,12 @@ onBeforeUnmount(() => {
 .message-time {
   font-size: 12px;
   color: var(--color-text-muted);
+}
+
+.message-type-badge {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-accent);
 }
 
 .message-content {
@@ -550,8 +653,28 @@ onBeforeUnmount(() => {
   border-color: var(--color-text-muted);
 }
 
-.empty {
+.empty-state {
+  flex: 1;
+  min-height: 220px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 6px;
+  padding: 16px;
+}
+
+.empty-title {
   margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.empty-description {
+  margin: 0;
+  font-size: 13px;
   color: var(--color-text-muted);
 }
 
@@ -569,6 +692,12 @@ onBeforeUnmount(() => {
   font-size: 14px;
   background-color: var(--color-input-bg);
   color: var(--color-text);
+}
+
+.composer-notice {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: var(--color-text-muted);
 }
 
 .member-list {
