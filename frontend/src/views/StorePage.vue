@@ -1,5 +1,5 @@
 <template>
-  <main class="store">
+  <main class="store container">
     <section class="store-hero">
       <div>
         <p class="store-hero__eyebrow">{{ t("store.hero.eyebrow") }}</p>

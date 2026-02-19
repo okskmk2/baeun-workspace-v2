@@ -68,7 +68,7 @@
     "project": {
       "projectNameFallback": "프로젝트",
       "nav": {
-        "board": "보드",
+        "board": "이슈 보드",
         "wiki": "위키",
         "messenger": "메신저"
       },

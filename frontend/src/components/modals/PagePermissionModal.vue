@@ -99,9 +99,6 @@ const handleSubmit = async () => {
       {
         member_id: form.value.memberId,
         role_name: form.value.roleName,
-      },
-      {
-        params: { project_id: props.projectId },
       }
     );
     emit("saved");

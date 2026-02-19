@@ -127,9 +127,6 @@ const handleReorder = async ({ parentId, orderedIds }) => {
       {
         parent_id: parentId ?? null,
         ordered_ids: orderedIds,
-      },
-      {
-        params: { project_id: projectId.value },
       }
     );
   } catch (error) {

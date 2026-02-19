@@ -1,5 +1,5 @@
 <template>
-  <main class="home">
+  <main class="home container">
     <section class="hero">
       <div class="hero__copy">
         <p class="hero__eyebrow">{{ t("home.hero.eyebrow") }}</p>

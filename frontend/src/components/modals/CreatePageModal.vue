@@ -66,11 +66,14 @@ const handleSubmit = async () => {
   formError.value = "";
 
   try {
-    const res = await api.post("/pages", {
-      title: form.value.title,
-      project_id: props.projectId,
-      parent_page_id: props.parentPageId,
-    });
+    const res = await api.post(
+      "/pages",
+      {
+        project_id: props.projectId,
+        title: form.value.title,
+        parent_id: props.parentPageId,
+      }
+    );
     const newPage = res.data;
     emit("created", newPage);
     handleClose();

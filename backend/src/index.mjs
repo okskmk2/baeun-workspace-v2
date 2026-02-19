@@ -1,7 +1,6 @@
 import express from "express";
 import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
-import cors from "cors"; // CORS module.
 import swaggerUi from "swagger-ui-express";
 import { swaggerSpec } from "./swagger.mjs";
 import pool from "./db.mjs";
@@ -13,7 +12,6 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { SESSION_TTL_MS, SESSION_TTL_SECONDS } from "./config/session.mjs";
 
-// __dirname ?��?구현 (ESM?�서??직접 만들?�야 ??
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -32,17 +30,6 @@ const isProduction = process.env.NODE_ENV === "production";
 
 // Cloud Run and other reverse-proxy platforms
 app.set("trust proxy", 1);
-
-// 1. CORS setup.
-// app.use(
-//   cors({
-//     // Client origin (frontend URL).
-//     origin: "http://localhost:8080",
-//     // Allow cookies to be sent.
-//     credentials: true,
-//     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-//   })
-// );
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

@@ -1,6 +1,12 @@
 import express from "express";
 import pool from "../db.mjs";
 import { isAuth } from "../middlewares/auth.middleware.mjs";
+import {
+  requireProjectMember,
+  resolveProjectIdFromOrderedPages,
+  resolveProjectIdFromPageId,
+  resolveProjectIdFromRequest,
+} from "../middlewares/projectMember.middleware.mjs";
 import logger from "../logger.mjs";
 
 const router = express.Router();
@@ -12,15 +18,6 @@ const ensureProjectExists = async (projectId, res) => {
     return false;
   }
   return true;
-};
-
-const getProjectId = (req, res) => {
-  const projectId = req.query.project_id;
-  if (!projectId) {
-    res.status(400).json({ name: "BadRequest", message: "project_id is required" });
-    return null;
-  }
-  return projectId;
 };
 
 /**
@@ -58,23 +55,12 @@ const getProjectId = (req, res) => {
  *       500:
  *         $ref: "#/components/responses/ErrorResponse"
  */
-router.get("/", isAuth, async (req, res) => {
-  const projectId = getProjectId(req, res);
-  if (!projectId) return;
-  const userId = req.session.userId;
+router.get("/", isAuth, resolveProjectIdFromRequest, requireProjectMember, async (req, res) => {
+  const projectId = req.projectId;
 
   try {
     const projectExists = await ensureProjectExists(projectId, res);
     if (!projectExists) return;
-
-    const memberCheck = await pool.query(
-      "SELECT id FROM project_member WHERE project_id = $1 AND member_id = $2",
-      [projectId, userId]
-    );
-
-    if (memberCheck.rows.length === 0) {
-      return res.status(403).json({ name: "Forbidden", message: "접근 권한이 없습니다." });
-    }
 
     const pagesRes = await pool.query(
       "SELECT * FROM page WHERE project_id = $1 ORDER BY sort_order ASC, created_at ASC",
@@ -163,23 +149,17 @@ router.get("/", isAuth, async (req, res) => {
  *       500:
  *         $ref: "#/components/responses/ErrorResponse"
  */
-router.get("/recent", isAuth, async (req, res) => {
-  const projectId = getProjectId(req, res);
-  if (!projectId) return;
-  const userId = req.session.userId;
+router.get(
+  "/recent",
+  isAuth,
+  resolveProjectIdFromRequest,
+  requireProjectMember,
+  async (req, res) => {
+  const projectId = req.projectId;
 
   try {
     const projectExists = await ensureProjectExists(projectId, res);
     if (!projectExists) return;
-
-    const memberCheck = await pool.query(
-      "SELECT id FROM project_member WHERE project_id = $1 AND member_id = $2",
-      [projectId, userId]
-    );
-
-    if (memberCheck.rows.length === 0) {
-      return res.status(403).json({ name: "Forbidden", message: "접근 권한이 없습니다." });
-    }
 
     const recentRes = await pool.query(
       `SELECT
@@ -262,29 +242,11 @@ router.get("/recent", isAuth, async (req, res) => {
  *       500:
  *         $ref: "#/components/responses/ErrorResponse"
  */
-router.get("/:pageId", isAuth, async (req, res) => {
-  const projectId = getProjectId(req, res);
-  if (!projectId) return;
+router.get("/:pageId", isAuth, resolveProjectIdFromPageId, requireProjectMember, async (req, res) => {
   const { pageId } = req.params;
-  const userId = req.session.userId;
 
   try {
-    const projectExists = await ensureProjectExists(projectId, res);
-    if (!projectExists) return;
-
-    const memberCheck = await pool.query(
-      "SELECT id FROM project_member WHERE project_id = $1 AND member_id = $2",
-      [projectId, userId]
-    );
-
-    if (memberCheck.rows.length === 0) {
-      return res.status(403).json({ name: "Forbidden", message: "접근 권한이 없습니다." });
-    }
-
-    const pageRes = await pool.query("SELECT * FROM page WHERE id = $1 AND project_id = $2", [
-      pageId,
-      projectId,
-    ]);
+    const pageRes = await pool.query("SELECT * FROM page WHERE id = $1", [pageId]);
 
     if (pageRes.rows.length === 0) {
       return res.status(404).json({ name: "NotFound", message: "페이지를 찾을 수 없습니다." });
@@ -359,29 +321,17 @@ router.get("/:pageId", isAuth, async (req, res) => {
  *       500:
  *         $ref: "#/components/responses/ErrorResponse"
  */
-router.patch("/:pageId", isAuth, async (req, res) => {
-  const projectId = getProjectId(req, res);
-  if (!projectId) return;
+router.patch("/:pageId", isAuth, resolveProjectIdFromPageId, requireProjectMember, async (req, res) => {
   const { pageId } = req.params;
-  const userId = req.session.userId;
   const { title, content } = req.body;
 
   try {
-    const memberCheck = await pool.query(
-      "SELECT id FROM project_member WHERE project_id = $1 AND member_id = $2",
-      [projectId, userId]
-    );
-
-    if (memberCheck.rows.length === 0) {
-      return res.status(403).json({ name: "Forbidden", message: "접근 권한이 없습니다." });
-    }
-
     const updateRes = await pool.query(
       `UPDATE page
        SET title = COALESCE($1, title), content = COALESCE($2, content), updated_at = CURRENT_TIMESTAMP
-       WHERE id = $3 AND project_id = $4
+       WHERE id = $3
        RETURNING *`,
-      [title, content, pageId, projectId]
+      [title, content, pageId]
     );
 
     if (updateRes.rows.length === 0) {
@@ -427,10 +377,9 @@ router.patch("/:pageId", isAuth, async (req, res) => {
  *       500:
  *         $ref: "#/components/responses/ErrorResponse"
  */
-router.delete("/:pageId", isAuth, async (req, res) => {
-  const projectId = getProjectId(req, res);
-  if (!projectId) return;
+router.delete("/:pageId", isAuth, resolveProjectIdFromPageId, requireProjectMember, async (req, res) => {
   const { pageId } = req.params;
+  const projectId = req.projectId;
   const userId = req.session.userId;
 
   try {
@@ -495,22 +444,15 @@ router.delete("/:pageId", isAuth, async (req, res) => {
  *       500:
  *         $ref: "#/components/responses/ErrorResponse"
  */
-router.get("/:pageId/members", isAuth, async (req, res) => {
-  const projectId = getProjectId(req, res);
-  if (!projectId) return;
+router.get(
+  "/:pageId/members",
+  isAuth,
+  resolveProjectIdFromPageId,
+  requireProjectMember,
+  async (req, res) => {
   const { pageId } = req.params;
-  const userId = req.session.userId;
 
   try {
-    const memberCheck = await pool.query(
-      "SELECT id FROM project_member WHERE project_id = $1 AND member_id = $2",
-      [projectId, userId]
-    );
-
-    if (memberCheck.rows.length === 0) {
-      return res.status(403).json({ name: "Forbidden", message: "접근 권한이 없습니다." });
-    }
-
     const result = await pool.query(
       `SELECT pm.id, m.id as member_id, m.name, m.email, pm.role_name
        FROM page_member pm
@@ -584,10 +526,14 @@ router.get("/:pageId/members", isAuth, async (req, res) => {
  *       500:
  *         $ref: "#/components/responses/ErrorResponse"
  */
-router.post("/:pageId/members", isAuth, async (req, res) => {
-  const projectId = getProjectId(req, res);
-  if (!projectId) return;
+router.post(
+  "/:pageId/members",
+  isAuth,
+  resolveProjectIdFromPageId,
+  requireProjectMember,
+  async (req, res) => {
   const { pageId } = req.params;
+  const projectId = req.projectId;
   const { member_id, role_name } = req.body;
   const userId = req.session.userId;
 
@@ -671,10 +617,12 @@ router.post("/:pageId/members", isAuth, async (req, res) => {
  *       500:
  *         $ref: "#/components/responses/ErrorResponse"
  */
-router.delete("/:pageId/members/:memberId", isAuth, async (req, res) => {
-  const projectId = getProjectId(req, res);
-  if (!projectId) return;
-
+router.delete(
+  "/:pageId/members/:memberId",
+  isAuth,
+  resolveProjectIdFromPageId,
+  requireProjectMember,
+  async (req, res) => {
   const { pageId, memberId } = req.params;
   const userId = req.session.userId;
   const targetMemberId = Number(memberId);
@@ -777,22 +725,12 @@ router.delete("/:pageId/members/:memberId", isAuth, async (req, res) => {
  *       500:
  *         $ref: "#/components/responses/ErrorResponse"
  */
-router.post("/", isAuth, async (req, res) => {
-  const projectId = getProjectId(req, res);
-  if (!projectId) return;
+router.post("/", isAuth, resolveProjectIdFromRequest, requireProjectMember, async (req, res) => {
+  const projectId = req.projectId;
   const userId = req.session.userId;
   const { title, content, parent_id } = req.body;
 
   try {
-    const memberCheck = await pool.query(
-      "SELECT id FROM project_member WHERE project_id = $1 AND member_id = $2",
-      [projectId, userId]
-    );
-
-    if (memberCheck.rows.length === 0) {
-      return res.status(403).json({ name: "Forbidden", message: "접근 권한이 없습니다." });
-    }
-
     const insertRes = await pool.query(
       "INSERT INTO page (title, content, project_id, parent_id) VALUES ($1, $2, $3, $4) RETURNING *",
       [title, content || null, projectId, parent_id || null]
@@ -853,32 +791,18 @@ router.post("/", isAuth, async (req, res) => {
  *       500:
  *         $ref: "#/components/responses/ErrorResponse"
  */
-router.post("/reorder", isAuth, async (req, res) => {
-  const projectId = getProjectId(req, res);
-  if (!projectId) return;
-  const userId = req.session.userId;
-  const { parent_id = null, ordered_ids } = req.body;
-
-  if (!Array.isArray(ordered_ids) || ordered_ids.length === 0) {
-    return res.status(400).json({ name: "BadRequest", message: "ordered_ids is required" });
-  }
-
-  const ids = ordered_ids.map((id) => Number(id)).filter((id) => Number.isFinite(id));
-  if (ids.length !== ordered_ids.length) {
-    return res.status(400).json({ name: "BadRequest", message: "ordered_ids must be numbers" });
-  }
+router.post(
+  "/reorder",
+  isAuth,
+  resolveProjectIdFromOrderedPages,
+  requireProjectMember,
+  async (req, res) => {
+  const projectId = req.projectId;
+  const parent_id = req.parentId;
+  const ids = req.orderedPageIds;
 
   const client = await pool.connect();
   try {
-    const memberCheck = await client.query(
-      "SELECT id FROM project_member WHERE project_id = $1 AND member_id = $2",
-      [projectId, userId]
-    );
-
-    if (memberCheck.rows.length === 0) {
-      return res.status(403).json({ name: "Forbidden", message: "접근 권한이 없습니다." });
-    }
-
     const parentFilter = parent_id ? "parent_id = $2" : "parent_id IS NULL";
     const params = parent_id ? [projectId, parent_id, ids] : [projectId, ids];
 

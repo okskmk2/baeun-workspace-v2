@@ -85,14 +85,8 @@ const handleItemClick = (item) => {
   router.push(`/project/${projectId.value}/wiki/${item.id}`);
 };
 
+onMounted(fetchRecentPages);
 watch(projectId, fetchRecentPages);
-watch(
-  pages,
-  () => {
-    fetchRecentPages();
-  },
-  { deep: true }
-);
 </script>
 
 <style scoped>

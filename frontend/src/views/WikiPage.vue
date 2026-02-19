@@ -174,9 +174,7 @@ const fetchPage = async () => {
   errorMessage.value = "";
 
   try {
-    const res = await api.get(`/pages/${pageId.value}`, {
-      params: { project_id: projectId.value },
-    });
+    const res = await api.get(`/pages/${pageId.value}`);
     page.value = res.data || {};
   } catch (error) {
     page.value = {};
@@ -216,9 +214,6 @@ const savePage = async () => {
       {
         title: editForm.value.title,
         content: editForm.value.content,
-      },
-      {
-        params: { project_id: projectId.value },
       }
     );
     page.value = res.data || page.value;
@@ -239,9 +234,7 @@ const fetchPageMembers = async () => {
     pageMembers.value = [];
     return;
   }
-  const res = await api.get(`/pages/${pageId.value}/members`, {
-    params: { project_id: projectId.value },
-  });
+  const res = await api.get(`/pages/${pageId.value}/members`);
   pageMembers.value = res.data || [];
 };
 
@@ -276,9 +269,7 @@ const deletePage = async () => {
 
   isDeleting.value = true;
   try {
-    await api.delete(`/pages/${pageId.value}`, {
-      params: { project_id: projectId.value },
-    });
+    await api.delete(`/pages/${pageId.value}`);
     await pageStore.fetchPages(projectId.value);
     await router.push(`/project/${projectId.value}/wiki`);
   } catch (error) {
