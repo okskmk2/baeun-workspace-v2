@@ -220,6 +220,8 @@ button.btn--icon {
   gap: 8px;
   display: flex;
   flex-direction: column;
+  max-height: 77dvh;
+  overflow-y: auto;
 }
 
 .LnbLayout > aside nav a {
