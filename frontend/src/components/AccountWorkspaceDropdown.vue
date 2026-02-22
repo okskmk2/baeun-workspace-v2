@@ -69,6 +69,20 @@
           {{ t("layout.account.nav.workspaces") }}
         </router-link>
       </div>
+
+      <div class="account-menu__footer">
+        <button
+          type="button"
+          class="account-menu__logout-btn"
+          :disabled="isLoggingOut"
+          @click="logout"
+        >
+          {{ isLoggingOut ? t("profile.actions.loggingOut") : t("profile.actions.logout") }}
+        </button>
+        <p v-if="logoutError" class="account-menu__status account-menu__status--error">
+          {{ logoutError }}
+        </p>
+      </div>
     </div>
   </div>
 </template>
@@ -76,11 +90,13 @@
 <script setup>
 import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
+import { useRouter } from "vue-router";
 import { useAppStore } from "../stores/appStore";
 import api from "../lib/axios";
 import Avatar from "./Avatar.vue";
 
 const { t } = useI18n();
+const router = useRouter();
 const appStore = useAppStore();
 const isAuthenticated = computed(() => Boolean(appStore.currentUser));
 const currentMemberId = computed(() => appStore.currentUser?.id || null);
@@ -93,6 +109,8 @@ const loadedMemberId = ref(null);
 const hasLoadedTree = ref(false);
 const inflightLoad = ref(null);
 const workspaceItems = ref([]);
+const isLoggingOut = ref(false);
+const logoutError = ref("");
 
 const accountInitials = computed(() => {
   const name = appStore.currentUser?.name || "";
@@ -181,6 +199,23 @@ const toggleMenu = async () => {
   await nextTick();
   document.removeEventListener("click", onDocumentClick);
   document.addEventListener("click", onDocumentClick);
+};
+
+const logout = async () => {
+  if (isLoggingOut.value) return;
+  isLoggingOut.value = true;
+  logoutError.value = "";
+
+  try {
+    await api.post("/members/logout");
+    appStore.setCurrentUser(null);
+    closeMenu();
+    await router.push("/login");
+  } catch (error) {
+    logoutError.value = error?.response?.data?.message || t("profile.status.logoutError");
+  } finally {
+    isLoggingOut.value = false;
+  }
 };
 
 onBeforeUnmount(() => {
@@ -351,5 +386,33 @@ watch(
 
 .account-menu__empty-link:hover {
   text-decoration: underline;
+}
+
+.account-menu__footer {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--color-divider);
+}
+
+.account-menu__logout-btn {
+  width: 100%;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.account-menu__logout-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.account-menu__logout-btn:hover:not(:disabled) {
+  background: var(--color-surface-muted);
+  color: var(--color-text);
+  border-color: var(--color-divider);
 }
 </style>

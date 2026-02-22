@@ -23,19 +23,19 @@
             {{ board.name }}
           </router-link>
         </template>
-        <hr/>
+        <hr />
         <router-link
-        class="lnb-item"
-        :to="`/project/${projectId}/board/backlog`"
-        @dragover.prevent
-        @drop.prevent.stop="moveIssueToBacklog"
+          class="lnb-item"
+          :to="`/project/${projectId}/board/backlog`"
+          @dragover.prevent
+          @drop.prevent.stop="moveIssueToBacklog"
         >
-        <!-- <MaterialSymbol name="low_priority" size="18" /> -->
-        {{ t("backlog.page.header.title") }}
-      </router-link>
-      <router-link class="lnb-item" :to="`/project/${projectId}/board/gantt`">
-        간트차트
-      </router-link>
+          <!-- <MaterialSymbol name="low_priority" size="18" /> -->
+          {{ t("backlog.page.header.title") }}
+        </router-link>
+        <router-link class="lnb-item" :to="`/project/${projectId}/board/gantt`">
+          간트차트
+        </router-link>
       </nav>
     </aside>
     <main>
@@ -70,7 +70,6 @@ const backlogBoard = computed(() => boards.value.find((board) => board.type === 
 const isLoading = ref(false);
 const errorMessage = ref("");
 const isModalOpen = ref(false);
-
 
 const projectId = computed(() => route.params.projectId);
 
@@ -163,9 +162,6 @@ onMounted(fetchBoards);
 watch(projectId, fetchBoards);
 </script>
 <style scoped>
-.BoardLayout aside {
-  width: 13rem;
-}
 .BoardLayout aside nav {
   /* font-size: 14px; */
   gap: 4px;

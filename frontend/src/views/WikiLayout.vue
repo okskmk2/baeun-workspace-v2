@@ -122,13 +122,10 @@ const handleReorder = async ({ parentId, orderedIds }) => {
   applyReorder(parentId, orderedIds);
 
   try {
-    await api.post(
-      "/pages/reorder",
-      {
-        parent_id: parentId ?? null,
-        ordered_ids: orderedIds,
-      }
-    );
+    await api.post("/pages/reorder", {
+      parent_id: parentId ?? null,
+      ordered_ids: orderedIds,
+    });
   } catch (error) {
     errorMessage.value = t("wiki.layout.status.errorReorder");
     await fetchPages();
@@ -138,12 +135,3 @@ const handleReorder = async ({ parentId, orderedIds }) => {
 onMounted(fetchPages);
 watch(projectId, fetchPages);
 </script>
-
-<style>
-/* .page-nav {
-  font-size: 14px;
-} */
-.WikiLayout aside {
-  width: 15rem;
-}
-</style>

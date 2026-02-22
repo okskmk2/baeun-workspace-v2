@@ -74,8 +74,8 @@ nav a:hover {
 }
 
 .DefaultLayout .inner-gnb {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
   padding: 20px 40px;
   color: var(--dl-gnb-text);
 }
@@ -89,11 +89,13 @@ nav a:hover {
   font-size: 18px;
   gap: 60px;
   font-weight: 600;
+  justify-self: center;
 }
 
 .DefaultLayout .utilnav {
   font-size: 15px;
   gap: 20px;
+  justify-self: end;
 }
 
 .DefaultLayout main {
@@ -211,7 +213,7 @@ button.btn--icon {
 .LnbLayout > aside {
   background-color: var(--color-page-bg);
   padding: 18px 20px;
-  width: 10rem;
+  width: 12rem;
   flex-shrink: 0;
   border-radius: 8px;
 }
