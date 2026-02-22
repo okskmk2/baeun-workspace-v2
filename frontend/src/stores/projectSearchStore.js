@@ -40,7 +40,7 @@ const getRouteByType = (projectId, type, id, item = {}) => {
   if (!projectId || !id) return "";
   if (type === "board") return `/project/${projectId}/board/${id}`;
   if (type === "page") return `/project/${projectId}/wiki/${id}`;
-  if (type === "channel") return `/project/${projectId}/messenger/${id}`;
+  if (type === "channel") return `/project/${projectId}/channel/${id}`;
   if (type === "issue" && item?.board_id) {
     return `/project/${projectId}/board/${item.board_id}/issue/${id}`;
   }

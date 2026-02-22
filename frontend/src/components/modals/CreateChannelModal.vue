@@ -151,7 +151,7 @@ const handleSubmit = async () => {
     
     // Navigate to the new channel
     if (newChannel?.id) {
-      router.push(`/project/${props.projectId}/messenger/${newChannel.id}`);
+      router.push(`/project/${props.projectId}/channel/${newChannel.id}`);
     }
   } catch (error) {
     formError.value = error?.response?.data?.message || t("messenger.layout.status.errorCreate");

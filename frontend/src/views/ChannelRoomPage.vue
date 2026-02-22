@@ -495,7 +495,7 @@ const leaveChannel = async () => {
   try {
     await api.post(`/channels/${roomId.value}/leave`);
     addToast({ message: t("messenger.room.status.left"), type: "success" });
-    router.push(`/project/${projectId.value}/messenger`);
+    router.push(`/project/${projectId.value}/channel`);
   } catch (error) {
     const message = error?.response?.data?.message || t("messenger.room.status.errorLeave");
     addToast({ message, type: "error" });
@@ -504,7 +504,7 @@ const leaveChannel = async () => {
 
 const channelSettingsPath = computed(() => {
   if (!roomId.value) return "";
-  return `/project/${projectId.value}/messenger/${roomId.value}/settings`;
+  return `/project/${projectId.value}/channel/${roomId.value}/settings`;
 });
 
 onMounted(async () => {

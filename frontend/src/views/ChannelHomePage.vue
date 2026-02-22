@@ -76,7 +76,7 @@ const messageGroups = computed(() => [
 
 const handleItemClick = (item) => {
   if (!projectId.value || !item?.channel_id) return;
-  router.push(`/project/${projectId.value}/messenger/${item.channel_id}`);
+  router.push(`/project/${projectId.value}/channel/${item.channel_id}`);
 };
 
 const getMessageType = (message) => {

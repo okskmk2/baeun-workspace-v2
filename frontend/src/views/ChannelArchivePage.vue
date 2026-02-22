@@ -12,7 +12,7 @@
   <ul v-else class="archive-list">
     <li v-for="item in items" :key="item.id" class="archive-item">
       <h2 class="channel-name">
-        <router-link :to="`/project/${projectId}/messenger/${item.id}`">
+        <router-link :to="`/project/${projectId}/channel/${item.id}`">
           {{ item.name || t("messenger.layout.fallback.channelName") }}
         </router-link>
       </h2>

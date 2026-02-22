@@ -16,7 +16,7 @@
               <router-link
                 v-for="room in section.items"
                 :key="room.id"
-                :to="`/project/${projectId}/messenger/${room.id}`"
+                :to="`/project/${projectId}/channel/${room.id}`"
               >
                 {{ getRoomDisplayName(room) }}
               </router-link>
@@ -65,7 +65,7 @@ const projectId = computed(() => route.params.projectId);
 
 const isModalOpen = ref(false);
 const rooms = computed(() => chatStore.getRooms(projectId.value));
-const archivePath = computed(() => `/project/${projectId.value}/messenger/archive`);
+const archivePath = computed(() => `/project/${projectId.value}/channel/archive`);
 const isLoading = ref(false);
 const errorMessage = ref("");
 

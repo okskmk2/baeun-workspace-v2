@@ -23,7 +23,7 @@
               <MaterialSymbol name="view_kanban" :size="20" alt="" />
               <span>{{ t("layout.project.nav.board") }}</span>
             </router-link>
-            <router-link class="mainnav-link" :to="`/project/${projectId}/messenger`">
+            <router-link class="mainnav-link" :to="`/project/${projectId}/channel`">
               <MaterialSymbol name="chat_bubble" :size="20" alt="" />
               <span>{{ t("layout.project.nav.messenger") }}</span>
             </router-link>

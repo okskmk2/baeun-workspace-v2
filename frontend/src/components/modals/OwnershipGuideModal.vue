@@ -83,7 +83,7 @@ const ownershipItems = computed(() => {
       route = resource.project_id ? `/project/${resource.project_id}/board/${resource.id}` : "";
     } else if (resource.type === "channel") {
       typeLabel = t("profile.danger.guide.types.channel");
-      route = resource.project_id ? `/project/${resource.project_id}/messenger/${resource.id}` : "";
+      route = resource.project_id ? `/project/${resource.project_id}/channel/${resource.id}` : "";
     }
 
     return {

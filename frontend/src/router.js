@@ -25,10 +25,10 @@ import BoardSettingsPage from "./views/BoardSettingsPage.vue";
 import GanttChartPage from "./views/GanttChartPage.vue";
 import WikiHomePage from "./views/WikiHomePage.vue";
 import WikiPage from "./views/WikiPage.vue";
-import MessengerHomePage from "./views/MessengerHomePage.vue";
-import MessengerArchivePage from "./views/MessengerArchivePage.vue";
-import MessengerRoomPage from "./views/MessengerRoomPage.vue";
-import MessengerSettingsPage from "./views/MessengerSettingsPage.vue";
+import ChannelHomePage from "./views/ChannelHomePage.vue";
+import ChannelArchivePage from "./views/ChannelArchivePage.vue";
+import ChannelRoomPage from "./views/ChannelRoomPage.vue";
+import ChannelSettingsPage from "./views/ChannelSettingsPage.vue";
 import ProjectSettingsLayout from "./views/ProjectSettingsLayout.vue";
 import ProjectSettingsHomePage from "./views/ProjectSettingsHomePage.vue";
 import ProjectSettingsMemberPage from "./views/ProjectSettingsMemberPage.vue";
@@ -149,24 +149,24 @@ const routes = [
         ],
       },
       {
-        path: "messenger",
+        path: "channel",
         component: MessengerLayout,
         children: [
           {
             path: "",
-            component: MessengerHomePage,
+            component: ChannelHomePage,
           },
           {
             path: "archive",
-            component: MessengerArchivePage,
+            component: ChannelArchivePage,
           },
           {
             path: ":roomId/settings",
-            component: MessengerSettingsPage,
+            component: ChannelSettingsPage,
           },
           {
             path: ":roomId",
-            component: MessengerRoomPage,
+            component: ChannelRoomPage,
           },
         ],
       },

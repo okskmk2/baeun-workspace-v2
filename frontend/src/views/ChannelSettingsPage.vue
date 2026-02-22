@@ -190,11 +190,11 @@ const toggleArchive = async () => {
     await chatStore.fetchRooms(projectId.value);
 
     if (nextStatus === "ARCHIVED") {
-      router.push(`/project/${projectId.value}/messenger`);
+      router.push(`/project/${projectId.value}/channel`);
       return;
     }
 
-    router.push(`/project/${projectId.value}/messenger/${roomId.value}`);
+    router.push(`/project/${projectId.value}/channel/${roomId.value}`);
   } catch (error) {
     archiveError.value =
       error?.response?.data?.message || t("messenger.settings.status.errorArchive");
@@ -242,7 +242,7 @@ const deleteChannel = async () => {
   try {
     await api.delete(`/channels/${roomId.value}`);
     await chatStore.fetchRooms(projectId.value);
-    router.push(`/project/${projectId.value}/messenger`);
+    router.push(`/project/${projectId.value}/channel`);
   } catch (error) {
     deleteError.value = error?.response?.data?.message || t("messenger.settings.status.errorDelete");
   } finally {

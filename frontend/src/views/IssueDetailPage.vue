@@ -332,7 +332,7 @@ const enterIssueChatRoom = async () => {
     if (!channelId) {
       throw new Error("channel id missing");
     }
-    router.push(`/project/${projectId.value}/messenger/${channelId}`);
+    router.push(`/project/${projectId.value}/channel/${channelId}`);
   } catch (error) {
     const message = error?.response?.data?.message || t("issue.detail.status.errorEnterChat");
     addToast({ message, type: "error" });
