@@ -1,9 +1,5 @@
 <template>
-  <BaseModal
-    :open="open"
-    :title="t('wiki.page.confirm.cancel.title')"
-    @close="handleClose"
-  >
+  <BaseModal :open="open" :title="t('wiki.page.confirm.cancel.title')" @close="handleClose">
     <p>{{ t("wiki.page.confirm.cancel.message") }}</p>
     <div class="modal-actions">
       <button type="button" class="btn btn--secondary" @click="handleClose">

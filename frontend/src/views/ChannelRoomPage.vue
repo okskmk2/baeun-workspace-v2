@@ -166,7 +166,6 @@ const realtimeStore = useRealtimeStore();
 const roomId = computed(() => route.params.roomId);
 const projectId = computed(() => route.params.projectId);
 
-
 const messages = ref([]);
 const messagesContainer = ref(null);
 const draft = ref("");
@@ -187,9 +186,7 @@ const memberNameById = computed(() => {
   });
   return map;
 });
-const isDmChannel = computed(
-  () => String(channelDetail.value?.type || "").toUpperCase() === "DM"
-);
+const isDmChannel = computed(() => String(channelDetail.value?.type || "").toUpperCase() === "DM");
 const isNoticeChannel = computed(
   () => String(channelDetail.value?.type || "").toUpperCase() === "NOTICE"
 );
@@ -206,7 +203,8 @@ const dmPeerName = computed(() => {
   if (!pairKey.includes(":")) return "";
   const [firstMemberId, secondMemberId] = pairKey.split(":");
   const currentId = String(currentUserId.value || "");
-  const peerId = currentId === String(firstMemberId) ? String(secondMemberId) : String(firstMemberId);
+  const peerId =
+    currentId === String(firstMemberId) ? String(secondMemberId) : String(firstMemberId);
   return memberNameById.value[String(peerId)] || "";
 });
 const displayRoomTitle = computed(() => {

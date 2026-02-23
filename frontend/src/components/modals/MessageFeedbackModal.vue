@@ -1,9 +1,5 @@
 <template>
-  <BaseModal
-    :open="open"
-    :title="t('messenger.room.feedback.modal.title')"
-    @close="handleClose"
-  >
+  <BaseModal :open="open" :title="t('messenger.room.feedback.modal.title')" @close="handleClose">
     <div class="feedback-modal">
       <button
         v-for="option in feedbackOptions"

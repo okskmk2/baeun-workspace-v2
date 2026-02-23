@@ -17,7 +17,7 @@
           <router-link v-if="!isAuthenticated" to="/login">{{
             t("layout.default.util.login")
           }}</router-link>
-          <AccountWorkspaceDropdown />
+          <AccountDropdown />
         </nav>
       </div>
     </header>
@@ -29,7 +29,7 @@
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import { useAppStore } from "../stores/appStore";
-import AccountWorkspaceDropdown from "../components/AccountWorkspaceDropdown.vue";
+import AccountDropdown from "../components/AccountDropdown.vue";
 
 const { t } = useI18n();
 const appStore = useAppStore();

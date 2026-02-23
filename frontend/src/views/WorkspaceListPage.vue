@@ -5,7 +5,9 @@
       <p class="subtitle">{{ t("workspaceList.header.subtitle") }}</p>
     </div>
     <div>
-      <button type="button" class="btn" @click="openModal">{{ t("workspaceList.actions.add") }}</button>
+      <button type="button" class="btn" @click="openModal">
+        {{ t("workspaceList.actions.add") }}
+      </button>
     </div>
   </hgroup>
   <p v-if="isLoading">{{ t("workspaceList.status.loading") }}</p>
@@ -28,14 +30,14 @@
             :size="40"
           />
           <div>
-          <h2>
-            <router-link :to="`/settings/workspaces/${workspace.id}`" class="workspace-link">
-              {{ workspace.name }}
-            </router-link>
-          </h2>
-          <Tag v-if="workspace.role_name">
-            {{ getRoleLabel("workspace_member", workspace.role_name) }}
-          </Tag>
+            <h2>
+              <router-link :to="`/settings/workspaces/${workspace.id}`" class="workspace-link">
+                {{ workspace.name }}
+              </router-link>
+            </h2>
+            <Tag v-if="workspace.role_name">
+              {{ getRoleLabel("workspace_member", workspace.role_name) }}
+            </Tag>
           </div>
         </div>
         <button
@@ -65,11 +67,7 @@
     </li>
   </ul>
 
-  <CreateWorkspaceModal
-    :open="isModalOpen"
-    @close="closeModal"
-    @created="onWorkspaceCreated"
-  />
+  <CreateWorkspaceModal :open="isModalOpen" @close="closeModal" @created="onWorkspaceCreated" />
 
   <BaseModal
     :open="isDeleteModalOpen"
@@ -81,15 +79,21 @@
       <p>{{ t("workspaceList.deleteModal.description", { name: deleteTargetName }) }}</p>
       <p class="delete-warning">{{ t("workspaceList.deleteModal.warning") }}</p>
       <div class="modal-actions">
-        <button type="button" class="btn btn--secondary" @click="closeDeleteModal" :disabled="isDeleting">
+        <button
+          type="button"
+          class="btn btn--secondary"
+          @click="closeDeleteModal"
+          :disabled="isDeleting"
+        >
           {{ t("workspaceList.actions.cancel") }}
         </button>
-        <button type="button" class="btn btn--danger" @click="confirmDeleteWorkspace" :disabled="isDeleting">
-          {{
-            isDeleting
-              ? t("workspaceList.actions.deleting")
-              : t("workspaceList.actions.delete")
-          }}
+        <button
+          type="button"
+          class="btn btn--danger"
+          @click="confirmDeleteWorkspace"
+          :disabled="isDeleting"
+        >
+          {{ isDeleting ? t("workspaceList.actions.deleting") : t("workspaceList.actions.delete") }}
         </button>
       </div>
     </div>

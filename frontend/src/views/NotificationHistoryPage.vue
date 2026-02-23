@@ -36,7 +36,9 @@
   </hgroup>
 
   <p v-if="isLoading" class="status">{{ t("layout.project.util.notificationsLoading") }}</p>
-  <p v-else-if="!visibleNotifications.length" class="status">{{ t("layout.project.util.notificationsEmpty") }}</p>
+  <p v-else-if="!visibleNotifications.length" class="status">
+    {{ t("layout.project.util.notificationsEmpty") }}
+  </p>
 
   <ul v-else class="notification-history">
     <li v-for="item in visibleNotifications" :key="item.id">

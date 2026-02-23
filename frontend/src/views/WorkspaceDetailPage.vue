@@ -115,7 +115,9 @@
             <button
               type="button"
               class="btn btn--secondary"
-              :disabled="!canManageWorkspace || isUploadingWorkspaceImage || isRemovingWorkspaceImage"
+              :disabled="
+                !canManageWorkspace || isUploadingWorkspaceImage || isRemovingWorkspaceImage
+              "
               @click="openWorkspaceImagePicker"
             >
               {{ isUploadingWorkspaceImage ? "Uploading..." : "Change Image" }}
@@ -123,14 +125,21 @@
             <button
               type="button"
               class="btn btn--secondary"
-              :disabled="!canManageWorkspace || !workspaceImageUrl || isUploadingWorkspaceImage || isRemovingWorkspaceImage"
+              :disabled="
+                !canManageWorkspace ||
+                !workspaceImageUrl ||
+                isUploadingWorkspaceImage ||
+                isRemovingWorkspaceImage
+              "
               @click="removeWorkspaceImage"
             >
               {{ isRemovingWorkspaceImage ? "Removing..." : "Remove Image" }}
             </button>
           </div>
           <p v-if="workspaceImageError" class="status error">{{ workspaceImageError }}</p>
-          <p v-else-if="workspaceImageSuccess" class="status success">{{ workspaceImageSuccess }}</p>
+          <p v-else-if="workspaceImageSuccess" class="status success">
+            {{ workspaceImageSuccess }}
+          </p>
           <p v-if="!canManageWorkspace" class="status muted">
             Only OWNER or ADMIN can edit workspace image.
           </p>
@@ -257,7 +266,6 @@ const removingMemberId = ref(null);
 const memberActionError = ref("");
 const memberActionSuccess = ref("");
 
-
 const workspace = computed(() => workspaceStore.workspaceById[workspaceId.value] || null);
 const projects = computed(() => workspaceStore.getProjects(workspaceId.value));
 
@@ -355,7 +363,12 @@ const updateWorkspaceName = async () => {
 };
 
 const openWorkspaceImagePicker = () => {
-  if (!canManageWorkspace.value || isUploadingWorkspaceImage.value || isRemovingWorkspaceImage.value) return;
+  if (
+    !canManageWorkspace.value ||
+    isUploadingWorkspaceImage.value ||
+    isRemovingWorkspaceImage.value
+  )
+    return;
   workspaceImageInputRef.value?.click();
 };
 
@@ -385,7 +398,8 @@ const onWorkspaceImageChange = async (event) => {
     const response = await workspaceStore.updateWorkspaceImage(workspaceId.value, selectedFile);
     workspaceImageSuccess.value = response?.message || "Workspace image updated.";
   } catch (error) {
-    workspaceImageError.value = error?.response?.data?.message || "Failed to update workspace image.";
+    workspaceImageError.value =
+      error?.response?.data?.message || "Failed to update workspace image.";
   } finally {
     isUploadingWorkspaceImage.value = false;
     event.target.value = "";
@@ -404,7 +418,8 @@ const removeWorkspaceImage = async () => {
     const response = await workspaceStore.removeWorkspaceImage(workspaceId.value);
     workspaceImageSuccess.value = response?.message || "Workspace image removed.";
   } catch (error) {
-    workspaceImageError.value = error?.response?.data?.message || "Failed to remove workspace image.";
+    workspaceImageError.value =
+      error?.response?.data?.message || "Failed to remove workspace image.";
   } finally {
     isRemovingWorkspaceImage.value = false;
   }

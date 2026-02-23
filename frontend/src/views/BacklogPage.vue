@@ -229,9 +229,9 @@ const onDropToBoard = async (targetBoardId) => {
     issues.value = issues.value.filter((issue) => issue.id !== issueId);
 
     // Update counts on the target board via store
-    const targetBoard = boardStore.getBoards(projectId.value).find(
-      (board) => board.id === targetBoardId
-    );
+    const targetBoard = boardStore
+      .getBoards(projectId.value)
+      .find((board) => board.id === targetBoardId);
     if (targetBoard) {
       const newIssueCounts = { ...(targetBoard.issue_counts || {}) };
       newIssueCounts.PENDING = (newIssueCounts.PENDING || 0) + 1;

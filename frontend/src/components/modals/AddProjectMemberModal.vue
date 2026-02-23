@@ -1,9 +1,5 @@
 <template>
-  <BaseModal
-    :open="open"
-    :title="t('settings.member.modal.title')"
-    @close="handleClose"
-  >
+  <BaseModal :open="open" :title="t('settings.member.modal.title')" @close="handleClose">
     <form class="modal-form" @submit.prevent="handleSubmit">
       <label for="workspace-member">{{ t("settings.member.modal.membersLabel") }}</label>
       <select id="workspace-member" v-model="selectedMemberId">
@@ -68,11 +64,9 @@ const isInviting = ref(false);
 const formError = ref("");
 
 const availableMembers = computed(() => {
-  return props.workspaceMembers.map(member => ({
+  return props.workspaceMembers.map((member) => ({
     ...member,
-    isAlreadyMember: props.projectMembers.some(
-      pm => String(pm.id) === String(member.id)
-    )
+    isAlreadyMember: props.projectMembers.some((pm) => String(pm.id) === String(member.id)),
   }));
 });
 

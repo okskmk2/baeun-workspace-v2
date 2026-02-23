@@ -25,6 +25,7 @@ import boardRouter from "./routes/board.route.mjs";
 import issueRouter from "./routes/issue.route.mjs";
 import chatRouter from "./routes/chat.route.mjs";
 import notificationRouter from "./routes/notification.route.mjs";
+import metricsRouter from "./routes/metrics.route.mjs";
 
 const app = express();
 const pgSession = connectPgSimple(session);
@@ -73,6 +74,7 @@ app.use("/api/boards", boardRouter);
 app.use("/api/issues", issueRouter);
 app.use("/api/channels", chatRouter);
 app.use("/api/notifications", notificationRouter);
+app.use("/api/metrics", metricsRouter);
 
 // Static files serve
 const staticPath = path.join(__dirname, "../../frontend/dist");
@@ -101,6 +103,23 @@ app.get("{/*path}", (req, res) => {
 const PORT = parseInt(process.env.PORT) || 8080;
 const server = http.createServer(app);
 const wss = new WebSocketServer({ noServer: true });
+const HEARTBEAT_INTERVAL_MS = 30_000;
+
+const heartbeatInterval = setInterval(() => {
+  wss.clients.forEach((ws) => {
+    if (!ws.isAlive) {
+      ws.terminate();
+      return;
+    }
+
+    ws.isAlive = false;
+    ws.ping();
+  });
+}, HEARTBEAT_INTERVAL_MS);
+
+wss.on("close", () => {
+  clearInterval(heartbeatInterval);
+});
 
 server.on("upgrade", (request, socket, head) => {
   if (!request.url?.startsWith("/ws")) {
@@ -123,6 +142,16 @@ server.on("upgrade", (request, socket, head) => {
 wss.on("connection", (ws, request) => {
   const userId = request.session.userId;
   registerUserSocket(ws, userId);
+  ws.isAlive = true;
+
+  ws.on("pong", () => {
+    ws.isAlive = true;
+  });
+
+  ws.on("error", () => {
+    removeSocket(ws);
+    ws.terminate();
+  });
 
   ws.on("message", async (raw) => {
     let payload;

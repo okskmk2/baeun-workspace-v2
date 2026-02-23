@@ -181,15 +181,8 @@ const onSubmit = async () => {
     });
 
     appStore.setCurrentUser(loginResponse.data);
-    const workspaceRes = await api.get("/workspaces/my");
-    const workspaces = workspaceRes.data || [];
     successMessage.value = t("auth.signup.success");
-
-    if (workspaces.length > 0) {
-      router.push(`/workspace/${workspaces[0].id}`);
-    } else {
-      router.push("/");
-    }
+    router.push("/");
   } catch (error) {
     errors.form = error?.response?.data?.message || t("auth.signup.errors.formDefault");
   } finally {

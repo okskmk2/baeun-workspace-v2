@@ -1,14 +1,11 @@
 <template>
   <div class="toast-host">
     <transition-group name="toast" tag="div" class="toast-stack">
-      <div
-        v-for="toast in toastState.items"
-        :key="toast.id"
-        class="toast"
-        :class="toast.type"
-      >
+      <div v-for="toast in toastState.items" :key="toast.id" class="toast" :class="toast.type">
         <span class="toast-message">{{ toast.message }}</span>
-        <button type="button" class="toast-close" @click="removeToast(toast.id)">{{ t("common.actions.close") }}</button>
+        <button type="button" class="toast-close" @click="removeToast(toast.id)">
+          {{ t("common.actions.close") }}
+        </button>
       </div>
     </transition-group>
   </div>

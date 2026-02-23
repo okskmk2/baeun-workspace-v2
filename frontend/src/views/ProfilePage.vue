@@ -64,12 +64,7 @@
     </div>
 
     <div class="profile-actions">
-      <button
-        class="btn btn--secondary"
-        type="button"
-        :disabled="isLoggingOut"
-        @click="logout"
-      >
+      <button class="btn btn--secondary" type="button" :disabled="isLoggingOut" @click="logout">
         {{ isLoggingOut ? t("profile.actions.loggingOut") : t("profile.actions.logout") }}
       </button>
       <p v-if="logoutError" class="status error">{{ logoutError }}</p>
@@ -292,7 +287,8 @@ const removeProfileImage = async () => {
 
     uploadImageMessage.value = message || t("profile.image.status.removed");
   } catch (error) {
-    uploadImageError.value = error?.response?.data?.message || t("profile.image.status.removeError");
+    uploadImageError.value =
+      error?.response?.data?.message || t("profile.image.status.removeError");
   } finally {
     isRemovingImage.value = false;
   }

@@ -26,9 +26,7 @@
     <div class="form-actions">
       <button type="submit" class="btn" :disabled="isSaving">
         {{
-          isSaving
-            ? t("messenger.settings.actions.saving")
-            : t("messenger.settings.actions.save")
+          isSaving ? t("messenger.settings.actions.saving") : t("messenger.settings.actions.save")
         }}
       </button>
     </div>
@@ -36,7 +34,9 @@
 
   <section class="members-section" v-if="!isLoading && !errorMessage">
     <h2>{{ t("messenger.settings.members.title") }}</h2>
-    <p v-if="isMembersLoading" class="status">{{ t("messenger.settings.members.status.loading") }}</p>
+    <p v-if="isMembersLoading" class="status">
+      {{ t("messenger.settings.members.status.loading") }}
+    </p>
     <p v-else-if="membersError" class="status error">{{ membersError }}</p>
     <p v-else-if="!channelMembers.length" class="status">
       {{ t("messenger.settings.members.empty") }}
@@ -66,8 +66,8 @@
           isArchiving
             ? t("messenger.settings.actions.archiving")
             : isArchived
-            ? t("messenger.settings.actions.reopen")
-            : t("messenger.settings.actions.archive")
+              ? t("messenger.settings.actions.reopen")
+              : t("messenger.settings.actions.archive")
         }}
       </button>
       <p v-if="archiveError" class="status error">{{ archiveError }}</p>
@@ -103,7 +103,6 @@ const route = useRoute();
 const router = useRouter();
 const chatStore = useChatStore();
 const { getRoleLabel } = useRoleLabels();
-
 
 const projectId = computed(() => route.params.projectId);
 const roomId = computed(() => route.params.roomId);
@@ -218,11 +217,7 @@ const saveChannelName = async () => {
     });
     const updated = res.data;
     if (projectId.value) {
-      chatStore.updateRoomName(
-        roomId.value,
-        projectId.value,
-        updated?.name || form.value.name
-      );
+      chatStore.updateRoomName(roomId.value, projectId.value, updated?.name || form.value.name);
     }
   } catch (error) {
     formError.value = error?.response?.data?.message || t("messenger.settings.status.errorUpdate");
@@ -244,7 +239,8 @@ const deleteChannel = async () => {
     await chatStore.fetchRooms(projectId.value);
     router.push(`/project/${projectId.value}/channel`);
   } catch (error) {
-    deleteError.value = error?.response?.data?.message || t("messenger.settings.status.errorDelete");
+    deleteError.value =
+      error?.response?.data?.message || t("messenger.settings.status.errorDelete");
   } finally {
     isDeleting.value = false;
   }

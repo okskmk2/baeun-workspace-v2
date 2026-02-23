@@ -1,9 +1,5 @@
 <template>
-  <BaseModal
-    :open="open"
-    :title="t('messenger.room.members.modal.title')"
-    @close="handleClose"
-  >
+  <BaseModal :open="open" :title="t('messenger.room.members.modal.title')" @close="handleClose">
     <div class="member-list">
       <p v-if="isLoading" class="status">{{ t("messenger.room.members.status.loading") }}</p>
       <p v-else-if="errorMessage" class="status error">{{ errorMessage }}</p>

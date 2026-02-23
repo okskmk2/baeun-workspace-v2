@@ -165,7 +165,11 @@ const planGroups = computed(() => [
   padding: 28px;
   border-radius: 18px;
   border: 1px solid var(--dl-border);
-  background: linear-gradient(135deg, var(--color-accent-soft, rgba(37,99,235,0.12)), transparent 60%);
+  background: linear-gradient(
+    135deg,
+    var(--color-accent-soft, rgba(37, 99, 235, 0.12)),
+    transparent 60%
+  );
 }
 
 .store-hero__eyebrow {
@@ -242,7 +246,7 @@ const planGroups = computed(() => [
 .plan-badge {
   padding: 6px 12px;
   border-radius: 999px;
-  background-color: var(--color-accent-soft, rgba(37,99,235,0.12));
+  background-color: var(--color-accent-soft, rgba(37, 99, 235, 0.12));
   color: var(--color-text);
   font-size: 12px;
   font-weight: 700;
@@ -271,8 +275,15 @@ const planGroups = computed(() => [
   color: var(--dl-text);
 }
 
-.plan-card{transition:box-shadow .18s ease, transform .12s ease}
-.plan-card:hover{transform:translateY(-6px);box-shadow:0 18px 30px color-mix(in srgb,var(--color-accent)8%,#0000)}
+.plan-card {
+  transition:
+    box-shadow 0.18s ease,
+    transform 0.12s ease;
+}
+.plan-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 18px 30px color-mix(in srgb, var(--color-accent) 8%, #0000);
+}
 
 .store-details {
   display: grid;
@@ -320,11 +331,32 @@ const planGroups = computed(() => [
   font-size: 13px;
 }
 
-.pricing-ex{margin-top:12px;padding:12px;border-radius:10px;background:linear-gradient(180deg,var(--color-accent-soft, rgba(37,99,235,0.06)),transparent);border:1px solid color-mix(in srgb,var(--color-accent)8%,#fff)}
-.pricing-ex h3{margin:0 0 8px;font-size:14px}
-.pricing-ex p{margin:0 0 8px;color:var(--dl-text-muted)}
-.pricing-ex ul{margin:0;padding-left:18px}
-.pricing-ex strong{color:var(--color-accent)}
+.pricing-ex {
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 10px;
+  background: linear-gradient(
+    180deg,
+    var(--color-accent-soft, rgba(37, 99, 235, 0.06)),
+    transparent
+  );
+  border: 1px solid color-mix(in srgb, var(--color-accent) 8%, #fff);
+}
+.pricing-ex h3 {
+  margin: 0 0 8px;
+  font-size: 14px;
+}
+.pricing-ex p {
+  margin: 0 0 8px;
+  color: var(--dl-text-muted);
+}
+.pricing-ex ul {
+  margin: 0;
+  padding-left: 18px;
+}
+.pricing-ex strong {
+  color: var(--color-accent);
+}
 
 @media (max-width: 720px) {
   .store-hero {

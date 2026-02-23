@@ -1,10 +1,5 @@
 <template>
-  <BaseModal
-    :open="open"
-    :title="title"
-    :close-on-backdrop="!isDeleting"
-    @close="handleClose"
-  >
+  <BaseModal :open="open" :title="title" :close-on-backdrop="!isDeleting" @close="handleClose">
     <div class="delete-modal-body">
       <p>{{ message }}</p>
       <p v-if="warningMessage" class="delete-warning">{{ warningMessage }}</p>
@@ -17,12 +12,7 @@
         >
           {{ cancelLabel }}
         </button>
-        <button
-          type="button"
-          class="btn btn--danger"
-          @click="handleConfirm"
-          :disabled="isDeleting"
-        >
+        <button type="button" class="btn btn--danger" @click="handleConfirm" :disabled="isDeleting">
           {{ isDeleting ? deletingLabel : confirmLabel }}
         </button>
       </div>

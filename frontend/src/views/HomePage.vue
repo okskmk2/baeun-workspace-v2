@@ -11,6 +11,7 @@
             {{ t("home.hero.secondaryCta") }}
           </router-link>
         </div>
+        <p class="hero__presence">현재 접속자: {{ onlineCountLabel }}</p>
         <div class="hero__stats">
           <div v-for="stat in stats" :key="stat.label" class="stat">
             <p class="stat__value">{{ stat.value }}</p>
@@ -67,21 +68,32 @@
       </div>
       <div class="pricing-panel">
         <div class="controls">
-          <label>워크스페이스 수: <strong>{{ ws }}</strong></label>
-          <input type="range" min="1" max="50" v-model.number="ws">
+          <label
+            >워크스페이스 수: <strong>{{ ws }}</strong></label
+          >
+          <input type="range" min="1" max="50" v-model.number="ws" />
 
-          <label>프로젝트 수: <strong>{{ proj }}</strong></label>
-          <input type="range" min="1" max="100" v-model.number="proj">
+          <label
+            >프로젝트 수: <strong>{{ proj }}</strong></label
+          >
+          <input type="range" min="1" max="100" v-model.number="proj" />
 
-          <label>멤버 수: <strong>{{ mem }}</strong></label>
-          <input type="range" min="1" max="1000" v-model.number="mem">
+          <label
+            >멤버 수: <strong>{{ mem }}</strong></label
+          >
+          <input type="range" min="1" max="1000" v-model.number="mem" />
 
-          <label>스토리지(GB): <strong>{{ stor }}</strong> GB</label>
-          <input type="range" min="10" max="2024" step="10" v-model.number="stor">
+          <label
+            >스토리지(GB): <strong>{{ stor }}</strong> GB</label
+          >
+          <input type="range" min="10" max="2024" step="10" v-model.number="stor" />
 
           <div class="billing-toggle">
-            <label><input type="radio" value="monthly" v-model="billing"> 월별</label>
-            <label><input type="radio" value="yearly" v-model="billing"> 연간(라이선스 15% 할인)</label>
+            <label><input type="radio" value="monthly" v-model="billing" /> 월별</label>
+            <label
+              ><input type="radio" value="yearly" v-model="billing" /> 연간(라이선스 15%
+              할인)</label
+            >
           </div>
         </div>
 
@@ -96,7 +108,10 @@
           </div>
         </div>
       </div>
-      <p class="pricing-note">기본 단가: 워크스페이스 $10, 프로젝트 $3, 멤버 $2, 스토리지 $1/10GB (스토리지는 종량제로 할인 미적용)</p>
+      <p class="pricing-note">
+        기본 단가: 워크스페이스 $10, 프로젝트 $3, 멤버 $2, 스토리지 $1/10GB (스토리지는 종량제로
+        할인 미적용)
+      </p>
     </section>
 
     <section class="cta">
@@ -110,10 +125,27 @@
 </template>
 
 <script setup>
-import { computed, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
+import api from "../lib/axios";
 
 const { t } = useI18n();
+
+const onlineCount = ref(null);
+const onlineCountLabel = computed(() => {
+  if (onlineCount.value === null) return "-";
+  return `${onlineCount.value}명`;
+});
+
+const loadOnlineCount = async () => {
+  try {
+    const response = await api.get("/metrics/online");
+    const sockets = Number(response?.data?.data?.sockets ?? 0);
+    onlineCount.value = Number.isFinite(sockets) ? sockets : 0;
+  } catch (error) {
+    onlineCount.value = null;
+  }
+};
 
 const stats = computed(() => [
   { value: "3", label: t("home.stats.workspaces") },
@@ -232,6 +264,10 @@ const total = computed(() => {
     billing.value === "yearly" ? licenseMonthly * (1 - 0.15) : licenseMonthly;
   return discountedLicense + storageMonthly;
 });
+
+onMounted(() => {
+  loadOnlineCount();
+});
 </script>
 
 <style scoped>
@@ -276,6 +312,12 @@ const total = computed(() => {
   flex-wrap: wrap;
   gap: 12px;
   margin-bottom: 24px;
+}
+
+.hero__presence {
+  margin: 0 0 16px;
+  font-size: 12px;
+  color: var(--dl-text-muted);
 }
 
 .hero__stats {
@@ -453,19 +495,60 @@ const total = computed(() => {
 }
 
 /* Pricing styles */
-.pricing-panel{display:flex;gap:20px;align-items:flex-start;margin-top:12px}
-.controls{flex:1}
-.controls label{display:block;margin:12px 0 6px;color:var(--dl-text-muted)}
-.controls input[type=range]{width:100%}
-.billing-toggle{margin-top:10px;display:flex;gap:12px}
-.summary{width:280px}
-.summary-card{background:linear-gradient(180deg,var(--color-accent-soft, rgba(37,99,235,0.12)), #fff);padding:18px;border-radius:12px;border:1px solid var(--dl-border);text-align:center}
-.summary-card .price{font-size:28px;margin:10px 0;font-weight:700;color:var(--color-accent)}
-.summary-actions{display:flex;gap:8px;justify-content:center}
-.pricing-note{color:var(--dl-text-muted);margin-top:8px}
+.pricing-panel {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  margin-top: 12px;
+}
+.controls {
+  flex: 1;
+}
+.controls label {
+  display: block;
+  margin: 12px 0 6px;
+  color: var(--dl-text-muted);
+}
+.controls input[type="range"] {
+  width: 100%;
+}
+.billing-toggle {
+  margin-top: 10px;
+  display: flex;
+  gap: 12px;
+}
+.summary {
+  width: 280px;
+}
+.summary-card {
+  background: linear-gradient(180deg, var(--color-accent-soft, rgba(37, 99, 235, 0.12)), #fff);
+  padding: 18px;
+  border-radius: 12px;
+  border: 1px solid var(--dl-border);
+  text-align: center;
+}
+.summary-card .price {
+  font-size: 28px;
+  margin: 10px 0;
+  font-weight: 700;
+  color: var(--color-accent);
+}
+.summary-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+.pricing-note {
+  color: var(--dl-text-muted);
+  margin-top: 8px;
+}
 
-@media (max-width:900px){
-  .pricing-panel{flex-direction:column}
-  .summary{width:100%}
+@media (max-width: 900px) {
+  .pricing-panel {
+    flex-direction: column;
+  }
+  .summary {
+    width: 100%;
+  }
 }
 </style>

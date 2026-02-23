@@ -42,7 +42,7 @@
               @mousedown="startResize($event, issue, 'start')"
               @click.stop.prevent
             />
-            <span class="bar-main">{{ assigneeName(issue) || '미할당' }} · {{ issue.status }}</span>
+            <span class="bar-main">{{ assigneeName(issue) || "미할당" }} · {{ issue.status }}</span>
             <div class="bar-hover">
               <p>계획: {{ formatRange(issue.plannedStartAt, issue.plannedEndAt) }}</p>
               <p>실제: {{ formatRange(issue.actualStartAt, issue.actualEndAt) }}</p>
@@ -68,13 +68,23 @@
       <div class="modal-grid">
         <p><strong>제목:</strong> {{ selectedIssue.title }}</p>
         <p><strong>상태:</strong> {{ selectedIssue.status }}</p>
-        <p><strong>계획기간:</strong> {{ formatRange(selectedIssue.plannedStartAt, selectedIssue.plannedEndAt) }}</p>
-        <p><strong>실제기간:</strong> {{ formatRange(selectedIssue.actualStartAt, selectedIssue.actualEndAt) }}</p>
+        <p>
+          <strong>계획기간:</strong>
+          {{ formatRange(selectedIssue.plannedStartAt, selectedIssue.plannedEndAt) }}
+        </p>
+        <p>
+          <strong>실제기간:</strong>
+          {{ formatRange(selectedIssue.actualStartAt, selectedIssue.actualEndAt) }}
+        </p>
       </div>
 
       <div class="modal-actions">
-        <button type="button" class="btn btn--sm" @click="shrinkIssue(selectedIssue)">기간 -1일</button>
-        <button type="button" class="btn btn--sm" @click="extendIssue(selectedIssue)">기간 +1일</button>
+        <button type="button" class="btn btn--sm" @click="shrinkIssue(selectedIssue)">
+          기간 -1일
+        </button>
+        <button type="button" class="btn btn--sm" @click="extendIssue(selectedIssue)">
+          기간 +1일
+        </button>
         <button type="button" class="btn btn--sm btn-danger" @click="deleteIssue(selectedIssue.id)">
           이슈 삭제
         </button>
@@ -100,7 +110,10 @@
         </div>
 
         <ul class="member-list">
-          <li v-for="member in selectedIssue.members" :key="`${selectedIssue.id}-${member.id}-${member.role}`">
+          <li
+            v-for="member in selectedIssue.members"
+            :key="`${selectedIssue.id}-${member.id}-${member.role}`"
+          >
             <span>{{ member.name }} ({{ member.role }})</span>
             <button type="button" class="link-btn" @click="removeMember(member.id, member.role)">
               제거
@@ -355,7 +368,9 @@ const addRelatedMember = () => {
     return;
   }
 
-  const member = allMembers.value.find((candidate) => String(candidate.id) === String(assignMemberId.value));
+  const member = allMembers.value.find(
+    (candidate) => String(candidate.id) === String(assignMemberId.value)
+  );
   if (!member) return;
 
   selectedIssue.value.members.push({

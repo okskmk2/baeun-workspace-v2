@@ -65,7 +65,6 @@ const route = useRoute();
 const router = useRouter();
 const boardStore = useBoardStore();
 
-
 const projectId = computed(() => route.params.projectId);
 const boardId = computed(() => route.params.boardId);
 
@@ -113,14 +112,10 @@ const saveBoard = async () => {
     });
     const updated = res.data;
     if (projectId.value) {
-      boardStore.updateBoardDetails(
-        boardId.value,
-        projectId.value,
-        {
-          name: updated?.name ?? form.value.name,
-          summary: updated?.summary ?? form.value.summary,
-        }
-      );
+      boardStore.updateBoardDetails(boardId.value, projectId.value, {
+        name: updated?.name ?? form.value.name,
+        summary: updated?.summary ?? form.value.summary,
+      });
     }
   } catch (error) {
     formError.value = error?.response?.data?.message || t("board.settings.status.errorUpdate");

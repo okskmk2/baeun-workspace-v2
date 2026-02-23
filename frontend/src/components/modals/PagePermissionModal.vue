@@ -1,9 +1,5 @@
 <template>
-  <BaseModal
-    :open="open"
-    :title="t('wiki.page.permissions.modal.title')"
-    @close="handleClose"
-  >
+  <BaseModal :open="open" :title="t('wiki.page.permissions.modal.title')" @close="handleClose">
     <form class="modal-form" @submit.prevent="handleSubmit">
       <label for="permission-member">{{ t("wiki.page.permissions.membersLabel") }}</label>
       <select id="permission-member" v-model="form.memberId">
@@ -94,13 +90,10 @@ const handleSubmit = async () => {
   formError.value = "";
 
   try {
-    await api.post(
-      `/pages/${props.pageId}/members`,
-      {
-        member_id: form.value.memberId,
-        role_name: form.value.roleName,
-      }
-    );
+    await api.post(`/pages/${props.pageId}/members`, {
+      member_id: form.value.memberId,
+      role_name: form.value.roleName,
+    });
     emit("saved");
   } catch (error) {
     formError.value =

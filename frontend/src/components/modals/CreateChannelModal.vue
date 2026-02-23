@@ -8,7 +8,9 @@
         <option value="AGENT">{{ t("messenger.layout.modal.types.agent") }}</option>
       </select>
 
-      <label v-if="form.type !== 'DM'" for="channel-name">{{ t("messenger.layout.modal.nameLabel") }}</label>
+      <label v-if="form.type !== 'DM'" for="channel-name">{{
+        t("messenger.layout.modal.nameLabel")
+      }}</label>
       <input
         v-if="form.type !== 'DM'"
         id="channel-name"
@@ -96,9 +98,7 @@ const isCreating = ref(false);
 const formError = ref("");
 
 const dmCandidates = computed(() =>
-  (props.projectMembers || []).filter(
-    (member) => String(member.id) !== String(props.currentUserId)
-  )
+  (props.projectMembers || []).filter((member) => String(member.id) !== String(props.currentUserId))
 );
 
 const handleClose = () => {
@@ -140,15 +140,15 @@ const handleSubmit = async () => {
       });
     }
     const newChannel = res.data;
-    
+
     addToast({
       message: t("messenger.layout.toast.created"),
       type: "success",
     });
-    
+
     emit("created", newChannel);
     handleClose();
-    
+
     // Navigate to the new channel
     if (newChannel?.id) {
       router.push(`/project/${props.projectId}/channel/${newChannel.id}`);

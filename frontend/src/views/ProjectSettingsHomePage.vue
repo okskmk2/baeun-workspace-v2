@@ -79,7 +79,12 @@
         >
           {{ t("settings.home.actions.cancel") }}
         </button>
-        <button type="button" class="btn btn--danger" @click="confirmDeleteProject" :disabled="isDeleting">
+        <button
+          type="button"
+          class="btn btn--danger"
+          @click="confirmDeleteProject"
+          :disabled="isDeleting"
+        >
           {{ isDeleting ? t("settings.home.actions.deleting") : t("settings.home.actions.delete") }}
         </button>
       </div>

@@ -1251,6 +1251,10 @@
         "board": "보드",
         "channel": "채널"
       },
+      "toast": {
+        "success": "회원 탈퇴가 완료되었습니다.",
+        "autoDeleted": "기본 워크스페이스와 프로젝트를 삭제하고 탈퇴했습니다."
+      },
       "cancel": "취소",
       "confirm": "탈퇴",
       "withdrawing": "탈퇴 처리 중..."

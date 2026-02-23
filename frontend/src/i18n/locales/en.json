@@ -1275,6 +1275,10 @@
         "board": "Board",
         "channel": "Channel"
       },
+      "toast": {
+        "success": "Account withdrawal completed.",
+        "autoDeleted": "Deleted the default workspace and project, then withdrew the account."
+      },
       "cancel": "Cancel",
       "confirm": "Withdraw",
       "withdrawing": "Withdrawing..."

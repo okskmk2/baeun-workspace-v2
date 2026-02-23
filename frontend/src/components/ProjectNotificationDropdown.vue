@@ -9,7 +9,9 @@
       @click="toggleMenu"
     >
       <MaterialSymbol name="notifications" :size="18" alt="" />
-      <span v-if="unreadCount > 0" class="notification-menu__badge">{{ unreadCount > 99 ? "99+" : unreadCount }}</span>
+      <span v-if="unreadCount > 0" class="notification-menu__badge">{{
+        unreadCount > 99 ? "99+" : unreadCount
+      }}</span>
     </button>
 
     <div v-if="isOpen" class="notification-menu__panel" role="menu">
@@ -24,7 +26,9 @@
           {{ t("layout.project.util.notificationsReadAll") }}
         </button>
       </div>
-      <p v-if="isLoading" class="notification-menu__empty">{{ t("layout.project.util.notificationsLoading") }}</p>
+      <p v-if="isLoading" class="notification-menu__empty">
+        {{ t("layout.project.util.notificationsLoading") }}
+      </p>
       <ul v-else-if="notifications.length" class="notification-menu__list">
         <li v-for="item in notifications" :key="item.id">
           <button
@@ -39,7 +43,9 @@
           </button>
         </li>
       </ul>
-      <p v-else class="notification-menu__empty">{{ t("layout.project.util.notificationsEmpty") }}</p>
+      <p v-else class="notification-menu__empty">
+        {{ t("layout.project.util.notificationsEmpty") }}
+      </p>
       <div class="notification-menu__footer">
         <router-link
           class="notification-menu__history-link"

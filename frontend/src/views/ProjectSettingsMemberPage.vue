@@ -61,9 +61,7 @@ const projectId = computed(() => route.params.projectId);
 const projectMemberStore = useProjectMemberStore();
 const workspaceStore = useWorkspaceStore();
 
-const workspaceId = computed(() =>
-  workspaceStore.getProject(projectId.value)?.workspace_id
-);
+const workspaceId = computed(() => workspaceStore.getProject(projectId.value)?.workspace_id);
 
 const projectMembers = computed(() => projectMemberStore.getProjectMembers(projectId.value));
 const workspaceMembers = ref([]);
@@ -80,8 +78,7 @@ const fetchProjectMembers = async () => {
   try {
     await projectMemberStore.fetchProjectMembers(projectId.value);
   } catch (error) {
-    errorMessage.value =
-      error?.response?.data?.message || t("settings.member.status.errorLoad");
+    errorMessage.value = error?.response?.data?.message || t("settings.member.status.errorLoad");
   } finally {
     isLoading.value = false;
   }

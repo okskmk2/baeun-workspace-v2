@@ -66,18 +66,15 @@ const handleSubmit = async () => {
   formError.value = "";
 
   try {
-    const res = await api.post(
-      "/pages",
-      {
-        project_id: props.projectId,
-        title: form.value.title,
-        parent_id: props.parentPageId,
-      }
-    );
+    const res = await api.post("/pages", {
+      project_id: props.projectId,
+      title: form.value.title,
+      parent_id: props.parentPageId,
+    });
     const newPage = res.data;
     emit("created", newPage);
     handleClose();
-    
+
     // Navigate to the new page
     if (newPage?.id) {
       router.push(`/project/${props.projectId}/wiki/${newPage.id}`);

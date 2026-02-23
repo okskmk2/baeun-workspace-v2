@@ -1,9 +1,5 @@
 <template>
-  <BaseModal
-    :open="open"
-    :title="t('messenger.room.invite.modal.title')"
-    @close="handleClose"
-  >
+  <BaseModal :open="open" :title="t('messenger.room.invite.modal.title')" @close="handleClose">
     <form class="modal-form" @submit.prevent="handleSubmit">
       <label for="invite-member">{{ t("messenger.room.invite.modal.membersLabel") }}</label>
       <select id="invite-member" v-model="selectedMemberId" :disabled="!inviteableMembers.length">

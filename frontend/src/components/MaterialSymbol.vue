@@ -32,12 +32,11 @@ const styleMap = {
 
 const styleKey = computed(() => styleMap[props.type] || styleMap.rounded);
 
-const weightSegment = computed(() =>
-  props.weight === 400 ? "default" : `wght${props.weight}`
-);
+const weightSegment = computed(() => (props.weight === 400 ? "default" : `wght${props.weight}`));
 
-const iconUrl = computed(() =>
-  `https://fonts.gstatic.com/s/i/short-term/release/${styleKey.value}/${props.name}/${weightSegment.value}/24px.svg`
+const iconUrl = computed(
+  () =>
+    `https://fonts.gstatic.com/s/i/short-term/release/${styleKey.value}/${props.name}/${weightSegment.value}/24px.svg`
 );
 
 const isDecorative = computed(() => props.alt.length === 0);

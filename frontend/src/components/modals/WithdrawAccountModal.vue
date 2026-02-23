@@ -1,9 +1,5 @@
 <template>
-  <BaseModal
-    :open="open"
-    :title="t('profile.withdraw.title')"
-    @close="handleClose"
-  >
+  <BaseModal :open="open" :title="t('profile.withdraw.title')" @close="handleClose">
     <form class="withdraw-form" @submit.prevent="handleSubmit">
       <p class="withdraw-description">{{ t("profile.withdraw.description") }}</p>
       <label for="withdraw-password" class="control-label">{{
@@ -40,6 +36,7 @@ import { ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import api from "../../lib/axios";
+import { addToast } from "../../lib/toast";
 import { useAppStore } from "../../stores/appStore";
 import BaseModal from "../BaseModal.vue";
 
@@ -76,8 +73,17 @@ const handleSubmit = async () => {
   formError.value = "";
 
   try {
-    await api.post("/members/withdraw", {
-      password: password.value,
+    const res = await api.delete("/members/me", {
+      data: {
+        password: password.value,
+      },
+    });
+    const autoDeletedDefaults = Boolean(res?.data?.auto_deleted_defaults);
+    addToast({
+      message: autoDeletedDefaults
+        ? t("profile.withdraw.toast.autoDeleted")
+        : t("profile.withdraw.toast.success"),
+      type: "success",
     });
     appStore.setCurrentUser(null);
     router.push("/login");

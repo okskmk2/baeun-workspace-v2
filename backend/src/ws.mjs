@@ -1,5 +1,12 @@
 const roomSockets = new Map();
 const userSockets = new Map();
+let activeSocketCount = 0;
+
+const markSocketActive = (ws) => {
+  if (ws.__counted) return;
+  ws.__counted = true;
+  activeSocketCount += 1;
+};
 
 const removeFromRoom = (ws) => {
   if (!ws.channelId) return;
@@ -22,6 +29,10 @@ const removeFromUser = (ws) => {
     userSockets.delete(key);
   }
   ws.userId = null;
+  if (ws.__counted) {
+    activeSocketCount = Math.max(0, activeSocketCount - 1);
+    ws.__counted = false;
+  }
 };
 
 export const registerUserSocket = (ws, userId) => {
@@ -31,6 +42,7 @@ export const registerUserSocket = (ws, userId) => {
     userSockets.set(key, new Set());
   }
   userSockets.get(key).add(ws);
+  markSocketActive(ws);
 };
 
 export const joinRoom = (ws, channelId) => {
@@ -76,3 +88,5 @@ export const removeSocket = (ws) => {
   removeFromRoom(ws);
   removeFromUser(ws);
 };
+
+export const getActiveSocketCount = () => activeSocketCount;

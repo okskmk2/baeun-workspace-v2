@@ -1,6 +1,10 @@
 <template>
   <div class="feed">
-    <div v-for="(group, groupIndex) in groups" :key="resolveGroupKey(group, groupIndex)" class="feed-group">
+    <div
+      v-for="(group, groupIndex) in groups"
+      :key="resolveGroupKey(group, groupIndex)"
+      class="feed-group"
+    >
       <div class="feed-date">{{ group.label }}</div>
       <article
         v-for="(item, itemIndex) in group.items"

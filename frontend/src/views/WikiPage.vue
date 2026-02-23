@@ -209,13 +209,10 @@ const savePage = async () => {
 
   isSaving.value = true;
   try {
-    const res = await api.patch(
-      `/pages/${pageId.value}`,
-      {
-        title: editForm.value.title,
-        content: editForm.value.content,
-      }
-    );
+    const res = await api.patch(`/pages/${pageId.value}`, {
+      title: editForm.value.title,
+      content: editForm.value.content,
+    });
     page.value = res.data || page.value;
     originalForm.value = {
       title: page.value.title || "",

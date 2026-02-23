@@ -18,12 +18,7 @@ const upload = multer({
   limits: { fileSize: PROFILE_IMAGE_MAX_SIZE },
 });
 
-const ALLOWED_IMAGE_MIME_TYPES = new Set([
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-  "image/gif",
-]);
+const ALLOWED_IMAGE_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
 
 const MIME_TO_EXTENSION = {
   "image/jpeg": "jpg",
@@ -249,6 +244,12 @@ router.post("/signup", isGuest, async (req, res) => {
       [workspaceId, userId]
     );
 
+    const workspaceNoticeQuery = `
+      INSERT INTO channel (name, workspace_id, type, scope, status)
+      VALUES ($1, $2, 'NOTICE', 'WORKSPACE', 'ACTIVE');
+    `;
+    await client.query(workspaceNoticeQuery, ["워크스페이스 공지채널", workspaceId]);
+
     // 4. Create default project.
     const projectRes = await client.query(
       `INSERT INTO project (name, workspace_id, is_default) 
@@ -256,6 +257,12 @@ router.post("/signup", isGuest, async (req, res) => {
       ["First Project", workspaceId]
     );
     const projectId = projectRes.rows[0].id;
+
+    const projectNoticeQuery = `
+      INSERT INTO channel (name, project_id, type, scope, status)
+      VALUES ($1, $2, 'NOTICE', 'PROJECT', 'ACTIVE');
+    `;
+    await client.query(projectNoticeQuery, ["프로젝트 공지채널", projectId]);
 
     // 5. Add project member (OWNER).
     await client.query(
@@ -777,7 +784,42 @@ router.delete("/me", isAuth, async (req, res) => {
     const ownedResourceItems = await getOwnedResourceItems(client, userId);
     const ownedResources = getOwnedResourceTypes(ownedResourceItems);
 
-    if (ownedResources.length > 0) {
+    const ownedWorkspaceRes = await client.query(
+      `SELECT w.id, w.is_default
+       FROM workspace w
+       JOIN workspace_member wm ON w.id = wm.workspace_id
+       WHERE wm.member_id = $1 AND wm.role_name = 'OWNER'`,
+      [userId]
+    );
+
+    const ownedProjectRes = await client.query(
+      `SELECT p.id, p.is_default
+       FROM project p
+       JOIN project_member pm ON p.id = pm.project_id
+       WHERE pm.member_id = $1 AND pm.role_name = 'OWNER'`,
+      [userId]
+    );
+
+    const ownedWorkspaceIds = ownedWorkspaceRes.rows.map((row) => row.id);
+    const ownedProjectIds = ownedProjectRes.rows.map((row) => row.id);
+    const defaultWorkspaceIds = ownedWorkspaceRes.rows
+      .filter((row) => row.is_default)
+      .map((row) => row.id);
+    const defaultProjectIds = ownedProjectRes.rows
+      .filter((row) => row.is_default)
+      .map((row) => row.id);
+
+    const onlyWorkspaceProjectTypes = ownedResources.every((type) =>
+      ["workspace", "project"].includes(type)
+    );
+    const hasOnlyDefaultWorkspace =
+      ownedWorkspaceIds.length > 0 && ownedWorkspaceIds.length === defaultWorkspaceIds.length;
+    const hasOnlyDefaultProject =
+      ownedProjectIds.length > 0 && ownedProjectIds.length === defaultProjectIds.length;
+    const canAutoDeleteDefaults =
+      onlyWorkspaceProjectTypes && hasOnlyDefaultWorkspace && hasOnlyDefaultProject;
+
+    if (ownedResources.length > 0 && !canAutoDeleteDefaults) {
       return res.status(403).json({
         name: "Forbidden",
         message: "Owner resources exist. Transfer ownership first.",
@@ -786,6 +828,11 @@ router.delete("/me", isAuth, async (req, res) => {
     }
 
     await client.query("BEGIN");
+
+    if (canAutoDeleteDefaults) {
+      await client.query("DELETE FROM project WHERE id = ANY($1::int[])", [defaultProjectIds]);
+      await client.query("DELETE FROM workspace WHERE id = ANY($1::int[])", [defaultWorkspaceIds]);
+    }
 
     await client.query("DELETE FROM workspace_member WHERE member_id = $1", [userId]);
     await client.query("DELETE FROM project_member WHERE member_id = $1", [userId]);
@@ -816,7 +863,10 @@ router.delete("/me", isAuth, async (req, res) => {
     });
     res.clearCookie("connect.sid");
 
-    res.json({ message: "Account withdrawn." });
+    res.json({
+      message: "Account withdrawn.",
+      auto_deleted_defaults: canAutoDeleteDefaults,
+    });
   } catch (error) {
     await client.query("ROLLBACK");
     res.status(500).json({ name: "InternalServerError", message: error.message });

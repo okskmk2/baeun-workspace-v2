@@ -19,9 +19,7 @@
         </span>
         {{ item.channel_name || "채널" }} · {{ item.content || "(내용 없음)" }}
       </div>
-      <div class="item-meta">
-        {{ getMessageAuthor(item) }} · {{ formatTime(item.created_at) }}
-      </div>
+      <div class="item-meta">{{ getMessageAuthor(item) }} · {{ formatTime(item.created_at) }}</div>
     </template>
   </FeedList>
 </template>

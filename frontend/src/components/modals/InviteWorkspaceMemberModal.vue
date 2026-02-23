@@ -1,9 +1,5 @@
 <template>
-  <BaseModal
-    :open="open"
-    :title="t('workspace.home.members.modal.title')"
-    @close="handleClose"
-  >
+  <BaseModal :open="open" :title="t('workspace.home.members.modal.title')" @close="handleClose">
     <form class="modal-form" @submit.prevent="handleSubmit">
       <label for="member-email">{{ t("workspace.home.members.emailLabel") }}</label>
       <input

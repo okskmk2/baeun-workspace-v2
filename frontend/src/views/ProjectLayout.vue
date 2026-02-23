@@ -70,7 +70,7 @@
           <MaterialSymbol name="settings" :size="18" alt="" />
         </router-link>
         <ProjectNotificationDropdown />
-        <AccountWorkspaceDropdown />
+        <AccountDropdown />
       </nav>
     </header>
     <router-view />
@@ -95,7 +95,7 @@ import MaterialSymbol from "../components/MaterialSymbol.vue";
 import Avatar from "../components/Avatar.vue";
 import SearchInput from "../components/SearchInput.vue";
 import ProjectNotificationDropdown from "../components/ProjectNotificationDropdown.vue";
-import AccountWorkspaceDropdown from "../components/AccountWorkspaceDropdown.vue";
+import AccountDropdown from "../components/AccountDropdown.vue";
 
 const { t } = useI18n();
 const route = useRoute();
