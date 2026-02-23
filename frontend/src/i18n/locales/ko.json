@@ -86,13 +86,22 @@
         "settings": "설정",
         "account": "계정",
         "notifications": "알림",
-        "notificationsEmpty": "새 알림이 없습니다."
+        "notificationsEmpty": "새 알림이 없습니다.",
+        "notificationsLoading": "알림을 불러오는 중...",
+        "notificationsReadAll": "모두 읽음",
+        "notificationsHistory": "이전 알림 보기",
+        "notificationsHistorySubtitle": "지난 알림을 확인하고 바로 이동할 수 있습니다.",
+        "notificationsFilterAll": "전체",
+        "notificationsFilterUnread": "읽지 않음",
+        "notificationsLoadMore": "더 보기",
+        "notificationsLoadingMore": "불러오는 중..."
       }
     },
     "settings": {
       "nav": {
         "general": "기본 설정",
-        "members": "구성원 관리"
+        "members": "구성원 관리",
+        "notifications": "알림 내역"
       }
     }
   },

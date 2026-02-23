@@ -8,6 +8,9 @@
         <router-link :to="`/project/${projectId}/settings/member`"
           >{{ t("layout.settings.nav.members") }}</router-link
         >
+        <router-link :to="`/project/${projectId}/settings/notifications`"
+          >{{ t("layout.settings.nav.notifications") }}</router-link
+        >
       </nav>
     </aside>
     <main>

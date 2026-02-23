@@ -1,6 +1,7 @@
 import express from "express";
 import pool from "../db.mjs";
 import { isAuth } from "../middlewares/auth.middleware.mjs";
+import { createNotifications, NOTIFICATION_TYPES } from "../notification.mjs";
 
 const router = express.Router();
 
@@ -465,10 +466,26 @@ router.get("/:issueId/members", isAuth, async (req, res) => {
 router.patch("/:issueId", isAuth, async (req, res) => {
   const { issueId } = req.params;
   let { title, content, status, board_id } = req.body; // Use 'let' for board_id as it might be reassigned
+  const actorId = req.session.userId;
   const client = await pool.connect();
 
   try {
     await client.query("BEGIN");
+
+    const prevIssueRes = await client.query(
+      `SELECT i.id, i.title, i.content, i.status, i.board_id, b.project_id
+       FROM issue i
+       JOIN board b ON b.id = i.board_id
+       WHERE i.id = $1`,
+      [issueId]
+    );
+
+    if (prevIssueRes.rows.length === 0) {
+      await client.query("ROLLBACK");
+      return res.status(404).json({ name: "NotFound", message: "이슈 없음" });
+    }
+
+    const prevIssue = prevIssueRes.rows[0];
 
     // If status is being set to BACKLOG, automatically move to the project's backlog board
     if (status === 'BACKLOG') {
@@ -503,12 +520,14 @@ router.patch("/:issueId", isAuth, async (req, res) => {
       [title, content, status, board_id, issueId]
     );
 
-    if (result.rows.length === 0) {
-      await client.query("ROLLBACK");
-      return res.status(404).json({ name: "NotFound", message: "이슈 없음" });
-    }
-
     const updatedIssue = result.rows[0];
+    const previousStatus = String(prevIssue.status || "").toUpperCase();
+    const nextStatus = String(updatedIssue.status || "").toUpperCase();
+    const isStatusChanged = previousStatus !== nextStatus;
+    const isContentChanged =
+      String(prevIssue.title || "") !== String(updatedIssue.title || "") ||
+      String(prevIssue.content || "") !== String(updatedIssue.content || "");
+
     if (String(updatedIssue.status || "").toUpperCase() === "DONE") {
       await client.query(
         `UPDATE channel
@@ -524,6 +543,88 @@ router.patch("/:issueId", isAuth, async (req, res) => {
          WHERE issue_id = $1
            AND type = 'ISSUE'`,
         [issueId]
+      );
+    }
+
+    if (isStatusChanged || isContentChanged) {
+      const watcherRes = await client.query(
+        `SELECT member_id
+         FROM issue_member
+         WHERE issue_id = $1
+           AND role_name = 'WATCHER'`,
+        [issueId]
+      );
+
+      const watcherIds = watcherRes.rows.map((row) => row.member_id);
+      const issueTitle = updatedIssue.title || prevIssue.title || `Issue #${issueId}`;
+
+      if (isStatusChanged) {
+        await createNotifications(
+          {
+            recipientIds: watcherIds,
+            actorId,
+            type: NOTIFICATION_TYPES.ISSUE_WATCHING_STATUS_CHANGED,
+            resourceType: "issue",
+            resourceId: Number(issueId),
+            projectId: prevIssue.project_id,
+            title: `팔로우 이슈 상태 변경: ${issueTitle}`,
+            body: `${previousStatus} → ${nextStatus}`,
+            payload: {
+              issue_id: Number(issueId),
+              previous_status: previousStatus,
+              next_status: nextStatus,
+            },
+          },
+          { client }
+        );
+      }
+
+      if (isContentChanged) {
+        await createNotifications(
+          {
+            recipientIds: watcherIds,
+            actorId,
+            type: NOTIFICATION_TYPES.ISSUE_WATCHING_CONTENT_CHANGED,
+            resourceType: "issue",
+            resourceId: Number(issueId),
+            projectId: prevIssue.project_id,
+            title: `팔로우 이슈 내용 변경: ${issueTitle}`,
+            body: "이슈 제목 또는 내용이 변경되었습니다.",
+            payload: {
+              issue_id: Number(issueId),
+            },
+          },
+          { client }
+        );
+      }
+    }
+
+    if (previousStatus === "IN_REVIEW" && nextStatus === "DONE") {
+      const assigneeRes = await client.query(
+        `SELECT member_id
+         FROM issue_member
+         WHERE issue_id = $1
+           AND role_name = 'ASSIGNEE'`,
+        [issueId]
+      );
+
+      await createNotifications(
+        {
+          recipientIds: assigneeRes.rows.map((row) => row.member_id),
+          actorId,
+          type: NOTIFICATION_TYPES.ISSUE_ASSIGNEE_REVIEW_TO_DONE,
+          resourceType: "issue",
+          resourceId: Number(issueId),
+          projectId: prevIssue.project_id,
+          title: `담당 이슈 완료 처리: ${updatedIssue.title || `Issue #${issueId}`}`,
+          body: "검토 중 상태에서 완료로 변경되었습니다.",
+          payload: {
+            issue_id: Number(issueId),
+            previous_status: previousStatus,
+            next_status: nextStatus,
+          },
+        },
+        { client }
       );
     }
 
@@ -585,6 +686,7 @@ router.patch("/:issueId", isAuth, async (req, res) => {
 router.post("/:issueId/members", isAuth, async (req, res) => {
   const { issueId } = req.params;
   const { member_id, role_name = "ASSIGNEE" } = req.body;
+  const actorId = req.session.userId;
   try {
     const insertRes = await pool.query(
       `INSERT INTO issue_member (issue_id, member_id, role_name) VALUES ($1, $2, $3)
@@ -600,6 +702,34 @@ router.post("/:issueId/members", isAuth, async (req, res) => {
         [issueId, member_id]
       );
       issueMemberId = existingRes.rows[0]?.id;
+    }
+
+    const roleUpper = String(role_name || "").toUpperCase();
+    if (roleUpper === "ASSIGNEE") {
+      const issueRes = await pool.query(
+        `SELECT i.title, b.project_id, b.id AS board_id
+         FROM issue i
+         JOIN board b ON b.id = i.board_id
+         WHERE i.id = $1`,
+        [issueId]
+      );
+      const issueTitle = issueRes.rows[0]?.title || `Issue #${issueId}`;
+      const projectId = issueRes.rows[0]?.project_id || null;
+      const boardId = issueRes.rows[0]?.board_id || null;
+      await createNotifications({
+        recipientIds: [member_id],
+        actorId,
+        type: NOTIFICATION_TYPES.ISSUE_ASSIGNED_TO_ME,
+        resourceType: "issue",
+        resourceId: Number(issueId),
+        projectId,
+        title: `이슈 담당자로 지정됨: ${issueTitle}`,
+        body: "담당자로 할당되었습니다.",
+        payload: {
+          issue_id: Number(issueId),
+          board_id: boardId ? Number(boardId) : null,
+        },
+      });
     }
 
     res.json({ id: issueMemberId, message: "담당자가 추가되었습니다." });
@@ -664,6 +794,7 @@ router.post("/:issueId/members", isAuth, async (req, res) => {
 router.patch("/members/:issueMemberId", isAuth, async (req, res) => {
   const { issueMemberId } = req.params;
   const { role_name } = req.body;
+  const actorId = req.session.userId;
 
   if (!role_name) {
     return res.status(400).json({ name: "BadRequest", message: "역할이 필요합니다." });
@@ -679,7 +810,38 @@ router.patch("/members/:issueMemberId", isAuth, async (req, res) => {
       return res.status(404).json({ name: "NotFound", message: "관련자를 찾을 수 없습니다." });
     }
 
-    res.json(result.rows[0]);
+    const updatedMember = result.rows[0];
+    const roleUpper = String(updatedMember.role_name || "").toUpperCase();
+    if (roleUpper === "ASSIGNEE") {
+      const issueRes = await pool.query(
+        `SELECT i.title, b.project_id, b.id AS board_id
+         FROM issue i
+         JOIN board b ON b.id = i.board_id
+         WHERE i.id = $1`,
+        [updatedMember.issue_id]
+      );
+      const issueTitle = issueRes.rows[0]?.title || `Issue #${updatedMember.issue_id}`;
+      const projectId = issueRes.rows[0]?.project_id || null;
+      const boardId = issueRes.rows[0]?.board_id || null;
+
+      await createNotifications({
+        recipientIds: [updatedMember.member_id],
+        actorId,
+        type: NOTIFICATION_TYPES.ISSUE_ASSIGNED_TO_ME,
+        resourceType: "issue",
+        resourceId: Number(updatedMember.issue_id),
+        projectId,
+        title: `이슈 담당자로 지정됨: ${issueTitle}`,
+        body: "담당자로 할당되었습니다.",
+        payload: {
+          issue_id: Number(updatedMember.issue_id),
+          issue_member_id: Number(updatedMember.id),
+          board_id: boardId ? Number(boardId) : null,
+        },
+      });
+    }
+
+    res.json(updatedMember);
   } catch (error) {
     res.status(500).json({ name: "InternalServerError", message: error.message });
   }

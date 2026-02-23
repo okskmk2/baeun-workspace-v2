@@ -26,7 +26,7 @@
         {{ t("messenger.room.actions.invite") }}
       </button>
       <button
-        v-if="!isDmChannel && !isNoticeChannel"
+        v-if="!isDmChannel && !isNoticeChannel && !isChannelOwner"
         type="button"
         class="btn btn--sm btn--secondary"
         @click="leaveChannel"
@@ -155,12 +155,14 @@ import MessageFeedbackModal from "../components/modals/MessageFeedbackModal.vue"
 import { addToast } from "../lib/toast";
 import { useProjectMemberStore } from "../stores/projectMemberStore";
 import { useAppStore } from "../stores/appStore";
+import { useRealtimeStore } from "../stores/realtimeStore";
 
 const { t, locale } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const projectMemberStore = useProjectMemberStore();
 const appStore = useAppStore();
+const realtimeStore = useRealtimeStore();
 const roomId = computed(() => route.params.roomId);
 const projectId = computed(() => route.params.projectId);
 
@@ -191,6 +193,9 @@ const isDmChannel = computed(
 const isNoticeChannel = computed(
   () => String(channelDetail.value?.type || "").toUpperCase() === "NOTICE"
 );
+const isChannelOwner = computed(
+  () => String(channelDetail.value?.viewer_role_name || "").toUpperCase() === "OWNER"
+);
 const canPostMessage = computed(() => {
   if (!isNoticeChannel.value) return true;
   return Boolean(channelDetail.value?.can_post_message);
@@ -216,7 +221,10 @@ const linkedIssuePath = computed(() => {
   if (!channelDetail.value?.issue_id || !channelDetail.value?.board_id) return "";
   return `/project/${projectId.value}/board/${channelDetail.value.board_id}/issue/${channelDetail.value.issue_id}`;
 });
-let socket = null;
+let unsubscribeMessage = null;
+let unsubscribeFeedback = null;
+let unsubscribeOpen = null;
+let unsubscribeClose = null;
 const isInviteOpen = ref(false);
 const projectMembers = computed(() => projectMemberStore.getProjectMembers(projectId.value));
 const isFeedbackOpen = ref(false);
@@ -325,61 +333,58 @@ const scrollMessagesToBottom = async () => {
 };
 
 const connectSocket = () => {
-  if (socket) {
-    socket.close();
-  }
+  isConnected.value = realtimeStore.isConnected;
 
-  const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-  const port = window.location.hostname.includes("localhost") ? ":8080" : "";
-  socket = new WebSocket(`${protocol}://${window.location.hostname}${port}/ws`);
-
-  socket.addEventListener("open", () => {
+  unsubscribeOpen = realtimeStore.subscribe("open", () => {
     isConnected.value = true;
     if (roomId.value) {
-      socket.send(JSON.stringify({ type: "join", channelId: roomId.value }));
-      console.log("연결됨");
+      realtimeStore.joinRoom(roomId.value);
     }
   });
-  socket.addEventListener("close", () => {
+
+  unsubscribeClose = realtimeStore.subscribe("close", () => {
     isConnected.value = false;
   });
-  socket.addEventListener("message", (event) => {
-    try {
-      const payload = JSON.parse(event.data);
-      if (payload?.type === "message" && payload?.data) {
-        messages.value = [...messages.value, payload.data];
-        return;
-      }
-      if (payload?.type === "feedback" && payload?.data) {
-        const messageId = payload.data.message_id;
-        const counts = payload.data.feedback_counts || {};
-        messages.value = messages.value.map((message) =>
-          String(message.id) === String(messageId)
-            ? {
-                ...message,
-                feedback_counts: counts,
-                feedback_mine: message.feedback_mine || [],
-              }
-            : message
-        );
-      }
-    } catch (error) {
-      // ignore bad payloads
-    }
+
+  unsubscribeMessage = realtimeStore.subscribe("message", (data) => {
+    if (!data) return;
+    if (String(data.channel_id) !== String(roomId.value)) return;
+    messages.value = [...messages.value, data];
   });
+
+  unsubscribeFeedback = realtimeStore.subscribe("feedback", (data) => {
+    if (!data) return;
+    const messageId = data.message_id;
+    const counts = data.feedback_counts || {};
+    messages.value = messages.value.map((message) =>
+      String(message.id) === String(messageId)
+        ? {
+            ...message,
+            feedback_counts: counts,
+            feedback_mine: message.feedback_mine || [],
+          }
+        : message
+    );
+  });
+
+  if (roomId.value) {
+    realtimeStore.joinRoom(roomId.value);
+  }
 };
 
 const sendMessage = async () => {
-  if (!draft.value || !roomId.value || !socket || socket.readyState !== 1) return;
+  if (!draft.value || !roomId.value) return;
   isSending.value = true;
-  socket.send(
-    JSON.stringify({
-      type: "message",
-      channelId: roomId.value,
-      content: draft.value,
-      messageType: "USER",
-    })
-  );
+  const ok = realtimeStore.send({
+    type: "message",
+    channelId: roomId.value,
+    content: draft.value,
+    messageType: "USER",
+  });
+  if (!ok) {
+    isSending.value = false;
+    return;
+  }
   draft.value = "";
   isSending.value = false;
 };
@@ -518,9 +523,7 @@ watch(roomId, async () => {
   await projectMemberStore.fetchProjectMembers(projectId.value);
   await fetchchannelDetail();
   await fetchMessages({ loadMore: false });
-  if (socket && socket.readyState === 1) {
-    socket.send(JSON.stringify({ type: "join", channelId: roomId.value }));
-  }
+  realtimeStore.joinRoom(roomId.value);
 });
 
 watch(
@@ -534,11 +537,17 @@ watch(
 );
 
 onBeforeUnmount(() => {
-  if (socket) {
-    socket.close();
-    socket = null;
-    console.log("소켓 닫힘");
+  if (roomId.value) {
+    realtimeStore.leaveRoom(roomId.value);
   }
+  if (unsubscribeMessage) unsubscribeMessage();
+  if (unsubscribeFeedback) unsubscribeFeedback();
+  if (unsubscribeOpen) unsubscribeOpen();
+  if (unsubscribeClose) unsubscribeClose();
+  unsubscribeMessage = null;
+  unsubscribeFeedback = null;
+  unsubscribeOpen = null;
+  unsubscribeClose = null;
 });
 </script>
 

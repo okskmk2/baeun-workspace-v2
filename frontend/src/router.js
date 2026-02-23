@@ -32,6 +32,7 @@ import ChannelSettingsPage from "./views/ChannelSettingsPage.vue";
 import ProjectSettingsLayout from "./views/ProjectSettingsLayout.vue";
 import ProjectSettingsHomePage from "./views/ProjectSettingsHomePage.vue";
 import ProjectSettingsMemberPage from "./views/ProjectSettingsMemberPage.vue";
+import NotificationHistoryPage from "./views/NotificationHistoryPage.vue";
 import BlankPage from "./views/BlankPage.vue";
 import BacklogPage from "./views/BacklogPage.vue";
 import { useAppStore } from "./stores/appStore";
@@ -182,6 +183,10 @@ const routes = [
           {
             path: "member",
             component: ProjectSettingsMemberPage,
+          },
+          {
+            path: "notifications",
+            component: NotificationHistoryPage,
           },
         ],
       },

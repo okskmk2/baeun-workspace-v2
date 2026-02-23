@@ -86,13 +86,22 @@
         "settings": "Settings",
         "account": "Account",
         "notifications": "Notifications",
-        "notificationsEmpty": "No new notifications."
+        "notificationsEmpty": "No new notifications.",
+        "notificationsLoading": "Loading notifications...",
+        "notificationsReadAll": "Mark all read",
+        "notificationsHistory": "View previous notifications",
+        "notificationsHistorySubtitle": "Browse earlier notifications and jump directly.",
+        "notificationsFilterAll": "All",
+        "notificationsFilterUnread": "Unread",
+        "notificationsLoadMore": "Load more",
+        "notificationsLoadingMore": "Loading..."
       }
     },
     "settings": {
       "nav": {
         "general": "General",
-        "members": "Members"
+        "members": "Members",
+        "notifications": "Notification History"
       }
     }
   },

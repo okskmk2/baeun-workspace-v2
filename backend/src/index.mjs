@@ -7,7 +7,8 @@ import pool from "./db.mjs";
 import logger from "./logger.mjs";
 import http from "http";
 import { WebSocketServer } from "ws";
-import { broadcastToRoom, joinRoom, removeSocket } from "./ws.mjs";
+import { broadcastToRoom, joinRoom, registerUserSocket, removeSocket } from "./ws.mjs";
+import { createNotifications, NOTIFICATION_TYPES } from "./notification.mjs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { SESSION_TTL_MS, SESSION_TTL_SECONDS } from "./config/session.mjs";
@@ -23,6 +24,7 @@ import pagesRouter from "./routes/pages.route.mjs";
 import boardRouter from "./routes/board.route.mjs";
 import issueRouter from "./routes/issue.route.mjs";
 import chatRouter from "./routes/chat.route.mjs";
+import notificationRouter from "./routes/notification.route.mjs";
 
 const app = express();
 const pgSession = connectPgSimple(session);
@@ -70,6 +72,7 @@ app.use("/api/pages", pagesRouter);
 app.use("/api/boards", boardRouter);
 app.use("/api/issues", issueRouter);
 app.use("/api/channels", chatRouter);
+app.use("/api/notifications", notificationRouter);
 
 // Static files serve
 const staticPath = path.join(__dirname, "../../frontend/dist");
@@ -119,6 +122,7 @@ server.on("upgrade", (request, socket, head) => {
 
 wss.on("connection", (ws, request) => {
   const userId = request.session.userId;
+  registerUserSocket(ws, userId);
 
   ws.on("message", async (raw) => {
     let payload;
@@ -205,6 +209,49 @@ wss.on("connection", (ws, request) => {
             type: message.type || messageType,
           },
         });
+
+        if (channelType === "NOTICE") {
+          const scope = String(channel.scope || "").toUpperCase();
+          if (scope === "WORKSPACE" && channel.workspace_id) {
+            const wsMembersRes = await pool.query(
+              "SELECT member_id FROM workspace_member WHERE workspace_id = $1",
+              [channel.workspace_id]
+            );
+            await createNotifications({
+              recipientIds: wsMembersRes.rows.map((row) => row.member_id),
+              actorId: userId,
+              type: NOTIFICATION_TYPES.CHANNEL_NOTICE_WORKSPACE_NEW_MESSAGE,
+              resourceType: "channel",
+              resourceId: Number(channelId),
+              workspaceId: channel.workspace_id,
+              title: "워크스페이스 공지 새 메시지",
+              body: String(content || "").slice(0, 180),
+              payload: {
+                channel_id: Number(channelId),
+                message_id: message.id,
+              },
+            });
+          } else if (channel.project_id) {
+            const projectMembersRes = await pool.query(
+              "SELECT member_id FROM project_member WHERE project_id = $1",
+              [channel.project_id]
+            );
+            await createNotifications({
+              recipientIds: projectMembersRes.rows.map((row) => row.member_id),
+              actorId: userId,
+              type: NOTIFICATION_TYPES.CHANNEL_NOTICE_PROJECT_NEW_MESSAGE,
+              resourceType: "channel",
+              resourceId: Number(channelId),
+              projectId: channel.project_id,
+              title: "프로젝트 공지 새 메시지",
+              body: String(content || "").slice(0, 180),
+              payload: {
+                channel_id: Number(channelId),
+                message_id: message.id,
+              },
+            });
+          }
+        }
       } catch (error) {
         logger.error("chat websocket error", {
           err: error?.message,

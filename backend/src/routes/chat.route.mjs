@@ -3,6 +3,7 @@ import pool from "../db.mjs";
 import { isAuth } from "../middlewares/auth.middleware.mjs";
 import { broadcastToRoom } from "../ws.mjs";
 import logger from "../logger.mjs";
+import { createNotifications, NOTIFICATION_TYPES } from "../notification.mjs";
 
 const router = express.Router();
 const FEEDBACK_KEYS = ["like", "checking", "done", "excited", "sad", "funny"];
@@ -1122,6 +1123,21 @@ router.post("/:channelId/invite", isAuth, async (req, res) => {
       },
     };
     broadcastToRoom(channelId, broadcastPayload);
+
+    await createNotifications({
+      recipientIds: [member_id],
+      actorId: userId,
+      type: NOTIFICATION_TYPES.CHANNEL_INVITED_ME,
+      resourceType: "channel",
+      resourceId: Number(channelId),
+      projectId,
+      title: "채널에 초대되었습니다.",
+      body: `${inviterName}님이 채널에 초대했습니다.`,
+      payload: {
+        channel_id: Number(channelId),
+        invited_member_id: Number(member_id),
+      },
+    });
 
     res.status(201).json({
       message: "초대되었습니다.",
