@@ -36,7 +36,7 @@ nav a:hover {
   align-items: center;
 }
 
-.DefaultLayout {
+.PublicLayout {
   display: flex;
   flex-direction: column;
   --dl-bg: #f5f5f5;
@@ -49,7 +49,7 @@ nav a:hover {
   --dl-page-bg: #ffffff;
 }
 
-.DefaultLayout .brand {
+.PublicLayout .brand {
   text-decoration: none;
   color: inherit;
   font-size: 18px;
@@ -59,46 +59,46 @@ nav a:hover {
   font-weight: 800;
 }
 
-.DefaultLayout .brand-logo {
+.PublicLayout .brand-logo {
   height: 24px;
   width: 24px;
   display: block;
 }
 
-.DefaultLayout .brand-text {
+.PublicLayout .brand-text {
   line-height: 1;
 }
 
-.DefaultLayout > header {
+.PublicLayout > header {
   background-color: var(--dl-gnb-bg);
 }
 
-.DefaultLayout .inner-gnb {
+.PublicLayout .inner-gnb {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   padding: 20px 40px;
   color: var(--dl-gnb-text);
 }
 
-.DefaultLayout .inner-gnb > nav {
+.PublicLayout .inner-gnb > nav {
   display: flex;
   align-items: center;
 }
 
-.DefaultLayout .mainnav {
+.PublicLayout .mainnav {
   font-size: 18px;
   gap: 60px;
   font-weight: 600;
   justify-self: center;
 }
 
-.DefaultLayout .utilnav {
+.PublicLayout .utilnav {
   font-size: 15px;
   gap: 20px;
   justify-self: end;
 }
 
-.DefaultLayout main {
+.PublicLayout main {
   background-color: var(--dl-page-bg);
   padding: 2rem 3rem 4rem;
   margin-top: 1rem;
@@ -106,26 +106,26 @@ nav a:hover {
   border-radius: 8px;
 }
 
-.DefaultLayout,
-.DefaultLayout main {
+.PublicLayout,
+.PublicLayout main {
   color: var(--dl-text);
 }
 
-.DefaultLayout .subtitle {
+.PublicLayout .subtitle {
   color: var(--dl-text-muted);
 }
 
-.DefaultLayout .feed-item {
+.PublicLayout .feed-item {
   background-color: var(--dl-surface);
   border-color: var(--dl-border);
 }
 
-.DefaultLayout .feed-meta {
+.PublicLayout .feed-meta {
   color: var(--dl-text-muted);
 }
 
 @media (prefers-color-scheme: dark) {
-  .DefaultLayout {
+  .PublicLayout {
     --dl-bg: #0f1115;
     --dl-surface: #1b1f2a;
     --dl-text: #e5e7eb;
@@ -137,7 +137,7 @@ nav a:hover {
   }
 }
 
-.DefaultLayout > header .projectselect {
+.PublicLayout > header .projectselect {
   margin-left: 2rem;
   padding: 4px;
 }
