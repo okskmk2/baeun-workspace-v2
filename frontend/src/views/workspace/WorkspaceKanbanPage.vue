@@ -1,8 +1,8 @@
 <template>
-  <main class="workspace-board">
+  <main class="workspace-kanban">
     <hgroup>
-      <h1>워크스페이스 게시판</h1>
-      <p class="subtitle">프로젝트 보드로 이동할 수 있습니다.</p>
+      <h1>워크스페이스 칸반</h1>
+      <p class="subtitle">프로젝트 칸반으로 이동할 수 있습니다.</p>
     </hgroup>
 
     <p v-if="isLoading" class="status">불러오는 중...</p>
@@ -12,8 +12,8 @@
     <ul v-else class="project-list">
       <li v-for="project in projects" :key="project.id" class="project-item">
         <span class="project-name">{{ project.name }}</span>
-        <router-link class="btn btn--secondary" :to="`/project/${project.id}/board`">
-          보드 열기
+        <router-link class="btn btn--secondary" :to="`/project/${project.id}/kanban`">
+          칸반 열기
         </router-link>
       </li>
     </ul>
@@ -51,7 +51,7 @@ watch(workspaceId, fetchProjects);
 </script>
 
 <style scoped>
-.workspace-board {
+.workspace-kanban {
   display: grid;
   gap: 16px;
   padding: 24px;

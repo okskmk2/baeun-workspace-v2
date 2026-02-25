@@ -187,18 +187,18 @@ router.get("/archived", isAuth, async (req, res) => {
       `SELECT
         c.id,
         c.name,
-        c.issue_id,
-        i.title as issue_title,
-        i.board_id,
+        c.task_id as issue_id,
+        t.title as issue_title,
+        t.kanban_id as board_id,
         MAX(m.created_at) as last_message_at,
         COUNT(m.id)::int as total_message_count
       FROM channel c
       JOIN channel_member cm ON cm.channel_id = c.id AND cm.member_id = $2
-      LEFT JOIN issue i ON i.id = c.issue_id
+      LEFT JOIN task t ON t.id = c.task_id
       LEFT JOIN message m ON m.channel_id = c.id
       WHERE c.project_id = $1
         AND c.status = 'ARCHIVED'
-      GROUP BY c.id, c.name, c.issue_id, i.title, i.board_id
+      GROUP BY c.id, c.name, c.task_id, t.title, t.kanban_id
       ORDER BY MAX(m.created_at) DESC NULLS LAST, c.created_at DESC`,
       [projectId, userId]
     );
@@ -460,9 +460,9 @@ router.get("/:channelId", isAuth, async (req, res) => {
 
   try {
     const chatRes = await pool.query(
-      `SELECT c.*, i.title as issue_title, i.board_id
+      `SELECT c.*, t.title as issue_title, t.kanban_id as board_id, c.task_id as issue_id
        FROM channel c
-       LEFT JOIN issue i ON c.issue_id = i.id
+       LEFT JOIN task t ON c.task_id = t.id
        WHERE c.id = $1`,
       [channelId]
     );

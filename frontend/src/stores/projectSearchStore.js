@@ -1,7 +1,7 @@
 import { defineStore } from "pinia";
 import { connectDB } from "yosie";
 
-const DEFAULT_TYPES = ["board", "page", "channel", "issue"];
+const DEFAULT_TYPES = ["kanban", "page", "channel", "task"];
 const CACHE_DB_NAME = "baeun_workspace_cache";
 const CACHE_STORE_NAME = "project_search";
 
@@ -38,11 +38,11 @@ const toTimestamp = (value) => {
 
 const getRouteByType = (projectId, type, id, item = {}) => {
   if (!projectId || !id) return "";
-  if (type === "board") return `/project/${projectId}/board/${id}`;
+  if (type === "kanban") return `/project/${projectId}/kanban/${id}`;
   if (type === "page") return `/project/${projectId}/wiki/${id}`;
   if (type === "channel") return `/project/${projectId}/channel/${id}`;
-  if (type === "issue" && item?.board_id) {
-    return `/project/${projectId}/board/${item.board_id}/issue/${id}`;
+  if (type === "task" && item?.kanban_id) {
+    return `/project/${projectId}/kanban/${item.kanban_id}/task/${id}`;
   }
   return "";
 };
@@ -74,7 +74,7 @@ const toSearchItem = (projectId, type, item) => {
     searchText: normalizeSearchText(name),
     route: getRouteByType(projectId, type, id, item),
     updatedAt: toTimestamp(item?.updated_at || item?.updatedAt || item?.created_at),
-    status: type === "issue" ? normalizeString(item?.status).toUpperCase() : "",
+    status: type === "task" ? normalizeString(item?.status).toUpperCase() : "",
   };
 };
 
@@ -149,19 +149,19 @@ export const useProjectSearchStore = defineStore("projectSearch", {
 
       if (!this.resourcesByProject[projectId]) {
         this.resourcesByProject[projectId] = {
-          board: [],
+          kanban: [],
           page: [],
           channel: [],
-          issue: [],
+          task: [],
         };
       }
 
       if (!this.lastSyncedAtByProject[projectId]) {
         this.lastSyncedAtByProject[projectId] = {
-          board: 0,
+          kanban: 0,
           page: 0,
           channel: 0,
-          issue: 0,
+          task: 0,
         };
       }
     },
@@ -179,8 +179,8 @@ export const useProjectSearchStore = defineStore("projectSearch", {
       this.schedulePersistSnapshot();
     },
 
-    upsertBoards(projectId, boards) {
-      this.setResources(projectId, "board", boards);
+    upsertKanbans(projectId, kanbans) {
+      this.setResources(projectId, "kanban", kanbans);
     },
 
     upsertPages(projectId, pages) {
@@ -191,8 +191,8 @@ export const useProjectSearchStore = defineStore("projectSearch", {
       this.setResources(projectId, "channel", channels);
     },
 
-    upsertIssues(projectId, issues) {
-      this.setResources(projectId, "issue", issues);
+    upsertTasks(projectId, tasks) {
+      this.setResources(projectId, "task", tasks);
     },
 
     isTypeStale(projectId, type, ttlMs, now = Date.now()) {

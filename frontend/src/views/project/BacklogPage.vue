@@ -11,7 +11,7 @@
       <div class="column-header">
         <h2>{{ t("backlog.page.header.title") }}</h2>
         <button type="button" class="btn btn--sm" @click="openModal" :disabled="!backlogBoardId">
-          {{ t("backlog.page.actions.createIssue") }}
+          {{ t("backlog.page.actions.createTask") }}
         </button>
       </div>
       <p v-if="isLoadingIssues">{{ t("backlog.page.status.loading") }}</p>
@@ -77,14 +77,14 @@
     </div>
   </div>
 
-  <CreateIssueModal
+  <CreateTaskModal
     :open="isModalOpen"
     :board-id="backlogBoardId"
     @close="closeModal"
     @created="onIssueCreated"
   />
 
-  <CreateBoardModal
+  <CreateKanbanModal
     :open="isBoardModalOpen"
     :project-id="projectId"
     @close="closeBoardModal"
@@ -98,17 +98,17 @@ import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 import api from "../../lib/axios";
 import Tag from "../../components/Tag.vue";
-import CreateIssueModal from "../../components/modals/CreateIssueModal.vue";
-import CreateBoardModal from "../../components/modals/CreateBoardModal.vue";
+import CreateTaskModal from "../../components/modals/CreateTaskModal.vue";
+import CreateKanbanModal from "../../components/modals/CreateKanbanModal.vue";
 import { useRoleLabels } from "../../lib/roleLabels";
-import { useBoardStore } from "../../stores/boardStore";
+import { useKanbanStore } from "../../stores/KanbanStore";
 import { convertSnakeToCamel } from "../../lib/utils";
 import { useProjectSearchStore } from "../../stores/projectSearchStore";
 
 const { t } = useI18n();
 const { getRoleLabel } = useRoleLabels();
 const route = useRoute();
-const boardStore = useBoardStore();
+const boardStore = useKanbanStore();
 const projectSearchStore = useProjectSearchStore();
 
 const issues = ref([]);
@@ -463,4 +463,3 @@ watch(projectId, async () => {
   }
 }
 </style>
-

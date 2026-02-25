@@ -34,10 +34,10 @@ router.beforeEach(async (to, from, next) => {
       const role = String(currentMember?.role_name || "").toUpperCase();
 
       if (!["OWNER", "ADMIN"].includes(role)) {
-        return next({ path: `/project/${projectId}/board` });
+        return next({ path: `/project/${projectId}/kanban` });
       }
     } catch (error) {
-      return next({ path: `/project/${projectId}/board` });
+      return next({ path: `/project/${projectId}/kanban` });
     }
   }
 

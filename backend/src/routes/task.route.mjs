@@ -16,12 +16,12 @@ const ensureProjectExists = async (projectId, res) => {
 
 /**
  * @swagger
- * /api/issues/recent:
+ * /api/tasks/recent:
  *   get:
- *     summary: 최근 이슈 활동 조회
- *     description: 최근 24시간 이슈 활동 목록 조회
+ *     summary: 최근 작업 활동 조회
+ *     description: 최근 24시간 작업 활동 목록 조회
  *     tags:
- *       - Issue
+ *       - Task
  *     parameters:
  *       - in: query
  *         name: project_id
@@ -30,7 +30,7 @@ const ensureProjectExists = async (projectId, res) => {
  *           type: integer
  *     responses:
  *       200:
- *         description: 최근 이슈 활동 조회 성공
+ *         description: 최근 작업 활동 조회 성공
  *         content:
  *           application/json:
  *             schema:
@@ -50,9 +50,9 @@ const ensureProjectExists = async (projectId, res) => {
  *                             type: integer
  *                           title:
  *                             type: string
- *                           board_id:
+ *                           kanban_id:
  *                             type: integer
- *                           board_name:
+ *                           kanban_name:
  *                             type: string
  *                           created_at:
  *                             type: string
@@ -96,33 +96,33 @@ router.get("/recent", isAuth, async (req, res) => {
 
     const recentRes = await pool.query(
       `SELECT
-        i.id,
-        i.title,
-        i.board_id,
-        b.name as board_name,
-        i.created_at,
-        i.updated_at,
+        t.id,
+        t.title,
+        t.kanban_id,
+        k.name as kanban_name,
+        t.created_at,
+        t.updated_at,
         'CREATED' as event_type,
-        i.created_at as occurred_at
-       FROM issue i
-       JOIN board b ON i.board_id = b.id
-       WHERE b.project_id = $1
-         AND i.created_at >= NOW() - INTERVAL '24 hours'
+        t.created_at as occurred_at
+       FROM task t
+       JOIN kanban k ON t.kanban_id = k.id
+       WHERE k.project_id = $1
+         AND t.created_at >= NOW() - INTERVAL '24 hours'
        UNION ALL
        SELECT
-        i.id,
-        i.title,
-        i.board_id,
-        b.name as board_name,
-        i.created_at,
-        i.updated_at,
+        t.id,
+        t.title,
+        t.kanban_id,
+        k.name as kanban_name,
+        t.created_at,
+        t.updated_at,
         'UPDATED' as event_type,
-        i.updated_at as occurred_at
-       FROM issue i
-       JOIN board b ON i.board_id = b.id
-       WHERE b.project_id = $1
-         AND i.updated_at >= NOW() - INTERVAL '24 hours'
-         AND i.updated_at > i.created_at
+        t.updated_at as occurred_at
+       FROM task t
+       JOIN kanban k ON t.kanban_id = k.id
+       WHERE k.project_id = $1
+         AND t.updated_at >= NOW() - INTERVAL '24 hours'
+         AND t.updated_at > t.created_at
        ORDER BY occurred_at DESC`,
       [projectId]
     );
@@ -135,12 +135,12 @@ router.get("/recent", isAuth, async (req, res) => {
 
 /**
  * @swagger
- * /api/issues:
+ * /api/tasks:
  *   post:
- *     summary: 이슈 생성
- *     description: 새 이슈를 생성하고 작성자를 REPORTER로 등록
+ *     summary: 작업 생성
+ *     description: 새 작업을 생성하고 작성자를 REPORTER로 등록
  *     tags:
- *       - Issue
+ *       - Task
  *     requestBody:
  *       required: true
  *       content:
@@ -152,17 +152,17 @@ router.get("/recent", isAuth, async (req, res) => {
  *                 type: string
  *               content:
  *                 type: string
- *               board_id:
+ *               kanban_id:
  *                 type: integer
  *               status:
  *                 type: string
  *                 default: BACKLOG
  *             required:
  *               - title
- *               - board_id
+ *               - kanban_id
  *     responses:
  *       201:
- *         description: 이슈 생성 성공
+ *         description: 작업 생성 성공
  *         content:
  *           application/json:
  *             schema:
@@ -178,7 +178,7 @@ router.get("/recent", isAuth, async (req, res) => {
  *         $ref: "#/components/responses/ErrorResponse"
  */
 router.post("/", isAuth, async (req, res) => {
-  const { title, content, board_id, status = "BACKLOG" } = req.body;
+  const { title, content, kanban_id, status = "BACKLOG" } = req.body;
   const userId = req.session.userId;
 
   const client = await pool.connect();
@@ -186,32 +186,32 @@ router.post("/", isAuth, async (req, res) => {
     // 권한 확인: 프로젝트 멤버인지 체크
     const authCheck = await client.query(
       `SELECT pm.id FROM project_member pm
-       JOIN board b ON b.project_id = pm.project_id
-       WHERE b.id = $1 AND pm.member_id = $2`,
-      [board_id, userId]
+       JOIN kanban k ON k.project_id = pm.project_id
+       WHERE k.id = $1 AND pm.member_id = $2`,
+      [kanban_id, userId]
     );
 
     if (authCheck.rows.length === 0) {
-      return res.status(403).json({ name: "Forbidden", message: "이슈 생성 권한이 없습니다." });
+      return res.status(403).json({ name: "Forbidden", message: "작업 생성 권한이 없습니다." });
     }
 
     await client.query("BEGIN");
 
-    // 이슈 삽입
-    const issueRes = await client.query(
-      `INSERT INTO issue (title, content, board_id, status) VALUES ($1, $2, $3, $4) RETURNING *`,
-      [title, content, board_id, status]
+    // 작업 삽입
+    const taskRes = await client.query(
+      `INSERT INTO task (title, content, kanban_id, status) VALUES ($1, $2, $3, $4) RETURNING *`,
+      [title, content, kanban_id, status]
     );
-    const newIssue = issueRes.rows[0];
+    const newTask = taskRes.rows[0];
 
     // 작성자를 REPORTER로 등록
     await client.query(
-      `INSERT INTO issue_member (issue_id, member_id, role_name) VALUES ($1, $2, 'REPORTER')`,
-      [newIssue.id, userId]
+      `INSERT INTO task_member (task_id, member_id, role_name) VALUES ($1, $2, 'REPORTER')`,
+      [newTask.id, userId]
     );
 
     await client.query("COMMIT");
-    res.status(201).json({ id: newIssue.id });
+    res.status(201).json({ id: newTask.id });
   } catch (error) {
     await client.query("ROLLBACK");
     res.status(500).json({ name: "InternalServerError", message: error.message });
@@ -222,21 +222,21 @@ router.post("/", isAuth, async (req, res) => {
 
 /**
  * @swagger
- * /api/issues/{issueId}:
+ * /api/tasks/{taskId}:
  *   get:
- *     summary: 이슈 상세 조회
- *     description: 이슈의 상세 정보 조회
+ *     summary: 작업 상세 조회
+ *     description: 작업의 상세 정보 조회
  *     tags:
- *       - Issue
+ *       - Task
  *     parameters:
  *       - in: path
- *         name: issueId
+ *         name: taskId
  *         required: true
  *         schema:
  *           type: integer
  *     responses:
  *       200:
- *         description: 이슈 상세 조회 성공
+ *         description: 작업 상세 조회 성공
  *         content:
  *           application/json:
  *             schema:
@@ -245,52 +245,52 @@ router.post("/", isAuth, async (req, res) => {
  *                 success:
  *                   type: boolean
  *                 data:
- *                   $ref: "#/components/schemas/Issue"
+ *                   $ref: "#/components/schemas/Task"
  *       404:
  *         $ref: "#/components/responses/ErrorResponse"
  *       500:
  *         $ref: "#/components/responses/ErrorResponse"
  */
-router.get("/:issueId", isAuth, async (req, res) => {
-  const { issueId } = req.params;
+router.get("/:taskId", isAuth, async (req, res) => {
+  const { taskId } = req.params;
   try {
-    const issueRes = await pool.query(`SELECT * FROM issue WHERE id = $1`, [issueId]);
-    if (issueRes.rows.length === 0) {
-      return res.status(404).json({ name: "NotFound", message: "이슈를 찾을 수 없습니다." });
+    const taskRes = await pool.query(`SELECT * FROM task WHERE id = $1`, [taskId]);
+    if (taskRes.rows.length === 0) {
+      return res.status(404).json({ name: "NotFound", message: "작업을 찾을 수 없습니다." });
     }
 
-    res.json(issueRes.rows[0]);
+    res.json(taskRes.rows[0]);
   } catch (error) {
     res.status(500).json({ name: "InternalServerError", message: error.message });
   }
 });
 
-router.post("/:issueId/channel", isAuth, async (req, res) => {
-  const { issueId } = req.params;
+router.post("/:taskId/channel", isAuth, async (req, res) => {
+  const { taskId } = req.params;
   const userId = req.session.userId;
 
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
 
-    const issueRes = await client.query(
-      `SELECT i.id, i.title, b.project_id
-       FROM issue i
-       JOIN board b ON b.id = i.board_id
-       WHERE i.id = $1`,
-      [issueId]
+    const taskRes = await client.query(
+      `SELECT t.id, t.title, k.project_id
+       FROM task t
+       JOIN kanban k ON k.id = t.kanban_id
+       WHERE t.id = $1`,
+      [taskId]
     );
 
-    if (issueRes.rows.length === 0) {
+    if (taskRes.rows.length === 0) {
       await client.query("ROLLBACK");
-      return res.status(404).json({ name: "NotFound", message: "이슈를 찾을 수 없습니다." });
+      return res.status(404).json({ name: "NotFound", message: "작업을 찾을 수 없습니다." });
     }
 
-    const issue = issueRes.rows[0];
+    const task = taskRes.rows[0];
 
     const memberCheck = await client.query(
       "SELECT id FROM project_member WHERE project_id = $1 AND member_id = $2",
-      [issue.project_id, userId]
+      [task.project_id, userId]
     );
 
     if (memberCheck.rows.length === 0) {
@@ -301,16 +301,16 @@ router.post("/:issueId/channel", isAuth, async (req, res) => {
     let createdNow = false;
     let channel;
 
-    const existingChannelRes = await client.query("SELECT * FROM channel WHERE issue_id = $1", [issueId]);
+    const existingChannelRes = await client.query("SELECT * FROM channel WHERE task_id = $1", [taskId]);
     if (existingChannelRes.rows.length > 0) {
       channel = existingChannelRes.rows[0];
     } else {
       try {
         const createChannelRes = await client.query(
-          `INSERT INTO channel (name, project_id, issue_id, type, status)
-           VALUES ($1, $2, $3, 'ISSUE', 'ACTIVE')
+          `INSERT INTO channel (name, project_id, task_id, type, status)
+           VALUES ($1, $2, $3, 'TASK', 'ACTIVE')
            RETURNING *`,
-          [issue.title || `Issue #${issueId}`, issue.project_id, issueId]
+          [task.title || `Task #${taskId}`, task.project_id, taskId]
         );
         channel = createChannelRes.rows[0];
         createdNow = true;
@@ -318,7 +318,7 @@ router.post("/:issueId/channel", isAuth, async (req, res) => {
         if (error?.code !== "23505") {
           throw error;
         }
-        const conflictChannelRes = await client.query("SELECT * FROM channel WHERE issue_id = $1", [issueId]);
+        const conflictChannelRes = await client.query("SELECT * FROM channel WHERE task_id = $1", [taskId]);
         channel = conflictChannelRes.rows[0];
       }
     }
@@ -331,12 +331,12 @@ router.post("/:issueId/channel", isAuth, async (req, res) => {
         [channel.id, userId]
       );
 
-      const issueMemberRes = await client.query(
-        "SELECT DISTINCT member_id FROM issue_member WHERE issue_id = $1",
-        [issueId]
+      const taskMemberRes = await client.query(
+        "SELECT DISTINCT member_id FROM task_member WHERE task_id = $1",
+        [taskId]
       );
 
-      for (const row of issueMemberRes.rows) {
+      for (const row of taskMemberRes.rows) {
         if (String(row.member_id) === String(userId)) {
           continue;
         }
@@ -361,7 +361,7 @@ router.post("/:issueId/channel", isAuth, async (req, res) => {
       id: channel.id,
       name: channel.name,
       status: channel.status,
-      issue_id: channel.issue_id,
+      task_id: channel.task_id,
     });
   } catch (error) {
     await client.query("ROLLBACK");
@@ -373,21 +373,21 @@ router.post("/:issueId/channel", isAuth, async (req, res) => {
 
 /**
  * @swagger
- * /api/issues/{issueId}/members:
+ * /api/tasks/{taskId}/members:
  *   get:
- *     summary: 이슈 관련자 목록 조회
- *     description: 이슈에 연결된 멤버 목록 조회
+ *     summary: 작업 관련자 목록 조회
+ *     description: 작업에 연결된 멤버 목록 조회
  *     tags:
- *       - Issue
+ *       - Task
  *     parameters:
  *       - in: path
- *         name: issueId
+ *         name: taskId
  *         required: true
  *         schema:
  *           type: integer
  *     responses:
  *       200:
- *         description: 이슈 관련자 목록 조회 성공
+ *         description: 작업 관련자 목록 조회 성공
  *         content:
  *           application/json:
  *             schema:
@@ -398,20 +398,20 @@ router.post("/:issueId/channel", isAuth, async (req, res) => {
  *                 data:
  *                   type: array
  *                   items:
- *                     $ref: "#/components/schemas/IssueMember"
+ *                     $ref: "#/components/schemas/TaskMember"
  *       500:
  *         $ref: "#/components/responses/ErrorResponse"
  */
-router.get("/:issueId/members", isAuth, async (req, res) => {
-  const { issueId } = req.params;
+router.get("/:taskId/members", isAuth, async (req, res) => {
+  const { taskId } = req.params;
   try {
     const membersRes = await pool.query(
-      `SELECT im.id as issue_member_id, m.id as member_id, m.name, m.email, im.role_name, im.created_at
-       FROM issue_member im
-       JOIN member m ON im.member_id = m.id
-       WHERE im.issue_id = $1
-       ORDER BY im.created_at ASC`,
-      [issueId]
+      `SELECT tm.id as task_member_id, m.id as member_id, m.name, m.email, tm.role_name, tm.created_at
+       FROM task_member tm
+       JOIN member m ON tm.member_id = m.id
+       WHERE tm.task_id = $1
+       ORDER BY tm.created_at ASC`,
+      [taskId]
     );
 
     res.json(membersRes.rows);
@@ -422,15 +422,15 @@ router.get("/:issueId/members", isAuth, async (req, res) => {
 
 /**
  * @swagger
- * /api/issues/{issueId}:
+ * /api/tasks/{taskId}:
  *   patch:
- *     summary: 이슈 수정
- *     description: 이슈의 정보와 상태 수정
+ *     summary: 작업 수정
+ *     description: 작업의 정보와 상태 수정
  *     tags:
- *       - Issue
+ *       - Task
  *     parameters:
  *       - in: path
- *         name: issueId
+ *         name: taskId
  *         required: true
  *         schema:
  *           type: integer
@@ -448,7 +448,7 @@ router.get("/:issueId/members", isAuth, async (req, res) => {
  *                 type: string
  *     responses:
  *       200:
- *         description: 이슈 수정 성공
+ *         description: 작업 수정 성공
  *         content:
  *           application/json:
  *             schema:
@@ -457,120 +457,120 @@ router.get("/:issueId/members", isAuth, async (req, res) => {
  *                 success:
  *                   type: boolean
  *                 data:
- *                   $ref: "#/components/schemas/Issue"
+ *                   $ref: "#/components/schemas/Task"
  *       404:
  *         $ref: "#/components/responses/ErrorResponse"
  *       500:
  *         $ref: "#/components/responses/ErrorResponse"
  */
-router.patch("/:issueId", isAuth, async (req, res) => {
-  const { issueId } = req.params;
-  let { title, content, status, board_id } = req.body; // Use 'let' for board_id as it might be reassigned
+router.patch("/:taskId", isAuth, async (req, res) => {
+  const { taskId } = req.params;
+  let { title, content, status, kanban_id } = req.body; // Use 'let' for kanban_id as it might be reassigned
   const actorId = req.session.userId;
   const client = await pool.connect();
 
   try {
     await client.query("BEGIN");
 
-    const prevIssueRes = await client.query(
-      `SELECT i.id, i.title, i.content, i.status, i.board_id, b.project_id
-       FROM issue i
-       JOIN board b ON b.id = i.board_id
-       WHERE i.id = $1`,
-      [issueId]
+    const prevTaskRes = await client.query(
+      `SELECT t.id, t.title, t.content, t.status, t.kanban_id, k.project_id
+       FROM task t
+       JOIN kanban k ON k.id = t.kanban_id
+       WHERE t.id = $1`,
+      [taskId]
     );
 
-    if (prevIssueRes.rows.length === 0) {
+    if (prevTaskRes.rows.length === 0) {
       await client.query("ROLLBACK");
-      return res.status(404).json({ name: "NotFound", message: "이슈 없음" });
+      return res.status(404).json({ name: "NotFound", message: "작업 없음" });
     }
 
-    const prevIssue = prevIssueRes.rows[0];
+    const prevTask = prevTaskRes.rows[0];
 
-    // If status is being set to BACKLOG, automatically move to the project's backlog board
+    // If status is being set to BACKLOG, automatically move to the project's backlog kanban
     if (status === 'BACKLOG') {
-      // 1. Get the current issue's project_id
-      const currentIssueInfo = await client.query(
-        `SELECT b.project_id
-         FROM issue i
-         JOIN board b ON i.board_id = b.id
-         WHERE i.id = $1`,
-        [issueId]
+      // 1. Get the current task's project_id
+      const currentTaskInfo = await client.query(
+        `SELECT k.project_id
+         FROM task t
+         JOIN kanban k ON t.kanban_id = k.id
+         WHERE t.id = $1`,
+        [taskId]
       );
 
-      if (currentIssueInfo.rows.length > 0) {
-        const currentProjectId = currentIssueInfo.rows[0].project_id;
+      if (currentTaskInfo.rows.length > 0) {
+        const currentProjectId = currentTaskInfo.rows[0].project_id;
 
-        // 2. Find the backlog board for this project
-        const backlogBoard = await client.query(
-          `SELECT id FROM board WHERE project_id = $1 AND type = 'BACKLOG'`,
+        // 2. Find the backlog kanban for this project
+        const backlogKanban = await client.query(
+          `SELECT id FROM kanban WHERE project_id = $1 AND type = 'BACKLOG'`,
           [currentProjectId]
         );
 
-        if (backlogBoard.rows.length > 0) {
-          board_id = backlogBoard.rows[0].id; // Override board_id to the backlog board's ID
+        if (backlogKanban.rows.length > 0) {
+          kanban_id = backlogKanban.rows[0].id; // Override kanban_id to the backlog kanban's ID
         }
       }
     }
 
     const result = await client.query(
-      `UPDATE issue
-       SET title = COALESCE($1, title), content = COALESCE($2, content), status = COALESCE($3, status), board_id = COALESCE($4, board_id), updated_at = CURRENT_TIMESTAMP
+      `UPDATE task
+       SET title = COALESCE($1, title), content = COALESCE($2, content), status = COALESCE($3, status), kanban_id = COALESCE($4, kanban_id), updated_at = CURRENT_TIMESTAMP
        WHERE id = $5 RETURNING *`,
-      [title, content, status, board_id, issueId]
+      [title, content, status, kanban_id, taskId]
     );
 
-    const updatedIssue = result.rows[0];
-    const previousStatus = String(prevIssue.status || "").toUpperCase();
-    const nextStatus = String(updatedIssue.status || "").toUpperCase();
+    const updatedTask = result.rows[0];
+    const previousStatus = String(prevTask.status || "").toUpperCase();
+    const nextStatus = String(updatedTask.status || "").toUpperCase();
     const isStatusChanged = previousStatus !== nextStatus;
     const isContentChanged =
-      String(prevIssue.title || "") !== String(updatedIssue.title || "") ||
-      String(prevIssue.content || "") !== String(updatedIssue.content || "");
+      String(prevTask.title || "") !== String(updatedTask.title || "") ||
+      String(prevTask.content || "") !== String(updatedTask.content || "");
 
-    if (String(updatedIssue.status || "").toUpperCase() === "DONE") {
+    if (String(updatedTask.status || "").toUpperCase() === "DONE") {
       await client.query(
         `UPDATE channel
          SET status = 'ARCHIVED'
-         WHERE issue_id = $1
-           AND type = 'ISSUE'`,
-        [issueId]
+         WHERE task_id = $1
+           AND type = 'TASK'`,
+        [taskId]
       );
     } else {
       await client.query(
         `UPDATE channel
          SET status = 'ACTIVE'
-         WHERE issue_id = $1
-           AND type = 'ISSUE'`,
-        [issueId]
+         WHERE task_id = $1
+           AND type = 'TASK'`,
+        [taskId]
       );
     }
 
     if (isStatusChanged || isContentChanged) {
       const watcherRes = await client.query(
         `SELECT member_id
-         FROM issue_member
-         WHERE issue_id = $1
+         FROM task_member
+         WHERE task_id = $1
            AND role_name = 'WATCHER'`,
-        [issueId]
+        [taskId]
       );
 
       const watcherIds = watcherRes.rows.map((row) => row.member_id);
-      const issueTitle = updatedIssue.title || prevIssue.title || `Issue #${issueId}`;
+      const taskTitle = updatedTask.title || prevTask.title || `Task #${taskId}`;
 
       if (isStatusChanged) {
         await createNotifications(
           {
             recipientIds: watcherIds,
             actorId,
-            type: NOTIFICATION_TYPES.ISSUE_WATCHING_STATUS_CHANGED,
-            resourceType: "issue",
-            resourceId: Number(issueId),
-            projectId: prevIssue.project_id,
-            title: `팔로우 이슈 상태 변경: ${issueTitle}`,
+            type: NOTIFICATION_TYPES.TASK_WATCHING_STATUS_CHANGED,
+            resourceType: "task",
+            resourceId: Number(taskId),
+            projectId: prevTask.project_id,
+            title: `팔로우 작업 상태 변경: ${taskTitle}`,
             body: `${previousStatus} → ${nextStatus}`,
             payload: {
-              issue_id: Number(issueId),
+              task_id: Number(taskId),
               previous_status: previousStatus,
               next_status: nextStatus,
             },
@@ -584,14 +584,14 @@ router.patch("/:issueId", isAuth, async (req, res) => {
           {
             recipientIds: watcherIds,
             actorId,
-            type: NOTIFICATION_TYPES.ISSUE_WATCHING_CONTENT_CHANGED,
-            resourceType: "issue",
-            resourceId: Number(issueId),
-            projectId: prevIssue.project_id,
-            title: `팔로우 이슈 내용 변경: ${issueTitle}`,
-            body: "이슈 제목 또는 내용이 변경되었습니다.",
+            type: NOTIFICATION_TYPES.TASK_WATCHING_CONTENT_CHANGED,
+            resourceType: "task",
+            resourceId: Number(taskId),
+            projectId: prevTask.project_id,
+            title: `팔로우 작업 내용 변경: ${taskTitle}`,
+            body: "작업 제목 또는 내용이 변경되었습니다.",
             payload: {
-              issue_id: Number(issueId),
+              task_id: Number(taskId),
             },
           },
           { client }
@@ -602,24 +602,24 @@ router.patch("/:issueId", isAuth, async (req, res) => {
     if (previousStatus === "IN_REVIEW" && nextStatus === "DONE") {
       const assigneeRes = await client.query(
         `SELECT member_id
-         FROM issue_member
-         WHERE issue_id = $1
+         FROM task_member
+         WHERE task_id = $1
            AND role_name = 'ASSIGNEE'`,
-        [issueId]
+        [taskId]
       );
 
       await createNotifications(
         {
           recipientIds: assigneeRes.rows.map((row) => row.member_id),
           actorId,
-          type: NOTIFICATION_TYPES.ISSUE_ASSIGNEE_REVIEW_TO_DONE,
-          resourceType: "issue",
-          resourceId: Number(issueId),
-          projectId: prevIssue.project_id,
-          title: `담당 이슈 완료 처리: ${updatedIssue.title || `Issue #${issueId}`}`,
+          type: NOTIFICATION_TYPES.TASK_ASSIGNEE_REVIEW_TO_DONE,
+          resourceType: "task",
+          resourceId: Number(taskId),
+          projectId: prevTask.project_id,
+          title: `담당 작업 완료 처리: ${updatedTask.title || `Task #${taskId}`}`,
           body: "검토 중 상태에서 완료로 변경되었습니다.",
           payload: {
-            issue_id: Number(issueId),
+            task_id: Number(taskId),
             previous_status: previousStatus,
             next_status: nextStatus,
           },
@@ -629,7 +629,7 @@ router.patch("/:issueId", isAuth, async (req, res) => {
     }
 
     await client.query("COMMIT");
-    res.json(updatedIssue);
+    res.json(updatedTask);
   } catch (error) {
     await client.query("ROLLBACK");
     res.status(500).json({ name: "InternalServerError", message: error.message });
@@ -640,15 +640,15 @@ router.patch("/:issueId", isAuth, async (req, res) => {
 
 /**
  * @swagger
- * /api/issues/{issueId}/members:
+ * /api/tasks/{taskId}/members:
  *   post:
- *     summary: 이슈 담당자 추가
- *     description: 이슈에 담당자를 추가
+ *     summary: 작업 담당자 추가
+ *     description: 작업에 담당자를 추가
  *     tags:
- *       - Issue
+ *       - Task
  *     parameters:
  *       - in: path
- *         name: issueId
+ *         name: taskId
  *         required: true
  *         schema:
  *           type: integer
@@ -683,56 +683,56 @@ router.patch("/:issueId", isAuth, async (req, res) => {
  *       500:
  *         $ref: "#/components/responses/ErrorResponse"
  */
-router.post("/:issueId/members", isAuth, async (req, res) => {
-  const { issueId } = req.params;
+router.post("/:taskId/members", isAuth, async (req, res) => {
+  const { taskId } = req.params;
   const { member_id, role_name = "ASSIGNEE" } = req.body;
   const actorId = req.session.userId;
   try {
     const insertRes = await pool.query(
-      `INSERT INTO issue_member (issue_id, member_id, role_name) VALUES ($1, $2, $3)
+      `INSERT INTO task_member (task_id, member_id, role_name) VALUES ($1, $2, $3)
        ON CONFLICT DO NOTHING
        RETURNING id`,
-      [issueId, member_id, role_name]
+      [taskId, member_id, role_name]
     );
 
-    let issueMemberId = insertRes.rows[0]?.id;
-    if (!issueMemberId) {
+    let taskMemberId = insertRes.rows[0]?.id;
+    if (!taskMemberId) {
       const existingRes = await pool.query(
-        "SELECT id FROM issue_member WHERE issue_id = $1 AND member_id = $2",
-        [issueId, member_id]
+        "SELECT id FROM task_member WHERE task_id = $1 AND member_id = $2",
+        [taskId, member_id]
       );
-      issueMemberId = existingRes.rows[0]?.id;
+      taskMemberId = existingRes.rows[0]?.id;
     }
 
     const roleUpper = String(role_name || "").toUpperCase();
     if (roleUpper === "ASSIGNEE") {
-      const issueRes = await pool.query(
-        `SELECT i.title, b.project_id, b.id AS board_id
-         FROM issue i
-         JOIN board b ON b.id = i.board_id
-         WHERE i.id = $1`,
-        [issueId]
+      const taskRes = await pool.query(
+        `SELECT t.title, k.project_id, k.id AS kanban_id
+         FROM task t
+         JOIN kanban k ON k.id = t.kanban_id
+         WHERE t.id = $1`,
+        [taskId]
       );
-      const issueTitle = issueRes.rows[0]?.title || `Issue #${issueId}`;
-      const projectId = issueRes.rows[0]?.project_id || null;
-      const boardId = issueRes.rows[0]?.board_id || null;
+      const taskTitle = taskRes.rows[0]?.title || `Task #${taskId}`;
+      const projectId = taskRes.rows[0]?.project_id || null;
+      const kanbanId = taskRes.rows[0]?.kanban_id || null;
       await createNotifications({
         recipientIds: [member_id],
         actorId,
-        type: NOTIFICATION_TYPES.ISSUE_ASSIGNED_TO_ME,
-        resourceType: "issue",
-        resourceId: Number(issueId),
+        type: NOTIFICATION_TYPES.TASK_ASSIGNED_TO_ME,
+        resourceType: "task",
+        resourceId: Number(taskId),
         projectId,
-        title: `이슈 담당자로 지정됨: ${issueTitle}`,
+        title: `작업 담당자로 지정됨: ${taskTitle}`,
         body: "담당자로 할당되었습니다.",
         payload: {
-          issue_id: Number(issueId),
-          board_id: boardId ? Number(boardId) : null,
+          task_id: Number(taskId),
+          kanban_id: kanbanId ? Number(kanbanId) : null,
         },
       });
     }
 
-    res.json({ id: issueMemberId, message: "담당자가 추가되었습니다." });
+    res.json({ id: taskMemberId, message: "담당자가 추가되었습니다." });
   } catch (error) {
     res.status(500).json({ name: "InternalServerError", message: error.message });
   }
@@ -740,15 +740,15 @@ router.post("/:issueId/members", isAuth, async (req, res) => {
 
 /**
  * @swagger
- * /api/issues/members/{issueMemberId}:
+ * /api/tasks/members/{taskMemberId}:
  *   patch:
- *     summary: 이슈 담당자 역할 수정
- *     description: 이슈 담당자의 역할을 수정
+ *     summary: 작업 담당자 역할 수정
+ *     description: 작업 담당자의 역할을 수정
  *     tags:
- *       - Issue
+ *       - Task
  *     parameters:
  *       - in: path
- *         name: issueMemberId
+ *         name: taskMemberId
  *         required: true
  *         schema:
  *           type: integer
@@ -778,7 +778,7 @@ router.post("/:issueId/members", isAuth, async (req, res) => {
  *                   properties:
  *                     id:
  *                       type: integer
- *                     issue_id:
+ *                     task_id:
  *                       type: integer
  *                     member_id:
  *                       type: integer
@@ -791,8 +791,8 @@ router.post("/:issueId/members", isAuth, async (req, res) => {
  *       500:
  *         $ref: "#/components/responses/ErrorResponse"
  */
-router.patch("/members/:issueMemberId", isAuth, async (req, res) => {
-  const { issueMemberId } = req.params;
+router.patch("/members/:taskMemberId", isAuth, async (req, res) => {
+  const { taskMemberId } = req.params;
   const { role_name } = req.body;
   const actorId = req.session.userId;
 
@@ -802,8 +802,8 @@ router.patch("/members/:issueMemberId", isAuth, async (req, res) => {
 
   try {
     const result = await pool.query(
-      `UPDATE issue_member SET role_name = $1 WHERE id = $2 RETURNING *`,
-      [role_name, issueMemberId]
+      `UPDATE task_member SET role_name = $1 WHERE id = $2 RETURNING *`,
+      [role_name, taskMemberId]
     );
 
     if (result.rows.length === 0) {
@@ -813,30 +813,30 @@ router.patch("/members/:issueMemberId", isAuth, async (req, res) => {
     const updatedMember = result.rows[0];
     const roleUpper = String(updatedMember.role_name || "").toUpperCase();
     if (roleUpper === "ASSIGNEE") {
-      const issueRes = await pool.query(
-        `SELECT i.title, b.project_id, b.id AS board_id
-         FROM issue i
-         JOIN board b ON b.id = i.board_id
-         WHERE i.id = $1`,
-        [updatedMember.issue_id]
+      const taskRes = await pool.query(
+        `SELECT t.title, k.project_id, k.id AS kanban_id
+         FROM task t
+         JOIN kanban k ON k.id = t.kanban_id
+         WHERE t.id = $1`,
+        [updatedMember.task_id]
       );
-      const issueTitle = issueRes.rows[0]?.title || `Issue #${updatedMember.issue_id}`;
-      const projectId = issueRes.rows[0]?.project_id || null;
-      const boardId = issueRes.rows[0]?.board_id || null;
+      const taskTitle = taskRes.rows[0]?.title || `Task #${updatedMember.task_id}`;
+      const projectId = taskRes.rows[0]?.project_id || null;
+      const kanbanId = taskRes.rows[0]?.kanban_id || null;
 
       await createNotifications({
         recipientIds: [updatedMember.member_id],
         actorId,
-        type: NOTIFICATION_TYPES.ISSUE_ASSIGNED_TO_ME,
-        resourceType: "issue",
-        resourceId: Number(updatedMember.issue_id),
+        type: NOTIFICATION_TYPES.TASK_ASSIGNED_TO_ME,
+        resourceType: "task",
+        resourceId: Number(updatedMember.task_id),
         projectId,
-        title: `이슈 담당자로 지정됨: ${issueTitle}`,
+        title: `작업 담당자로 지정됨: ${taskTitle}`,
         body: "담당자로 할당되었습니다.",
         payload: {
-          issue_id: Number(updatedMember.issue_id),
-          issue_member_id: Number(updatedMember.id),
-          board_id: boardId ? Number(boardId) : null,
+          task_id: Number(updatedMember.task_id),
+          task_member_id: Number(updatedMember.id),
+          kanban_id: kanbanId ? Number(kanbanId) : null,
         },
       });
     }
@@ -849,15 +849,15 @@ router.patch("/members/:issueMemberId", isAuth, async (req, res) => {
 
 /**
  * @swagger
- * /api/issues/members/{issueMemberId}:
+ * /api/tasks/members/{taskMemberId}:
  *   delete:
- *     summary: 이슈 담당자 제거
- *     description: 이슈 담당자를 제거
+ *     summary: 작업 담당자 제거
+ *     description: 작업 담당자를 제거
  *     tags:
- *       - Issue
+ *       - Task
  *     parameters:
  *       - in: path
- *         name: issueMemberId
+ *         name: taskMemberId
  *         required: true
  *         schema:
  *           type: integer
@@ -867,9 +867,9 @@ router.patch("/members/:issueMemberId", isAuth, async (req, res) => {
  *       500:
  *         $ref: "#/components/responses/ErrorResponse"
  */
-router.delete("/members/:issueMemberId", isAuth, async (req, res) => {
+router.delete("/members/:taskMemberId", isAuth, async (req, res) => {
   try {
-    await pool.query(`DELETE FROM issue_member WHERE id = $1`, [req.params.issueMemberId]);
+    await pool.query(`DELETE FROM task_member WHERE id = $1`, [req.params.taskMemberId]);
     res.json({ message: "멤버가 제외되었습니다." });
   } catch (error) {
     res.status(500).json({ name: "InternalServerError", message: error.message });
@@ -878,15 +878,15 @@ router.delete("/members/:issueMemberId", isAuth, async (req, res) => {
 
 /**
  * @swagger
- * /api/issues/{issueId}:
+ * /api/tasks/{taskId}:
  *   delete:
- *     summary: 이슈 삭제
- *     description: 이슈 삭제
+ *     summary: 작업 삭제
+ *     description: 작업 삭제
  *     tags:
- *       - Issue
+ *       - Task
  *     parameters:
  *       - in: path
- *         name: issueId
+ *         name: taskId
  *         required: true
  *         schema:
  *           type: integer
@@ -896,10 +896,10 @@ router.delete("/members/:issueMemberId", isAuth, async (req, res) => {
  *       500:
  *         $ref: "#/components/responses/ErrorResponse"
  */
-router.delete("/:issueId", isAuth, async (req, res) => {
+router.delete("/:taskId", isAuth, async (req, res) => {
   try {
-    await pool.query(`DELETE FROM issue WHERE id = $1`, [req.params.issueId]);
-    res.json({ message: "이슈가 삭제되었습니다." });
+    await pool.query(`DELETE FROM task WHERE id = $1`, [req.params.taskId]);
+    res.json({ message: "작업이 삭제되었습니다." });
   } catch (error) {
     res.status(500).json({ name: "InternalServerError", message: error.message });
   }

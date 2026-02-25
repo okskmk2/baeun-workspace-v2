@@ -1,19 +1,19 @@
 ﻿<template>
-  <BackLinkButton @click="$router.back()"> 보드로 돌아가기 </BackLinkButton>
+  <BackLinkButton @click="$router.back()"> 칸반으로 돌아가기 </BackLinkButton>
   <hgroup>
     <div>
-      <h1 v-if="!isEditing">{{ issue.title || t("issue.detail.header.fallbackTitle") }}</h1>
+      <h1 v-if="!isEditing">{{ task.title || t("task.detail.header.fallbackTitle") }}</h1>
       <input
         v-else
         v-model.trim="editForm.title"
         type="text"
-        class="issue-title-input"
-        :placeholder="t('issue.detail.fields.titlePlaceholder')"
+        class="task-title-input"
+        :placeholder="t('task.detail.fields.titlePlaceholder')"
       />
-      <Tag v-if="!isEditing">{{ issueStatusLabel }}</Tag>
-      <select v-else v-model="editForm.status" class="issue-status-select">
+      <Tag v-if="!isEditing">{{ taskStatusLabel }}</Tag>
+      <select v-else v-model="editForm.status" class="task-status-select">
         <option v-for="statusOption in allStatuses" :key="statusOption" :value="statusOption">
-          {{ t(`issue.status.${convertSnakeToCamel(statusOption)}`) }}
+          {{ t(`task.status.${convertSnakeToCamel(statusOption)}`) }}
         </option>
       </select>
     </div>
@@ -21,20 +21,20 @@
       <button
         v-if="!isEditing"
         class="btn btn--sm"
-        @click="enterIssueChatRoom"
+        @click="enterTaskChatRoom"
         :disabled="isEnteringChat"
       >
         {{
           isEnteringChat
-            ? t("issue.detail.actions.enteringChat")
-            : t("issue.detail.actions.enterChat")
+            ? t("task.detail.actions.enteringChat")
+            : t("task.detail.actions.enterChat")
         }}
       </button>
       <button v-if="!isEditing" class="btn btn--sm btn--secondary" @click="startEditing">
-        {{ t("issue.detail.actions.edit") }}
+        {{ t("task.detail.actions.edit") }}
       </button>
-      <button v-else class="btn btn--sm" @click="saveIssue" :disabled="isSaving">
-        {{ isSaving ? t("issue.detail.actions.saving") : t("issue.detail.actions.save") }}
+      <button v-else class="btn btn--sm" @click="saveTask" :disabled="isSaving">
+        {{ isSaving ? t("task.detail.actions.saving") : t("task.detail.actions.save") }}
       </button>
       <button
         v-if="isEditing"
@@ -42,36 +42,36 @@
         @click="cancelEditing"
         :disabled="isSaving"
       >
-        {{ t("issue.detail.actions.cancel") }}
+        {{ t("task.detail.actions.cancel") }}
       </button>
       <button
-        v-if="canDeleteIssue"
+        v-if="canDeleteTask"
         class="btn btn--sm btn--danger"
-        @click="deleteIssue"
+        @click="deleteTask"
         :disabled="isSaving || isDeleting"
       >
-        {{ isDeleting ? t("issue.detail.actions.deleting") : t("issue.detail.actions.delete") }}
+        {{ isDeleting ? t("task.detail.actions.deleting") : t("task.detail.actions.delete") }}
       </button>
     </div>
   </hgroup>
 
-  <p v-if="isLoading">{{ t("issue.detail.status.loading") }}</p>
+  <p v-if="isLoading">{{ t("task.detail.status.loading") }}</p>
   <p v-else-if="errorMessage">{{ errorMessage }}</p>
 
-  <section v-else class="issue-grid">
-    <div class="issue-main">
-      <p v-if="!isEditing && issue.content">{{ issue.content }}</p>
-      <p v-else-if="!isEditing">{{ t("issue.detail.empty.description") }}</p>
+  <section v-else class="task-grid">
+    <div class="task-main">
+      <p v-if="!isEditing && task.content">{{ task.content }}</p>
+      <p v-else-if="!isEditing">{{ t("task.detail.empty.description") }}</p>
       <textarea
         v-else
         v-model.trim="editForm.content"
-        class="issue-content-input"
+        class="task-content-input"
         rows="8"
-        :placeholder="t('issue.detail.fields.descriptionPlaceholder')"
+        :placeholder="t('task.detail.fields.descriptionPlaceholder')"
       ></textarea>
     </div>
-    <aside class="issue-meta">
-      <h2>{{ t("issue.detail.sections.assignees") }}</h2>
+    <aside class="task-meta">
+      <h2>{{ t("task.detail.sections.assignees") }}</h2>
       <div class="role-picker">
         <RelatedMemberPicker
           v-for="role in roleOptions"
@@ -88,12 +88,12 @@
         <p v-if="relatedError" class="role-error">{{ relatedError }}</p>
       </div>
       <div class="member-history">
-        <h3>{{ t("issue.detail.sections.memberHistory") }}</h3>
-        <p v-if="issueMembers.length === 0" class="member-history-empty">
-          {{ t("issue.detail.empty.memberHistory") }}
+        <h3>{{ t("task.detail.sections.memberHistory") }}</h3>
+        <p v-if="taskMembers.length === 0" class="member-history-empty">
+          {{ t("task.detail.empty.memberHistory") }}
         </p>
         <ul v-else class="member-history-list">
-          <li v-for="member in issueMembers" :key="member.issue_member_id">
+          <li v-for="member in taskMembers" :key="member.task_member_id">
             <span class="history-date">{{ formatDate(member.created_at) }}</span>
             <span class="history-meta">
               {{ member.name }}
@@ -124,8 +124,8 @@ const route = useRoute();
 const router = useRouter();
 const appStore = useAppStore();
 const projectMemberStore = useProjectMemberStore();
-const issue = ref({});
-const issueMembers = ref([]);
+const task = ref({});
+const taskMembers = ref([]);
 const isLoading = ref(false);
 const isSaving = ref(false);
 const isDeleting = ref(false);
@@ -146,19 +146,19 @@ const allStatuses = ["BACKLOG", "PENDING", "IN_PROGRESS", "IN_REVIEW", "DONE"]; 
 const roleOptions = ["ASSIGNEE", "REPORTER", "REVIEWER", "WATCHER"];
 
 const projectId = computed(() => route.params.projectId);
-const boardId = computed(() => route.params.boardId);
-const issueId = computed(() => route.params.issueId);
+const kanbanId = computed(() => route.params.kanbanId);
+const taskId = computed(() => route.params.taskId);
 const projectMembers = computed(() => projectMemberStore.getProjectMembers(projectId.value));
 
-const issueStatusLabel = computed(() => {
-  const key = String(issue.value?.status || "").toUpperCase();
+const taskStatusLabel = computed(() => {
+  const key = String(task.value?.status || "").toUpperCase();
   if (!key) return "";
   const map = {
-    BACKLOG: "issue.status.backlog",
-    PENDING: "issue.status.pending",
-    IN_PROGRESS: "issue.status.inProgress",
-    IN_REVIEW: "issue.status.inReview",
-    DONE: "issue.status.done",
+    BACKLOG: "task.status.backlog",
+    PENDING: "task.status.pending",
+    IN_PROGRESS: "task.status.inProgress",
+    IN_REVIEW: "task.status.inReview",
+    DONE: "task.status.done",
   };
   const labelKey = map[key];
   return labelKey ? t(labelKey) : key;
@@ -166,25 +166,25 @@ const issueStatusLabel = computed(() => {
 
 const roleLabel = (role) => {
   const key = (role || "").toUpperCase();
-  if (key === "ASSIGNEE") return t("issue.detail.roles.assignee");
-  if (key === "REPORTER") return t("issue.detail.roles.reporter");
-  if (key === "REVIEWER") return t("issue.detail.roles.reviewer");
-  if (key === "WATCHER") return t("issue.detail.roles.watcher");
+  if (key === "ASSIGNEE") return t("task.detail.roles.assignee");
+  if (key === "REPORTER") return t("task.detail.roles.reporter");
+  if (key === "REVIEWER") return t("task.detail.roles.reviewer");
+  if (key === "WATCHER") return t("task.detail.roles.watcher");
   return role || "";
 };
 const currentUserId = computed(() => appStore.currentUser?.id);
-const userIssueRole = computed(() => {
+const userTaskRole = computed(() => {
   if (!currentUserId.value) return "";
-  const found = issueMembers.value.find(
+  const found = taskMembers.value.find(
     (member) => String(member.member_id) === String(currentUserId.value)
   );
   return (found?.role_name || "").toUpperCase();
 });
-const canDeleteIssue = computed(() => ["REPORTER", "REVIEWER"].includes(userIssueRole.value));
+const canDeleteTask = computed(() => ["REPORTER", "REVIEWER"].includes(userTaskRole.value));
 
 const roleMembers = (role) => {
   const key = (role || "").toUpperCase();
-  return issueMembers.value.filter((member) => (member.role_name || "").toUpperCase() === key);
+  return taskMembers.value.filter((member) => (member.role_name || "").toUpperCase() === key);
 };
 
 const formatDate = (value) => {
@@ -196,23 +196,23 @@ const formatDate = (value) => {
 
 const hasMemberInRole = (role, memberId) => {
   const key = (role || "").toUpperCase();
-  return issueMembers.value.some((member) => {
+  return taskMembers.value.some((member) => {
     const memberRole = (member.role_name || "").toUpperCase();
     return memberRole === key && String(member.member_id) === String(memberId);
   });
 };
 
-const findIssueMemberByMemberId = (memberId) =>
-  issueMembers.value.find((member) => String(member.member_id) === String(memberId));
+const findTaskMemberByMemberId = (memberId) =>
+  taskMembers.value.find((member) => String(member.member_id) === String(memberId));
 
-const updateIssueMembers = (members) => {
-  issueMembers.value = members;
+const updateTaskMembers = (members) => {
+  taskMembers.value = members;
 };
 
-const fetchIssue = async (options = {}) => {
+const fetchTask = async (options = {}) => {
   const { silent = false } = options;
-  if (!issueId.value) {
-    issue.value = {};
+  if (!taskId.value) {
+    task.value = {};
     return;
   }
 
@@ -222,16 +222,16 @@ const fetchIssue = async (options = {}) => {
   errorMessage.value = "";
 
   try {
-    const res = await api.get(`/issues/${issueId.value}`);
-    issue.value = res.data || {};
+    const res = await api.get(`/tasks/${taskId.value}`);
+    task.value = res.data || {};
     if (!isEditing.value) {
       editForm.value = {
-        title: issue.value.title || "",
-        content: issue.value.content || "",
+        title: task.value.title || "",
+        content: task.value.content || "",
       };
     }
   } catch (error) {
-    errorMessage.value = t("issue.detail.status.errorLoad");
+    errorMessage.value = t("task.detail.status.errorLoad");
   } finally {
     if (!silent) {
       isLoading.value = false;
@@ -239,31 +239,31 @@ const fetchIssue = async (options = {}) => {
   }
 };
 
-onMounted(fetchIssue);
-watch(issueId, fetchIssue);
+onMounted(fetchTask);
+watch(taskId, fetchTask);
 
 const startEditing = () => {
   isEditing.value = true;
   editForm.value = {
-    title: issue.value.title || "",
-    content: issue.value.content || "",
-    status: issue.value.status || "BACKLOG", // Initialize status
+    title: task.value.title || "",
+    content: task.value.content || "",
+    status: task.value.status || "BACKLOG", // Initialize status
   };
 };
 
 const cancelEditing = () => {
   isEditing.value = false;
   editForm.value = {
-    title: issue.value.title || "",
-    content: issue.value.content || "",
-    status: issue.value.status || "BACKLOG", // Reset status
+    title: task.value.title || "",
+    content: task.value.content || "",
+    status: task.value.status || "BACKLOG", // Reset status
   };
 };
 
-const saveIssue = async () => {
-  if (!issueId.value) return;
+const saveTask = async () => {
+  if (!taskId.value) return;
   if (!editForm.value.title) {
-    errorMessage.value = t("issue.detail.validation.titleRequired");
+    errorMessage.value = t("task.detail.validation.titleRequired");
     return;
   }
 
@@ -271,21 +271,21 @@ const saveIssue = async () => {
   errorMessage.value = "";
 
   try {
-    await api.patch(`/issues/${issueId.value}`, {
+    await api.patch(`/tasks/${taskId.value}`, {
       title: editForm.value.title,
       content: editForm.value.content,
       status: editForm.value.status,
     });
-    issue.value = {
-      ...issue.value,
+    task.value = {
+      ...task.value,
       title: editForm.value.title,
       content: editForm.value.content,
       status: editForm.value.status,
     };
     isEditing.value = false;
-    addToast({ message: t("issue.detail.toast.updated"), type: "success" });
+    addToast({ message: t("task.detail.toast.updated"), type: "success" });
   } catch (error) {
-    const message = error?.response?.data?.message || t("issue.detail.status.errorUpdate");
+    const message = error?.response?.data?.message || t("task.detail.status.errorUpdate");
     errorMessage.value = message;
     addToast({ message, type: "error" });
   } finally {
@@ -293,25 +293,25 @@ const saveIssue = async () => {
   }
 };
 
-const deleteIssue = async () => {
-  if (!issueId.value) return;
-  if (!canDeleteIssue.value) return;
-  const confirmed = window.confirm(t("issue.detail.confirm.delete"));
+const deleteTask = async () => {
+  if (!taskId.value) return;
+  if (!canDeleteTask.value) return;
+  const confirmed = window.confirm(t("task.detail.confirm.delete"));
   if (!confirmed) return;
 
   isDeleting.value = true;
   errorMessage.value = "";
 
   try {
-    await api.delete(`/issues/${issueId.value}`);
-    addToast({ message: t("issue.detail.toast.deleted"), type: "success" });
-    if (projectId.value && boardId.value) {
-      router.push(`/project/${projectId.value}/board/${boardId.value}`);
+    await api.delete(`/tasks/${taskId.value}`);
+    addToast({ message: t("task.detail.toast.deleted"), type: "success" });
+    if (projectId.value && kanbanId.value) {
+      router.push(`/project/${projectId.value}/kanban/${kanbanId.value}`);
       return;
     }
     router.back();
   } catch (error) {
-    const message = error?.response?.data?.message || t("issue.detail.status.errorDelete");
+    const message = error?.response?.data?.message || t("task.detail.status.errorDelete");
     errorMessage.value = message;
     addToast({ message, type: "error" });
   } finally {
@@ -319,32 +319,32 @@ const deleteIssue = async () => {
   }
 };
 
-const enterIssueChatRoom = async () => {
-  if (!issueId.value || !projectId.value) {
+const enterTaskChatRoom = async () => {
+  if (!taskId.value || !projectId.value) {
     return;
   }
 
   isEnteringChat.value = true;
 
   try {
-    const res = await api.post(`/issues/${issueId.value}/channel`);
+    const res = await api.post(`/tasks/${taskId.value}/channel`);
     const channelId = res.data?.id;
     if (!channelId) {
       throw new Error("channel id missing");
     }
     router.push(`/project/${projectId.value}/channel/${channelId}`);
   } catch (error) {
-    const message = error?.response?.data?.message || t("issue.detail.status.errorEnterChat");
+    const message = error?.response?.data?.message || t("task.detail.status.errorEnterChat");
     addToast({ message, type: "error" });
   } finally {
     isEnteringChat.value = false;
   }
 };
 
-const fetchIssueMembers = async (options = {}) => {
+const fetchTaskMembers = async (options = {}) => {
   const { silent = false } = options;
-  if (!issueId.value) {
-    updateIssueMembers([]);
+  if (!taskId.value) {
+    updateTaskMembers([]);
     return;
   }
 
@@ -354,10 +354,10 @@ const fetchIssueMembers = async (options = {}) => {
   relatedError.value = "";
 
   try {
-    const res = await api.get(`/issues/${issueId.value}/members`);
-    updateIssueMembers(res.data || []);
+    const res = await api.get(`/tasks/${taskId.value}/members`);
+    updateTaskMembers(res.data || []);
   } catch (error) {
-    relatedError.value = t("issue.detail.related.errorLoad");
+    relatedError.value = t("task.detail.related.errorLoad");
   } finally {
     if (!silent) {
       isUpdatingRelated.value = false;
@@ -365,21 +365,21 @@ const fetchIssueMembers = async (options = {}) => {
   }
 };
 
-onMounted(fetchIssueMembers);
-watch(issueId, fetchIssueMembers);
+onMounted(fetchTaskMembers);
+watch(taskId, fetchTaskMembers);
 
-const removeRelatedMember = async (issueMemberId) => {
-  const confirmed = window.confirm(t("issue.detail.related.confirmRemove"));
+const removeRelatedMember = async (taskMemberId) => {
+  const confirmed = window.confirm(t("task.detail.related.confirmRemove"));
   if (!confirmed) return;
 
-  updatingMemberId.value = issueMemberId;
+  updatingMemberId.value = taskMemberId;
   relatedError.value = "";
 
   try {
-    await api.delete(`/issues/members/${issueMemberId}`);
-    await fetchIssueMembers({ silent: true });
+    await api.delete(`/tasks/members/${taskMemberId}`);
+    await fetchTaskMembers({ silent: true });
   } catch (error) {
-    relatedError.value = error?.response?.data?.message || t("issue.detail.related.errorRemove");
+    relatedError.value = error?.response?.data?.message || t("task.detail.related.errorRemove");
   } finally {
     updatingMemberId.value = null;
   }
@@ -388,7 +388,7 @@ const removeRelatedMember = async (issueMemberId) => {
 const addRelatedMemberByRole = async (role, memberId) => {
   const resolvedMemberId = memberId;
   if (!resolvedMemberId) {
-    relatedError.value = t("issue.detail.related.validation.selectMember");
+    relatedError.value = t("task.detail.related.validation.selectMember");
     return;
   }
 
@@ -396,25 +396,25 @@ const addRelatedMemberByRole = async (role, memberId) => {
   relatedError.value = "";
 
   try {
-    const current = findIssueMemberByMemberId(resolvedMemberId);
+    const current = findTaskMemberByMemberId(resolvedMemberId);
     if (current) {
       const currentRole = (current.role_name || "").toUpperCase();
       const nextRole = (role || "").toUpperCase();
       if (currentRole === nextRole) {
         return;
       }
-      await api.delete(`/issues/members/${current.issue_member_id}`);
+      await api.delete(`/tasks/members/${current.task_member_id}`);
     }
     if (hasMemberInRole(role, resolvedMemberId)) {
       return;
     }
-    await api.post(`/issues/${issueId.value}/members`, {
+    await api.post(`/tasks/${taskId.value}/members`, {
       member_id: resolvedMemberId,
       role_name: role || "ASSIGNEE",
     });
-    await fetchIssueMembers({ silent: true });
+    await fetchTaskMembers({ silent: true });
   } catch (error) {
-    relatedError.value = error?.response?.data?.message || t("issue.detail.related.errorUpdate");
+    relatedError.value = error?.response?.data?.message || t("task.detail.related.errorUpdate");
   } finally {
     isUpdatingRelated.value = false;
   }
@@ -434,22 +434,22 @@ const addRelatedMemberByRole = async (role, memberId) => {
   margin: 0;
 }
 
-.issue-grid {
+.task-grid {
   display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
   gap: 24px;
 }
 
-.issue-main {
+.task-main {
   grid-column: span 9;
 }
 
-.issue-main p {
+.task-main p {
   white-space: pre-wrap;
   line-height: 1.5;
 }
 
-.issue-meta {
+.task-meta {
   grid-column: span 3;
 }
 
@@ -458,7 +458,7 @@ const addRelatedMemberByRole = async (role, memberId) => {
   gap: 8px;
 }
 
-.issue-title-input {
+.task-title-input {
   padding: 6px 10px;
   border-radius: 4px;
   border: 1px solid #e5e7eb;
@@ -468,7 +468,7 @@ const addRelatedMemberByRole = async (role, memberId) => {
   width: 30rem;
 }
 
-.issue-status-select {
+.task-status-select {
   padding: 6px 10px;
   border-radius: 4px;
   border: 1px solid #e5e7eb;
@@ -478,7 +478,7 @@ const addRelatedMemberByRole = async (role, memberId) => {
   min-width: 120px;
 }
 
-.issue-content-input {
+.task-content-input {
   width: 100%;
   min-height: 180px;
   padding: 10px;
@@ -488,7 +488,7 @@ const addRelatedMemberByRole = async (role, memberId) => {
   resize: vertical;
 }
 
-.issue-meta h2 {
+.task-meta h2 {
   margin: 0 0 12px 0;
   font-size: 16px;
 }
@@ -545,10 +545,9 @@ const addRelatedMemberByRole = async (role, memberId) => {
 }
 
 @media (max-width: 900px) {
-  .issue-main,
-  .issue-meta {
+  .task-main,
+  .task-meta {
     grid-column: span 12;
   }
 }
 </style>
-

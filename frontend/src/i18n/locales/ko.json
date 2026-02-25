@@ -68,7 +68,7 @@
     "project": {
       "projectNameFallback": "프로젝트",
       "nav": {
-        "board": "이슈 보드",
+        "kanban": "이슈 보드",
         "wiki": "위키",
         "messenger": "메신저"
       },
@@ -357,7 +357,7 @@
       }
     }
   },
-  "board": {
+  "kanban": {
     "layout": {
       "actions": {
         "create": "보드 만들기",
@@ -371,7 +371,7 @@
         "errorCreate": "보드를 생성하지 못했습니다."
       },
       "empty": {
-        "boards": "보드가 없습니다."
+        "kanbans": "보드가 없습니다."
       },
       "modal": {
         "title": "보드 만들기",
@@ -419,7 +419,7 @@
         "fallbackTitle": "보드"
       },
       "actions": {
-        "createIssue": "이슈 만들기",
+        "createTask": "작업 만들기",
         "settings": "보드 설정",
         "delete": "보드 삭제",
         "deleting": "삭제 중...",
@@ -431,11 +431,11 @@
         "assignees": "담당자 없음"
       },
       "modal": {
-        "title": "이슈 만들기",
+        "title": "작업 만들기",
         "titleLabel": "제목",
-        "titlePlaceholder": "이슈 제목",
+        "titlePlaceholder": "작업 제목",
         "descriptionLabel": "설명",
-        "descriptionPlaceholder": "이슈 내용을 입력하세요",
+        "descriptionPlaceholder": "작업 내용을 입력하세요",
         "statusLabel": "상태"
       },
       "validation": {
@@ -486,7 +486,7 @@
       }
     }
   },
-  "issue": {
+  "task": {
     "status": {
       "backlog": "백로그",
       "pending": "대기 중",
@@ -560,7 +560,7 @@
         "title": "백로그"
       },
       "actions": {
-        "createIssue": "이슈 만들기",
+        "createTask": "이슈 만들기",
         "creating": "생성 중...",
         "cancel": "취소",
         "create": "생성"

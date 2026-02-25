@@ -1,18 +1,18 @@
 ﻿<template>
   <hgroup>
     <div>
-      <h1>{{ board.name || t("board.page.header.fallbackTitle") }}</h1>
-      <p v-if="board.summary" class="subtitle">{{ board.summary }}</p>
+      <h1>{{ kanban.name || t("kanban.page.header.fallbackTitle") }}</h1>
+      <p v-if="kanban.summary" class="subtitle">{{ kanban.summary }}</p>
     </div>
     <div class="actions">
       <button type="button" class="btn btn--sm" @click="openModal">
-        {{ t("board.page.actions.createIssue") }}
+        {{ t("kanban.page.actions.createTask") }}
       </button>
       <router-link
         class="btn btn--icon"
-        :aria-label="t('board.page.actions.settings')"
-        :title="t('board.page.actions.settings')"
-        :to="boardSettingsPath"
+        :aria-label="t('kanban.page.actions.settings')"
+        :title="t('kanban.page.actions.settings')"
+        :to="kanbanSettingsPath"
       >
         <MaterialSymbol name="settings" :size="18" />
       </router-link>
@@ -29,48 +29,48 @@
     >
       <header>
         <h2>{{ statusLabels[status] }}</h2>
-        <span>{{ issuesByStatus(status).length }}</span>
+        <span>{{ tasksByStatus(status).length }}</span>
       </header>
 
       <div class="kanban-cards">
         <article
-          v-for="issue in issuesByStatus(status)"
-          :key="issue.id"
+          v-for="task in tasksByStatus(status)"
+          :key="task.id"
           class="kanban-card"
           draggable="true"
-          @dragstart="onDragStart($event, issue)"
+          @dragstart="onDragStart($event, task)"
         >
           <h3>
-            <router-link :to="issueDetailPath(issue.id)">{{ issue.title }}</router-link>
+            <router-link :to="taskDetailPath(task.id)">{{ task.title }}</router-link>
           </h3>
-          <div v-if="issue.assignee_members?.length" class="assignee-list">
+          <div v-if="task.assignee_members?.length" class="assignee-list">
             <div
-              v-for="assignee in issue.assignee_members"
-              :key="`${issue.id}-${assignee.id}-${assignee.role_name}`"
+              v-for="assignee in task.assignee_members"
+              :key="`${task.id}-${assignee.id}-${assignee.role_name}`"
               class="assignee-item"
             >
               <span>{{ assignee.name }}</span>
               <Tag
                 v-if="assignee.role_name"
-                :label="getRoleLabel('issue_member', assignee.role_name)"
+                :label="getRoleLabel('task_member', assignee.role_name)"
                 :variant="roleVariant(assignee.role_name)"
               />
             </div>
           </div>
-          <p v-else>{{ t("board.page.empty.assignees") }}</p>
+          <p v-else>{{ t("kanban.page.empty.assignees") }}</p>
         </article>
       </div>
     </section>
   </div>
 
-  <CreateIssueModal
+  <CreateTaskModal
     :open="isModalOpen"
-    :board-id="boardId"
+    :kanban-id="kanbanId"
     :show-status-select="true"
     :statuses="statuses"
     :default-status="'PENDING'"
     @close="closeModal"
-    @created="onIssueCreated"
+    @created="onTaskCreated"
   />
 </template>
 
@@ -79,7 +79,7 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 import api from "../../lib/axios";
-import CreateIssueModal from "../../components/modals/CreateIssueModal.vue";
+import CreateTaskModal from "../../components/modals/CreateTaskModal.vue";
 import MaterialSymbol from "../../components/MaterialSymbol.vue";
 import Tag from "../../components/Tag.vue";
 import { useRoleLabels } from "../../lib/roleLabels";
@@ -91,9 +91,9 @@ const { getRoleLabel } = useRoleLabels();
 const route = useRoute();
 const projectSearchStore = useProjectSearchStore();
 
-const board = ref({});
-const issues = ref([]);
-const draggingIssueId = ref(null);
+const kanban = ref({});
+const tasks = ref([]);
+const draggingTaskId = ref(null);
 const isModalOpen = ref(false);
 
 const statuses = ["PENDING", "IN_PROGRESS", "IN_REVIEW", "DONE"];
@@ -102,33 +102,33 @@ const statusLabels = computed(() => {
   const labels = {};
   statuses.forEach((status) => {
     const key = convertSnakeToCamel(status);
-    labels[status] = t(`issue.status.${key}`);
+    labels[status] = t(`task.status.${key}`);
   });
   return labels;
 });
 
 const projectId = computed(() => route.params.projectId);
-const boardId = computed(() => route.params.boardId);
+const kanbanId = computed(() => route.params.kanbanId);
 
-const fetchBoard = async () => {
-  if (!boardId.value) return;
-  const res = await api.get(`/boards/${boardId.value}`);
-  board.value = res.data || {};
+const fetchKanban = async () => {
+  if (!kanbanId.value) return;
+  const res = await api.get(`/kanbans/${kanbanId.value}`);
+  kanban.value = res.data || {};
 };
 
-const fetchIssues = async () => {
-  if (!boardId.value) return;
-  const res = await api.get(`/boards/${boardId.value}/issues`);
-  issues.value = res.data || [];
-  projectSearchStore.upsertIssues(projectId.value, issues.value);
+const fetchTasks = async () => {
+  if (!kanbanId.value) return;
+  const res = await api.get(`/kanbans/${kanbanId.value}/tasks`);
+  tasks.value = res.data || [];
+  projectSearchStore.upsertTasks(projectId.value, tasks.value);
 };
 
-const issuesByStatus = (status) =>
-  issues.value.filter((issue) => (issue.status || "BACKLOG") === status);
-const issueDetailPath = (issueId) =>
-  `/project/${projectId.value}/board/${boardId.value}/issue/${issueId}`;
-const boardSettingsPath = computed(
-  () => `/project/${projectId.value}/board/${boardId.value}/settings`
+const tasksByStatus = (status) =>
+  tasks.value.filter((task) => (task.status || "BACKLOG") === status);
+const taskDetailPath = (taskId) =>
+  `/project/${projectId.value}/kanban/${kanbanId.value}/task/${taskId}`;
+const kanbanSettingsPath = computed(
+  () => `/project/${projectId.value}/kanban/${kanbanId.value}/settings`
 );
 
 const roleVariant = (role) => {
@@ -140,35 +140,35 @@ const roleVariant = (role) => {
   return "default";
 };
 
-const onDragStart = (event, issue) => {
-  draggingIssueId.value = issue.id;
+const onDragStart = (event, task) => {
+  draggingTaskId.value = task.id;
   if (event?.dataTransfer) {
     event.dataTransfer.effectAllowed = "move";
-    event.dataTransfer.setData("text/issue-id", String(issue.id));
-    event.dataTransfer.setData("text/issue-origin", "board");
+    event.dataTransfer.setData("text/task-id", String(task.id));
+    event.dataTransfer.setData("text/task-origin", "kanban");
   }
 };
 
 const onDrop = async (status) => {
-  const issueId = draggingIssueId.value;
-  if (!issueId) return;
+  const taskId = draggingTaskId.value;
+  if (!taskId) return;
 
-  const currentIssue = issues.value.find((item) => item.id === issueId);
-  if (!currentIssue || currentIssue.status === status) {
-    draggingIssueId.value = null;
+  const currentTask = tasks.value.find((item) => item.id === taskId);
+  if (!currentTask || currentTask.status === status) {
+    draggingTaskId.value = null;
     return;
   }
 
   try {
-    const res = await api.patch(`/issues/${issueId}`, { status });
+    const res = await api.patch(`/tasks/${taskId}`, { status });
     const updated = res.data;
-    issues.value = issues.value.map((item) =>
-      item.id === issueId ? { ...item, ...updated } : item
+    tasks.value = tasks.value.map((item) =>
+      item.id === taskId ? { ...item, ...updated } : item
     );
   } catch (error) {
-    await fetchIssues();
+    await fetchTasks();
   } finally {
-    draggingIssueId.value = null;
+    draggingTaskId.value = null;
   }
 };
 
@@ -180,32 +180,32 @@ const closeModal = () => {
   isModalOpen.value = false;
 };
 
-const onIssueCreated = async () => {
-  await fetchIssues();
+const onTaskCreated = async () => {
+  await fetchTasks();
 };
 
-const loadBoardData = async () => {
-  await Promise.all([fetchBoard(), fetchIssues()]);
+const loadKanbanData = async () => {
+  await Promise.all([fetchKanban(), fetchTasks()]);
 };
 
-onMounted(loadBoardData);
+onMounted(loadKanbanData);
 
-const handleExternalIssueMove = async () => {
-  await fetchIssues();
+const handleExternalTaskMove = async () => {
+  await fetchTasks();
 };
 
-watch(boardId, async (nextId, prevId) => {
+watch(kanbanId, async (nextId, prevId) => {
   if (nextId && nextId !== prevId) {
-    await loadBoardData();
+    await loadKanbanData();
   }
 });
 
 onMounted(() => {
-  window.addEventListener("issue:moved", handleExternalIssueMove);
+  window.addEventListener("task:moved", handleExternalTaskMove);
 });
 
 onBeforeUnmount(() => {
-  window.removeEventListener("issue:moved", handleExternalIssueMove);
+  window.removeEventListener("task:moved", handleExternalTaskMove);
 });
 </script>
 
@@ -223,7 +223,7 @@ onBeforeUnmount(() => {
   gap: 8px;
 }
 
-.board-summary {
+.kanban-summary {
   margin: 4px 0 0;
   font-size: 13px;
   color: var(--color-text-muted);

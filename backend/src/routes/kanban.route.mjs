@@ -16,12 +16,12 @@ const ensureProjectExists = async (projectId, res) => {
 
 /**
  * @swagger
- * /api/boards:
+ * /api/kanbans:
  *   get:
- *     summary: 프로젝트 보드 목록
- *     description: 쿼리스트링 projectId로 특정 프로젝트 내의 활성 보드 목록 조회
+ *     summary: 프로젝트 칸반 목록
+ *     description: 쿼리스트링 projectId로 특정 프로젝트 내의 활성 칸반 목록 조회
  *     tags:
- *       - Board
+ *       - Kanban
  *     parameters:
  *       - in: query
  *         name: projectId
@@ -30,7 +30,7 @@ const ensureProjectExists = async (projectId, res) => {
  *           type: integer
  *     responses:
  *       200:
- *         description: 보드 목록 조회 성공
+ *         description: 칸반 목록 조회 성공
  *         content:
  *           application/json:
  *             schema:
@@ -41,7 +41,7 @@ const ensureProjectExists = async (projectId, res) => {
  *                 data:
  *                   type: array
  *                   items:
- *                     $ref: "#/components/schemas/Board"
+ *                     $ref: "#/components/schemas/Kanban"
  *       400:
  *         $ref: "#/components/responses/ErrorResponse"
  *       403:
@@ -70,16 +70,16 @@ router.get("/", isAuth, async (req, res) => {
       return res.status(403).json({ name: "Forbidden", message: "접근 권한이 없습니다." });
     }
 
-    const boards = await pool.query(
+    const kanbans = await pool.query(
       `SELECT
-          b.*,
+          k.*,
           COALESCE(
               json_build_object(
-                  'BACKLOG', COUNT(CASE WHEN i.status = 'BACKLOG' THEN 1 ELSE NULL END),
-                  'PENDING', COUNT(CASE WHEN i.status = 'PENDING' THEN 1 ELSE NULL END),
-                  'IN_PROGRESS', COUNT(CASE WHEN i.status = 'IN_PROGRESS' THEN 1 ELSE NULL END),
-                  'IN_REVIEW', COUNT(CASE WHEN i.status = 'IN_REVIEW' THEN 1 ELSE NULL END),
-                  'DONE', COUNT(CASE WHEN i.status = 'DONE' THEN 1 ELSE NULL END)
+                  'BACKLOG', COUNT(CASE WHEN t.status = 'BACKLOG' THEN 1 ELSE NULL END),
+                  'PENDING', COUNT(CASE WHEN t.status = 'PENDING' THEN 1 ELSE NULL END),
+                  'IN_PROGRESS', COUNT(CASE WHEN t.status = 'IN_PROGRESS' THEN 1 ELSE NULL END),
+                  'IN_REVIEW', COUNT(CASE WHEN t.status = 'IN_REVIEW' THEN 1 ELSE NULL END),
+                  'DONE', COUNT(CASE WHEN t.status = 'DONE' THEN 1 ELSE NULL END)
               ),
               json_build_object(
                   'BACKLOG', 0,
@@ -88,21 +88,21 @@ router.get("/", isAuth, async (req, res) => {
                   'IN_REVIEW', 0,
                   'DONE', 0
               )
-          ) AS issue_counts
+          ) AS task_counts
       FROM
-          board b
+          kanban k
       LEFT JOIN
-          issue i ON b.id = i.board_id
+          task t ON k.id = t.kanban_id
       WHERE
-          b.project_id = $1 AND b.is_active = 1
+          k.project_id = $1 AND k.is_active = TRUE
       GROUP BY
-          b.id
+          k.id
       ORDER BY
-          b.sort_order ASC, b.created_at DESC;`,
+          k.sort_order ASC, k.created_at DESC;`,
       [projectId]
     );
 
-    res.json(boards.rows);
+    res.json(kanbans.rows);
   } catch (error) {
     res.status(500).json({ name: "InternalServerError", message: error.message });
   }
@@ -110,12 +110,12 @@ router.get("/", isAuth, async (req, res) => {
 
 /**
  * @swagger
- * /api/boards:
+ * /api/kanbans:
  *   post:
- *     summary: 보드 생성
- *     description: 새 보드를 생성하고 생성자를 OWNER로 등록
+ *     summary: 칸반 생성
+ *     description: 새 칸반을 생성하고 생성자를 OWNER로 등록
  *     tags:
- *       - Board
+ *       - Kanban
  *     requestBody:
  *       required: true
  *       content:
@@ -137,7 +137,7 @@ router.get("/", isAuth, async (req, res) => {
  *               - project_id
  *     responses:
  *       201:
- *         description: 보드 생성 성공
+ *         description: 칸반 생성 성공
  *         content:
  *           application/json:
  *             schema:
@@ -161,7 +161,7 @@ router.post("/", isAuth, async (req, res) => {
   if (!name || !project_id) {
     return res
       .status(400)
-      .json({ name: "BadRequest", message: "보드 이름과 프로젝트 ID는 필수입니다." });
+      .json({ name: "BadRequest", message: "칸반 이름과 프로젝트 ID는 필수입니다." });
   }
 
   const client = await pool.connect();
@@ -182,28 +182,28 @@ router.post("/", isAuth, async (req, res) => {
 
     await client.query("BEGIN");
 
-    // 2. 보드 생성
-    const boardQuery = `
-      INSERT INTO board (name, summary, project_id, type)
+    // 2. 칸반 생성
+    const kanbanQuery = `
+      INSERT INTO kanban (name, summary, project_id, type)
       VALUES ($1, $2, $3, $4)
       RETURNING *;
     `;
-    const boardRes = await client.query(boardQuery, [name, summary ?? null, project_id, type]);
-    const newBoard = boardRes.rows[0];
+    const kanbanRes = await client.query(kanbanQuery, [name, summary ?? null, project_id, type]);
+    const newKanban = kanbanRes.rows[0];
 
-    // 3. 보드 멤버 등록 (생성자를 OWNER로 등록)
+    // 3. 칸반 멤버 등록 (생성자를 OWNER로 등록)
     const memberQuery = `
-        INSERT INTO board_member (board_id, member_id, role_name)
+        INSERT INTO kanban_member (kanban_id, member_id, role_name)
         VALUES ($1, $2, 'OWNER');
     `;
-    await client.query(memberQuery, [newBoard.id, userId]);
+    await client.query(memberQuery, [newKanban.id, userId]);
 
     await client.query("COMMIT");
 
-    res.status(201).json({ id: newBoard.id });
+    res.status(201).json({ id: newKanban.id });
   } catch (error) {
     await client.query("ROLLBACK");
-    logger.error("Board create error", {
+    logger.error("Kanban create error", {
       err: error?.message,
       stack: error?.stack,
     });
@@ -215,21 +215,21 @@ router.post("/", isAuth, async (req, res) => {
 
 /**
  * @swagger
- * /api/boards/{boardId}:
+ * /api/kanbans/{kanbanId}:
  *   get:
- *     summary: 보드 상세 조회
- *     description: 보드의 상세 정보 조회
+ *     summary: 칸반 상세 조회
+ *     description: 칸반의 상세 정보 조회
  *     tags:
- *       - Board
+ *       - Kanban
  *     parameters:
  *       - in: path
- *         name: boardId
+ *         name: kanbanId
  *         required: true
  *         schema:
  *           type: integer
  *     responses:
  *       200:
- *         description: 보드 상세 조회 성공
+ *         description: 칸반 상세 조회 성공
  *         content:
  *           application/json:
  *             schema:
@@ -238,19 +238,19 @@ router.post("/", isAuth, async (req, res) => {
  *                 success:
  *                   type: boolean
  *                 data:
- *                   $ref: "#/components/schemas/Board"
+ *                   $ref: "#/components/schemas/Kanban"
  *       404:
  *         $ref: "#/components/responses/ErrorResponse"
  *       500:
  *         $ref: "#/components/responses/ErrorResponse"
  */
-router.get("/:boardId", isAuth, async (req, res) => {
-  const { boardId } = req.params;
+router.get("/:kanbanId", isAuth, async (req, res) => {
+  const { kanbanId } = req.params;
   try {
-    const result = await pool.query("SELECT * FROM board WHERE id = $1", [boardId]);
+    const result = await pool.query("SELECT * FROM kanban WHERE id = $1", [kanbanId]);
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ name: "NotFound", message: "보드를 찾을 수 없습니다." });
+      return res.status(404).json({ name: "NotFound", message: "칸반을 찾을 수 없습니다." });
     }
 
     res.json(result.rows[0]);
@@ -261,15 +261,15 @@ router.get("/:boardId", isAuth, async (req, res) => {
 
 /**
  * @swagger
- * /api/boards/{boardId}:
+ * /api/kanbans/{kanbanId}:
  *   patch:
- *     summary: 보드 수정
- *     description: 보드 이름 변경 (OWNER 전용)
+ *     summary: 칸반 수정
+ *     description: 칸반 이름 변경 (OWNER 전용)
  *     tags:
- *       - Board
+ *       - Kanban
  *     parameters:
  *       - in: path
- *         name: boardId
+ *         name: kanbanId
  *         required: true
  *         schema:
  *           type: integer
@@ -286,7 +286,7 @@ router.get("/:boardId", isAuth, async (req, res) => {
  *                 type: string
  *     responses:
  *       200:
- *         description: 보드 수정 성공
+ *         description: 칸반 수정 성공
  *         content:
  *           application/json:
  *             schema:
@@ -295,7 +295,7 @@ router.get("/:boardId", isAuth, async (req, res) => {
  *                 success:
  *                   type: boolean
  *                 data:
- *                   $ref: "#/components/schemas/Board"
+ *                   $ref: "#/components/schemas/Kanban"
  *       400:
  *         $ref: "#/components/responses/ErrorResponse"
  *       403:
@@ -303,8 +303,8 @@ router.get("/:boardId", isAuth, async (req, res) => {
  *       500:
  *         $ref: "#/components/responses/ErrorResponse"
  */
-router.patch("/:boardId", isAuth, async (req, res) => {
-  const { boardId } = req.params;
+router.patch("/:kanbanId", isAuth, async (req, res) => {
+  const { kanbanId } = req.params;
   const { name, summary } = req.body;
   const userId = req.session.userId;
 
@@ -313,17 +313,17 @@ router.patch("/:boardId", isAuth, async (req, res) => {
   }
 
   if (name !== undefined && !name) {
-    return res.status(400).json({ name: "BadRequest", message: "보드 이름은 필수입니다." });
+    return res.status(400).json({ name: "BadRequest", message: "칸반 이름은 필수입니다." });
   }
 
   try {
     const authCheck = await pool.query(
-      "SELECT role_name FROM board_member WHERE board_id = $1 AND member_id = $2",
-      [boardId, userId]
+      "SELECT role_name FROM kanban_member WHERE kanban_id = $1 AND member_id = $2",
+      [kanbanId, userId]
     );
 
     if (!authCheck.rows[0] || authCheck.rows[0].role_name !== "OWNER") {
-      return res.status(403).json({ name: "Forbidden", message: "보드 수정 권한이 없습니다." });
+      return res.status(403).json({ name: "Forbidden", message: "칸반 수정 권한이 없습니다." });
     }
 
     const fields = [];
@@ -342,8 +342,8 @@ router.patch("/:boardId", isAuth, async (req, res) => {
       paramIndex += 1;
     }
 
-    values.push(boardId);
-    const updateQuery = `UPDATE board SET ${fields.join(", ")} WHERE id = $${paramIndex} RETURNING *`;
+    values.push(kanbanId);
+    const updateQuery = `UPDATE kanban SET ${fields.join(", ")} WHERE id = $${paramIndex} RETURNING *`;
     const updateRes = await pool.query(updateQuery, values);
 
     res.json(updateRes.rows[0]);
@@ -354,15 +354,15 @@ router.patch("/:boardId", isAuth, async (req, res) => {
 
 /**
  * @swagger
- * /api/boards/{boardId}:
+ * /api/kanbans/{kanbanId}:
  *   delete:
- *     summary: 보드 삭제
- *     description: 보드 삭제 (OWNER 전용)
+ *     summary: 칸반 삭제
+ *     description: 칸반 삭제 (OWNER 전용)
  *     tags:
- *       - Board
+ *       - Kanban
  *     parameters:
  *       - in: path
- *         name: boardId
+ *         name: kanbanId
  *         required: true
  *         schema:
  *           type: integer
@@ -374,39 +374,39 @@ router.patch("/:boardId", isAuth, async (req, res) => {
  *       500:
  *         $ref: "#/components/responses/ErrorResponse"
  */
-router.delete("/:boardId", isAuth, async (req, res) => {
-  const { boardId } = req.params;
+router.delete("/:kanbanId", isAuth, async (req, res) => {
+  const { kanbanId } = req.params;
   const userId = req.session.userId;
 
   try {
-    // 권한 확인: 보드의 OWNER인지 확인
+    // 권한 확인: 칸반의 OWNER인지 확인
     const authCheck = await pool.query(
-      "SELECT role_name FROM board_member WHERE board_id = $1 AND member_id = $2",
-      [boardId, userId]
+      "SELECT role_name FROM kanban_member WHERE kanban_id = $1 AND member_id = $2",
+      [kanbanId, userId]
     );
 
     if (!authCheck.rows[0] || authCheck.rows[0].role_name !== "OWNER") {
-      return res.status(403).json({ name: "Forbidden", message: "보드 삭제 권한이 없습니다." });
+      return res.status(403).json({ name: "Forbidden", message: "칸반 삭제 권한이 없습니다." });
     }
 
-    // 추가: 보드가 기본 백로그 보드인지 확인 (type으로 구분)
-    const boardCheck = await pool.query(
-      "SELECT type FROM board WHERE id = $1",
-      [boardId]
+    // 추가: 칸반이 기본 백로그 칸반인지 확인 (type으로 구분)
+    const kanbanCheck = await pool.query(
+      "SELECT type FROM kanban WHERE id = $1",
+      [kanbanId]
     );
 
-    if (boardCheck.rows.length === 0) {
-      return res.status(404).json({ name: "NotFound", message: "보드를 찾을 수 없습니다." });
+    if (kanbanCheck.rows.length === 0) {
+      return res.status(404).json({ name: "NotFound", message: "칸반을 찾을 수 없습니다." });
     }
 
-    if (boardCheck.rows[0].type === 'BACKLOG') {
-      return res.status(403).json({ name: "Forbidden", message: "백로그 보드는 삭제할 수 없습니다." });
+    if (kanbanCheck.rows[0].type === 'BACKLOG') {
+      return res.status(403).json({ name: "Forbidden", message: "백로그 칸반은 삭제할 수 없습니다." });
     }
 
-    // ON DELETE CASCADE에 의해 관련 issue, board_member 자동 삭제됨
-    await pool.query("DELETE FROM board WHERE id = $1", [boardId]);
+    // ON DELETE CASCADE에 의해 관련 task, kanban_member 자동 삭제됨
+    await pool.query("DELETE FROM kanban WHERE id = $1", [kanbanId]);
 
-    res.json({ message: "보드가 삭제되었습니다." });
+    res.json({ message: "칸반이 삭제되었습니다." });
   } catch (error) {
     res.status(500).json({ name: "InternalServerError", message: error.message });
   }
@@ -414,21 +414,21 @@ router.delete("/:boardId", isAuth, async (req, res) => {
 
 /**
  * @swagger
- * /api/boards/{boardId}/issues:
+ * /api/kanbans/{kanbanId}/tasks:
  *   get:
- *     summary: 보드 이슈 목록
- *     description: 특정 보드의 모든 이슈 조회
+ *     summary: 칸반 작업 목록
+ *     description: 특정 칸반의 모든 작업 조회
  *     tags:
- *       - Board
+ *       - Kanban
  *     parameters:
  *       - in: path
- *         name: boardId
+ *         name: kanbanId
  *         required: true
  *         schema:
  *           type: integer
  *     responses:
  *       200:
- *         description: 이슈 목록 조회 성공
+ *         description: 작업 목록 조회 성공
  *         content:
  *           application/json:
  *             schema:
@@ -439,32 +439,32 @@ router.delete("/:boardId", isAuth, async (req, res) => {
  *                 data:
  *                   type: array
  *                   items:
- *                     $ref: "#/components/schemas/IssueWithAssignees"
+ *                     $ref: "#/components/schemas/TaskWithAssignees"
  *       500:
  *         $ref: "#/components/responses/ErrorResponse"
  */
-router.get("/:boardId/issues", isAuth, async (req, res) => {
-  const { boardId } = req.params;
+router.get("/:kanbanId/tasks", isAuth, async (req, res) => {
+  const { kanbanId } = req.params;
   try {
     const query = `
-      SELECT i.*, 
+      SELECT t.*, 
              COALESCE((
               SELECT json_agg(
                 json_build_object(
                   'id', m.id,
                   'name', m.name,
-                  'role_name', im.role_name
+                  'role_name', tm.role_name
                 )
               )
-              FROM issue_member im 
-              JOIN member m ON im.member_id = m.id 
-              WHERE im.issue_id = i.id
+              FROM task_member tm 
+              JOIN member m ON tm.member_id = m.id 
+              WHERE tm.task_id = t.id
              ), '[]'::json) as assignee_members
-      FROM issue i
-      WHERE i.board_id = $1
-      ORDER BY i.updated_at ASC;
+      FROM task t
+      WHERE t.kanban_id = $1
+      ORDER BY t.updated_at ASC;
     `;
-    const result = await pool.query(query, [boardId]);
+    const result = await pool.query(query, [kanbanId]);
     res.json(result.rows);
   } catch (error) {
     res.status(500).json({ name: "InternalServerError", message: error.message });

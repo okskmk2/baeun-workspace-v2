@@ -1,30 +1,30 @@
 <template>
   <BaseModal
     :open="open"
-    :title="t('board.page.modal.title')"
+    :title="t('kanban.page.modal.title')"
     :closeOnBackdrop="false"
     @close="handleClose"
   >
     <form class="modal-form" @submit.prevent="handleSubmit">
-      <label for="issue-title">{{ t("backlog.page.modal.titleLabel") }}</label>
+      <label for="task-title">{{ t("backlog.page.modal.titleLabel") }}</label>
       <input
-        id="issue-title"
+        id="task-title"
         v-model.trim="form.title"
         type="text"
         :placeholder="t('backlog.page.modal.titlePlaceholder')"
       />
 
-      <label for="issue-content">{{ t("backlog.page.modal.descriptionLabel") }}</label>
+      <label for="task-content">{{ t("backlog.page.modal.descriptionLabel") }}</label>
       <textarea
-        id="issue-content"
+        id="task-content"
         v-model.trim="form.content"
         rows="10"
         :placeholder="t('backlog.page.modal.descriptionPlaceholder')"
       ></textarea>
 
       <template v-if="showStatusSelect">
-        <label for="issue-status">{{ t("board.page.modal.statusLabel") }}</label>
-        <select id="issue-status" v-model="form.status">
+        <label for="task-status">{{ t("kanban.page.modal.statusLabel") }}</label>
+        <select id="task-status" v-model="form.status">
           <option v-for="status in statuses" :key="status" :value="status">
             {{ getStatusLabel(status) }}
           </option>
@@ -49,6 +49,7 @@ import { ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import api from "../../lib/axios";
 import BaseModal from "../BaseModal.vue";
+import { convertSnakeToCamel } from "../../lib/utils";
 
 const { t } = useI18n();
 
@@ -57,7 +58,7 @@ const props = defineProps({
     type: Boolean,
     required: true,
   },
-  boardId: {
+  kanbanId: {
     type: [Number, String],
     default: null,
   },
@@ -86,8 +87,8 @@ const isCreating = ref(false);
 const formError = ref("");
 
 const getStatusLabel = (status) => {
-  const key = status.toLowerCase().replace(/_/g, "");
-  return t(`issue.status.${key}`);
+  const key = convertSnakeToCamel(status);
+  return t(`task.status.${key}`);
 };
 
 const handleClose = () => {
@@ -104,10 +105,10 @@ const handleSubmit = async () => {
   formError.value = "";
 
   try {
-    await api.post("/issues", {
+    await api.post("/tasks", {
       title: form.value.title,
       content: form.value.content,
-      board_id: props.boardId,
+      kanban_id: props.kanbanId,
       status: form.value.status,
     });
     emit("created");

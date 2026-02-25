@@ -1,11 +1,11 @@
-import IssueDetailPage from "../views/project/IssueDetailPage.vue";
-import BoardHomePage from "../views/project/BoardHomePage.vue";
-import BoardLayout from "../views/project/BoardLayout.vue";
+import TaskDetailPage from "../views/project/TaskDetailPage.vue";
+import KanbanHomePage from "../views/project/KanbanHomePage.vue";
+import KanbanLayout from "../views/project/KanbanLayout.vue";
 import WikiLayout from "../views/project/WikiLayout.vue";
 import MessengerLayout from "../views/project/MessengerLayout.vue";
 import ProjectLayout from "../views/project/ProjectLayout.vue";
-import BoardPage from "../views/project/BoardPage.vue";
-import BoardSettingsPage from "../views/project/BoardSettingsPage.vue";
+import KanbanPage from "../views/project/KanbanPage.vue";
+import KanbanSettingsPage from "../views/project/KanbanSettingsPage.vue";
 import WikiHomePage from "../views/project/WikiHomePage.vue";
 import WikiPage from "../views/project/WikiPage.vue";
 import ChannelHomePage from "../views/project/ChannelHomePage.vue";
@@ -28,29 +28,29 @@ export const projectRoutes = [
         path: "",
         beforeEnter: async (to, from) => {
           const { projectId } = to.params;
-          return `/project/${projectId}/board`;
+          return `/project/${projectId}/kanban`;
         },
         component: BlankPage,
       },
       {
-        path: "board",
-        component: BoardLayout,
+        path: "kanban",
+        component: KanbanLayout,
         children: [
           {
             path: "",
-            component: BoardHomePage,
+            component: KanbanHomePage,
           },
           {
-            path: ":boardId",
-            component: BoardPage,
+            path: ":kanbanId",
+            component: KanbanPage,
           },
           {
-            path: ":boardId/settings",
-            component: BoardSettingsPage,
+            path: ":kanbanId/settings",
+            component: KanbanSettingsPage,
           },
           {
-            path: ":boardId/issue/:issueId",
-            component: IssueDetailPage,
+            path: ":kanbanId/task/:taskId",
+            component: TaskDetailPage,
           },
           {
             path: "backlog",

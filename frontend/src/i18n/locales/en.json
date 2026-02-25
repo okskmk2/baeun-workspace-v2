@@ -68,7 +68,7 @@
     "project": {
       "projectNameFallback": "Project",
       "nav": {
-        "board": "Issue Board",
+        "kanban": "Issue Board",
         "wiki": "Wiki",
         "messenger": "Messenger"
       },
@@ -357,7 +357,7 @@
       }
     }
   },
-  "board": {
+  "kanban": {
     "layout": {
       "actions": {
         "create": "Create Board",
@@ -371,7 +371,7 @@
         "errorCreate": "Failed to create board."
       },
       "empty": {
-        "boards": "No boards yet."
+        "kanbans": "No boards yet."
       },
       "modal": {
         "title": "Create Board",
@@ -416,10 +416,10 @@
     },
     "page": {
       "header": {
-        "fallbackTitle": "Board"
+        "fallbackTitle": "Kanban"
       },
       "actions": {
-        "createIssue": "Create Issue",
+        "createTask": "Create Task",
         "settings": "Board settings",
         "delete": "Delete Board",
         "deleting": "Deleting...",
@@ -486,7 +486,7 @@
       }
     }
   },
-  "issue": {
+  "task": {
     "status": {
       "backlog": "Backlog",
       "pending": "Pending",
@@ -560,7 +560,7 @@
         "title": "Backlog"
       },
       "actions": {
-        "createIssue": "Create Issue",
+        "createTask": "Create Issue",
         "creating": "Creating...",
         "cancel": "Cancel",
         "create": "Create"

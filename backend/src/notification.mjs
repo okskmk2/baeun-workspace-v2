@@ -2,11 +2,11 @@ import pool from "./db.mjs";
 import { broadcastToUsers } from "./ws.mjs";
 
 export const NOTIFICATION_TYPES = {
-  ISSUE_ASSIGNED_TO_ME: "issue.assigned_to_me",
+  TASK_ASSIGNED_TO_ME: "task.assigned_to_me",
   CHANNEL_INVITED_ME: "channel.invited_me",
-  ISSUE_WATCHING_STATUS_CHANGED: "issue.watching_status_changed",
-  ISSUE_WATCHING_CONTENT_CHANGED: "issue.watching_content_changed",
-  ISSUE_ASSIGNEE_REVIEW_TO_DONE: "issue.assignee_review_to_done",
+  TASK_WATCHING_STATUS_CHANGED: "task.watching_status_changed",
+  TASK_WATCHING_CONTENT_CHANGED: "task.watching_content_changed",
+  TASK_ASSIGNEE_REVIEW_TO_DONE: "task.assignee_review_to_done",
   CHANNEL_NOTICE_PROJECT_NEW_MESSAGE: "channel.notice_project_new_message",
   CHANNEL_NOTICE_WORKSPACE_NEW_MESSAGE: "channel.notice_workspace_new_message",
 };

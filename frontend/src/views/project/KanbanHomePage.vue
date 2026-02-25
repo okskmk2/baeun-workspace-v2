@@ -1,14 +1,14 @@
 ﻿<template>
   <hgroup>
-    <h1>{{ t("board.home.header.title") }}</h1>
+    <h1>{{ t("kanban.home.header.title") }}</h1>
   </hgroup>
 
   <p v-if="isLoading" class="status">불러오는 중...</p>
   <p v-else-if="errorMessage" class="status error">{{ errorMessage }}</p>
-  <p v-else-if="activities.length === 0" class="status">최근 이슈 활동이 없습니다.</p>
+  <p v-else-if="activities.length === 0" class="status">최근 작업 활동이 없습니다.</p>
   <FeedList v-else :groups="activityGroups" item-key="itemKey" :item-click="handleItemClick">
     <template #icon>
-      <span class="feed-icon">B</span>
+      <span class="feed-icon">K</span>
     </template>
     <template #item="{ item }">
       <div class="item-title">
@@ -17,7 +17,7 @@
         </span>
         {{ item.title }}
       </div>
-      <div class="item-meta">{{ item.board_name }} · {{ formatTime(item.occurred_at) }}</div>
+      <div class="item-meta">{{ item.kanban_name }} · {{ formatTime(item.occurred_at) }}</div>
     </template>
   </FeedList>
 </template>
@@ -40,24 +40,24 @@ const isLoading = ref(false);
 const errorMessage = ref("");
 const activities = ref([]);
 
-const fetchRecentIssues = async () => {
+const fetchRecentTasks = async () => {
   if (!projectId.value) return;
   isLoading.value = true;
   errorMessage.value = "";
 
   try {
-    const res = await api.get("/issues/recent", {
+    const res = await api.get("/tasks/recent", {
       params: { project_id: projectId.value },
     });
     activities.value = res.data || [];
-    projectSearchStore.upsertIssues(projectId.value, activities.value);
+    projectSearchStore.upsertTasks(projectId.value, activities.value);
   } catch (error) {
     if (error?.response?.status === 404) {
       router.push("/not-found");
       return;
     }
     activities.value = [];
-    errorMessage.value = "최근 활동을 불러오지 못했습니다.";
+    errorMessage.value = "최근 작업을 불러오지 못했습니다.";
   } finally {
     isLoading.value = false;
   }
@@ -81,12 +81,12 @@ const activityGroups = computed(() => [
 ]);
 
 const handleItemClick = (item) => {
-  if (!projectId.value || !item?.board_id || !item?.id) return;
-  router.push(`/project/${projectId.value}/board/${item.board_id}/issue/${item.id}`);
+  if (!projectId.value || !item?.kanban_id || !item?.id) return;
+  router.push(`/project/${projectId.value}/kanban/${item.kanban_id}/task/${item.id}`);
 };
 
-onMounted(fetchRecentIssues);
-watch(projectId, fetchRecentIssues);
+onMounted(fetchRecentTasks);
+watch(projectId, fetchRecentTasks);
 </script>
 
 <style scoped>

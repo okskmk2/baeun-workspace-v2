@@ -19,9 +19,9 @@
               <MaterialSymbol name="menu_book" :size="20" alt="" />
               <span>{{ t("layout.project.nav.wiki") }}</span>
             </router-link>
-            <router-link class="mainnav-link" :to="`/project/${projectId}/board`">
+            <router-link class="mainnav-link" :to="`/project/${projectId}/kanban`">
               <MaterialSymbol name="view_kanban" :size="20" alt="" />
-              <span>{{ t("layout.project.nav.board") }}</span>
+              <span>{{ t("layout.project.nav.kanban") }}</span>
             </router-link>
             <router-link class="mainnav-link" :to="`/project/${projectId}/channel`">
               <MaterialSymbol name="chat_bubble" :size="20" alt="" />
@@ -50,8 +50,8 @@
               <span>{{ result.name }}</span>
               <span class="search-result-meta">
                 <small>{{ getResultTypeLabel(result.type) }}</small>
-                <small v-if="result.type === 'issue' && result.status" class="search-status-badge">
-                  {{ getIssueStatusLabel(result.status) }}
+                <small v-if="result.type === 'task' && result.status" class="search-status-badge">
+                  {{ getTaskStatusLabel(result.status) }}
                 </small>
               </span>
             </button>
@@ -86,7 +86,7 @@ import api from "../../lib/axios";
 import { useProjectMemberStore } from "../../stores/projectMemberStore";
 import { useWorkspaceStore } from "../../stores/workspaceStore";
 import { useAppStore } from "../../stores/appStore";
-import { useBoardStore } from "../../stores/boardStore";
+import { useKanbanStore } from "../../stores/kanbanStore";
 import { usePageStore } from "../../stores/pageStore";
 import { useChatStore } from "../../stores/chatStore";
 import { useProjectSearchStore } from "../../stores/projectSearchStore";
@@ -103,17 +103,17 @@ const router = useRouter();
 const projectMemberStore = useProjectMemberStore();
 const workspaceStore = useWorkspaceStore();
 const appStore = useAppStore();
-const boardStore = useBoardStore();
+const kanbanStore = useKanbanStore();
 const pageStore = usePageStore();
 const chatStore = useChatStore();
 const projectSearchStore = useProjectSearchStore();
 const { gnbPreviewTheme, currentUser } = storeToRefs(appStore);
 
 const SEARCH_TYPE_TTLS = {
-  board: 60 * 1000,
+  kanban: 60 * 1000,
   page: 30 * 1000,
   channel: 60 * 1000,
-  issue: 30 * 1000,
+  task: 30 * 1000,
 };
 
 const projectId = computed(() => route.params.projectId);
@@ -192,9 +192,9 @@ const refreshSearchSources = async () => {
   await projectSearchStore.refreshStaleTypes(projectId.value, {
     ttls: SEARCH_TYPE_TTLS,
     fetchers: {
-      board: async () => {
-        await boardStore.fetchBoards(projectId.value);
-        projectSearchStore.upsertBoards(projectId.value, boardStore.getBoards(projectId.value));
+      kanban: async () => {
+        await kanbanStore.fetchKanbans(projectId.value);
+        projectSearchStore.upsertKanbans(projectId.value, kanbanStore.getKanbans(projectId.value));
       },
       page: async () => {
         await pageStore.fetchPages(projectId.value);
@@ -204,11 +204,11 @@ const refreshSearchSources = async () => {
         await chatStore.fetchRooms(projectId.value);
         projectSearchStore.upsertChannels(projectId.value, chatStore.getRooms(projectId.value));
       },
-      issue: async () => {
-        const res = await api.get("/issues/recent", {
+      task: async () => {
+        const res = await api.get("/tasks/recent", {
           params: { project_id: projectId.value },
         });
-        projectSearchStore.upsertIssues(projectId.value, res.data || []);
+        projectSearchStore.upsertTasks(projectId.value, res.data || []);
       },
     },
   });
@@ -227,16 +227,16 @@ const onSearchBlur = () => {
 };
 
 const getResultTypeLabel = (type) => {
-  if (type === "board") return t("layout.project.search.types.board");
+  if (type === "kanban") return t("layout.project.search.types.kanban");
   if (type === "page") return t("layout.project.search.types.page");
   if (type === "channel") return t("layout.project.search.types.channel");
-  if (type === "issue") return t("layout.project.search.types.issue");
+  if (type === "task") return t("layout.project.search.types.task");
   return type;
 };
 
-const getIssueStatusLabel = (status) => {
+const getTaskStatusLabel = (status) => {
   const key = convertSnakeToCamel(status || "");
-  return t(`issue.status.${key}`);
+  return t(`task.status.${key}`);
 };
 
 const onSelectResult = (result) => {
