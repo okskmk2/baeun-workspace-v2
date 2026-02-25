@@ -100,10 +100,10 @@ import api from "../../lib/axios";
 import Tag from "../../components/Tag.vue";
 import CreateTaskModal from "../../components/modals/CreateTaskModal.vue";
 import CreateKanbanModal from "../../components/modals/CreateKanbanModal.vue";
-import { useRoleLabels } from "../../lib/roleLabels";
-import { useKanbanStore } from "../../stores/KanbanStore";
 import { convertSnakeToCamel } from "../../lib/utils";
 import { useProjectSearchStore } from "../../stores/projectSearchStore";
+import { useRoleLabels } from "../../lib/roleLabels";
+import { useKanbanStore } from "../../stores/kanbanStore";
 
 const { t } = useI18n();
 const { getRoleLabel } = useRoleLabels();
