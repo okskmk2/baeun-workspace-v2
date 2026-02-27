@@ -25,10 +25,10 @@
       <p class="meta-row">
         {{ t("messenger.archive.fields.linkedIssue") }}:
         <router-link
-          v-if="item.issue_id && item.board_id"
-          :to="`/project/${projectId}/board/${item.board_id}/issue/${item.issue_id}`"
+          v-if="(item.task_id || item.issue_id) && (item.kanban_id || item.board_id)"
+          :to="`/project/${projectId}/kanban/${item.kanban_id || item.board_id}/task/${item.task_id || item.issue_id}`"
         >
-          {{ item.issue_title || `#${item.issue_id}` }}
+          {{ item.task_title || item.issue_title || `#${item.task_id || item.issue_id}` }}
         </router-link>
         <span v-else>{{ t("messenger.archive.empty.noIssue") }}</span>
       </p>

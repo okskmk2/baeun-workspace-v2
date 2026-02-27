@@ -187,9 +187,9 @@ router.get("/archived", isAuth, async (req, res) => {
       `SELECT
         c.id,
         c.name,
-        c.task_id as issue_id,
-        t.title as issue_title,
-        t.kanban_id as board_id,
+        t.id as task_id,
+        t.title as task_title,
+        t.kanban_id as kanban_id,
         MAX(m.created_at) as last_message_at,
         COUNT(m.id)::int as total_message_count
       FROM channel c
@@ -198,7 +198,7 @@ router.get("/archived", isAuth, async (req, res) => {
       LEFT JOIN message m ON m.channel_id = c.id
       WHERE c.project_id = $1
         AND c.status = 'ARCHIVED'
-      GROUP BY c.id, c.name, c.task_id, t.title, t.kanban_id
+      GROUP BY c.id, c.name, t.id, t.title, t.kanban_id
       ORDER BY MAX(m.created_at) DESC NULLS LAST, c.created_at DESC`,
       [projectId, userId]
     );
@@ -460,9 +460,9 @@ router.get("/:channelId", isAuth, async (req, res) => {
 
   try {
     const chatRes = await pool.query(
-      `SELECT c.*, t.title as issue_title, t.kanban_id as board_id, c.task_id as issue_id
+      `SELECT c.*, t.title as task_title, t.kanban_id as kanban_id, t.id as task_id
        FROM channel c
-       LEFT JOIN task t ON c.task_id = t.id
+       LEFT JOIN task t ON t.id = c.task_id
        WHERE c.id = $1`,
       [channelId]
     );
@@ -1417,39 +1417,51 @@ router.post("/:channelId/leave", isAuth, async (req, res) => {
 router.delete("/:channelId", isAuth, async (req, res) => {
   const { channelId } = req.params;
   const userId = req.session.userId;
+  const client = await pool.connect();
 
   try {
-    const channelRes = await pool.query("SELECT type FROM channel WHERE id = $1", [channelId]);
+    await client.query("BEGIN");
+
+    const channelRes = await client.query("SELECT type FROM channel WHERE id = $1 FOR UPDATE", [
+      channelId,
+    ]);
     if (channelRes.rows.length === 0) {
+      await client.query("ROLLBACK");
       return res.status(404).json({ name: "NotFound", message: "채널을 찾을 수 없습니다." });
     }
 
     const channelType = String(channelRes.rows[0].type || "").toUpperCase();
     if (channelType === "NOTICE") {
+      await client.query("ROLLBACK");
       return res.status(400).json({
         name: "BadRequest",
         message: "공지 채널은 삭제할 수 없습니다.",
       });
     }
 
-    const authCheck = await pool.query(
+    const authCheck = await client.query(
       "SELECT role_name FROM channel_member WHERE channel_id = $1 AND member_id = $2",
       [channelId, userId]
     );
 
     if (!authCheck.rows[0] || authCheck.rows[0].role_name !== "OWNER") {
+      await client.query("ROLLBACK");
       return res.status(403).json({ name: "Forbidden", message: "채널 삭제 권한이 없습니다." });
     }
 
-    await pool.query("DELETE FROM channel WHERE id = $1", [channelId]);
+    await client.query("DELETE FROM channel WHERE id = $1", [channelId]);
+    await client.query("COMMIT");
 
     res.json({ message: "채널이 삭제되었습니다." });
   } catch (error) {
+    await client.query("ROLLBACK");
     logger.error("channel delete error", {
       err: error?.message,
       stack: error?.stack,
     });
     res.status(500).json({ name: "InternalServerError", message: error.message });
+  } finally {
+    client.release();
   }
 });
 

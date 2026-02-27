@@ -55,8 +55,8 @@ const getOwnedResourceItems = async (client, userId) => {
     ),
     client.query(
       `SELECT b.id, b.name, b.project_id
-       FROM board_member bm
-       JOIN board b ON b.id = bm.board_id
+       FROM kanban_member bm
+       JOIN kanban b ON b.id = bm.kanban_id
        WHERE bm.member_id = $1 AND bm.role_name = 'OWNER'
        ORDER BY b.id DESC`,
       [userId]
@@ -837,9 +837,9 @@ router.delete("/me", isAuth, async (req, res) => {
     await client.query("DELETE FROM workspace_member WHERE member_id = $1", [userId]);
     await client.query("DELETE FROM project_member WHERE member_id = $1", [userId]);
     await client.query("DELETE FROM page_member WHERE member_id = $1", [userId]);
-    await client.query("DELETE FROM board_member WHERE member_id = $1", [userId]);
+    await client.query("DELETE FROM kanban_member WHERE member_id = $1", [userId]);
     await client.query("DELETE FROM channel_member WHERE member_id = $1", [userId]);
-    await client.query("DELETE FROM issue_member WHERE member_id = $1", [userId]);
+    await client.query("DELETE FROM task_member WHERE member_id = $1", [userId]);
 
     const withdrawnEmail = `withdrawn_${userId}_${Date.now()}@withdrawn.local`;
     const randomPasswordHash = await bcrypt.hash(randomUUID(), SALT_ROUNDS);

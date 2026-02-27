@@ -93,16 +93,16 @@ const resolveNotificationPath = (notification) => {
   const projectId = notification.project_id || currentProjectId;
   const payload = notification.payload || {};
   const channelId = payload.channel_id || notification.resource_id;
-  const issueId = payload.issue_id || notification.resource_id;
-  const boardId = payload.board_id;
+  const taskId = payload.task_id || payload.issue_id || notification.resource_id;
+  const kanbanId = payload.kanban_id || payload.board_id;
 
   if (
     String(notification.type || "") === "issue.assigned_to_me" &&
     projectId &&
-    boardId &&
-    issueId
+    kanbanId &&
+    taskId
   ) {
-    return `/project/${projectId}/board/${boardId}/issue/${issueId}`;
+    return `/project/${projectId}/kanban/${kanbanId}/task/${taskId}`;
   }
 
   if (notification.resource_type === "channel" && projectId && channelId) {
@@ -110,11 +110,11 @@ const resolveNotificationPath = (notification) => {
   }
 
   if (notification.resource_type === "issue" && projectId) {
-    return `/project/${projectId}/board`;
+    return `/project/${projectId}/kanban`;
   }
 
   if (projectId) {
-    return `/project/${projectId}/board`;
+    return `/project/${projectId}/kanban`;
   }
 
   return "";

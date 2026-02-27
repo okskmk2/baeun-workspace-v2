@@ -197,12 +197,12 @@ create table channel (
     sort_order   integer not null default 0,
     created_at   timestamptz not null default current_timestamp,
 
-    task_id      bigint,
     status       varchar(20) not null default 'ACTIVE',
     dm_pair_key  varchar(120),
     agent_key    varchar(100),
     workspace_id integer not null,
     scope        varchar(20) not null default 'PROJECT',
+    task_id      bigint,
 
     constraint pk_channel primary key (id),
 
@@ -211,7 +211,6 @@ create table channel (
     constraint fk_channel_workspace_id__workspace
         foreign key (workspace_id) references workspace(id) on delete cascade,
 
-    constraint uq_channel_task_id unique (task_id),
     constraint uq_channel_dm_pair_key unique (dm_pair_key),
 
     constraint ck_channel_type check (type in ('GENERAL','NOTICE','DM','TASK','AGENT')),
@@ -237,13 +236,12 @@ create table task (
     constraint fk_task_kanban_id__kanban
         foreign key (kanban_id) references kanban(id) on delete cascade,
     constraint fk_task_channel_id__channel
-        foreign key (channel_id) references channel(id),
+        foreign key (channel_id) references channel(id) on delete set null,
     constraint ck_task_status check (status in ('BACKLOG','PENDING','IN_PROGRESS','IN_REVIEW','DONE'))
 );
 
 create index ix_task_kanban_id on task(kanban_id);
 
--- channel.task_id → task.id FK 연결(순환 참조 해소)
 alter table channel
     add constraint fk_channel_task_id__task
         foreign key (task_id) references task(id) on delete cascade;

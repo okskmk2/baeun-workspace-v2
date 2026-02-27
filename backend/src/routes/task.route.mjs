@@ -274,10 +274,12 @@ router.post("/:taskId/channel", isAuth, async (req, res) => {
     await client.query("BEGIN");
 
     const taskRes = await client.query(
-      `SELECT t.id, t.title, k.project_id
+      `SELECT t.id, t.title, k.project_id, p.workspace_id
        FROM task t
        JOIN kanban k ON k.id = t.kanban_id
-       WHERE t.id = $1`,
+       JOIN project p ON p.id = k.project_id
+       WHERE t.id = $1
+       FOR UPDATE`,
       [taskId]
     );
 
@@ -305,22 +307,14 @@ router.post("/:taskId/channel", isAuth, async (req, res) => {
     if (existingChannelRes.rows.length > 0) {
       channel = existingChannelRes.rows[0];
     } else {
-      try {
-        const createChannelRes = await client.query(
-          `INSERT INTO channel (name, project_id, task_id, type, status)
-           VALUES ($1, $2, $3, 'TASK', 'ACTIVE')
-           RETURNING *`,
-          [task.title || `Task #${taskId}`, task.project_id, taskId]
-        );
-        channel = createChannelRes.rows[0];
-        createdNow = true;
-      } catch (error) {
-        if (error?.code !== "23505") {
-          throw error;
-        }
-        const conflictChannelRes = await client.query("SELECT * FROM channel WHERE task_id = $1", [taskId]);
-        channel = conflictChannelRes.rows[0];
-      }
+      const createChannelRes = await client.query(
+        `INSERT INTO channel (name, project_id, workspace_id, task_id, type, status, scope)
+         VALUES ($1, $2, $3, $4, 'TASK', 'ACTIVE', 'PROJECT')
+         RETURNING *`,
+        [task.title || `Task #${taskId}`, task.project_id, task.workspace_id, taskId]
+      );
+      channel = createChannelRes.rows[0];
+      createdNow = true;
     }
 
     if (createdNow) {
@@ -361,7 +355,7 @@ router.post("/:taskId/channel", isAuth, async (req, res) => {
       id: channel.id,
       name: channel.name,
       status: channel.status,
-      task_id: channel.task_id,
+      task_id: Number(taskId),
     });
   } catch (error) {
     await client.query("ROLLBACK");

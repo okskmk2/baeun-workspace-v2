@@ -213,11 +213,15 @@ const displayRoomTitle = computed(() => {
   }
   return roomTitle.value || t("messenger.room.fallback.roomTitle");
 });
-const isIssueChannel = computed(() => Boolean(channelDetail.value?.issue_id));
+const isIssueChannel = computed(() =>
+  Boolean(channelDetail.value?.task_id || channelDetail.value?.issue_id)
+);
 const linkedIssuePath = computed(() => {
   if (!projectId.value) return "";
-  if (!channelDetail.value?.issue_id || !channelDetail.value?.board_id) return "";
-  return `/project/${projectId.value}/board/${channelDetail.value.board_id}/issue/${channelDetail.value.issue_id}`;
+  const taskId = channelDetail.value?.task_id || channelDetail.value?.issue_id;
+  const kanbanId = channelDetail.value?.kanban_id || channelDetail.value?.board_id;
+  if (!taskId || !kanbanId) return "";
+  return `/project/${projectId.value}/kanban/${kanbanId}/task/${taskId}`;
 });
 let unsubscribeMessage = null;
 let unsubscribeFeedback = null;

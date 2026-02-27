@@ -10,7 +10,7 @@
     <div class="backlog-issues">
       <div class="column-header">
         <h2>{{ t("backlog.page.header.title") }}</h2>
-        <button type="button" class="btn btn--sm" @click="openModal" :disabled="!backlogBoardId">
+        <button type="button" class="btn btn--sm" @click="openModal" :disabled="!backlogKanbanId">
           {{ t("backlog.page.actions.createTask") }}
         </button>
       </div>
@@ -62,13 +62,13 @@
           class="board-card"
           @dragover.prevent
           @drop="onDropToBoard(board.id)"
-          @click="$router.push(`/project/${projectId}/board/${board.id}`)"
+          @click="$router.push(`/project/${projectId}/kanban/${board.id}`)"
         >
           <h3>{{ board.name }}</h3>
           <p v-if="board.summary" class="board-card-summary">{{ board.summary }}</p>
           <div class="issue-counts">
-            <div v-for="(count, status) in board.issue_counts" :key="status" class="status-count">
-              <span>{{ t(`issue.status.${convertSnakeToCamel(status)}`) }}:</span>
+            <div v-for="(count, status) in board.task_counts" :key="status" class="status-count">
+              <span>{{ t(`task.status.${convertSnakeToCamel(status)}`) }}:</span>
               <span class="tabular-nums">{{ count }}</span>
             </div>
           </div>
@@ -79,7 +79,7 @@
 
   <CreateTaskModal
     :open="isModalOpen"
-    :board-id="backlogBoardId"
+    :kanban-id="backlogKanbanId"
     @close="closeModal"
     @created="onIssueCreated"
   />
@@ -108,11 +108,11 @@ import { useKanbanStore } from "../../stores/kanbanStore";
 const { t } = useI18n();
 const { getRoleLabel } = useRoleLabels();
 const route = useRoute();
-const boardStore = useKanbanStore();
+const kanbanStore = useKanbanStore();
 const projectSearchStore = useProjectSearchStore();
 
 const issues = ref([]);
-const backlogBoardId = ref(null);
+const backlogKanbanId = ref(null);
 const isLoadingIssues = ref(false);
 const errorMessage = ref("");
 
@@ -125,24 +125,24 @@ const isBoardModalOpen = ref(false);
 const projectId = computed(() => route.params.projectId);
 
 const boardsForDisplay = computed(() => {
-  const allBoards = boardStore.getBoards(projectId.value);
+  const allBoards = kanbanStore.getKanbans(projectId.value);
   return allBoards.filter((board) => board.type !== "BACKLOG");
 });
 
 const fetchBacklogBoard = async () => {
   if (!projectId.value) return;
   try {
-    const allBoards = boardStore.getBoards(projectId.value);
+    const allBoards = kanbanStore.getKanbans(projectId.value);
     const defaultBacklogBoard = allBoards.find((board) => board.type === "BACKLOG");
     if (defaultBacklogBoard) {
-      backlogBoardId.value = defaultBacklogBoard.id;
+      backlogKanbanId.value = defaultBacklogBoard.id;
     } else {
       // Fallback: If not in store, try to fetch all boards and find it
-      await boardStore.fetchBoards(projectId.value);
-      const fetchedBoards = boardStore.getBoards(projectId.value);
+      await kanbanStore.fetchKanbans(projectId.value);
+      const fetchedBoards = kanbanStore.getKanbans(projectId.value);
       const foundBoard = fetchedBoards.find((board) => board.type === "BACKLOG");
       if (foundBoard) {
-        backlogBoardId.value = foundBoard.id;
+        backlogKanbanId.value = foundBoard.id;
       } else {
         errorMessage.value = t("backlog.page.status.errorBoardNotFound");
       }
@@ -153,16 +153,16 @@ const fetchBacklogBoard = async () => {
 };
 
 const fetchIssues = async () => {
-  if (!backlogBoardId.value) {
+  if (!backlogKanbanId.value) {
     isLoadingIssues.value = false;
     return;
   }
   isLoadingIssues.value = true;
   errorMessage.value = "";
   try {
-    const res = await api.get(`/boards/${backlogBoardId.value}/issues`);
+    const res = await api.get(`/kanbans/${backlogKanbanId.value}/tasks`);
     issues.value = res.data || [];
-    projectSearchStore.upsertIssues(projectId.value, issues.value);
+    projectSearchStore.upsertTasks(projectId.value, issues.value);
   } catch (error) {
     errorMessage.value = t("backlog.page.status.errorLoad");
   } finally {
@@ -175,10 +175,10 @@ const fetchBoardsForDisplay = async () => {
   isLoadingBoards.value = true;
   boardListError.value = "";
   try {
-    const boardsFromStore = boardStore.getBoards(projectId.value);
+    const boardsFromStore = kanbanStore.getKanbans(projectId.value);
     if (boardsFromStore.length === 0) {
       // If boards are not yet loaded in the store for this project
-      await boardStore.fetchBoards(projectId.value);
+      await kanbanStore.fetchKanbans(projectId.value);
     }
   } catch (error) {
     boardListError.value = error?.response?.data?.message || t("backlog.page.boardList.errorLoad");
@@ -188,7 +188,7 @@ const fetchBoardsForDisplay = async () => {
 };
 
 const issueDetailPath = (issueId) =>
-  `/project/${projectId.value}/board/${backlogBoardId.value}/issue/${issueId}`;
+  `/project/${projectId.value}/kanban/${backlogKanbanId.value}/task/${issueId}`;
 
 const roleVariant = (role) => {
   const key = (role || "").toUpperCase();
@@ -203,8 +203,8 @@ const onDragStart = (event, issue) => {
   draggingIssueId.value = issue.id;
   if (event?.dataTransfer) {
     event.dataTransfer.effectAllowed = "move";
-    event.dataTransfer.setData("text/issue-id", String(issue.id));
-    event.dataTransfer.setData("text/issue-origin", "backlog");
+    event.dataTransfer.setData("text/task-id", String(issue.id));
+    event.dataTransfer.setData("text/task-origin", "backlog");
   }
 };
 
@@ -213,30 +213,29 @@ const onDropToBoard = async (targetBoardId) => {
   if (!issueId) return;
 
   const currentIssue = issues.value.find((item) => item.id === issueId);
-  if (!currentIssue || currentIssue.board_id === targetBoardId) {
+  if (!currentIssue || currentIssue.kanban_id === targetBoardId) {
     draggingIssueId.value = null;
     return;
   }
 
   try {
-    const res = await api.patch(`/issues/${issueId}`, {
-      board_id: targetBoardId,
+    await api.patch(`/tasks/${issueId}`, {
+      kanban_id: targetBoardId,
       status: "PENDING", // Set status to PENDING when dropped onto a board
     });
-    const updated = res.data;
 
     // Remove issue from backlog list
     issues.value = issues.value.filter((issue) => issue.id !== issueId);
 
     // Update counts on the target board via store
-    const targetBoard = boardStore
-      .getBoards(projectId.value)
+    const targetBoard = kanbanStore
+      .getKanbans(projectId.value)
       .find((board) => board.id === targetBoardId);
     if (targetBoard) {
-      const newIssueCounts = { ...(targetBoard.issue_counts || {}) };
+      const newIssueCounts = { ...(targetBoard.task_counts || {}) };
       newIssueCounts.PENDING = (newIssueCounts.PENDING || 0) + 1;
-      boardStore.updateBoardDetails(targetBoardId, projectId.value, {
-        issue_counts: newIssueCounts,
+      kanbanStore.updateKanbanDetails(targetBoardId, projectId.value, {
+        task_counts: newIssueCounts,
       });
     }
   } catch (error) {
@@ -270,7 +269,7 @@ const onIssueCreated = async () => {
 };
 
 const onBoardCreated = async () => {
-  await boardStore.fetchBoards(projectId.value);
+  await kanbanStore.fetchKanbans(projectId.value);
   await fetchBacklogBoard();
   await fetchBoardsForDisplay();
 };
@@ -286,7 +285,7 @@ const initializePage = async () => {
 onMounted(initializePage);
 
 watch(projectId, async () => {
-  backlogBoardId.value = null;
+  backlogKanbanId.value = null;
   issues.value = [];
   await initializePage();
 });
