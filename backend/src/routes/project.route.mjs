@@ -179,13 +179,13 @@ router.post("/", isAuth, async (req, res) => {
     `;
     await client.query(projectNoticeQuery, ["프로젝트 공지채널", newProject.id]);
 
-    // Create a default "Backlog" board for the new project
-    const backlogBoardQuery = `
-        INSERT INTO board (name, project_id, type)
-        VALUES ($1, $2, $3)
-        RETURNING id;
+    // Create a default "Backlog" kanban for the new project
+    const backlogKanbanQuery = `
+      INSERT INTO kanban (name, project_id, type)
+      VALUES ($1, $2, $3)
+      RETURNING id;
     `;
-    await client.query(backlogBoardQuery, ['Backlog', newProject.id, 'BACKLOG']);
+    await client.query(backlogKanbanQuery, ["Backlog", newProject.id, "BACKLOG"]);
 
     await client.query("COMMIT");
 
