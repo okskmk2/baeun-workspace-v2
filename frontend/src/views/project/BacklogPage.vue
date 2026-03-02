@@ -2,7 +2,7 @@
   <hgroup>
     <div>
       <h1>{{ t("backlog.page.header.title") }}</h1>
-      <p class="subtitle">미할당된 이슈를 드래그 앤 드롭으로 보드에 할당할 수 있습니다.</p>
+      <p class="subtitle">{{ t("backlog.page.header.subtitle") }}</p>
     </div>
   </hgroup>
 
@@ -49,7 +49,7 @@
       <div class="column-header">
         <h2>{{ t("backlog.page.boardList.title") }}</h2>
         <button type="button" class="btn btn--sm" @click="openBoardModal" :disabled="!projectId">
-          {{ t("board.layout.actions.create") }}
+          {{ t("kanban.layout.actions.create") }}
         </button>
       </div>
       <p v-if="isLoadingBoards">{{ t("backlog.page.status.loadingBoards") }}</p>

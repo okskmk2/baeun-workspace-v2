@@ -5,13 +5,14 @@ import WikiLayout from "../views/project/WikiLayout.vue";
 import MessengerLayout from "../views/project/MessengerLayout.vue";
 import ProjectLayout from "../views/project/ProjectLayout.vue";
 import KanbanPage from "../views/project/KanbanPage.vue";
-import KanbanSettingsPage from "../views/project/KanbanSettingsPage.vue";
+import GanttPage from "../views/project/GanttPage.vue";
 import WikiHomePage from "../views/project/WikiHomePage.vue";
 import WikiPage from "../views/project/WikiPage.vue";
 import ChannelHomePage from "../views/project/ChannelHomePage.vue";
 import ChannelArchivePage from "../views/project/ChannelArchivePage.vue";
 import ChannelRoomPage from "../views/project/ChannelRoomPage.vue";
 import ChannelSettingsPage from "../views/project/ChannelSettingsPage.vue";
+import KanbanSettingsPage from "../views/project/KanbanSettingsPage.vue";
 import ProjectSettingsLayout from "../views/project/ProjectSettingsLayout.vue";
 import ProjectSettingsHomePage from "../views/project/ProjectSettingsHomePage.vue";
 import ProjectSettingsMemberPage from "../views/project/ProjectSettingsMemberPage.vue";
@@ -39,6 +40,10 @@ export const projectRoutes = [
           {
             path: "",
             component: KanbanHomePage,
+          },
+          {
+            path: "gantt",
+            component: GanttPage,
           },
           {
             path: ":kanbanId",

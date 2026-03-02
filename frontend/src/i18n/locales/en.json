@@ -47,6 +47,9 @@
         "login": "Login",
         "account": "Account",
         "accountMenu": "Account menu",
+        "language": "Language",
+        "languageKo": "Korean",
+        "languageEn": "English",
         "quickMove": "Quick move",
         "profile": "My Profile",
         "settings": "Settings",
@@ -385,7 +388,24 @@
         "nameRequired": "Please enter a board name."
       },
       "nav": {
-        "backlog": "Backlog"
+        "backlog": "Backlog",
+        "gantt": "Gantt"
+      }
+    },
+    "gantt": {
+      "header": {
+        "title": "Gantt",
+        "subtitle": "Read-only timeline view for project tasks."
+      },
+      "columns": {
+        "task": "Task"
+      },
+      "status": {
+        "loading": "Loading...",
+        "errorLoad": "Failed to load gantt data."
+      },
+      "empty": {
+        "tasks": "No tasks to display."
       }
     },
     "home": {
@@ -499,6 +519,7 @@
         "fallbackTitle": "Issue"
       },
       "actions": {
+        "backToKanban": "Back to board",
         "enterChat": "Enter chat room",
         "enteringChat": "Entering...",
         "edit": "Edit",
@@ -557,10 +578,11 @@
   "backlog": {
     "page": {
       "header": {
-        "title": "Backlog"
+        "title": "Backlog",
+        "subtitle": "You can assign unassigned tasks to a board using drag and drop."
       },
       "actions": {
-        "createTask": "Create Issue",
+        "createTask": "Create Task",
         "creating": "Creating...",
         "cancel": "Cancel",
         "create": "Create"
