@@ -483,10 +483,19 @@
       },
       "confirm": {
         "delete": "Delete this board?"
+      },
+      "toast": {
+        "updated": "Board saved."
       }
     }
   },
   "task": {
+    "priority": {
+      "relaxed": "Relaxed",
+      "normal": "Normal",
+      "high": "High",
+      "urgent": "Urgent"
+    },
     "status": {
       "backlog": "Backlog",
       "pending": "Pending",
@@ -517,7 +526,8 @@
       },
       "fields": {
         "titlePlaceholder": "Enter a title",
-        "descriptionPlaceholder": "Enter a description"
+        "descriptionPlaceholder": "Enter a description",
+        "priorityLabel": "Priority"
       },
       "empty": {
         "description": "No description.",
@@ -581,7 +591,8 @@
         "titleLabel": "Title",
         "titlePlaceholder": "Issue title",
         "descriptionLabel": "Description",
-        "descriptionPlaceholder": "Enter issue details"
+        "descriptionPlaceholder": "Enter issue details",
+        "priorityLabel": "Priority"
       },
       "validation": {
         "noBoard": "Backlog board not found.",

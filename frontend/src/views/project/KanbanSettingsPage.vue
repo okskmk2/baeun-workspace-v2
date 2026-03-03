@@ -57,6 +57,7 @@ import { computed, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 import api from "../../lib/axios";
+import { addToast } from "../../lib/toast";
 import BackLinkButton from "../../components/BackLinkButton.vue";
 import { useKanbanStore } from "../../stores/kanbanStore";
 
@@ -117,8 +118,11 @@ const saveKanban = async () => {
         summary: updated?.summary ?? form.value.summary,
       });
     }
+    addToast({ message: t("kanban.settings.toast.updated"), type: "success" });
   } catch (error) {
-    formError.value = error?.response?.data?.message || t("kanban.settings.status.errorUpdate");
+    const message = error?.response?.data?.message || t("kanban.settings.status.errorUpdate");
+    formError.value = message;
+    addToast({ message, type: "error" });
   } finally {
     isSaving.value = false;
   }

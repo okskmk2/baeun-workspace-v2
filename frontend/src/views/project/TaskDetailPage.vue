@@ -2,7 +2,16 @@
   <BackLinkButton @click="$router.back()"> 칸반으로 돌아가기 </BackLinkButton>
   <hgroup>
     <div>
-      <h1 v-if="!isEditing">{{ task.title || t("task.detail.header.fallbackTitle") }}</h1>
+      <h1 v-if="!isEditing" class="task-title-row">
+        <MaterialSymbol
+          v-if="getPriorityIconName(task.priority)"
+          :name="getPriorityIconName(task.priority)"
+          :size="20"
+          class="task-priority-icon"
+          :style="{ color: getPriorityColor(task.priority) }"
+        />
+        <span>{{ task.title || t("task.detail.header.fallbackTitle") }}</span>
+      </h1>
       <input
         v-else
         v-model.trim="editForm.title"
@@ -16,6 +25,22 @@
           {{ t(`task.status.${convertSnakeToCamel(statusOption)}`) }}
         </option>
       </select>
+      <template v-if="isEditing">
+        <label for="task-priority" class="task-priority-label">{{ t("task.detail.fields.priorityLabel") }}</label>
+        <div class="task-priority-field">
+          <MaterialSymbol
+            :name="getPriorityIconName(editForm.priority)"
+            :size="18"
+            class="task-priority-icon"
+            :style="{ color: getPriorityColor(editForm.priority) }"
+          />
+          <select id="task-priority" v-model.number="editForm.priority" class="task-priority-select">
+            <option v-for="option in priorityOptions" :key="option.value" :value="option.value">
+              {{ t(option.labelKey) }}
+            </option>
+          </select>
+        </div>
+      </template>
     </div>
     <div class="actions">
       <button
@@ -38,7 +63,7 @@
       </button>
       <button
         v-if="isEditing"
-        class="btn btn--sm btn--ghost"
+        class="btn btn--sm btn--secondary"
         @click="cancelEditing"
         :disabled="isSaving"
       >
@@ -114,6 +139,7 @@ import api from "../../lib/axios";
 import { addToast } from "../../lib/toast";
 import { useAppStore } from "../../stores/appStore";
 import { useProjectMemberStore } from "../../stores/projectMemberStore";
+import MaterialSymbol from "../../components/MaterialSymbol.vue";
 import Tag from "../../components/Tag.vue";
 import RelatedMemberPicker from "../../components/RelatedMemberPicker.vue";
 import BackLinkButton from "../../components/BackLinkButton.vue";
@@ -139,9 +165,16 @@ const editForm = ref({
   title: "",
   content: "",
   status: "BACKLOG", // Added status field
+  priority: 0,
 });
 
 const allStatuses = ["BACKLOG", "PENDING", "IN_PROGRESS", "IN_REVIEW", "DONE"]; // Define all possible statuses
+const priorityOptions = [
+  { value: 2, labelKey: "task.priority.urgent" },
+  { value: 1, labelKey: "task.priority.high" },
+  { value: 0, labelKey: "task.priority.normal" },
+  { value: -1, labelKey: "task.priority.relaxed" },
+];
 
 const roleOptions = ["ASSIGNEE", "REPORTER", "REVIEWER", "WATCHER"];
 
@@ -163,6 +196,24 @@ const taskStatusLabel = computed(() => {
   const labelKey = map[key];
   return labelKey ? t(labelKey) : key;
 });
+
+const getPriorityIconName = (priority) => {
+  const parsed = Number(priority);
+  if (parsed === 2) return "stat_2";
+  if (parsed === 1) return "stat_1";
+  if (parsed === 0) return "stat_0";
+  if (parsed === -1) return "stat_minus_1";
+  return "stat_0";
+};
+
+const getPriorityColor = (priority) => {
+  const parsed = Number(priority);
+  if (parsed === 2) return "var(--color-danger)";
+  if (parsed === 1) return "var(--color-warning)";
+  if (parsed === 0) return "var(--color-info)";
+  if (parsed === -1) return "var(--color-text-muted)";
+  return "var(--color-text-muted)";
+};
 
 const roleLabel = (role) => {
   const key = (role || "").toUpperCase();
@@ -228,6 +279,8 @@ const fetchTask = async (options = {}) => {
       editForm.value = {
         title: task.value.title || "",
         content: task.value.content || "",
+        status: task.value.status || "BACKLOG",
+        priority: Number.isFinite(Number(task.value.priority)) ? Number(task.value.priority) : 0,
       };
     }
   } catch (error) {
@@ -248,6 +301,7 @@ const startEditing = () => {
     title: task.value.title || "",
     content: task.value.content || "",
     status: task.value.status || "BACKLOG", // Initialize status
+    priority: Number.isFinite(Number(task.value.priority)) ? Number(task.value.priority) : 0,
   };
 };
 
@@ -257,6 +311,7 @@ const cancelEditing = () => {
     title: task.value.title || "",
     content: task.value.content || "",
     status: task.value.status || "BACKLOG", // Reset status
+    priority: Number.isFinite(Number(task.value.priority)) ? Number(task.value.priority) : 0,
   };
 };
 
@@ -275,12 +330,14 @@ const saveTask = async () => {
       title: editForm.value.title,
       content: editForm.value.content,
       status: editForm.value.status,
+      priority: editForm.value.priority,
     });
     task.value = {
       ...task.value,
       title: editForm.value.title,
       content: editForm.value.content,
       status: editForm.value.status,
+      priority: editForm.value.priority,
     };
     isEditing.value = false;
     addToast({ message: t("task.detail.toast.updated"), type: "success" });
@@ -468,6 +525,16 @@ const addRelatedMemberByRole = async (role, memberId) => {
   width: 30rem;
 }
 
+.task-title-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.task-priority-icon {
+  flex-shrink: 0;
+}
+
 .task-status-select {
   padding: 6px 10px;
   border-radius: 4px;
@@ -476,6 +543,26 @@ const addRelatedMemberByRole = async (role, memberId) => {
   margin-left: 8px;
   /* Adjust width as needed */
   min-width: 120px;
+}
+
+.task-priority-label {
+  margin-left: 8px;
+  margin-right: 4px;
+  font-size: 14px;
+}
+
+.task-priority-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.task-priority-select {
+  padding: 6px 10px;
+  border-radius: 4px;
+  border: 1px solid #e5e7eb;
+  font-size: 14px;
+  min-width: 80px;
 }
 
 .task-content-input {

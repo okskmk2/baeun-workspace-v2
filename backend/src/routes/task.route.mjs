@@ -178,8 +178,16 @@ router.get("/recent", isAuth, async (req, res) => {
  *         $ref: "#/components/responses/ErrorResponse"
  */
 router.post("/", isAuth, async (req, res) => {
-  const { title, content, kanban_id, status = "BACKLOG" } = req.body;
+  const { title, content, kanban_id, status = "BACKLOG", priority = 0 } = req.body;
   const userId = req.session.userId;
+  const normalizedPriority = Number(priority);
+
+  if (![2, 1, 0, -1].includes(normalizedPriority)) {
+    return res.status(400).json({
+      name: "BadRequest",
+      message: "priority는 2, 1, 0, -1 중 하나여야 합니다.",
+    });
+  }
 
   const client = await pool.connect();
   try {
@@ -199,8 +207,8 @@ router.post("/", isAuth, async (req, res) => {
 
     // 작업 삽입
     const taskRes = await client.query(
-      `INSERT INTO task (title, content, kanban_id, status) VALUES ($1, $2, $3, $4) RETURNING *`,
-      [title, content, kanban_id, status]
+      `INSERT INTO task (title, content, kanban_id, status, priority) VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+      [title, content, kanban_id, status, normalizedPriority]
     );
     const newTask = taskRes.rows[0];
 
@@ -459,15 +467,26 @@ router.get("/:taskId/members", isAuth, async (req, res) => {
  */
 router.patch("/:taskId", isAuth, async (req, res) => {
   const { taskId } = req.params;
-  let { title, content, status, kanban_id } = req.body; // Use 'let' for kanban_id as it might be reassigned
+  let { title, content, status, kanban_id, priority } = req.body; // Use 'let' for kanban_id as it might be reassigned
   const actorId = req.session.userId;
   const client = await pool.connect();
+
+  if (priority !== undefined) {
+    const parsedPriority = Number(priority);
+    if (![2, 1, 0, -1].includes(parsedPriority)) {
+      return res.status(400).json({
+        name: "BadRequest",
+        message: "priority는 2, 1, 0, -1 중 하나여야 합니다.",
+      });
+    }
+    priority = parsedPriority;
+  }
 
   try {
     await client.query("BEGIN");
 
     const prevTaskRes = await client.query(
-      `SELECT t.id, t.title, t.content, t.status, t.kanban_id, k.project_id
+      `SELECT t.id, t.title, t.content, t.status, t.priority, t.kanban_id, k.project_id
        FROM task t
        JOIN kanban k ON k.id = t.kanban_id
        WHERE t.id = $1`,
@@ -509,9 +528,9 @@ router.patch("/:taskId", isAuth, async (req, res) => {
 
     const result = await client.query(
       `UPDATE task
-       SET title = COALESCE($1, title), content = COALESCE($2, content), status = COALESCE($3, status), kanban_id = COALESCE($4, kanban_id), updated_at = CURRENT_TIMESTAMP
-       WHERE id = $5 RETURNING *`,
-      [title, content, status, kanban_id, taskId]
+       SET title = COALESCE($1, title), content = COALESCE($2, content), status = COALESCE($3, status), kanban_id = COALESCE($4, kanban_id), priority = COALESCE($5, priority), updated_at = CURRENT_TIMESTAMP
+       WHERE id = $6 RETURNING *`,
+      [title, content, status, kanban_id, priority, taskId]
     );
 
     const updatedTask = result.rows[0];
@@ -520,7 +539,8 @@ router.patch("/:taskId", isAuth, async (req, res) => {
     const isStatusChanged = previousStatus !== nextStatus;
     const isContentChanged =
       String(prevTask.title || "") !== String(updatedTask.title || "") ||
-      String(prevTask.content || "") !== String(updatedTask.content || "");
+      String(prevTask.content || "") !== String(updatedTask.content || "") ||
+      Number(prevTask.priority) !== Number(updatedTask.priority);
 
     if (String(updatedTask.status || "").toUpperCase() === "DONE") {
       await client.query(

@@ -9,7 +9,10 @@
   <div class="backlog-layout">
     <div class="backlog-issues">
       <div class="column-header">
-        <h2>{{ t("backlog.page.header.title") }}</h2>
+        <h2 class="backlog-title-row">
+          <span>{{ t("backlog.page.header.title") }}</span>
+          <CountChip :count="issues.length" />
+        </h2>
         <button type="button" class="btn btn--sm" @click="openModal" :disabled="!backlogKanbanId">
           {{ t("backlog.page.actions.createTask") }}
         </button>
@@ -24,7 +27,14 @@
         draggable="true"
         @dragstart="onDragStart($event, issue)"
       >
-        <h3>
+        <h3 class="task-title-row">
+          <MaterialSymbol
+            v-if="getPriorityIconName(issue.priority)"
+            :name="getPriorityIconName(issue.priority)"
+            :size="18"
+            class="task-priority-icon"
+            :style="{ color: getPriorityColor(issue.priority) }"
+          />
           <router-link :to="issueDetailPath(issue.id)">{{ issue.title }}</router-link>
         </h3>
         <div v-if="issue.assignee_members?.length" class="assignee-list">
@@ -49,7 +59,7 @@
       <div class="column-header">
         <h2>{{ t("backlog.page.boardList.title") }}</h2>
         <button type="button" class="btn btn--sm" @click="openBoardModal" :disabled="!projectId">
-          {{ t("board.layout.actions.create") }}
+          {{ t("kanban.layout.actions.create") }}
         </button>
       </div>
       <p v-if="isLoadingBoards">{{ t("backlog.page.status.loadingBoards") }}</p>
@@ -97,6 +107,8 @@ import { computed, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 import api from "../../lib/axios";
+import CountChip from "../../components/CountChip.vue";
+import MaterialSymbol from "../../components/MaterialSymbol.vue";
 import Tag from "../../components/Tag.vue";
 import CreateTaskModal from "../../components/modals/CreateTaskModal.vue";
 import CreateKanbanModal from "../../components/modals/CreateKanbanModal.vue";
@@ -189,6 +201,25 @@ const fetchBoardsForDisplay = async () => {
 
 const issueDetailPath = (issueId) =>
   `/project/${projectId.value}/kanban/${backlogKanbanId.value}/task/${issueId}`;
+
+const getPriorityIconName = (priority) => {
+  const parsed = Number(priority);
+  if (Number.isNaN(parsed)) return "";
+  if (parsed === 2) return "stat_2";
+  if (parsed === 1) return "stat_1";
+  if (parsed === 0) return "stat_0";
+  if (parsed === -1) return "stat_minus_1";
+  return "";
+};
+
+const getPriorityColor = (priority) => {
+  const parsed = Number(priority);
+  if (parsed === 2) return "var(--color-danger)";
+  if (parsed === 1) return "var(--color-warning)";
+  if (parsed === 0) return "var(--color-info)";
+  if (parsed === -1) return "var(--color-text-muted)";
+  return "var(--color-text-muted)";
+};
 
 const roleVariant = (role) => {
   const key = (role || "").toUpperCase();
@@ -308,6 +339,21 @@ watch(projectId, async () => {
 .column-header h2 {
   margin: 0;
   font-size: 18px;
+}
+
+.backlog-title-row {
+  display: inline-flex;
+  align-items: center;
+}
+
+.task-title-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.task-priority-icon {
+  flex-shrink: 0;
 }
 
 .backlog-issues {

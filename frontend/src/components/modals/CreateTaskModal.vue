@@ -31,6 +31,21 @@
         </select>
       </template>
 
+      <label for="task-priority">{{ t("backlog.page.modal.priorityLabel") }}</label>
+      <div class="priority-select-row">
+        <MaterialSymbol
+          :name="getPriorityIconName(form.priority)"
+          :size="18"
+          class="priority-icon"
+          :style="{ color: getPriorityColor(form.priority) }"
+        />
+        <select id="task-priority" v-model.number="form.priority">
+          <option v-for="option in priorityOptions" :key="option.value" :value="option.value">
+            {{ t(option.labelKey) }}
+          </option>
+        </select>
+      </div>
+
       <p v-if="formError" class="form-error">{{ formError }}</p>
       <div class="modal-actions">
         <button type="button" class="btn btn--secondary" @click="handleClose">
@@ -49,6 +64,7 @@ import { ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import api from "../../lib/axios";
 import BaseModal from "../BaseModal.vue";
+import MaterialSymbol from "../MaterialSymbol.vue";
 import { convertSnakeToCamel } from "../../lib/utils";
 
 const { t } = useI18n();
@@ -82,9 +98,34 @@ const form = ref({
   title: "",
   content: "",
   status: "BACKLOG",
+  priority: 0,
 });
 const isCreating = ref(false);
 const formError = ref("");
+const priorityOptions = [
+  { value: 2, labelKey: "task.priority.urgent" },
+  { value: 1, labelKey: "task.priority.high" },
+  { value: 0, labelKey: "task.priority.normal" },
+  { value: -1, labelKey: "task.priority.relaxed" },
+];
+
+const getPriorityIconName = (priority) => {
+  const parsed = Number(priority);
+  if (parsed === 2) return "stat_2";
+  if (parsed === 1) return "stat_1";
+  if (parsed === 0) return "stat_0";
+  if (parsed === -1) return "stat_minus_1";
+  return "stat_0";
+};
+
+const getPriorityColor = (priority) => {
+  const parsed = Number(priority);
+  if (parsed === 2) return "var(--color-danger)";
+  if (parsed === 1) return "var(--color-warning)";
+  if (parsed === 0) return "var(--color-info)";
+  if (parsed === -1) return "var(--color-text-muted)";
+  return "var(--color-text-muted)";
+};
 
 const getStatusLabel = (status) => {
   const key = convertSnakeToCamel(status);
@@ -110,6 +151,7 @@ const handleSubmit = async () => {
       content: form.value.content,
       kanban_id: props.kanbanId,
       status: form.value.status,
+      priority: form.value.priority,
     });
     emit("created");
     handleClose();
@@ -129,6 +171,7 @@ watch(
         title: "",
         content: "",
         status: props.defaultStatus || "BACKLOG",
+        priority: 0,
       };
       formError.value = "";
     }
@@ -151,5 +194,15 @@ watch(
   justify-content: flex-end;
   gap: 0.5rem;
   margin-top: 1rem;
+}
+
+.priority-select-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.priority-icon {
+  flex-shrink: 0;
 }
 </style>

@@ -227,6 +227,7 @@ create table task (
     title      varchar(255) not null,
     content    text,
     kanban_id  integer not null,
+    priority   smallint,
     status     varchar(50) not null default 'BACKLOG',
     created_at timestamptz not null default current_timestamp,
     updated_at timestamptz not null default current_timestamp,

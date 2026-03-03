@@ -29,7 +29,7 @@
     >
       <header>
         <h2>{{ statusLabels[status] }}</h2>
-        <span>{{ tasksByStatus(status).length }}</span>
+        <CountChip :count="tasksByStatus(status).length" />
       </header>
 
       <div class="kanban-cards">
@@ -40,7 +40,14 @@
           draggable="true"
           @dragstart="onDragStart($event, task)"
         >
-          <h3>
+          <h3 class="task-title-row">
+            <MaterialSymbol
+              v-if="getPriorityIconName(task.priority)"
+              :name="getPriorityIconName(task.priority)"
+              :size="18"
+              class="task-priority-icon"
+              :style="{ color: getPriorityColor(task.priority) }"
+            />
             <router-link :to="taskDetailPath(task.id)">{{ task.title }}</router-link>
           </h3>
           <div v-if="task.assignee_members?.length" class="assignee-list">
@@ -79,6 +86,7 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 import api from "../../lib/axios";
+import CountChip from "../../components/CountChip.vue";
 import CreateTaskModal from "../../components/modals/CreateTaskModal.vue";
 import MaterialSymbol from "../../components/MaterialSymbol.vue";
 import Tag from "../../components/Tag.vue";
@@ -125,6 +133,23 @@ const fetchTasks = async () => {
 
 const tasksByStatus = (status) =>
   tasks.value.filter((task) => (task.status || "BACKLOG") === status);
+const getPriorityIconName = (priority) => {
+  const parsed = Number(priority);
+  if (Number.isNaN(parsed)) return "";
+  if (parsed === 2) return "stat_2";
+  if (parsed === 1) return "stat_1";
+  if (parsed === 0) return "stat_0";
+  if (parsed === -1) return "stat_minus_1";
+  return "";
+};
+const getPriorityColor = (priority) => {
+  const parsed = Number(priority);
+  if (parsed === 2) return "var(--color-danger)";
+  if (parsed === 1) return "var(--color-warning)";
+  if (parsed === 0) return "var(--color-info)";
+  if (parsed === -1) return "var(--color-text-muted)";
+  return "var(--color-text-muted)";
+};
 const taskDetailPath = (taskId) =>
   `/project/${projectId.value}/kanban/${kanbanId.value}/task/${taskId}`;
 const kanbanSettingsPath = computed(
@@ -247,20 +272,6 @@ onBeforeUnmount(() => {
   font-weight: 700;
 }
 
-.kanban-column header span {
-  margin-left: 6px;
-  font-size: 10px;
-  color: var(--color-text);
-  background-color: #e2e8f0;
-  border-radius: 999px;
-  width: 18px;
-  height: 18px;
-  display: inline-flex;
-  line-height: 1;
-  align-items: center;
-  justify-content: center;
-}
-
 .kanban-cards {
   display: flex;
   flex-direction: column;
@@ -281,6 +292,16 @@ onBeforeUnmount(() => {
   font-size: 14px;
   font-weight: normal;
   margin: 0;
+}
+
+.task-title-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.task-priority-icon {
+  flex-shrink: 0;
 }
 
 .kanban-card h3 > a {
