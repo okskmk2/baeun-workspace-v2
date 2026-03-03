@@ -5,6 +5,10 @@ import multer from "multer";
 import { Storage } from "@google-cloud/storage";
 import { isAuth, isGuest } from "../middlewares/auth.middleware.mjs";
 import pool from "../db.mjs"; // DB connection config.
+import {
+  DEFAULT_PROJECT_WIKI_CONTENT,
+  DEFAULT_PROJECT_WIKI_TITLE,
+} from "../constants/defaultProjectWiki.mjs";
 
 const router = express.Router();
 const SALT_ROUNDS = 10; // Hash cost (higher is more secure but slower).
@@ -269,6 +273,20 @@ router.post("/signup", isGuest, async (req, res) => {
       `INSERT INTO project_member (project_id, member_id, role_name) 
      VALUES ($1, $2, 'OWNER')`,
       [projectId, userId]
+    );
+
+    // 6. Create default wiki page for signup default project only.
+    const pageRes = await client.query(
+      `INSERT INTO page (title, content, project_id, parent_id)
+       VALUES ($1, $2, $3, NULL)
+       RETURNING id`,
+      [DEFAULT_PROJECT_WIKI_TITLE, DEFAULT_PROJECT_WIKI_CONTENT, projectId]
+    );
+
+    await client.query(
+      `INSERT INTO page_member (page_id, member_id, role_name)
+       VALUES ($1, $2, 'OWNER')`,
+      [pageRes.rows[0].id, userId]
     );
 
     await client.query("COMMIT");
