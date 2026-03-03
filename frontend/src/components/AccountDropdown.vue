@@ -16,15 +16,11 @@
     </button>
 
     <div v-if="isMenuOpen" class="account-menu__panel" role="menu">
-      <div class="account-menu__header">
-        <router-link class="account-menu__profile-link" to="/settings/profile" @click="closeMenu">
-          {{ t("layout.default.util.profile") }}
-        </router-link>
-      </div>
-
-      <p class="account-menu__caption">{{ t("layout.default.util.quickMove") }}</p>
-
-      <div class="account-menu__locale" role="group" :aria-label="t('layout.default.util.language')">
+      <div
+        class="account-menu__locale"
+        role="group"
+        :aria-label="t('layout.default.util.language')"
+      >
         <span class="account-menu__locale-label">
           <MaterialSymbol
             name="translate"
@@ -43,6 +39,14 @@
           <option value="en">{{ t("layout.default.util.languageEn") }}</option>
         </select>
       </div>
+
+      <div class="account-menu__header">
+        <router-link class="account-menu__profile-link" to="/settings/profile" @click="closeMenu">
+          {{ t("layout.default.util.profile") }}
+        </router-link>
+      </div>
+
+      <p class="account-menu__caption">{{ t("layout.default.util.quickMove") }}</p>
 
       <p v-if="isMenuLoading" class="account-menu__status">
         {{ t("layout.default.util.loading") }}
@@ -321,7 +325,7 @@ watch(locale, (value) => {
 }
 
 .account-menu__locale {
-  margin: 8px 2px 0;
+  margin-bottom: 8px;
   display: flex;
   align-items: center;
   justify-content: space-between;

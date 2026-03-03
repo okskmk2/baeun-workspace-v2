@@ -16,12 +16,7 @@
     <input id="kanban-name" v-model.trim="form.name" type="text" placeholder="칸반 이름" />
 
     <label for="kanban-summary">설명</label>
-    <textarea
-      id="kanban-summary"
-      v-model.trim="form.summary"
-      rows="4"
-      placeholder="칸반 설명"
-    />
+    <textarea id="kanban-summary" v-model.trim="form.summary" rows="4" placeholder="칸반 설명" />
 
     <p v-if="formError" class="status error">{{ formError }}</p>
 
@@ -52,7 +47,6 @@ import { useRoute, useRouter } from "vue-router";
 import api from "../../lib/axios";
 import { addToast } from "../../lib/toast";
 import BackLinkButton from "../../components/BackLinkButton.vue";
-import { addToast } from "../../lib/toast";
 
 const route = useRoute();
 const router = useRouter();
