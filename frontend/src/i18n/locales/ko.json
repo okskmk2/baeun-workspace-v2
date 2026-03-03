@@ -47,6 +47,9 @@
         "login": "로그인",
         "account": "계정",
         "accountMenu": "계정 메뉴",
+        "language": "언어",
+        "languageKo": "한국어",
+        "languageEn": "English",
         "quickMove": "빠른 이동",
         "profile": "내 프로필",
         "settings": "설정",
@@ -385,7 +388,24 @@
         "nameRequired": "보드 이름을 입력하세요."
       },
       "nav": {
-        "backlog": "백로그"
+        "backlog": "백로그",
+        "gantt": "간트"
+      }
+    },
+    "gantt": {
+      "header": {
+        "title": "간트",
+        "subtitle": "프로젝트 작업 일정을 읽기 전용으로 확인합니다."
+      },
+      "columns": {
+        "task": "작업"
+      },
+      "status": {
+        "loading": "불러오는 중...",
+        "errorLoad": "간트 데이터를 불러오지 못했습니다."
+      },
+      "empty": {
+        "tasks": "표시할 작업이 없습니다."
       }
     },
     "home": {
@@ -508,6 +528,7 @@
         "fallbackTitle": "이슈"
       },
       "actions": {
+        "backToKanban": "칸반으로 돌아가기",
         "enterChat": "채팅방 입장",
         "enteringChat": "입장 중...",
         "edit": "편집",
@@ -567,10 +588,11 @@
   "backlog": {
     "page": {
       "header": {
-        "title": "백로그"
+        "title": "백로그",
+        "subtitle": "미할당된 작업을 드래그 앤 드롭으로 보드에 할당할 수 있습니다."
       },
       "actions": {
-        "createTask": "이슈 만들기",
+        "createTask": "작업 만들기",
         "creating": "생성 중...",
         "cancel": "취소",
         "create": "생성"

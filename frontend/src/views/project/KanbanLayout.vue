@@ -34,7 +34,7 @@
           {{ t("backlog.page.header.title") }}
         </router-link>
         <router-link class="lnb-item" :to="`/project/${projectId}/kanban/gantt`">
-          간트차트
+          {{ t("kanban.layout.nav.gantt") }}
         </router-link>
       </nav>
     </aside>

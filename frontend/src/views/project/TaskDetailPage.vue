@@ -1,5 +1,5 @@
 ﻿<template>
-  <BackLinkButton @click="$router.back()"> 칸반으로 돌아가기 </BackLinkButton>
+  <BackLinkButton @click="goBackToKanban"> {{ t("task.detail.actions.backToKanban") }} </BackLinkButton>
   <hgroup>
     <div>
       <h1 v-if="!isEditing" class="task-title-row">
@@ -290,6 +290,15 @@ const fetchTask = async (options = {}) => {
       isLoading.value = false;
     }
   }
+};
+
+const goBackToKanban = () => {
+  if (projectId.value && kanbanId.value) {
+    router.push(`/project/${projectId.value}/kanban/${kanbanId.value}`);
+    return;
+  }
+
+  router.back();
 };
 
 onMounted(fetchTask);
