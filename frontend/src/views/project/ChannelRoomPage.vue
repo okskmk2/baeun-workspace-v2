@@ -92,7 +92,7 @@
                 :class="{ active: isFeedbackMine(message, option.key) }"
                 :aria-label="t(option.labelKey)"
               >
-                <MaterialSymbol :name="option.icon" :size="16" />
+                <span class="feedback-emoji" aria-hidden="true">{{ option.emoji }}</span>
                 <span class="feedback-count">{{ getFeedbackCount(message, option.key) }}</span>
               </div>
             </div>
@@ -232,12 +232,10 @@ const projectMembers = computed(() => projectMemberStore.getProjectMembers(proje
 const isFeedbackOpen = ref(false);
 const activeFeedbackMessageId = ref(null);
 const feedbackOptions = [
-  { key: "like", icon: "thumb_up", labelKey: "messenger.room.feedback.like" },
-  { key: "checking", icon: "schedule", labelKey: "messenger.room.feedback.checking" },
-  { key: "done", icon: "task_alt", labelKey: "messenger.room.feedback.done" },
-  { key: "excited", icon: "celebration", labelKey: "messenger.room.feedback.excited" },
-  { key: "sad", icon: "sentiment_dissatisfied", labelKey: "messenger.room.feedback.sad" },
-  { key: "funny", icon: "sentiment_very_satisfied", labelKey: "messenger.room.feedback.funny" },
+  { key: "done", emoji: "✅", labelKey: "messenger.room.feedback.done" },
+  { key: "like", emoji: "👍", labelKey: "messenger.room.feedback.like" },
+  { key: "checking", emoji: "👀", labelKey: "messenger.room.feedback.checking" },
+  { key: "thanks", emoji: "🙏", labelKey: "messenger.room.feedback.thanks" },
 ];
 
 const fetchchannelDetail = async () => {
@@ -694,6 +692,10 @@ onBeforeUnmount(() => {
   border-color: var(--color-text-muted);
 }
 
+.feedback-add-emoji {
+  line-height: 1;
+}
+
 .feedback-chip {
   display: inline-flex;
   align-items: center;
@@ -705,6 +707,10 @@ onBeforeUnmount(() => {
   color: var(--color-text);
   font-size: 12px;
   font-weight: 600;
+}
+
+.feedback-emoji {
+  line-height: 1;
 }
 
 .feedback-chip.active {
@@ -844,4 +850,3 @@ onBeforeUnmount(() => {
   color: var(--color-danger);
 }
 </style>
-

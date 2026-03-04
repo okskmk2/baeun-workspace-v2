@@ -85,13 +85,14 @@ const planGroups = computed(() => [
         name: "연간 (USD)",
         price: "$108",
         period: "월 기준 10% 할인 적용",
-        badge: "추천",
+
         includes: ["12개월 선결제", "월 결제 대비 10% 절감", "중앙 결제 관리"],
       },
       {
         name: "영구 (USD)",
         price: "$360",
         period: "3년치 선결제로 영구 사용",
+        badge: "추천",
         includes: ["초기 비용 확정", "장기 운영 팀에 유리", "설정 화면에서 상태 확인"],
       },
     ],
@@ -105,6 +106,7 @@ const planGroups = computed(() => [
         name: "월간 (USD)",
         price: "$3",
         period: "프로젝트 / 월",
+        badge: "추천",
         includes: ["프로젝트별 과금", "필요 수량만 추가", "월 단위 조정 가능"],
       },
       {
@@ -136,6 +138,7 @@ const planGroups = computed(() => [
         name: "연간 (USD)",
         price: "$21.60",
         period: "월 기준 10% 할인 적용",
+        badge: "추천",
         includes: ["12개월 선결제", "대규모 팀 비용 절감", "회계 처리 단순화"],
       },
       {

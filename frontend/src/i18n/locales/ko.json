@@ -876,7 +876,8 @@
       "feedback": {
         "like": "좋아요",
         "checking": "확인 중",
-        "done": "완료",
+        "done": "확인했습니다",
+        "thanks": "부탁/감사",
         "excited": "신난다",
         "sad": "슬퍼요",
         "funny": "웃김",

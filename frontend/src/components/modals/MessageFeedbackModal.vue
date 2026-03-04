@@ -9,19 +9,17 @@
         :class="{ 'is-active': isActive(option.key) }"
         @click="handleSelect(option.key)"
       >
-        <MaterialSymbol :name="option.icon" :size="20" />
-        <span>{{ t(option.labelKey) }}</span>
+        <span class="feedback-emoji" aria-hidden="true">{{ option.emoji }}</span>
+        <span class="feedback-label">{{ t(option.labelKey) }}</span>
       </button>
     </div>
   </BaseModal>
 </template>
 
 <script setup>
-import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import api from "../../lib/axios";
 import BaseModal from "../BaseModal.vue";
-import MaterialSymbol from "../MaterialSymbol.vue";
 
 const { t } = useI18n();
 
@@ -47,12 +45,10 @@ const props = defineProps({
 const emit = defineEmits(["close", "selected"]);
 
 const feedbackOptions = [
-  { key: "like", icon: "thumb_up", labelKey: "messenger.room.feedback.like" },
-  { key: "checking", icon: "schedule", labelKey: "messenger.room.feedback.checking" },
-  { key: "done", icon: "task_alt", labelKey: "messenger.room.feedback.done" },
-  { key: "excited", icon: "celebration", labelKey: "messenger.room.feedback.excited" },
-  { key: "sad", icon: "sentiment_dissatisfied", labelKey: "messenger.room.feedback.sad" },
-  { key: "funny", icon: "sentiment_very_satisfied", labelKey: "messenger.room.feedback.funny" },
+  { key: "done", emoji: "✅", labelKey: "messenger.room.feedback.done" },
+  { key: "like", emoji: "👍", labelKey: "messenger.room.feedback.like" },
+  { key: "checking", emoji: "👀", labelKey: "messenger.room.feedback.checking" },
+  { key: "thanks", emoji: "🙏", labelKey: "messenger.room.feedback.thanks" },
 ];
 
 const isActive = (key) => {
@@ -89,7 +85,7 @@ const handleSelect = async (key) => {
 <style scoped>
 .feedback-modal {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 0.75rem;
   padding: 0.5rem 0;
 }
@@ -119,7 +115,12 @@ const handleSelect = async (key) => {
   color: white;
 }
 
-.feedback-option span {
+.feedback-emoji {
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.feedback-label {
   font-size: 0.875rem;
   font-weight: 500;
 }

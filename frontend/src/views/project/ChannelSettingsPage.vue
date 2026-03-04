@@ -263,7 +263,6 @@ watch(roomId, (nextId, prevId) => {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  max-width: 420px;
 }
 
 .settings-form input {

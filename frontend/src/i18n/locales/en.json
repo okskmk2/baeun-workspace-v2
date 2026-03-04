@@ -876,7 +876,8 @@
       "feedback": {
         "like": "Like",
         "checking": "Checking",
-        "done": "Done",
+        "done": "Acknowledged",
+        "thanks": "Please/Thanks",
         "excited": "Excited",
         "sad": "Sad",
         "funny": "Funny",

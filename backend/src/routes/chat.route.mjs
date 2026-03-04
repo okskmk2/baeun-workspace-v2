@@ -6,7 +6,7 @@ import logger from "../logger.mjs";
 import { createNotifications, NOTIFICATION_TYPES } from "../notification.mjs";
 
 const router = express.Router();
-const FEEDBACK_KEYS = ["like", "checking", "done", "excited", "sad", "funny"];
+const FEEDBACK_KEYS = ["done", "like", "checking", "thanks"];
 const CHANNEL_TYPES = ["GENERAL", "ISSUE", "DM", "AGENT", "NOTICE"];
 const NOTICE_SCOPES = ["PROJECT", "WORKSPACE"];
 const NOTICE_WRITER_ROLES = ["OWNER", "ADMIN"];
@@ -790,10 +790,12 @@ router.get("/:channelId/messages", isAuth, async (req, res) => {
  */
 router.post("/:channelId/messages/:messageId/feedback", isAuth, async (req, res) => {
   const { channelId, messageId } = req.params;
-  const { feedback_key: feedbackKey } = req.body;
+  const feedbackKey = String(req.body?.feedback_key || "")
+    .trim()
+    .toLowerCase();
   const userId = req.session.userId;
 
-  if (!feedbackKey || !FEEDBACK_KEYS.includes(feedbackKey)) {
+  if (!FEEDBACK_KEYS.includes(feedbackKey)) {
     return res.status(400).json({ name: "BadRequest", message: "invalid feedback_key" });
   }
 
