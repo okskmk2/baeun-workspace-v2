@@ -763,7 +763,7 @@
         "rooms": "Channel sections",
         "notice": "Notices",
         "general": "General Channels",
-        "issue": "Issue Channels",
+        "task": "Task Channels",
         "dm": "DM",
         "agent": "AI Agent",
         "active": "Channels",

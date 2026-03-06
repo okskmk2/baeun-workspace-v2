@@ -2,7 +2,7 @@ import TaskDetailPage from "../views/project/TaskDetailPage.vue";
 import KanbanHomePage from "../views/project/KanbanHomePage.vue";
 import KanbanLayout from "../views/project/KanbanLayout.vue";
 import WikiLayout from "../views/project/WikiLayout.vue";
-import MessengerLayout from "../views/project/MessengerLayout.vue";
+import ChannelLayout from "../views/project/ChannelLayout.vue";
 import ProjectLayout from "../views/project/ProjectLayout.vue";
 import KanbanPage from "../views/project/KanbanPage.vue";
 import GanttPage from "../views/project/GanttPage.vue";
@@ -80,7 +80,7 @@ export const projectRoutes = [
       },
       {
         path: "channel",
-        component: MessengerLayout,
+        component: ChannelLayout,
         children: [
           {
             path: "",

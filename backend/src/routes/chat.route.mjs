@@ -7,7 +7,7 @@ import { createNotifications, NOTIFICATION_TYPES } from "../notification.mjs";
 
 const router = express.Router();
 const FEEDBACK_KEYS = ["done", "like", "checking", "thanks"];
-const CHANNEL_TYPES = ["GENERAL", "ISSUE", "DM", "AGENT", "NOTICE"];
+const CHANNEL_TYPES = ["GENERAL", "TASK", "DM", "AGENT", "NOTICE"];
 const NOTICE_SCOPES = ["PROJECT", "WORKSPACE"];
 const NOTICE_WRITER_ROLES = ["OWNER", "ADMIN"];
 

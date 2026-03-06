@@ -83,7 +83,7 @@ const roomSections = computed(() => {
   const mapByType = {
     NOTICE: [],
     GENERAL: [],
-    ISSUE: [],
+    TASK: [],
     DM: [],
     AGENT: [],
   };
@@ -109,7 +109,7 @@ const roomSections = computed(() => {
   const sections = [
     { key: "NOTICE", title: t("messenger.layout.sections.notice"), items: noticeItems },
     { key: "GENERAL", title: t("messenger.layout.sections.general"), items: mapByType.GENERAL },
-    { key: "ISSUE", title: t("messenger.layout.sections.issue"), items: mapByType.ISSUE },
+    { key: "TASK", title: t("messenger.layout.sections.task"), items: mapByType.TASK },
     { key: "DM", title: t("messenger.layout.sections.dm"), items: mapByType.DM },
     { key: "AGENT", title: t("messenger.layout.sections.agent"), items: mapByType.AGENT },
   ];

@@ -763,7 +763,7 @@
         "rooms": "채널 구분",
         "notice": "공지사항",
         "general": "일반 채널",
-        "issue": "이슈 채널",
+        "task": "작업 채널",
         "dm": "DM",
         "agent": "AI Agent",
         "active": "채널",
