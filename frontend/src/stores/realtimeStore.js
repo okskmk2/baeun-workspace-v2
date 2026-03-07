@@ -26,6 +26,7 @@ export const useRealtimeStore = defineStore("realtime", {
     shouldReconnect: false,
     listeners: {
       message: new Set(),
+      channelMessage: new Set(),
       feedback: new Set(),
       notification: new Set(),
       task: new Set(),
@@ -101,6 +102,10 @@ export const useRealtimeStore = defineStore("realtime", {
           const type = String(payload?.type || "");
           if (type === "message") {
             this._emit("message", payload.data);
+            return;
+          }
+          if (type === "channel_message") {
+            this._emit("channelMessage", payload.data);
             return;
           }
           if (type === "feedback") {

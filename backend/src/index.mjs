@@ -7,7 +7,7 @@ import pool from "./db.mjs";
 import logger from "./logger.mjs";
 import http from "http";
 import { WebSocketServer } from "ws";
-import { broadcastToRoom, joinRoom, registerUserSocket, removeSocket } from "./ws.mjs";
+import { broadcastToRoom, broadcastToUsers, joinRoom, registerUserSocket, removeSocket } from "./ws.mjs";
 import { createNotifications, NOTIFICATION_TYPES } from "./notification.mjs";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -175,7 +175,7 @@ wss.on("connection", (ws, request) => {
 
       try {
         const channelRes = await pool.query(
-          "SELECT type, scope, project_id, workspace_id FROM channel WHERE id = $1",
+          "SELECT name, type, scope, project_id, workspace_id FROM channel WHERE id = $1",
           [channelId]
         );
         if (channelRes.rows.length === 0) return;
@@ -239,6 +239,33 @@ wss.on("connection", (ws, request) => {
           },
         });
 
+        if (channelType !== "NOTICE") {
+          const channelMembersRes = await pool.query(
+            "SELECT member_id FROM channel_member WHERE channel_id = $1",
+            [channelId]
+          );
+          const recipientIds = channelMembersRes.rows
+            .map((row) => Number(row.member_id))
+            .filter((id) => Number.isInteger(id) && id > 0)
+            .filter((id) => String(id) !== String(userId));
+
+          if (recipientIds.length > 0) {
+            broadcastToUsers(recipientIds, {
+              type: "channel_message",
+              data: {
+                channel_id: Number(channelId),
+                message_id: Number(message.id),
+                project_id: channel.project_id ? Number(channel.project_id) : null,
+                workspace_id: channel.workspace_id ? Number(channel.workspace_id) : null,
+                created_by: Number(userId),
+                creator_name: creatorName,
+                channel_name: String(channel.name || ""),
+                content: String(message.content || ""),
+              },
+            });
+          }
+        }
+
         if (channelType === "NOTICE") {
           const scope = String(channel.scope || "").toUpperCase();
           if (scope === "WORKSPACE" && channel.workspace_id) {
@@ -246,8 +273,29 @@ wss.on("connection", (ws, request) => {
               "SELECT member_id FROM workspace_member WHERE workspace_id = $1",
               [channel.workspace_id]
             );
+            const recipientIds = wsMembersRes.rows
+              .map((row) => Number(row.member_id))
+              .filter((id) => Number.isInteger(id) && id > 0)
+              .filter((id) => String(id) !== String(userId));
+
+            if (recipientIds.length > 0) {
+              broadcastToUsers(recipientIds, {
+                type: "channel_message",
+                data: {
+                  channel_id: Number(channelId),
+                  message_id: Number(message.id),
+                  project_id: channel.project_id ? Number(channel.project_id) : null,
+                  workspace_id: channel.workspace_id ? Number(channel.workspace_id) : null,
+                  created_by: Number(userId),
+                  creator_name: creatorName,
+                  channel_name: String(channel.name || ""),
+                  content: String(message.content || ""),
+                },
+              });
+            }
+
             await createNotifications({
-              recipientIds: wsMembersRes.rows.map((row) => row.member_id),
+              recipientIds,
               actorId: userId,
               type: NOTIFICATION_TYPES.CHANNEL_NOTICE_WORKSPACE_NEW_MESSAGE,
               resourceType: "channel",
@@ -265,8 +313,29 @@ wss.on("connection", (ws, request) => {
               "SELECT member_id FROM project_member WHERE project_id = $1",
               [channel.project_id]
             );
+            const recipientIds = projectMembersRes.rows
+              .map((row) => Number(row.member_id))
+              .filter((id) => Number.isInteger(id) && id > 0)
+              .filter((id) => String(id) !== String(userId));
+
+            if (recipientIds.length > 0) {
+              broadcastToUsers(recipientIds, {
+                type: "channel_message",
+                data: {
+                  channel_id: Number(channelId),
+                  message_id: Number(message.id),
+                  project_id: channel.project_id ? Number(channel.project_id) : null,
+                  workspace_id: channel.workspace_id ? Number(channel.workspace_id) : null,
+                  created_by: Number(userId),
+                  creator_name: creatorName,
+                  channel_name: String(channel.name || ""),
+                  content: String(message.content || ""),
+                },
+              });
+            }
+
             await createNotifications({
-              recipientIds: projectMembersRes.rows.map((row) => row.member_id),
+              recipientIds,
               actorId: userId,
               type: NOTIFICATION_TYPES.CHANNEL_NOTICE_PROJECT_NEW_MESSAGE,
               resourceType: "channel",

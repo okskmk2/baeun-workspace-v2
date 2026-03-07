@@ -16,9 +16,13 @@
               <router-link
                 v-for="room in section.items"
                 :key="room.id"
+                class="room-link"
                 :to="`/project/${projectId}/channel/${room.id}`"
               >
-                {{ getRoomDisplayName(room) }}
+                <span class="room-link__label">
+                  {{ getRoomDisplayName(room) }}
+                  <UnreadDot v-if="isRoomUnread(room.id)" />
+                </span>
               </router-link>
             </section>
           </template>
@@ -52,6 +56,7 @@ import { useChatStore } from "../../stores/chatStore";
 import { useProjectSearchStore } from "../../stores/projectSearchStore";
 import { useProjectMemberStore } from "../../stores/projectMemberStore";
 import { useAppStore } from "../../stores/appStore";
+import UnreadDot from "../../components/UnreadDot.vue";
 
 const { t } = useI18n();
 const route = useRoute();
@@ -65,6 +70,7 @@ const projectId = computed(() => route.params.projectId);
 
 const isModalOpen = ref(false);
 const rooms = computed(() => chatStore.getRooms(projectId.value));
+const unreadChannelIds = computed(() => chatStore.getUnreadChannelIds(projectId.value));
 const archivePath = computed(() => `/project/${projectId.value}/channel/archive`);
 const isLoading = ref(false);
 const errorMessage = ref("");
@@ -166,6 +172,8 @@ const getRoomDisplayName = (room) => {
   return room?.name || t("messenger.layout.fallback.channelName");
 };
 
+const isRoomUnread = (roomId) => unreadChannelIds.value.includes(String(roomId));
+
 const openModal = () => {
   isModalOpen.value = true;
 };
@@ -213,6 +221,16 @@ watch(projectId, fetchRooms);
   flex-direction: column;
   gap: 4px;
   margin-bottom: 10px;
+}
+
+.ChannelLayout .room-link {
+  position: relative;
+}
+
+.ChannelLayout .room-link__label {
+  position: relative;
+  display: inline-flex;
+  padding-right: 12px;
 }
 
 .room-section h3 {

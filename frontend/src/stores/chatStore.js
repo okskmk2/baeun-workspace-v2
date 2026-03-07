@@ -5,6 +5,7 @@ export const useChatStore = defineStore("chat", {
   state: () => ({
     roomsByProject: {},
     messagesByRoom: {},
+    unreadChannelIdsByProject: {},
   }),
   actions: {
     getRooms(projectId, options = {}) {
@@ -69,6 +70,30 @@ export const useChatStore = defineStore("chat", {
         active: updateBucket(current.active || []),
         archived: updateBucket(current.archived || []),
       };
+    },
+    getUnreadChannelIds(projectId) {
+      if (!projectId) return [];
+      return this.unreadChannelIdsByProject[projectId] || [];
+    },
+    addUnreadChannel(projectId, channelId) {
+      if (!projectId || !channelId) return;
+      const projectKey = String(projectId);
+      const channelKey = String(channelId);
+      const current = this.unreadChannelIdsByProject[projectKey] || [];
+      if (current.includes(channelKey)) return;
+      this.unreadChannelIdsByProject[projectKey] = [...current, channelKey];
+    },
+    removeUnreadChannel(projectId, channelId) {
+      if (!projectId || !channelId) return;
+      const projectKey = String(projectId);
+      const channelKey = String(channelId);
+      const current = this.unreadChannelIdsByProject[projectKey] || [];
+      this.unreadChannelIdsByProject[projectKey] = current.filter((id) => id !== channelKey);
+    },
+    clearUnreadChannels(projectId) {
+      if (!projectId) return;
+      const projectKey = String(projectId);
+      this.unreadChannelIdsByProject[projectKey] = [];
     },
   },
 });

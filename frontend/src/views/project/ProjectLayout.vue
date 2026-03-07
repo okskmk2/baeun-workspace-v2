@@ -23,9 +23,16 @@
               <MaterialSymbol name="view_kanban" :size="20" alt="" />
               <span>{{ t("layout.project.nav.kanban") }}</span>
             </router-link>
-            <router-link class="mainnav-link" :to="`/project/${projectId}/channel`">
+            <router-link
+              class="mainnav-link"
+              :class="{ 'mainnav-link--messenger-active': hasUnreadChannelMessage }"
+              :to="`/project/${projectId}/channel`"
+            >
               <MaterialSymbol name="chat_bubble" :size="20" alt="" />
-              <span>{{ t("layout.project.nav.messenger") }}</span>
+              <span class="mainnav-link__label">
+                {{ t("layout.project.nav.messenger") }}
+                <UnreadDot v-if="hasUnreadChannelMessage" />
+              </span>
             </router-link>
           </nav>
         </template>
@@ -97,6 +104,7 @@ import Avatar from "../../components/Avatar.vue";
 import SearchInput from "../../components/SearchInput.vue";
 import ProjectNotificationDropdown from "../../components/ProjectNotificationDropdown.vue";
 import AccountDropdown from "../../components/AccountDropdown.vue";
+import UnreadDot from "../../components/UnreadDot.vue";
 
 const { t } = useI18n();
 const route = useRoute();
@@ -119,6 +127,8 @@ const SEARCH_TYPE_TTLS = {
 };
 
 let unsubscribeTaskCreated = null;
+let unsubscribeChannelMessage = null;
+let notificationPermissionRequest = null;
 
 const projectId = computed(() => route.params.projectId);
 const searchQuery = ref("");
@@ -188,7 +198,90 @@ const searchResults = computed(() => {
   if (!projectId.value) return [];
   return projectSearchStore.search(projectId.value, searchQuery.value, { limit: 10 });
 });
+const unreadChannelIds = computed(() => chatStore.getUnreadChannelIds(projectId.value));
 const showSearchPanel = computed(() => isSearchOpen.value && hasSearchQuery.value);
+const hasUnreadChannelMessage = computed(() => unreadChannelIds.value.length > 0);
+
+const normalizePath = (value) => String(value || "").replace(/\/+$/, "");
+const channelRoomPathPrefix = computed(() => {
+  if (!projectId.value) return "";
+  return `/project/${projectId.value}/channel/`;
+});
+
+const isCurrentChannelRoomPath = (channelId) => {
+  if (!projectId.value || !channelId) return false;
+  const currentPath = normalizePath(route.path);
+  return currentPath === `/project/${projectId.value}/channel/${channelId}`;
+};
+
+const addUnreadChannel = (channelId) => {
+  if (!projectId.value || !channelId) return;
+  chatStore.addUnreadChannel(projectId.value, channelId);
+};
+
+const removeUnreadChannel = (channelId) => {
+  if (!projectId.value || !channelId) return;
+  chatStore.removeUnreadChannel(projectId.value, channelId);
+};
+
+const isWebNotificationSupported = () =>
+  typeof window !== "undefined" && typeof Notification !== "undefined";
+
+const requestWebNotificationPermission = async () => {
+  if (!isWebNotificationSupported()) return "denied";
+  if (Notification.permission !== "default") return Notification.permission;
+  if (!notificationPermissionRequest) {
+    notificationPermissionRequest = Notification.requestPermission().catch(() => "denied");
+  }
+  const permission = await notificationPermissionRequest;
+  notificationPermissionRequest = null;
+  return permission;
+};
+
+const resolveChannelName = (payload) => {
+  const directName = String(payload?.channel_name || "").trim();
+  if (directName) return directName;
+
+  const channelId = String(payload?.channel_id || "");
+  if (!channelId) return t("messenger.layout.fallback.channelName");
+
+  const room = chatStore
+    .getRooms(projectId.value)
+    .find((item) => String(item?.id || "") === channelId);
+  if (room?.name) return String(room.name);
+  return t("messenger.layout.fallback.channelName");
+};
+
+const showChannelMessageNotification = async (payload) => {
+  if (!isWebNotificationSupported()) return;
+
+  const permission =
+    Notification.permission === "granted"
+      ? "granted"
+      : await requestWebNotificationPermission();
+  if (permission !== "granted") return;
+
+  const channelName = resolveChannelName(payload);
+  const senderName =
+    String(payload?.creator_name || "").trim() || t("messenger.room.fallback.unknownUser");
+  const messageText = String(payload?.content || "").trim() || "(내용 없음)";
+  const body = `${senderName}: ${messageText}`;
+
+  const browserNotification = new Notification(channelName, {
+    body,
+    tag: payload?.message_id ? `channel-message-${payload.message_id}` : undefined,
+  });
+
+  browserNotification.onclick = () => {
+    if (typeof window !== "undefined" && typeof window.focus === "function") {
+      window.focus();
+    }
+    if (projectId.value && payload?.channel_id) {
+      router.push(`/project/${projectId.value}/channel/${payload.channel_id}`);
+    }
+    browserNotification.close();
+  };
+};
 
 const refreshSearchSources = async () => {
   if (!projectId.value) return;
@@ -267,6 +360,26 @@ const handleTaskEvent = (payload) => {
   }
 };
 
+const handleChannelMessageEvent = (payload) => {
+  if (!projectId.value) return;
+
+  const payloadProjectId = payload?.project_id;
+  if (String(payloadProjectId || "") !== String(projectId.value)) return;
+
+  if (String(payload?.created_by || "") === String(currentUserId.value || "")) return;
+
+  const channelId = payload?.channel_id;
+  if (!channelId) return;
+
+  if (isCurrentChannelRoomPath(channelId)) {
+    removeUnreadChannel(channelId);
+    return;
+  }
+
+  addUnreadChannel(channelId);
+  showChannelMessageNotification(payload);
+};
+
 const applySystemTheme = () => {
   if (typeof window === "undefined" || !window.matchMedia) return;
   const query = window.matchMedia("(prefers-color-scheme: dark)");
@@ -299,6 +412,9 @@ watch(
   async (value) => {
     searchQuery.value = "";
     isSearchOpen.value = false;
+    if (value) {
+      chatStore.clearUnreadChannels(value);
+    }
     if (!value) return;
     await workspaceStore.fetchProjectDetail(value);
     if (workspaceStore.getProject(value)?.workspace_id) {
@@ -319,14 +435,35 @@ watch(
   { immediate: true }
 );
 
+watch(
+  () => route.path,
+  (path) => {
+    const prefix = channelRoomPathPrefix.value;
+    if (!prefix) return;
+
+    const currentPath = normalizePath(path);
+    if (!currentPath.startsWith(prefix)) return;
+
+    const channelSegment = currentPath.slice(prefix.length);
+    if (!channelSegment || channelSegment.includes("/")) return;
+    removeUnreadChannel(channelSegment);
+  },
+  { immediate: true }
+);
+
 onMounted(() => {
   unsubscribeTaskCreated = realtimeStore.subscribe("task", handleTaskEvent);
+  unsubscribeChannelMessage = realtimeStore.subscribe("channelMessage", handleChannelMessageEvent);
 });
 
 onBeforeUnmount(() => {
   if (unsubscribeTaskCreated) {
     unsubscribeTaskCreated();
     unsubscribeTaskCreated = null;
+  }
+  if (unsubscribeChannelMessage) {
+    unsubscribeChannelMessage();
+    unsubscribeChannelMessage = null;
   }
   applyTheme("");
 });
@@ -346,6 +483,7 @@ onBeforeUnmount(() => {
 }
 
 .mainnav-link {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -359,6 +497,12 @@ onBeforeUnmount(() => {
 
 .mainnav-link:hover {
   background-color: color-mix(in srgb, var(--gnb-bg) 95%, var(--gnb-fg) 5%);
+}
+
+.mainnav-link__label {
+  position: relative;
+  display: inline-flex;
+  padding-right: 12px;
 }
 
 .project-search {
@@ -429,4 +573,3 @@ onBeforeUnmount(() => {
   font-size: 13px;
 }
 </style>
-
