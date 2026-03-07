@@ -78,7 +78,7 @@
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, ref, watch } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
@@ -90,6 +90,7 @@ import { useKanbanStore } from "../../stores/kanbanStore";
 import { usePageStore } from "../../stores/pageStore";
 import { useChatStore } from "../../stores/chatStore";
 import { useProjectSearchStore } from "../../stores/projectSearchStore";
+import { useRealtimeStore } from "../../stores/realtimeStore";
 import { convertSnakeToCamel } from "../../lib/utils";
 import MaterialSymbol from "../../components/MaterialSymbol.vue";
 import Avatar from "../../components/Avatar.vue";
@@ -107,14 +108,17 @@ const kanbanStore = useKanbanStore();
 const pageStore = usePageStore();
 const chatStore = useChatStore();
 const projectSearchStore = useProjectSearchStore();
+const realtimeStore = useRealtimeStore();
 const { gnbPreviewTheme, currentUser } = storeToRefs(appStore);
 
 const SEARCH_TYPE_TTLS = {
   kanban: 60 * 1000,
   page: 30 * 1000,
   channel: 60 * 1000,
-  task: 30 * 1000,
+  task: 24 * 60 * 60 * 1000,
 };
+
+let unsubscribeTaskCreated = null;
 
 const projectId = computed(() => route.params.projectId);
 const searchQuery = ref("");
@@ -205,10 +209,10 @@ const refreshSearchSources = async () => {
         projectSearchStore.upsertChannels(projectId.value, chatStore.getRooms(projectId.value));
       },
       task: async () => {
-        const res = await api.get("/tasks/recent", {
+        const res = await api.get("/tasks", {
           params: { project_id: projectId.value },
         });
-        projectSearchStore.upsertTasks(projectId.value, res.data || []);
+        projectSearchStore.replaceTasks(projectId.value, res.data || []);
       },
     },
   });
@@ -243,6 +247,24 @@ const onSelectResult = (result) => {
   if (!result?.route) return;
   router.push(result.route);
   isSearchOpen.value = false;
+};
+
+const handleTaskEvent = (payload) => {
+  const event = String(payload?.event || "").toLowerCase();
+  if (!["created", "updated", "deleted"].includes(event)) return;
+  if (!projectId.value) return;
+
+  const payloadProjectId = payload?.project_id;
+  if (String(payloadProjectId || "") !== String(projectId.value)) return;
+
+  if (["created", "updated"].includes(event) && payload?.task) {
+    projectSearchStore.upsertTasksPartial(projectId.value, [payload.task]);
+    return;
+  }
+
+  if (event === "deleted" && payload?.task_id) {
+    projectSearchStore.removeTask(projectId.value, payload.task_id);
+  }
 };
 
 const applySystemTheme = () => {
@@ -297,7 +319,15 @@ watch(
   { immediate: true }
 );
 
+onMounted(() => {
+  unsubscribeTaskCreated = realtimeStore.subscribe("task", handleTaskEvent);
+});
+
 onBeforeUnmount(() => {
+  if (unsubscribeTaskCreated) {
+    unsubscribeTaskCreated();
+    unsubscribeTaskCreated = null;
+  }
   applyTheme("");
 });
 </script>

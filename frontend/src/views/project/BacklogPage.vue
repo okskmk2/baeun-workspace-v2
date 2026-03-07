@@ -20,39 +20,17 @@
       <p v-if="isLoadingIssues">{{ t("backlog.page.status.loading") }}</p>
       <p v-else-if="errorMessage">{{ errorMessage }}</p>
       <p v-else-if="issues.length === 0">{{ t("backlog.page.empty.issues") }}</p>
-      <article
+      <TaskCard
         v-for="issue in issues"
         :key="issue.id"
-        class="issue-card"
-        draggable="true"
-        @dragstart="onDragStart($event, issue)"
-      >
-        <h3 class="task-title-row">
-          <MaterialSymbol
-            v-if="getPriorityIconName(issue.priority)"
-            :name="getPriorityIconName(issue.priority)"
-            :size="18"
-            class="task-priority-icon"
-            :style="{ color: getPriorityColor(issue.priority) }"
-          />
-          <router-link :to="issueDetailPath(issue.id)">{{ issue.title }}</router-link>
-        </h3>
-        <div v-if="issue.assignee_members?.length" class="assignee-list">
-          <div
-            v-for="assignee in issue.assignee_members"
-            :key="`${issue.id}-${assignee.id}-${assignee.role_name}`"
-            class="assignee-item"
-          >
-            <span>{{ assignee.name }}</span>
-            <Tag
-              v-if="assignee.role_name"
-              :label="getRoleLabel('issue_member', assignee.role_name)"
-              :variant="roleVariant(assignee.role_name)"
-            />
-          </div>
-        </div>
-        <p v-else>{{ t("backlog.page.empty.assignees") }}</p>
-      </article>
+        :task="issue"
+        :detail-path="issueDetailPath(issue.id)"
+        variant="backlog"
+        role-scope="issue_member"
+        :empty-assignees-text="t('backlog.page.empty.assignees')"
+        :draggable="true"
+        @dragstart="onDragStart"
+      />
     </div>
 
     <div class="project-boards">
@@ -108,17 +86,14 @@ import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 import api from "../../lib/axios";
 import CountChip from "../../components/CountChip.vue";
-import MaterialSymbol from "../../components/MaterialSymbol.vue";
-import Tag from "../../components/Tag.vue";
+import TaskCard from "../../components/TaskCard.vue";
 import CreateTaskModal from "../../components/modals/CreateTaskModal.vue";
 import CreateKanbanModal from "../../components/modals/CreateKanbanModal.vue";
 import { convertSnakeToCamel } from "../../lib/utils";
 import { useProjectSearchStore } from "../../stores/projectSearchStore";
-import { useRoleLabels } from "../../lib/roleLabels";
 import { useKanbanStore } from "../../stores/kanbanStore";
 
 const { t } = useI18n();
-const { getRoleLabel } = useRoleLabels();
 const route = useRoute();
 const kanbanStore = useKanbanStore();
 const projectSearchStore = useProjectSearchStore();
@@ -174,7 +149,7 @@ const fetchIssues = async () => {
   try {
     const res = await api.get(`/kanbans/${backlogKanbanId.value}/tasks`);
     issues.value = res.data || [];
-    projectSearchStore.upsertTasks(projectId.value, issues.value);
+    projectSearchStore.upsertTasksPartial(projectId.value, issues.value);
   } catch (error) {
     errorMessage.value = t("backlog.page.status.errorLoad");
   } finally {
@@ -200,35 +175,7 @@ const fetchBoardsForDisplay = async () => {
 };
 
 const issueDetailPath = (issueId) =>
-  `/project/${projectId.value}/kanban/${backlogKanbanId.value}/task/${issueId}`;
-
-const getPriorityIconName = (priority) => {
-  const parsed = Number(priority);
-  if (Number.isNaN(parsed)) return "";
-  if (parsed === 2) return "stat_2";
-  if (parsed === 1) return "stat_1";
-  if (parsed === 0) return "stat_0";
-  if (parsed === -1) return "stat_minus_1";
-  return "";
-};
-
-const getPriorityColor = (priority) => {
-  const parsed = Number(priority);
-  if (parsed === 2) return "var(--color-danger)";
-  if (parsed === 1) return "var(--color-warning)";
-  if (parsed === 0) return "var(--color-info)";
-  if (parsed === -1) return "var(--color-text-muted)";
-  return "var(--color-text-muted)";
-};
-
-const roleVariant = (role) => {
-  const key = (role || "").toUpperCase();
-  if (key === "REPORTER") return "info";
-  if (key === "ASSIGNEE") return "success";
-  if (key === "REVIEWER") return "warning";
-  if (key === "WATCHER") return "default";
-  return "default";
-};
+  `/project/${projectId.value}/kanban/${backlogKanbanId.value}/task/${issueId}?from=backlog`;
 
 const onDragStart = (event, issue) => {
   draggingIssueId.value = issue.id;
@@ -346,16 +293,6 @@ watch(projectId, async () => {
   align-items: center;
 }
 
-.task-title-row {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.task-priority-icon {
-  flex-shrink: 0;
-}
-
 .backlog-issues {
   /* Style for the backlog issues column */
   display: flex;
@@ -364,50 +301,6 @@ watch(projectId, async () => {
   height: calc(100vh - 238px); /* Adjust height to fit layout */
   overflow-y: auto;
   padding-right: 12px; /* Add some padding for scrollbar */
-}
-
-.issue-card {
-  background-color: var(--color-surface);
-  border: 1px solid var(--color-border);
-  padding: 12px 16px;
-  border-radius: 8px;
-  cursor: grab;
-}
-
-.issue-card h3 {
-  font-size: 14px; /* Reduced font size for backlog list */
-  font-weight: 500;
-  margin: 0 0 8px 0;
-}
-
-.issue-card h3 > a {
-  color: var(--color-text);
-  text-decoration: none;
-}
-
-.issue-card h3 > a:hover {
-  text-decoration: underline;
-}
-
-.issue-card p {
-  margin: 0;
-  font-size: 12px; /* Reduced font size */
-  color: #94a3b8;
-}
-
-.assignee-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px; /* Reduced gap */
-  margin-top: 6px; /* Reduced margin */
-}
-
-.assignee-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px; /* Reduced gap */
-  font-size: 10px; /* Reduced font size */
-  color: var(--color-text);
 }
 
 .project-boards {

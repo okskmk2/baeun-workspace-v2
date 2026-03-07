@@ -2,26 +2,36 @@
   <hgroup>
     <h1>{{ page.title || t("wiki.page.header.fallbackTitle") }}</h1>
     <div class="actions">
-      <button
-        type="button"
-        class="btn btn--secondary btn--sm"
-        :disabled="!canEdit"
-        @click="startEdit"
-      >
-        {{ t("wiki.page.actions.edit") }}
-      </button>
-      <button type="button" class="btn btn--secondary btn--sm" @click="openPermissionModal">
-        {{ t("wiki.page.actions.permissions") }}
-      </button>
-      <button
-        v-if="isOwner"
-        type="button"
-        class="btn btn--danger btn--sm"
-        :disabled="isDeleting"
-        @click="deletePage"
-      >
-        {{ isDeleting ? t("wiki.page.actions.deleting") : t("wiki.page.actions.delete") }}
-      </button>
+      <template v-if="isEditing">
+        <button type="button" class="btn btn--secondary btn--sm" @click="cancelEdit">
+          {{ t("wiki.page.actions.cancel") }}
+        </button>
+        <button type="button" class="btn btn--sm" :disabled="isSaving" @click="savePage">
+          {{ isSaving ? t("wiki.page.actions.saving") : t("wiki.page.actions.save") }}
+        </button>
+      </template>
+      <template v-else>
+        <button
+          type="button"
+          class="btn btn--secondary btn--sm"
+          :disabled="!canEdit"
+          @click="startEdit"
+        >
+          {{ t("wiki.page.actions.edit") }}
+        </button>
+        <button type="button" class="btn btn--secondary btn--sm" @click="openPermissionModal">
+          {{ t("wiki.page.actions.permissions") }}
+        </button>
+        <button
+          v-if="isOwner"
+          type="button"
+          class="btn btn--danger btn--sm"
+          :disabled="isDeleting"
+          @click="deletePage"
+        >
+          {{ isDeleting ? t("wiki.page.actions.deleting") : t("wiki.page.actions.delete") }}
+        </button>
+      </template>
     </div>
   </hgroup>
   <p v-if="isLoading">{{ t("wiki.page.status.loading") }}</p>
@@ -47,14 +57,6 @@
           <label class="edit-label">{{ t("wiki.page.fields.previewLabel") }}</label>
           <div class="markdown-body preview" v-html="renderedPreview"></div>
         </section>
-      </div>
-      <div class="edit-actions">
-        <button type="button" class="btn btn--secondary" @click="cancelEdit">
-          {{ t("wiki.page.actions.cancel") }}
-        </button>
-        <button type="button" class="btn" :disabled="isSaving" @click="savePage">
-          {{ isSaving ? t("wiki.page.actions.saving") : t("wiki.page.actions.save") }}
-        </button>
       </div>
     </template>
     <template v-else>
@@ -366,4 +368,3 @@ watch(projectId, fetchPageMembers);
   color: var(--color-text-muted);
 }
 </style>
-

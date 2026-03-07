@@ -1,40 +1,50 @@
 <template>
-  <BackLinkButton @click="$router.back()">뒤로</BackLinkButton>
+  <BackLinkButton @click="router.back()">{{ t("kanban.settings.actions.back") }}</BackLinkButton>
 
   <hgroup>
     <div>
-      <h1>칸반 설정</h1>
-      <p class="subtitle">칸반 이름과 설명을 수정하거나 칸반을 삭제할 수 있습니다.</p>
+      <h1>{{ t("kanban.settings.header.title") }}</h1>
+      <p class="subtitle">{{ t("kanban.settings.header.subtitle") }}</p>
     </div>
   </hgroup>
 
-  <p v-if="isLoading" class="status">불러오는 중...</p>
+  <p v-if="isLoading" class="status">{{ t("kanban.settings.status.loading") }}</p>
   <p v-else-if="errorMessage" class="status error">{{ errorMessage }}</p>
 
   <form v-else class="settings-form" @submit.prevent="saveKanban">
-    <label for="kanban-name">칸반 이름</label>
-    <input id="kanban-name" v-model.trim="form.name" type="text" placeholder="칸반 이름" />
+    <label for="kanban-name">{{ t("kanban.settings.form.nameLabel") }}</label>
+    <input
+      id="kanban-name"
+      v-model.trim="form.name"
+      type="text"
+      :placeholder="t('kanban.settings.form.namePlaceholder')"
+    />
 
-    <label for="kanban-summary">설명</label>
-    <textarea id="kanban-summary" v-model.trim="form.summary" rows="4" placeholder="칸반 설명" />
+    <label for="kanban-summary">{{ t("kanban.settings.form.summaryLabel") }}</label>
+    <textarea
+      id="kanban-summary"
+      v-model.trim="form.summary"
+      rows="4"
+      :placeholder="t('kanban.settings.form.summaryPlaceholder')"
+    />
 
     <p v-if="formError" class="status error">{{ formError }}</p>
 
     <div class="form-actions">
       <button type="submit" class="btn" :disabled="isSaving">
-        {{ isSaving ? "저장 중..." : "저장" }}
+        {{ isSaving ? t("kanban.settings.actions.saving") : t("kanban.settings.actions.save") }}
       </button>
     </div>
   </form>
 
   <section v-if="!isLoading && !errorMessage && !isBacklog" class="danger-zone">
     <div>
-      <h2>위험 영역</h2>
-      <p class="danger-desc">칸반을 삭제하면 포함된 작업과 멤버 정보도 함께 삭제됩니다.</p>
+      <h2>{{ t("kanban.settings.danger.title") }}</h2>
+      <p class="danger-desc">{{ t("kanban.settings.danger.description") }}</p>
     </div>
     <div class="danger-actions">
       <button type="button" class="btn btn--danger" :disabled="isDeleting" @click="deleteKanban">
-        {{ isDeleting ? "삭제 중..." : "칸반 삭제" }}
+        {{ isDeleting ? t("kanban.settings.actions.deleting") : t("kanban.settings.actions.delete") }}
       </button>
       <p v-if="deleteError" class="status error">{{ deleteError }}</p>
     </div>
@@ -43,13 +53,17 @@
 
 <script setup>
 import { computed, onMounted, ref, watch } from "vue";
+import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 import api from "../../lib/axios";
 import { addToast } from "../../lib/toast";
 import BackLinkButton from "../../components/BackLinkButton.vue";
+import { useKanbanStore } from "../../stores/kanbanStore";
 
 const route = useRoute();
 const router = useRouter();
+const { t } = useI18n();
+const kanbanStore = useKanbanStore();
 
 const projectId = computed(() => route.params.projectId);
 const kanbanId = computed(() => route.params.kanbanId);
@@ -86,7 +100,7 @@ const fetchKanban = async () => {
       router.push("/not-found");
       return;
     }
-    errorMessage.value = error?.response?.data?.message || "칸반 정보를 불러오지 못했습니다.";
+    errorMessage.value = error?.response?.data?.message || t("kanban.settings.status.errorLoad");
   } finally {
     isLoading.value = false;
   }
@@ -94,7 +108,7 @@ const fetchKanban = async () => {
 
 const saveKanban = async () => {
   if (!form.value.name) {
-    formError.value = "칸반 이름은 필수입니다.";
+    formError.value = t("kanban.settings.validation.nameRequired");
     return;
   }
 
@@ -102,7 +116,7 @@ const saveKanban = async () => {
   formError.value = "";
 
   try {
-    await api.patch(`/kanbans/${kanbanId.value}`, {
+    const res = await api.patch(`/kanbans/${kanbanId.value}`, {
       name: form.value.name,
       summary: form.value.summary || null,
     });
@@ -126,17 +140,17 @@ const saveKanban = async () => {
 const deleteKanban = async () => {
   if (!kanbanId.value) return;
 
-  const confirmed = window.confirm("이 칸반을 삭제하시겠습니까?");
+  const confirmed = window.confirm(t("kanban.settings.confirm.delete"));
   if (!confirmed) return;
 
   isDeleting.value = true;
   deleteError.value = "";
 
   try {
-    await api.delete(`/kanbans/${kanbanId.value}`);
+    await kanbanStore.deleteKanban(kanbanId.value, projectId.value);
     router.push(`/project/${projectId.value}/kanban`);
   } catch (error) {
-    deleteError.value = error?.response?.data?.message || "칸반 삭제에 실패했습니다.";
+    deleteError.value = error?.response?.data?.message || t("kanban.settings.status.errorDelete");
   } finally {
     isDeleting.value = false;
   }

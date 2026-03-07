@@ -79,9 +79,11 @@
         "placeholder": "Search in project",
         "empty": "No search results.",
         "types": {
+          "kanban": "Board",
           "board": "Board",
           "page": "Page",
           "channel": "Channel",
+          "task": "Issue",
           "issue": "Issue"
         }
       },
@@ -529,6 +531,7 @@
       },
       "actions": {
         "backToKanban": "Back to board",
+        "backToBacklog": "Back to backlog",
         "enterChat": "Enter chat room",
         "enteringChat": "Entering...",
         "edit": "Edit",

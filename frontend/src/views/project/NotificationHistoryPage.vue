@@ -274,6 +274,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 6px;
+  min-width: 0;
 }
 
 .notification-item.unread {
@@ -282,9 +283,14 @@ onMounted(() => {
 
 .notification-item__title {
   margin: 0;
+  flex: 1;
+  min-width: 0;
   font-size: 14px;
   font-weight: 600;
   color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .notification-item__body {

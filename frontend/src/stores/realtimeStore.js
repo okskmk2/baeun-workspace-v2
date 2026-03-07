@@ -28,6 +28,7 @@ export const useRealtimeStore = defineStore("realtime", {
       message: new Set(),
       feedback: new Set(),
       notification: new Set(),
+      task: new Set(),
       open: new Set(),
       close: new Set(),
     },
@@ -108,6 +109,10 @@ export const useRealtimeStore = defineStore("realtime", {
           }
           if (type === "notification") {
             this._emit("notification", payload.data);
+            return;
+          }
+          if (type === "task") {
+            this._emit("task", payload.data);
           }
         } catch (error) {
           logRealtime("invalid ws payload", error);

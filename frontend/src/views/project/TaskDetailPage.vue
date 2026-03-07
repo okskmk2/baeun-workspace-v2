@@ -1,5 +1,5 @@
 ﻿<template>
-  <BackLinkButton @click="goBackToKanban"> {{ t("task.detail.actions.backToKanban") }} </BackLinkButton>
+  <BackLinkButton @click="goBackToKanban"> {{ backButtonLabel }} </BackLinkButton>
   <hgroup>
     <div>
       <h1 v-if="!isEditing" class="task-title-row">
@@ -138,6 +138,7 @@ import { useRoute, useRouter } from "vue-router";
 import api from "../../lib/axios";
 import { addToast } from "../../lib/toast";
 import { useAppStore } from "../../stores/appStore";
+import { useKanbanStore } from "../../stores/kanbanStore";
 import { useProjectMemberStore } from "../../stores/projectMemberStore";
 import MaterialSymbol from "../../components/MaterialSymbol.vue";
 import Tag from "../../components/Tag.vue";
@@ -149,6 +150,7 @@ const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const appStore = useAppStore();
+const kanbanStore = useKanbanStore();
 const projectMemberStore = useProjectMemberStore();
 const task = ref({});
 const taskMembers = ref([]);
@@ -181,6 +183,24 @@ const roleOptions = ["ASSIGNEE", "REPORTER", "REVIEWER", "WATCHER"];
 const projectId = computed(() => route.params.projectId);
 const kanbanId = computed(() => route.params.kanbanId);
 const taskId = computed(() => route.params.taskId);
+const currentKanbanType = computed(() => {
+  if (!projectId.value || !kanbanId.value) return "";
+  const found = kanbanStore
+    .getKanbans(projectId.value)
+    .find((board) => String(board.id) === String(kanbanId.value));
+  return String(found?.type || "").toUpperCase();
+});
+const backSource = computed(() => {
+  const raw = route.query.from;
+  const value = Array.isArray(raw) ? raw[0] : raw;
+  return String(value || "").toLowerCase();
+});
+const backButtonLabel = computed(() => {
+  if (backSource.value === "backlog") {
+    return t("task.detail.actions.backToBacklog");
+  }
+  return t("task.detail.actions.backToKanban");
+});
 const projectMembers = computed(() => projectMemberStore.getProjectMembers(projectId.value));
 
 const taskStatusLabel = computed(() => {
@@ -292,14 +312,43 @@ const fetchTask = async (options = {}) => {
   }
 };
 
+const resolveBackPath = () => {
+  if (!projectId.value) return "";
+  const isBacklogContext = backSource.value === "backlog" || currentKanbanType.value === "BACKLOG";
+  if (isBacklogContext) {
+    return `/project/${projectId.value}/kanban/backlog`;
+  }
+  if (kanbanId.value) {
+    return `/project/${projectId.value}/kanban/${kanbanId.value}`;
+  }
+  return `/project/${projectId.value}/kanban`;
+};
+
+const ensureKanbanContext = async () => {
+  if (!projectId.value || !kanbanId.value) return;
+  if (currentKanbanType.value) return;
+  try {
+    await kanbanStore.fetchKanbans(projectId.value);
+  } catch (error) {
+    // Ignore context fetch failures and keep default fallback behavior.
+  }
+};
+
 const goBackToKanban = () => {
-  if (projectId.value && kanbanId.value) {
-    router.push(`/project/${projectId.value}/kanban/${kanbanId.value}`);
+  const backPath = resolveBackPath();
+  if (backPath) {
+    router.push(backPath);
     return;
   }
 
   router.back();
 };
+
+onMounted(ensureKanbanContext);
+
+watch([projectId, kanbanId], async () => {
+  await ensureKanbanContext();
+});
 
 onMounted(fetchTask);
 watch(taskId, fetchTask);
@@ -371,8 +420,9 @@ const deleteTask = async () => {
   try {
     await api.delete(`/tasks/${taskId.value}`);
     addToast({ message: t("task.detail.toast.deleted"), type: "success" });
-    if (projectId.value && kanbanId.value) {
-      router.push(`/project/${projectId.value}/kanban/${kanbanId.value}`);
+    const backPath = resolveBackPath();
+    if (backPath) {
+      router.push(backPath);
       return;
     }
     router.back();

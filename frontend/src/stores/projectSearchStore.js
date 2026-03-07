@@ -191,8 +191,56 @@ export const useProjectSearchStore = defineStore("projectSearch", {
       this.setResources(projectId, "channel", channels);
     },
 
+    replaceTasks(projectId, tasks, syncedAt = Date.now()) {
+      this.setResources(projectId, "task", tasks, syncedAt);
+    },
+
     upsertTasks(projectId, tasks) {
-      this.setResources(projectId, "task", tasks);
+      this.replaceTasks(projectId, tasks);
+    },
+
+    upsertTasksPartial(projectId, tasks) {
+      if (!projectId) return;
+      this.ensureProject(projectId);
+
+      const incoming = Array.isArray(tasks) ? tasks : [];
+      if (incoming.length === 0) return;
+
+      const current = this.resourcesByProject[projectId].task || [];
+      const byId = new Map(current.map((item) => [String(item.id), item]));
+
+      incoming.forEach((item) => {
+        const normalized = toSearchItem(projectId, "task", item);
+        if (!normalized.id || !normalized.name) return;
+
+        const key = String(normalized.id);
+        const prev = byId.get(key);
+        if (!prev) {
+          byId.set(key, normalized);
+          return;
+        }
+
+        byId.set(key, {
+          ...prev,
+          ...normalized,
+          updatedAt: Math.max(Number(prev.updatedAt || 0), Number(normalized.updatedAt || 0)),
+        });
+      });
+
+      this.resourcesByProject[projectId].task = Array.from(byId.values());
+      this.schedulePersistSnapshot();
+    },
+
+    removeTask(projectId, taskId) {
+      if (!projectId || !taskId) return;
+      this.ensureProject(projectId);
+
+      const prev = this.resourcesByProject[projectId].task || [];
+      const next = prev.filter((item) => String(item.id) !== String(taskId));
+      if (next.length === prev.length) return;
+
+      this.resourcesByProject[projectId].task = next;
+      this.schedulePersistSnapshot();
     },
 
     isTypeStale(projectId, type, ttlMs, now = Date.now()) {

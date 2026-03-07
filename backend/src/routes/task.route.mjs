@@ -2,6 +2,7 @@ import express from "express";
 import pool from "../db.mjs";
 import { isAuth } from "../middlewares/auth.middleware.mjs";
 import { createNotifications, NOTIFICATION_TYPES } from "../notification.mjs";
+import { broadcastToUsers } from "../ws.mjs";
 
 const router = express.Router();
 
@@ -12,6 +13,61 @@ const ensureProjectExists = async (projectId, res) => {
     return false;
   }
   return true;
+};
+
+const normalizeTaskRealtimePayload = (task) => {
+  if (!task) return null;
+  return {
+    id: task.id,
+    title: task.title,
+    content: task.content,
+    status: task.status,
+    priority: task.priority,
+    kanban_id: task.kanban_id,
+    created_at: task.created_at,
+    updated_at: task.updated_at,
+  };
+};
+
+const broadcastTaskEventToProjectMembers = async (
+  db,
+  {
+    projectId,
+    event,
+    task = null,
+    taskId = null,
+  }
+) => {
+  if (!projectId || !event) return;
+
+  const memberRes = await db.query("SELECT member_id FROM project_member WHERE project_id = $1", [projectId]);
+  const recipientIds = memberRes.rows
+    .map((row) => Number(row.member_id))
+    .filter((id) => Number.isInteger(id) && id > 0);
+
+  if (recipientIds.length === 0) return;
+
+  const data = {
+    event,
+    project_id: Number(projectId),
+  };
+
+  const normalizedTask = normalizeTaskRealtimePayload(task);
+  if (normalizedTask) {
+    data.task = normalizedTask;
+  }
+
+  if (taskId != null) {
+    const numericTaskId = Number(taskId);
+    if (Number.isInteger(numericTaskId) && numericTaskId > 0) {
+      data.task_id = numericTaskId;
+    }
+  }
+
+  broadcastToUsers(recipientIds, {
+    type: "task",
+    data,
+  });
 };
 
 /**
@@ -136,6 +192,74 @@ router.get("/recent", isAuth, async (req, res) => {
 /**
  * @swagger
  * /api/tasks:
+ *   get:
+ *     summary: 프로젝트 작업 전체 조회
+ *     description: project_id 기준으로 프로젝트 내 전체 작업 목록 조회
+ *     tags:
+ *       - Task
+ *     parameters:
+ *       - in: query
+ *         name: project_id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: 작업 목록 조회 성공
+ *       400:
+ *         $ref: "#/components/responses/ErrorResponse"
+ *       403:
+ *         $ref: "#/components/responses/ErrorResponse"
+ *       500:
+ *         $ref: "#/components/responses/ErrorResponse"
+ */
+router.get("/", isAuth, async (req, res) => {
+  const projectId = req.query.project_id;
+  const userId = req.session.userId;
+
+  if (!projectId) {
+    return res.status(400).json({ name: "BadRequest", message: "project_id is required" });
+  }
+
+  try {
+    const projectExists = await ensureProjectExists(projectId, res);
+    if (!projectExists) return;
+
+    const memberCheck = await pool.query(
+      "SELECT id FROM project_member WHERE project_id = $1 AND member_id = $2",
+      [projectId, userId]
+    );
+
+    if (memberCheck.rows.length === 0) {
+      return res.status(403).json({ name: "Forbidden", message: "접근 권한이 없습니다." });
+    }
+
+    const taskRes = await pool.query(
+      `SELECT
+        t.id,
+        t.title,
+        t.content,
+        t.status,
+        t.priority,
+        t.kanban_id,
+        t.created_at,
+        t.updated_at
+      FROM task t
+      JOIN kanban k ON k.id = t.kanban_id
+      WHERE k.project_id = $1
+      ORDER BY t.updated_at DESC, t.created_at DESC, t.id DESC`,
+      [projectId]
+    );
+
+    res.json(taskRes.rows);
+  } catch (error) {
+    res.status(500).json({ name: "InternalServerError", message: error.message });
+  }
+});
+
+/**
+ * @swagger
+ * /api/tasks:
  *   post:
  *     summary: 작업 생성
  *     description: 새 작업을 생성하고 작성자를 REPORTER로 등록
@@ -193,7 +317,7 @@ router.post("/", isAuth, async (req, res) => {
   try {
     // 권한 확인: 프로젝트 멤버인지 체크
     const authCheck = await client.query(
-      `SELECT pm.id FROM project_member pm
+      `SELECT pm.id, k.project_id FROM project_member pm
        JOIN kanban k ON k.project_id = pm.project_id
        WHERE k.id = $1 AND pm.member_id = $2`,
       [kanban_id, userId]
@@ -218,10 +342,27 @@ router.post("/", isAuth, async (req, res) => {
       [newTask.id, userId]
     );
 
+    const projectId = authCheck.rows[0]?.project_id;
+
     await client.query("COMMIT");
+
+    try {
+      await broadcastTaskEventToProjectMembers(client, {
+        projectId,
+        event: "created",
+        task: newTask,
+      });
+    } catch (broadcastError) {
+      console.warn("task created websocket broadcast failed", broadcastError?.message || broadcastError);
+    }
+
     res.status(201).json({ id: newTask.id });
   } catch (error) {
-    await client.query("ROLLBACK");
+    try {
+      await client.query("ROLLBACK");
+    } catch (rollbackError) {
+      // noop
+    }
     res.status(500).json({ name: "InternalServerError", message: error.message });
   } finally {
     client.release();
@@ -537,6 +678,7 @@ router.patch("/:taskId", isAuth, async (req, res) => {
     const previousStatus = String(prevTask.status || "").toUpperCase();
     const nextStatus = String(updatedTask.status || "").toUpperCase();
     const isStatusChanged = previousStatus !== nextStatus;
+    const isTitleChanged = String(prevTask.title || "") !== String(updatedTask.title || "");
     const isContentChanged =
       String(prevTask.title || "") !== String(updatedTask.title || "") ||
       String(prevTask.content || "") !== String(updatedTask.content || "") ||
@@ -643,9 +785,26 @@ router.patch("/:taskId", isAuth, async (req, res) => {
     }
 
     await client.query("COMMIT");
+
+    if (isTitleChanged) {
+      try {
+        await broadcastTaskEventToProjectMembers(client, {
+          projectId: prevTask.project_id,
+          event: "updated",
+          task: updatedTask,
+        });
+      } catch (broadcastError) {
+        console.warn("task updated websocket broadcast failed", broadcastError?.message || broadcastError);
+      }
+    }
+
     res.json(updatedTask);
   } catch (error) {
-    await client.query("ROLLBACK");
+    try {
+      await client.query("ROLLBACK");
+    } catch (rollbackError) {
+      // noop
+    }
     res.status(500).json({ name: "InternalServerError", message: error.message });
   } finally {
     client.release();
@@ -911,11 +1070,46 @@ router.delete("/members/:taskMemberId", isAuth, async (req, res) => {
  *         $ref: "#/components/responses/ErrorResponse"
  */
 router.delete("/:taskId", isAuth, async (req, res) => {
+  const { taskId } = req.params;
+  const client = await pool.connect();
+
   try {
-    await pool.query(`DELETE FROM task WHERE id = $1`, [req.params.taskId]);
+    await client.query("BEGIN");
+
+    const taskRes = await client.query(
+      `SELECT t.id, k.project_id
+       FROM task t
+       JOIN kanban k ON k.id = t.kanban_id
+       WHERE t.id = $1`,
+      [taskId]
+    );
+
+    await client.query(`DELETE FROM task WHERE id = $1`, [taskId]);
+    await client.query("COMMIT");
+
+    const projectId = taskRes.rows[0]?.project_id;
+    if (projectId) {
+      try {
+        await broadcastTaskEventToProjectMembers(client, {
+          projectId,
+          event: "deleted",
+          taskId,
+        });
+      } catch (broadcastError) {
+        console.warn("task deleted websocket broadcast failed", broadcastError?.message || broadcastError);
+      }
+    }
+
     res.json({ message: "작업이 삭제되었습니다." });
   } catch (error) {
+    try {
+      await client.query("ROLLBACK");
+    } catch (rollbackError) {
+      // noop
+    }
     res.status(500).json({ name: "InternalServerError", message: error.message });
+  } finally {
+    client.release();
   }
 });
 

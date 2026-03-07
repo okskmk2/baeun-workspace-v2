@@ -310,9 +310,13 @@ onBeforeUnmount(() => {
 
 .notification-menu__item-title {
   margin: 0;
+  display: block;
   font-size: 13px;
   font-weight: 600;
   color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .notification-menu__item-body {

@@ -50,7 +50,7 @@ const fetchRecentTasks = async () => {
       params: { project_id: projectId.value },
     });
     activities.value = res.data || [];
-    projectSearchStore.upsertTasks(projectId.value, activities.value);
+    projectSearchStore.upsertTasksPartial(projectId.value, activities.value);
   } catch (error) {
     if (error?.response?.status === 404) {
       router.push("/not-found");
