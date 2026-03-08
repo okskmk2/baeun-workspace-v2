@@ -13,11 +13,11 @@ const ROLE_KEYS = {
     MEMBER: "roles.project_member.member",
     GUEST: "roles.project_member.guest",
   },
-  issue_member: {
-    ASSIGNEE: "roles.issue_member.assignee",
-    REPORTER: "roles.issue_member.reporter",
-    REVIEWER: "roles.issue_member.reviewer",
-    WATCHER: "roles.issue_member.watcher",
+  task_member: {
+    ASSIGNEE: "roles.task_member.assignee",
+    REPORTER: "roles.task_member.reporter",
+    REVIEWER: "roles.task_member.reviewer",
+    WATCHER: "roles.task_member.watcher",
   },
   page_member: {
     OWNER: "roles.page_member.owner",

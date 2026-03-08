@@ -17,7 +17,7 @@
       "member": "구성원",
       "guest": "게스트"
     },
-    "issue_member": {
+    "task_member": {
       "assignee": "담당자",
       "reporter": "보고자",
       "reviewer": "검토자",

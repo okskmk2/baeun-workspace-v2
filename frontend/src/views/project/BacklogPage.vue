@@ -44,23 +44,13 @@
       <p v-else-if="boardListError">{{ boardListError }}</p>
       <p v-else-if="boardsForDisplay.length === 0">{{ t("backlog.page.boardList.empty") }}</p>
       <div v-else class="board-cards-grid">
-        <article
+        <ProjectBoardCard
           v-for="board in boardsForDisplay"
           :key="board.id"
-          class="board-card"
-          @dragover.prevent
-          @drop="onDropToBoard(board.id)"
-          @click="$router.push(`/project/${projectId}/kanban/${board.id}`)"
-        >
-          <h3>{{ board.name }}</h3>
-          <p v-if="board.summary" class="board-card-summary">{{ board.summary }}</p>
-          <div class="issue-counts">
-            <div v-for="(count, status) in board.task_counts" :key="status" class="status-count">
-              <span>{{ t(`task.status.${convertSnakeToCamel(status)}`) }}:</span>
-              <span class="tabular-nums">{{ count }}</span>
-            </div>
-          </div>
-        </article>
+          :board="board"
+          :project-id="projectId"
+          @drop="onDropToBoard"
+        />
       </div>
     </div>
   </div>
@@ -81,15 +71,15 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 import api from "../../lib/axios";
 import CountChip from "../../components/CountChip.vue";
 import TaskCard from "../../components/TaskCard.vue";
+import ProjectBoardCard from "../../components/ProjectBoardCard.vue";
 import CreateTaskModal from "../../components/modals/CreateTaskModal.vue";
 import CreateKanbanModal from "../../components/modals/CreateKanbanModal.vue";
-import { convertSnakeToCamel } from "../../lib/utils";
 import { useProjectSearchStore } from "../../stores/projectSearchStore";
 import { useKanbanStore } from "../../stores/kanbanStore";
 
@@ -252,6 +242,10 @@ const onBoardCreated = async () => {
   await fetchBoardsForDisplay();
 };
 
+const handleExternalTaskMove = async () => {
+  await fetchIssues();
+};
+
 const initializePage = async () => {
   if (!projectId.value) return;
 
@@ -261,6 +255,14 @@ const initializePage = async () => {
 };
 
 onMounted(initializePage);
+
+onMounted(() => {
+  window.addEventListener("task:moved", handleExternalTaskMove);
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener("task:moved", handleExternalTaskMove);
+});
 
 watch(projectId, async () => {
   backlogKanbanId.value = null;
@@ -324,53 +326,6 @@ watch(projectId, async () => {
   gap: 16px;
   /* height: calc(100vh - 230px); */
   overflow-y: auto;
-}
-
-.board-card {
-  background-color: var(--color-surface);
-  border: 1px solid var(--color-border);
-  padding: 16px;
-  border-radius: 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  transition: all 0.2s ease-in-out;
-}
-
-.board-card:hover {
-  border-color: var(--color-primary);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.board-card h3 {
-  font-size: 16px;
-  font-weight: 600;
-  margin: 0;
-  color: var(--color-text);
-}
-
-.board-card-summary {
-  margin: 0;
-  font-size: 12px;
-  color: var(--color-text-muted);
-  line-clamp: 2;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.issue-counts {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  font-size: 13px;
-}
-
-.status-count {
-  display: flex;
-  justify-content: space-between;
-  padding: 2px 0;
 }
 
 /* Modal specific styles, might need adjustment */

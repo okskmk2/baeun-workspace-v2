@@ -39,7 +39,7 @@ const props = defineProps({
   task: { type: Object, required: true },
   detailPath: { type: String, required: true },
   emptyAssigneesText: { type: String, default: "" },
-  roleScope: { type: String, default: "issue_member" },
+  roleScope: { type: String, default: "task_member" },
   variant: { type: String, default: "kanban" },
   draggable: { type: Boolean, default: false },
 });
@@ -108,7 +108,7 @@ const handleDragStart = (event) => {
 .task-title-row {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
 }
 
 .task-priority-icon {
