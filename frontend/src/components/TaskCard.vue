@@ -106,9 +106,10 @@ const handleDragStart = (event) => {
 }
 
 .task-title-row {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 2px;
+  min-width: 0;
 }
 
 .task-priority-icon {
@@ -116,6 +117,11 @@ const handleDragStart = (event) => {
 }
 
 .task-title-row > a {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   color: var(--color-text);
   text-decoration: none;
 }
@@ -161,10 +167,6 @@ const handleDragStart = (event) => {
   font-size: 14px;
   font-weight: 400;
   margin: 0;
-}
-
-.task-card--kanban .task-title-row > a {
-  word-break: break-all;
 }
 
 .task-card--kanban .empty-assignees {

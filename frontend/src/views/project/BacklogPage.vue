@@ -26,7 +26,7 @@
         :task="issue"
         :detail-path="issueDetailPath(issue.id)"
         variant="backlog"
-        role-scope="issue_member"
+        role-scope="task_member"
         :empty-assignees-text="t('backlog.page.empty.assignees')"
         :draggable="true"
         @dragstart="onDragStart"
@@ -274,7 +274,7 @@ watch(projectId, async () => {
 <style scoped>
 .backlog-layout {
   display: grid;
-  grid-template-columns: 3fr 9fr; /* 3/9 column ratio */
+  grid-template-columns: 4fr 8fr; /* 3/9 column ratio */
   gap: 24px;
 }
 

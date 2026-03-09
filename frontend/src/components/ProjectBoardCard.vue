@@ -43,7 +43,6 @@ const handleClick = () => {
   border-radius: 8px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
   transition: all 0.2s ease-in-out;
 }
 
@@ -62,17 +61,14 @@ const handleClick = () => {
 .board-card-summary {
   margin: 0;
   font-size: 12px;
-  line-height: 1.4;
-  min-height: calc(1.4em * 2);
+  min-height: calc(1.4em * 1);
   color: var(--color-text-muted);
-  line-clamp: 2;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
   overflow: hidden;
+  margin-top: 4px;
 }
 
 .issue-counts {
+  margin-top: 8px;
   display: flex;
   flex-direction: column;
   gap: 4px;
