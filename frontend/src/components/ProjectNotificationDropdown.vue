@@ -343,13 +343,13 @@ onBeforeUnmount(() => {
   border-top: 1px solid var(--color-border);
 }
 
-.notification-menu__history-link {
+.utilnav .notification-menu__history-link {
   font-size: 13px;
   color: var(--color-text);
   text-decoration: none;
 }
 
-.notification-menu__history-link:hover {
+.utilnav .notification-menu__history-link:hover {
   text-decoration: underline;
 }
 </style>
