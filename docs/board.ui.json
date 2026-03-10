@@ -1,0 +1,146 @@
+{
+  "board_system": {
+    "layout": {
+      "gnb": ["프로젝트", "게시판", "랭킹"],
+      "utility_nav": ["설정"],
+      "structure": {
+        "left": "snb (게시판 목록)",
+        "right": "게시판 콘텐츠 영역"
+      },
+      "principle": "모든 게시판은 동일한 UI 구조를 사용하며, snb에는 항상 게시판 목록이 표시된다."
+    },
+    "snb": {
+      "description": "게시판 목록을 보여주는 사이드 네비게이션",
+      "items": [
+        {
+          "id": "board_home",
+          "name": "게시판 홈",
+          "type": "system"
+        },
+        {
+          "id": "notice",
+          "name": "공지사항",
+          "type": "system"
+        },
+        {
+          "group": "커뮤니티",
+          "boards": [
+            {
+              "id": "events",
+              "name": "경조사",
+              "type": "system"
+            }
+          ]
+        },
+        {
+          "group": "정보",
+          "boards": [
+            {
+              "id": "market",
+              "name": "중고시장",
+              "type": "system"
+            },
+            {
+              "id": "resource",
+              "name": "인력 수소문",
+              "type": "system"
+            }
+          ]
+        }
+      ]
+    },
+    "board_home": {
+      "title": "게시판 홈",
+      "purpose": "워크스페이스 게시판 활동을 한눈에 확인하는 허브 페이지",
+      "sections": [
+        {
+          "name": "pinned_notices",
+          "title": "공지사항",
+          "description": "공지사항 게시판에서 고정된 공지를 표시",
+          "max_items": 3
+        },
+        {
+          "name": "board_activity",
+          "title": "게시판 활동",
+          "description": "각 게시판의 최신 게시글을 요약 표시",
+          "max_items_per_board": 3
+        },
+        {
+          "name": "recent_posts",
+          "title": "최근 게시글",
+          "description": "전체 게시판의 최신 글 목록",
+          "max_items": 10
+        }
+      ]
+    },
+    "board_ui_common": {
+      "structure": [
+        "board_title",
+        "board_subtitle",
+        "search_and_filter",
+        "post_list"
+      ],
+      "post_list_columns": [
+        "title",
+        "author",
+        "created_at",
+        "view_count",
+        "comment_count"
+      ],
+      "write_button": {
+        "position": "top_right",
+        "visibility_rule": "게시판 권한에 따라 표시"
+      }
+    },
+    "boards": [
+      {
+        "id": "notice",
+        "name": "공지사항",
+        "subtitle": "워크스페이스 운영 공지와 필독 안내를 전달하는 게시판입니다.",
+        "purpose": "워크스페이스 운영 공지 전달",
+        "policy": {
+          "write_permission": "admin",
+          "comment": "optional",
+          "pin_post": true
+        }
+      },
+      {
+        "id": "events",
+        "name": "경조사",
+        "subtitle": "구성원의 결혼, 출산, 부고 등 축하와 애도의 소식을 공유하는 공간입니다.",
+        "purpose": "구성원의 경조사 공유",
+        "policy": {
+          "write_permission": "member",
+          "comment": "allowed",
+          "rules": ["예의를 지키는 댓글 작성", "개인 정보 과도 노출 금지"]
+        }
+      },
+      {
+        "id": "market",
+        "name": "중고시장",
+        "subtitle": "구성원 간 중고 물품 거래와 나눔을 위한 게시판입니다. 개인 간 거래는 당사자 책임이며 워크스페이스는 거래를 보증하지 않습니다.",
+        "purpose": "중고 물품 거래 및 나눔",
+        "policy": {
+          "write_permission": "member",
+          "comment": "allowed",
+          "rules": [
+            "회사 자산 판매 금지",
+            "상업적 판매 금지",
+            "불법 물품 거래 금지"
+          ]
+        }
+      },
+      {
+        "id": "resource",
+        "name": "인력 수소문",
+        "subtitle": "외주 인력, 프리랜서, 협력 업체 추천을 요청하거나 정보를 공유하는 게시판입니다. 실제 계약은 회사 구매 절차를 따릅니다.",
+        "purpose": "외부 인력 및 업체 추천",
+        "policy": {
+          "write_permission": "member",
+          "comment": "allowed",
+          "rules": ["외부 업체 직접 광고 금지", "추천 및 정보 공유 중심 사용"]
+        }
+      }
+    ]
+  }
+}

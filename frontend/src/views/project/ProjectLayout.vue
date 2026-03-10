@@ -77,7 +77,7 @@
           <MaterialSymbol name="settings" :size="18" alt="" />
         </router-link>
         <ProjectNotificationDropdown />
-        <AccountDropdown />
+        <ContextSwicher />
       </nav>
     </header>
     <router-view />
@@ -103,7 +103,7 @@ import MaterialSymbol from "../../components/MaterialSymbol.vue";
 import Avatar from "../../components/Avatar.vue";
 import SearchInput from "../../components/SearchInput.vue";
 import ProjectNotificationDropdown from "../../components/ProjectNotificationDropdown.vue";
-import AccountDropdown from "../../components/AccountDropdown.vue";
+import ContextSwicher from "../../components/ContextSwicher.vue";
 import UnreadDot from "../../components/UnreadDot.vue";
 
 const { t } = useI18n();

@@ -3,7 +3,13 @@
     <header>
       <div class="container inner-gnb">
         <router-link class="brand" :to="workspaceProjectsTo">
-          <span class="brand-text">워크스페이스 이름</span>
+          <Avatar
+            :text="workspaceInitials"
+            :label="workspaceName || 'Workspace'"
+            :image-url="workspaceImageUrl"
+            :size="28"
+          />
+          <span class="brand-text">{{ workspaceName || "워크스페이스" }}</span>
         </router-link>
         <nav class="mainnav">
           <router-link class="mainnav__link" :to="workspaceProjectsTo">프로젝트</router-link>
@@ -11,8 +17,15 @@
           <router-link class="mainnav__link" :to="workspaceRankTo">랭킹</router-link>
         </nav>
         <nav class="utilnav">
-          <router-link class="utilnav__link" :to="workspaceSettingsTo">설정</router-link>
-          <account-dropdown />
+          <router-link
+            class="btn btn--icon"
+            :to="workspaceSettingsTo"
+            aria-label="설정"
+            title="설정"
+          >
+            <MaterialSymbol name="settings" :size="18" alt="" />
+          </router-link>
+          <ContextSwicher />
         </nav>
       </div>
     </header>
@@ -21,14 +34,29 @@
 </template>
 
 <script setup>
-import { computed } from "vue";
+import { computed, watch } from "vue";
 import { useRoute } from "vue-router";
-import AccountDropdown from "../../components/AccountDropdown.vue";
+import ContextSwicher from "../../components/ContextSwicher.vue";
+import MaterialSymbol from "../../components/MaterialSymbol.vue";
+import Avatar from "../../components/Avatar.vue";
+import { useWorkspaceStore } from "../../stores/workspaceStore";
 
 const route = useRoute();
+const workspaceStore = useWorkspaceStore();
 
 const workspaceId = computed(() => route.params.workspaceId);
 const workspaceRouteParams = computed(() => ({ workspaceId: workspaceId.value }));
+const currentWorkspace = computed(() => {
+  if (!workspaceId.value) return null;
+  return workspaceStore.workspaceById[workspaceId.value] || null;
+});
+const workspaceName = computed(() => String(currentWorkspace.value?.name || ""));
+const workspaceImageUrl = computed(() => String(currentWorkspace.value?.img_url || ""));
+const workspaceInitials = computed(() => {
+  const name = workspaceName.value;
+  if (!name) return "W";
+  return name.slice(0, 2).toUpperCase();
+});
 
 const workspaceProjectsTo = computed(() => ({
   name: "workspace-projects",
@@ -46,6 +74,16 @@ const workspaceSettingsTo = computed(() => ({
   name: "workspace-settings",
   params: workspaceRouteParams.value,
 }));
+
+watch(
+  workspaceId,
+  async (value) => {
+    if (!value) return;
+    if (workspaceStore.workspaceById[value]) return;
+    await workspaceStore.fetchWorkspace(value);
+  },
+  { immediate: true }
+);
 </script>
 <style>
 .WorkspaceLayout {

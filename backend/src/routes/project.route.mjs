@@ -142,7 +142,7 @@ router.get("/", isAuth, async (req, res) => {
  *         $ref: "#/components/responses/ErrorResponse"
  */
 router.post("/", isAuth, async (req, res) => {
-  const { name, workspace_id } = req.body;
+  const { name, workspace_id, summary } = req.body;
   const userId = req.session.userId;
 
   const client = await pool.connect();
@@ -160,11 +160,11 @@ router.post("/", isAuth, async (req, res) => {
     await client.query("BEGIN");
 
     const projectQuery = `
-        INSERT INTO project (name, workspace_id)
-        VALUES ($1, $2)
-        RETURNING *;
+      INSERT INTO project (name, workspace_id, summary)
+      VALUES ($1, $2, $3)
+      RETURNING *;
     `;
-    const projectResult = await client.query(projectQuery, [name, workspace_id]);
+    const projectResult = await client.query(projectQuery, [name, workspace_id, summary ?? null]);
     const newProject = projectResult.rows[0];
 
     const memberQuery = `
@@ -191,6 +191,8 @@ router.post("/", isAuth, async (req, res) => {
 
     res.status(201).json({
       id: newProject.id,
+      summary: newProject.summary ?? null,
+      description: newProject.summary ?? null,
     });
   } catch (error) {
     await client.query("ROLLBACK");
@@ -242,7 +244,9 @@ router.delete("/:projectId/members/:memberId", isAuth, async (req, res) => {
     );
 
     if (!authCheck.rows[0] || authCheck.rows[0].role_name !== "OWNER") {
-      return res.status(403).json({ name: "Forbidden", message: "No permission to remove member." });
+      return res
+        .status(403)
+        .json({ name: "Forbidden", message: "No permission to remove member." });
     }
 
     await pool.query("DELETE FROM project_member WHERE project_id = $1 AND member_id = $2", [
@@ -299,6 +303,8 @@ router.get("/:projectId", isAuth, async (req, res) => {
     const project = result.rows[0];
     res.json({
       ...project,
+      summary: project.summary ?? null,
+      description: project.summary ?? null,
       theme_json: normalizeThemeJsonOutput(project.theme_json),
     });
   } catch (error) {
@@ -353,7 +359,7 @@ router.get("/:projectId", isAuth, async (req, res) => {
  */
 router.patch("/:projectId", isAuth, async (req, res) => {
   const { projectId } = req.params;
-  const { name, img_url, theme_json } = req.body;
+  const { name, img_url, theme_json, summary } = req.body;
   const normalizedThemeJson = normalizeThemeJsonInput(theme_json);
   const userId = req.session.userId;
 
@@ -364,14 +370,16 @@ router.patch("/:projectId", isAuth, async (req, res) => {
     );
 
     if (!authCheck.rows[0] || authCheck.rows[0].role_name !== "OWNER") {
-      return res.status(403).json({ name: "Forbidden", message: "No permission to update project." });
+      return res
+        .status(403)
+        .json({ name: "Forbidden", message: "No permission to update project." });
     }
 
     const result = await pool.query(
       `UPDATE project 
-       SET name = COALESCE($1, name), img_url = COALESCE($2, img_url), theme_json = COALESCE($3, theme_json)
-       WHERE id = $4 RETURNING *`,
-      [name, img_url, normalizedThemeJson, projectId]
+       SET name = COALESCE($1, name), img_url = COALESCE($2, img_url), theme_json = COALESCE($3, theme_json), summary = COALESCE($4, summary)
+       WHERE id = $5 RETURNING *`,
+      [name, img_url, normalizedThemeJson, summary, projectId]
     );
 
     if (result.rows.length === 0) {
@@ -381,6 +389,8 @@ router.patch("/:projectId", isAuth, async (req, res) => {
     const project = result.rows[0];
     res.json({
       ...project,
+      summary: project.summary ?? null,
+      description: project.summary ?? null,
       theme_json: normalizeThemeJsonOutput(project.theme_json),
     });
   } catch (error) {

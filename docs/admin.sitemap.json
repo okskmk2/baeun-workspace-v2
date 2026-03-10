@@ -1,0 +1,102 @@
+[
+  {
+    "path": "/admin",
+    "name": "AdminRoot",
+    "component": "AdminLayout",
+    "redirect": { "name": "AdminDashboard" },
+    "meta": {
+      "title": "Admin Site",
+      "description": "시스템 전체를 관리하는 백오피스 최상위 레이아웃입니다. 상단 GNB에는 사이트 이름('Baeun Admin')과 컨텍스트 스위쳐만 위치하며, 좌측 LNB에 모든 관리 메뉴(대시보드, 유저 관리, 결제 관리, 알림)가 상시 노출되는 구조입니다.",
+      "authorization": "시스템 관리자 (SYSTEM_ADMIN 권한 보유자)",
+      "actions": [
+        {
+          "uitype": "dropdown",
+          "name": "Context Switcher",
+          "component": "ContextSwitcherDropdown",
+          "description": "관리자 본인의 프로필 설정 및 일반 서비스 화면(워크스페이스 허브 등)으로 돌아갈 수 있는 전환 UI"
+        }
+      ]
+    },
+    "children": [
+      {
+        "path": "dashboard",
+        "name": "AdminDashboard",
+        "component": "AdminDashboardViewer",
+        "meta": {
+          "title": "System Dashboard",
+          "description": "전체 가입자 수, 활성 워크스페이스, 누적 매출(payment) 등 시스템 주요 통계 지표를 한눈에 확인하는 화면입니다.",
+          "actions": [
+            {
+              "uitype": "button",
+              "name": "Export CSV",
+              "description": "현재 조회 중인 통계 데이터를 CSV 파일로 다운로드"
+            }
+          ]
+        }
+      },
+      {
+        "path": "users",
+        "name": "AdminUserWorkspaceManager",
+        "component": "AdminUserWorkspaceViewer",
+        "meta": {
+          "title": "User & Workspace Management",
+          "description": "가입된 전체 회원(member)과 생성된 워크스페이스(workspace) 목록을 페이징하여 조회하고 상태를 제어하는 관리 화면입니다.",
+          "actions": [
+            {
+              "uitype": "modal",
+              "name": "User Detail & Control",
+              "component": "AdminUserDetailModal",
+              "description": "특정 회원의 상세 정보 모달을 열고, 계정 정지(Suspend) 등 상태를 변경하는 액션"
+            },
+            {
+              "uitype": "modal",
+              "name": "Force Reset Password",
+              "component": "ResetPasswordModal",
+              "description": "비밀번호 분실 CS 인입 시 관리자 권한으로 임시 비밀번호를 발급하여 이메일 전송"
+            }
+          ]
+        }
+      },
+      {
+        "path": "billing",
+        "name": "AdminBillingManager",
+        "component": "AdminBillingViewer",
+        "meta": {
+          "title": "License & Payment",
+          "description": "사용자들의 결제 내역(payment)을 모니터링하고, 라이선스 상품(license)의 마스터 데이터를 관리하는 재무 관리 화면입니다.",
+          "actions": [
+            {
+              "uitype": "modal",
+              "name": "Refund Payment",
+              "component": "RefundModal",
+              "description": "특정 결제 건 환불 처리 및 연결된 라이선스(member_license) 상태를 'EXPIRED'로 강제 변경"
+            },
+            {
+              "uitype": "modal",
+              "name": "Update Master Price",
+              "component": "EditLicensePriceModal",
+              "description": "슬롯 상품(워크스페이스, 멤버, 프로젝트)의 단가(price)를 수정하여 신규 결제부터 적용되도록 마스터 데이터 갱신"
+            }
+          ]
+        }
+      },
+      {
+        "path": "notifications",
+        "name": "AdminNotificationManager",
+        "component": "AdminNotificationViewer",
+        "meta": {
+          "title": "System Notifications",
+          "description": "서비스 전체 또는 특정 타겟 사용자/워크스페이스에 시스템 공지 및 긴급 알림(notification)을 발송하는 도구입니다.",
+          "actions": [
+            {
+              "uitype": "modal",
+              "name": "Send Broadcast",
+              "component": "CreateBroadcastModal",
+              "description": "작성한 메시지를 다수의 사용자 notification 테이블에 대량 삽입(Insert)하여 알림 발송"
+            }
+          ]
+        }
+      }
+    ]
+  }
+]

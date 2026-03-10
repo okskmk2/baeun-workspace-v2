@@ -17,7 +17,7 @@
           <router-link v-if="!isAuthenticated" to="/login">{{
             t("layout.default.util.login")
           }}</router-link>
-          <AccountDropdown />
+          <ContextSwicher />
         </nav>
       </div>
     </header>
@@ -29,7 +29,7 @@
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import { useAppStore } from "../../stores/appStore";
-import AccountDropdown from "../../components/AccountDropdown.vue";
+import ContextSwicher from "../../components/ContextSwicher.vue";
 
 const { t } = useI18n();
 const appStore = useAppStore();

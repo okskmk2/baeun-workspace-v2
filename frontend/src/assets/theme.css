@@ -73,6 +73,7 @@
   --color-bg: hsl(var(--theme-h), var(--theme-body-s), var(--theme-body-l));
   --color-surface: hsl(var(--theme-h), var(--theme-body-s), var(--theme-surface-l));
   --color-surface-alt: hsl(var(--theme-h), var(--theme-body-s), var(--theme-surface-alt-l));
+  --color-surface-muted: hsl(var(--theme-h), var(--theme-body-s), var(--theme-surface-alt-l));
   --color-text: hsl(var(--theme-h), 20%, var(--theme-text-l));
   --color-text-muted: hsl(var(--theme-h), 13%, var(--theme-text-muted-l));
   --color-text-inverse: #ffffff;
@@ -148,6 +149,7 @@
   --color-bg: hsl(0, 0%, 6%);
   --color-surface: hsl(220, 18%, 14%);
   --color-surface-alt: hsl(220, 16%, 18%);
+  --color-surface-muted: hsl(220, 16%, 18%);
   --color-text: hsl(0, 0%, 90%);
   --color-text-muted: hsl(215, 10%, 65%);
   --color-text-inverse: hsl(0, 0%, 6%);

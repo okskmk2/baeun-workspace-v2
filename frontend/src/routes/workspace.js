@@ -2,6 +2,12 @@ import WorkspaceLayout from "../views/workspace/WorkspaceLayout.vue";
 import WorkspaceProjectsPage from "../views/workspace/WorkspaceProjectsPage.vue";
 import WorkspaceSettingsPage from "../views/workspace/WorkspaceSettingsPage.vue";
 import WorkspaceRankPage from "../views/workspace/WorkspaceRankPage.vue";
+import WorkspaceBoardLayout from "../views/workspace/WorkspaceBoardLayout.vue";
+import WorkspaceBoardHomePage from "../views/workspace/WorkspaceBoardHomePage.vue";
+import WorkspaceBoardNoticePage from "../views/workspace/WorkspaceBoardNoticePage.vue";
+import WorkspaceBoardCelebrationPage from "../views/workspace/WorkspaceBoardCelebrationPage.vue";
+import WorkspaceBoardMarketPage from "../views/workspace/WorkspaceBoardMarketPage.vue";
+import WorkspaceBoardResourcePage from "../views/workspace/WorkspaceBoardResourcePage.vue";
 
 export const workspaceRoutes = [
   {
@@ -18,6 +24,51 @@ export const workspaceRoutes = [
         path: "projects",
         name: "workspace-projects",
         component: WorkspaceProjectsPage,
+      },
+      {
+        path: "board",
+        name: "workspace-board",
+        component: WorkspaceBoardLayout,
+        children: [
+          {
+            path: "",
+            name: "workspace-board-root",
+            redirect: (to) => `/workspace/${to.params.workspaceId}/board/home`,
+          },
+          {
+            path: "home",
+            name: "workspace-board-home",
+            component: WorkspaceBoardHomePage,
+          },
+          {
+            path: "notice",
+            name: "workspace-board-notice",
+            component: WorkspaceBoardNoticePage,
+          },
+          {
+            path: "events",
+            name: "workspace-board-events",
+            component: WorkspaceBoardCelebrationPage,
+          },
+          {
+            path: "market",
+            name: "workspace-board-market",
+            component: WorkspaceBoardMarketPage,
+          },
+          {
+            path: "resource",
+            name: "workspace-board-resource",
+            component: WorkspaceBoardResourcePage,
+          },
+          {
+            path: "celebration",
+            redirect: (to) => `/workspace/${to.params.workspaceId}/board/events`,
+          },
+          {
+            path: "people",
+            redirect: (to) => `/workspace/${to.params.workspaceId}/board/resource`,
+          },
+        ],
       },
       {
         path: "rank",

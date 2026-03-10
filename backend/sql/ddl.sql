@@ -51,6 +51,7 @@ create table member (
     password   varchar(255) not null,
     email      varchar(255) not null,
     avatar_url varchar(512),
+    role_name  varchar(20) not null default 'MEMBER',
     created_at timestamptz not null default current_timestamp,
 
     constraint pk_member primary key (id),
@@ -117,7 +118,7 @@ create table workspace (
     theme_json        jsonb,
     is_default        boolean not null default false,
     member_license_id bigint,
-
+    summary    varchar(100),
     constraint pk_workspace primary key (id),
     constraint fk_workspace_owner_id__member
         foreign key (owner_id) references member(id) on delete set null,
@@ -147,6 +148,7 @@ create table project (
     created_at        timestamptz not null default current_timestamp,
     is_default        boolean not null default false,
     member_license_id bigint,
+    summary    varchar(100),
 
     constraint pk_project primary key (id),
     constraint fk_project_workspace_id__workspace
@@ -175,7 +177,7 @@ create table kanban (
     is_active  boolean not null default true,
     type       varchar(30),
     created_at timestamptz not null default current_timestamp,
-    summary    varchar(80),
+    summary    varchar(100),
 
     constraint pk_kanban primary key (id),
     constraint fk_kanban_project_id__project

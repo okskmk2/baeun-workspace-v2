@@ -442,7 +442,7 @@ router.post("/logout", isAuth, (req, res) => {
  */
 router.get("/me", isAuth, async (req, res) => {
   try {
-    const query = "SELECT id, name, email, img_url, created_at FROM member WHERE id = $1";
+    const query = "SELECT id, name, email, img_url, role_name, created_at FROM member WHERE id = $1";
     const result = await pool.query(query, [req.session.userId]);
 
     res.json(result.rows[0]);

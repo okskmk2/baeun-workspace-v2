@@ -40,9 +40,22 @@
         </select>
       </div>
 
-      <div class="account-menu__header">
-        <router-link class="account-menu__profile-link" to="/settings/profile" @click="closeMenu">
-          {{ t("layout.default.util.profile") }}
+      <div class="account-menu__quick-section">
+        <p class="account-menu__section-title">계정</p>
+        <router-link class="account-menu__row-link" to="/settings/profile" @click="closeMenu">
+          <span>{{ t("layout.default.util.profile") }}</span>
+          <MaterialSymbol name="chevron_right" type="rounded" :size="16" alt="" />
+        </router-link>
+      </div>
+
+      <div v-if="isSystemAdmin" class="account-menu__quick-section">
+        <p class="account-menu__section-title">관리</p>
+        <router-link class="account-menu__row-link" to="/admin" @click="closeMenu">
+          <span class="account-menu__admin-main">
+            <MaterialSymbol name="admin_panel_settings" type="rounded" :size="18" alt="" />
+            <span>관리자 콘솔</span>
+          </span>
+          <MaterialSymbol name="chevron_right" type="rounded" :size="16" alt="" />
         </router-link>
       </div>
 
@@ -65,7 +78,7 @@
             />
             <router-link
               class="account-menu__workspace-link"
-              :to="`/settings/workspaces/${workspace.id}`"
+              :to="`/workspace/${workspace.id}`"
               @click="closeMenu"
             >
               {{ workspace.name }}
@@ -146,6 +159,9 @@ const accountInitials = computed(() => {
 
 const accountLabel = computed(() => appStore.currentUser?.name || t("layout.default.util.account"));
 const accountImageUrl = computed(() => String(appStore.currentUser?.img_url || ""));
+const isSystemAdmin = computed(
+  () => String(appStore.currentUser?.role_name || "").toUpperCase() === "SYSTEM_ADMIN"
+);
 
 const getWorkspaceInitials = (workspace) => {
   const name = String(workspace?.name || "").trim();
@@ -310,11 +326,39 @@ watch(locale, (value) => {
   color: var(--color-text);
 }
 
-.account-menu__header {
-  display: flex;
-  gap: 8px;
+.account-menu__quick-section {
   padding: 4px 2px 10px;
   border-bottom: 1px solid var(--color-divider);
+}
+
+.account-menu__section-title {
+  margin: 0 0 8px;
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.account-menu__row-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  text-decoration: none;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface);
+  color: var(--color-text) !important;
+  padding: 10px;
+  font-size: 14px;
+}
+
+.account-menu__row-link:hover {
+  background: var(--color-surface-muted);
+}
+
+.account-menu__admin-main {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .account-menu__caption {
