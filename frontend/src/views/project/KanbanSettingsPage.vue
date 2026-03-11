@@ -37,18 +37,18 @@
     </div>
   </form>
 
-  <section v-if="!isLoading && !errorMessage && !isBacklog" class="danger-zone">
-    <div>
-      <h2>{{ t("kanban.settings.danger.title") }}</h2>
-      <p class="danger-desc">{{ t("kanban.settings.danger.description") }}</p>
-    </div>
-    <div class="danger-actions">
+  <DangerZone
+    v-if="!isLoading && !errorMessage && !isBacklog"
+    :title="t('kanban.settings.danger.title')"
+    :description="t('kanban.settings.danger.description')"
+  >
+    <template #actions>
       <button type="button" class="btn btn--danger" :disabled="isDeleting" @click="deleteKanban">
         {{ isDeleting ? t("kanban.settings.actions.deleting") : t("kanban.settings.actions.delete") }}
       </button>
       <p v-if="deleteError" class="status error">{{ deleteError }}</p>
-    </div>
-  </section>
+    </template>
+  </DangerZone>
 </template>
 
 <script setup>
@@ -58,6 +58,7 @@ import { useRoute, useRouter } from "vue-router";
 import api from "../../lib/axios";
 import { addToast } from "../../lib/toast";
 import BackLinkButton from "../../components/BackLinkButton.vue";
+import DangerZone from "../../components/DangerZone.vue";
 import { useKanbanStore } from "../../stores/kanbanStore";
 
 const route = useRoute();
@@ -200,26 +201,4 @@ watch(kanbanId, (nextId, prevId) => {
   color: var(--color-danger);
 }
 
-.danger-zone {
-  margin-top: 24px;
-  border: 1px solid var(--color-danger);
-  border-radius: 12px;
-  padding: 16px;
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-
-.danger-desc {
-  margin: 6px 0 0;
-  color: var(--color-text-muted);
-}
-
-.danger-actions {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 8px;
-}
 </style>

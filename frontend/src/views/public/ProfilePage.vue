@@ -63,13 +63,6 @@
       </div>
     </div>
 
-    <div class="profile-actions">
-      <button class="btn btn--secondary" type="button" :disabled="isLoggingOut" @click="logout">
-        {{ isLoggingOut ? t("profile.actions.loggingOut") : t("profile.actions.logout") }}
-      </button>
-      <p v-if="logoutError" class="status error">{{ logoutError }}</p>
-    </div>
-
     <WithdrawAccountModal :open="isWithdrawOpen" @close="closeWithdrawModal" />
 
     <div class="locale-card" aria-label="Locale settings">
@@ -96,30 +89,26 @@
       </div>
     </div>
 
-    <section class="danger-zone">
-      <div>
-        <h2>{{ t("profile.danger.title") }}</h2>
-        <p class="danger-desc">{{ t("profile.danger.description") }}</p>
-        <ul class="danger-checklist">
-          <li>{{ t("profile.danger.checklist.transferOwnership") }}</li>
-          <li>{{ t("profile.danger.checklist.confirmScope") }}</li>
-          <li>{{ t("profile.danger.checklist.dataAnonymized") }}</li>
-        </ul>
-      </div>
-      <div class="danger-actions">
+    <DangerZone :title="t('profile.danger.title')" :description="t('profile.danger.description')">
+      <ul class="danger-checklist">
+        <li>{{ t("profile.danger.checklist.transferOwnership") }}</li>
+        <li>{{ t("profile.danger.checklist.confirmScope") }}</li>
+        <li>{{ t("profile.danger.checklist.dataAnonymized") }}</li>
+      </ul>
+
+      <template #actions>
+        <button class="btn btn--secondary" type="button" @click="openOwnershipGuideModal">
+          {{ t("profile.danger.actions.guide") }}
+        </button>
         <button
           class="btn btn--danger"
           type="button"
-          :disabled="isLoggingOut"
           @click="openWithdrawModal"
         >
           {{ t("profile.actions.withdraw") }}
         </button>
-        <button class="btn btn--secondary" type="button" @click="openOwnershipGuideModal">
-          {{ t("profile.danger.actions.guide") }}
-        </button>
-      </div>
-    </section>
+      </template>
+    </DangerZone>
   </div>
 
   <OwnershipGuideModal :open="isOwnershipGuideOpen" @close="closeOwnershipGuideModal" />
@@ -128,24 +117,19 @@
 <script setup>
 import { computed, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
-import { useRouter } from "vue-router";
 import api from "../../lib/axios";
 import { persistLocale, supportedLocales } from "../../i18n";
-import { useAppStore } from "../../stores/appStore";
 import Avatar from "../../components/Avatar.vue";
+import DangerZone from "../../components/DangerZone.vue";
 import WithdrawAccountModal from "../../components/modals/WithdrawAccountModal.vue";
 import OwnershipGuideModal from "../../components/modals/OwnershipGuideModal.vue";
 
 const { t, locale } = useI18n();
-const router = useRouter();
-const appStore = useAppStore();
 
 const isLoading = ref(false);
 const errorMessage = ref("");
 const profile = ref({});
 const region = ref("kr");
-const isLoggingOut = ref(false);
-const logoutError = ref("");
 const isWithdrawOpen = ref(false);
 const isOwnershipGuideOpen = ref(false);
 const profileImageInputRef = ref(null);
@@ -198,22 +182,6 @@ watch(locale, (value) => {
   if (!supportedLocales.includes(value)) return;
   persistLocale(value);
 });
-
-const logout = async () => {
-  if (isLoggingOut.value) return;
-  isLoggingOut.value = true;
-  logoutError.value = "";
-
-  try {
-    await api.post("/members/logout");
-    appStore.setCurrentUser(null);
-    await router.push("/login");
-  } catch (error) {
-    logoutError.value = error?.response?.data?.message || t("profile.status.logoutError");
-  } finally {
-    isLoggingOut.value = false;
-  }
-};
 
 const openProfileImagePicker = () => {
   if (isUploadingImage.value || isRemovingImage.value) return;
@@ -352,12 +320,6 @@ onMounted(fetchProfile);
   display: none;
 }
 
-.profile-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
 .withdraw-form {
   display: grid;
   gap: 10px;
@@ -449,28 +411,6 @@ onMounted(fetchProfile);
   color: var(--color-text);
 }
 
-.danger-zone {
-  padding: 16px;
-  border-radius: 10px;
-  border: 1px solid color-mix(in srgb, var(--color-danger) 50%, transparent 50%);
-  background-color: color-mix(in srgb, var(--color-danger) 6%, transparent 94%);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.danger-zone h2 {
-  font-size: 16px;
-  margin: 0 0 4px;
-}
-
-.danger-desc {
-  margin: 0;
-  color: var(--color-text-muted);
-  font-size: 13px;
-}
-
 .danger-checklist {
   margin: 10px 0 0;
   padding-left: 18px;
@@ -479,13 +419,6 @@ onMounted(fetchProfile);
   display: flex;
   flex-direction: column;
   gap: 4px;
-}
-
-.danger-actions {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 8px;
 }
 
 .ownership-guide {
@@ -581,15 +514,5 @@ onMounted(fetchProfile);
   .locale-controls {
     grid-template-columns: 1fr;
   }
-
-  .danger-zone {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .danger-actions {
-    align-items: flex-start;
-  }
 }
 </style>
-

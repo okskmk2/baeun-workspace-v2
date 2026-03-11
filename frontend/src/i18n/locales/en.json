@@ -741,7 +741,7 @@
       }
     }
   },
-  "messenger": {
+  "channel": {
     "layout": {
       "actions": {
         "createChannel": "Create Channel",
@@ -1095,7 +1095,7 @@
         ],
         "tags": ["Runbooks", "Policies", "Knowledge"]
       },
-      "messenger": {
+      "channel": {
         "title": "Fast team alignment",
         "description": "Channels and updates tied to the work.",
         "bullets": [
@@ -1224,12 +1224,9 @@
     "status": {
       "loading": "Loading...",
       "error": "Failed to load profile.",
-      "logoutError": "Failed to log out.",
       "withdrawError": "Failed to withdraw account."
     },
     "actions": {
-      "logout": "Log out",
-      "loggingOut": "Logging out...",
       "withdraw": "Withdraw account"
     },
     "image": {
@@ -1286,7 +1283,6 @@
         "error": "Failed to load owned resources.",
         "errorLoad": "Failed to load owned resources.",
         "empty": "No owned resources are currently identified. Try withdrawal again and recheck.",
-        "open": "Open settings",
         "close": "Close",
         "types": {
           "workspace": "Workspace",
@@ -1319,6 +1315,15 @@
       "cancel": "Cancel",
       "confirm": "Withdraw",
       "withdrawing": "Withdrawing..."
+    }
+  },
+  "contextSwitcher": {
+    "status": {
+      "logoutError": "Failed to log out."
+    },
+    "actions": {
+      "logout": "Log out",
+      "loggingOut": "Logging out..."
     }
   },
   "notFound": {

@@ -1,10 +1,10 @@
 <template>
-  <BaseModal :open="open" :title="t('messenger.room.members.modal.title')" @close="handleClose">
+  <BaseModal :open="open" :title="t('channel.room.members.modal.title')" @close="handleClose">
     <div class="member-list">
-      <p v-if="isLoading" class="status">{{ t("messenger.room.members.status.loading") }}</p>
+      <p v-if="isLoading" class="status">{{ t("channel.room.members.status.loading") }}</p>
       <p v-else-if="errorMessage" class="status error">{{ errorMessage }}</p>
       <p v-else-if="!chatMembers.length" class="status">
-        {{ t("messenger.room.members.empty") }}
+        {{ t("channel.room.members.empty") }}
       </p>
       <ul v-else>
         <li v-for="member in chatMembers" :key="member.id">
@@ -64,7 +64,7 @@ const fetchChatMembers = async () => {
     chatMembers.value = res.data || [];
   } catch (error) {
     chatMembers.value = [];
-    errorMessage.value = t("messenger.room.members.status.errorLoad");
+    errorMessage.value = t("channel.room.members.status.errorLoad");
   } finally {
     isLoading.value = false;
   }

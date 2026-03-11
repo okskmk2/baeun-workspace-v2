@@ -1,28 +1,28 @@
 <template>
-  <BaseModal :open="open" :title="t('messenger.layout.modal.title')" @close="handleClose">
+  <BaseModal :open="open" :title="t('channel.layout.modal.title')" @close="handleClose">
     <form class="modal-form" @submit.prevent="handleSubmit">
-      <label for="channel-type">{{ t("messenger.layout.modal.typeLabel") }}</label>
+      <label for="channel-type">{{ t("channel.layout.modal.typeLabel") }}</label>
       <select id="channel-type" v-model="form.type">
-        <option value="GENERAL">{{ t("messenger.layout.modal.types.general") }}</option>
-        <option value="DM">{{ t("messenger.layout.modal.types.dm") }}</option>
-        <option value="AGENT">{{ t("messenger.layout.modal.types.agent") }}</option>
+        <option value="GENERAL">{{ t("channel.layout.modal.types.general") }}</option>
+        <option value="DM">{{ t("channel.layout.modal.types.dm") }}</option>
+        <option value="AGENT">{{ t("channel.layout.modal.types.agent") }}</option>
       </select>
 
       <label v-if="form.type !== 'DM'" for="channel-name">{{
-        t("messenger.layout.modal.nameLabel")
+        t("channel.layout.modal.nameLabel")
       }}</label>
       <input
         v-if="form.type !== 'DM'"
         id="channel-name"
         v-model.trim="form.name"
         type="text"
-        :placeholder="t('messenger.layout.modal.namePlaceholder')"
+        :placeholder="t('channel.layout.modal.namePlaceholder')"
       />
 
       <template v-if="form.type === 'DM'">
-        <label for="dm-target">{{ t("messenger.layout.modal.dmTargetLabel") }}</label>
+        <label for="dm-target">{{ t("channel.layout.modal.dmTargetLabel") }}</label>
         <select id="dm-target" v-model="form.targetMemberId">
-          <option value="">{{ t("messenger.layout.modal.dmTargetPlaceholder") }}</option>
+          <option value="">{{ t("channel.layout.modal.dmTargetPlaceholder") }}</option>
           <option v-for="member in dmCandidates" :key="member.id" :value="String(member.id)">
             {{ member.name }}
           </option>
@@ -30,25 +30,25 @@
       </template>
 
       <template v-if="form.type === 'AGENT'">
-        <label for="agent-key">{{ t("messenger.layout.modal.agentKeyLabel") }}</label>
+        <label for="agent-key">{{ t("channel.layout.modal.agentKeyLabel") }}</label>
         <input
           id="agent-key"
           v-model.trim="form.agentKey"
           type="text"
-          :placeholder="t('messenger.layout.modal.agentKeyPlaceholder')"
+          :placeholder="t('channel.layout.modal.agentKeyPlaceholder')"
         />
       </template>
 
       <p v-if="formError" class="form-error">{{ formError }}</p>
       <div class="modal-actions">
         <button type="button" class="btn btn--secondary" @click="handleClose">
-          {{ t("messenger.layout.actions.cancel") }}
+          {{ t("channel.layout.actions.cancel") }}
         </button>
         <button type="submit" class="btn" :disabled="isCreating">
           {{
             isCreating
-              ? t("messenger.layout.actions.creating")
-              : t("messenger.layout.actions.create")
+              ? t("channel.layout.actions.creating")
+              : t("channel.layout.actions.create")
           }}
         </button>
       </div>
@@ -108,16 +108,16 @@ const handleClose = () => {
 const handleSubmit = async () => {
   if (form.value.type === "DM") {
     if (!form.value.targetMemberId) {
-      formError.value = t("messenger.layout.validation.selectDmTarget");
+      formError.value = t("channel.layout.validation.selectDmTarget");
       return;
     }
   } else if (!form.value.name) {
-    formError.value = t("messenger.layout.validation.nameRequired");
+    formError.value = t("channel.layout.validation.nameRequired");
     return;
   }
 
   if (form.value.type === "AGENT" && !form.value.agentKey) {
-    formError.value = t("messenger.layout.validation.agentKeyRequired");
+    formError.value = t("channel.layout.validation.agentKeyRequired");
     return;
   }
 
@@ -142,7 +142,7 @@ const handleSubmit = async () => {
     const newChannel = res.data;
 
     addToast({
-      message: t("messenger.layout.toast.created"),
+      message: t("channel.layout.toast.created"),
       type: "success",
     });
 
@@ -154,7 +154,7 @@ const handleSubmit = async () => {
       router.push(`/project/${props.projectId}/channel/${newChannel.id}`);
     }
   } catch (error) {
-    formError.value = error?.response?.data?.message || t("messenger.layout.status.errorCreate");
+    formError.value = error?.response?.data?.message || t("channel.layout.status.errorCreate");
   } finally {
     isCreating.value = false;
   }

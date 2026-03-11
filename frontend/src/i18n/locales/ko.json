@@ -741,7 +741,7 @@
       }
     }
   },
-  "messenger": {
+  "channel": {
     "layout": {
       "actions": {
         "createChannel": "채널 만들기",
@@ -1083,7 +1083,7 @@
         "bullets": ["팀별 구조화 문서", "권한 기반 접근", "지식 검색 가능"],
         "tags": ["런북", "정책", "지식"]
       },
-      "messenger": {
+      "channel": {
         "title": "빠른 팀 정렬",
         "description": "업무와 연결된 채널 업데이트를 제공합니다.",
         "bullets": ["대화의 맥락 유지", "메시지 기록으로 정렬", "가벼운 피드백 루프"],
@@ -1200,12 +1200,9 @@
     "status": {
       "loading": "불러오는 중...",
       "error": "프로필을 불러오지 못했습니다.",
-      "logoutError": "로그아웃에 실패했습니다.",
       "withdrawError": "회원 탈퇴에 실패했습니다."
     },
     "actions": {
-      "logout": "로그아웃",
-      "loggingOut": "로그아웃 중...",
       "withdraw": "회원 탈퇴"
     },
     "image": {
@@ -1262,7 +1259,6 @@
         "error": "소유 리소스를 불러오지 못했습니다.",
         "errorLoad": "소유 리소스를 불러오지 못했습니다.",
         "empty": "현재 확인된 소유 리소스가 없습니다. 탈퇴 시도 후 다시 확인하세요.",
-        "open": "설정으로 이동",
         "close": "닫기",
         "types": {
           "workspace": "워크스페이스",
@@ -1295,6 +1291,15 @@
       "cancel": "취소",
       "confirm": "탈퇴",
       "withdrawing": "탈퇴 처리 중..."
+    }
+  },
+  "contextSwitcher": {
+    "status": {
+      "logoutError": "로그아웃에 실패했습니다."
+    },
+    "actions": {
+      "logout": "로그아웃",
+      "loggingOut": "로그아웃 중..."
     }
   },
   "notFound": {

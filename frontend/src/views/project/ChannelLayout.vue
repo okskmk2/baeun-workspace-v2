@@ -1,15 +1,15 @@
-﻿<template>
+<template>
   <div class="LnbLayout ChannelLayout">
     <aside>
       <div>
         <button class="btn" type="button" @click="openModal">
-          {{ t("messenger.layout.actions.createChannel") }}
+          {{ t("channel.layout.actions.createChannel") }}
         </button>
 
         <nav>
-          <p v-if="isLoading">{{ t("messenger.layout.status.loading") }}</p>
+          <p v-if="isLoading">{{ t("channel.layout.status.loading") }}</p>
           <p v-else-if="errorMessage">{{ errorMessage }}</p>
-          <p v-else-if="rooms.length === 0">{{ t("messenger.layout.empty.channels") }}</p>
+          <p v-else-if="rooms.length === 0">{{ t("channel.layout.empty.channels") }}</p>
           <template v-else>
             <section v-for="section in roomSections" :key="section.key" class="room-section">
               <h3>{{ section.title }}</h3>
@@ -29,7 +29,7 @@
         </nav>
       </div>
       <router-link class="archive-link" :to="archivePath">
-        {{ t("messenger.layout.actions.archiveInbox") }}
+        {{ t("channel.layout.actions.archiveInbox") }}
       </router-link>
     </aside>
     <main>
@@ -113,11 +113,11 @@ const roomSections = computed(() => {
   });
 
   const sections = [
-    { key: "NOTICE", title: t("messenger.layout.sections.notice"), items: noticeItems },
-    { key: "GENERAL", title: t("messenger.layout.sections.general"), items: mapByType.GENERAL },
-    { key: "TASK", title: t("messenger.layout.sections.task"), items: mapByType.TASK },
-    { key: "DM", title: t("messenger.layout.sections.dm"), items: mapByType.DM },
-    { key: "AGENT", title: t("messenger.layout.sections.agent"), items: mapByType.AGENT },
+    { key: "NOTICE", title: t("channel.layout.sections.notice"), items: noticeItems },
+    { key: "GENERAL", title: t("channel.layout.sections.general"), items: mapByType.GENERAL },
+    { key: "TASK", title: t("channel.layout.sections.task"), items: mapByType.TASK },
+    { key: "DM", title: t("channel.layout.sections.dm"), items: mapByType.DM },
+    { key: "AGENT", title: t("channel.layout.sections.agent"), items: mapByType.AGENT },
   ];
 
   return sections.filter((section) => section.items.length > 0);
@@ -140,7 +140,7 @@ const fetchRooms = async () => {
       router.push("/not-found");
       return;
     }
-    errorMessage.value = t("messenger.layout.status.errorLoad");
+    errorMessage.value = t("channel.layout.status.errorLoad");
   } finally {
     isLoading.value = false;
   }
@@ -169,7 +169,7 @@ const getRoomDisplayName = (room) => {
   if (dmPeerName) {
     return dmPeerName;
   }
-  return room?.name || t("messenger.layout.fallback.channelName");
+  return room?.name || t("channel.layout.fallback.channelName");
 };
 
 const isRoomUnread = (roomId) => unreadChannelIds.value.includes(String(roomId));

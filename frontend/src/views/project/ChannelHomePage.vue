@@ -1,6 +1,6 @@
-﻿<template>
+<template>
   <hgroup>
-    <h1>{{ t("messenger.home.header.title") }}</h1>
+    <h1>{{ t("channel.home.header.title") }}</h1>
   </hgroup>
   <p v-if="isLoading" class="status">불러오는 중...</p>
   <p v-else-if="errorMessage" class="status error">{{ errorMessage }}</p>
@@ -12,10 +12,10 @@
     <template #item="{ item }">
       <div class="item-title">
         <span v-if="isSystemMessage(item)" class="message-type system">
-          {{ t("messenger.room.messageType.system") }}
+          {{ t("channel.room.messageType.system") }}
         </span>
         <span v-else-if="isAgentMessage(item)" class="message-type agent">
-          {{ t("messenger.room.messageType.agent") }}
+          {{ t("channel.room.messageType.agent") }}
         </span>
         {{ item.channel_name || "채널" }} · {{ item.content || "(내용 없음)" }}
       </div>
@@ -94,9 +94,9 @@ const isAgentMessage = (message) => getMessageType(message) === "AGENT";
 
 const getMessageAuthor = (message) => {
   if (isAgentMessage(message)) {
-    return message?.creator_name || t("messenger.room.messageType.agent");
+    return message?.creator_name || t("channel.room.messageType.agent");
   }
-  return message?.creator_name || t("messenger.room.fallback.unknownUser");
+  return message?.creator_name || t("channel.room.fallback.unknownUser");
 };
 
 onMounted(fetchRecentMessages);

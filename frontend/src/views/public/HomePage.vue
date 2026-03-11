@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <main class="home container">
     <section class="hero">
       <div class="hero__copy">
@@ -221,17 +221,17 @@ const featureCards = computed(() => [
     ],
   },
   {
-    title: t("home.features.messenger.title"),
-    description: t("home.features.messenger.description"),
+    title: t("home.features.channel.title"),
+    description: t("home.features.channel.description"),
     bullets: [
-      t("home.features.messenger.bullets.0"),
-      t("home.features.messenger.bullets.1"),
-      t("home.features.messenger.bullets.2"),
+      t("home.features.channel.bullets.0"),
+      t("home.features.channel.bullets.1"),
+      t("home.features.channel.bullets.2"),
     ],
     tables: [
-      t("home.features.messenger.tags.0"),
-      t("home.features.messenger.tags.1"),
-      t("home.features.messenger.tags.2"),
+      t("home.features.channel.tags.0"),
+      t("home.features.channel.tags.1"),
+      t("home.features.channel.tags.2"),
     ],
   },
   {

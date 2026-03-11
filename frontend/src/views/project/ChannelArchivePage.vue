@@ -1,36 +1,36 @@
-﻿<template>
+<template>
   <hgroup>
-    <h1>{{ t("messenger.archive.header.title") }}</h1>
+    <h1>{{ t("channel.archive.header.title") }}</h1>
   </hgroup>
 
-  <p v-if="isLoading" class="status">{{ t("messenger.archive.status.loading") }}</p>
+  <p v-if="isLoading" class="status">{{ t("channel.archive.status.loading") }}</p>
   <p v-else-if="errorMessage" class="status error">{{ errorMessage }}</p>
   <p v-else-if="items.length === 0" class="status">
-    {{ t("messenger.archive.empty.channels") }}
+    {{ t("channel.archive.empty.channels") }}
   </p>
 
   <ul v-else class="archive-list">
     <li v-for="item in items" :key="item.id" class="archive-item">
       <h2 class="channel-name">
         <router-link :to="`/project/${projectId}/channel/${item.id}`">
-          {{ item.name || t("messenger.layout.fallback.channelName") }}
+          {{ item.name || t("channel.layout.fallback.channelName") }}
         </router-link>
       </h2>
       <p class="meta-row">
-        {{ t("messenger.archive.fields.lastMessageAt") }}: {{ formatDate(item.last_message_at) }}
+        {{ t("channel.archive.fields.lastMessageAt") }}: {{ formatDate(item.last_message_at) }}
       </p>
       <p class="meta-row">
-        {{ t("messenger.archive.fields.totalMessageCount") }}: {{ item.total_message_count || 0 }}
+        {{ t("channel.archive.fields.totalMessageCount") }}: {{ item.total_message_count || 0 }}
       </p>
       <p class="meta-row">
-        {{ t("messenger.archive.fields.linkedIssue") }}:
+        {{ t("channel.archive.fields.linkedIssue") }}:
         <router-link
           v-if="(item.task_id || item.issue_id) && (item.kanban_id || item.board_id)"
           :to="`/project/${projectId}/kanban/${item.kanban_id || item.board_id}/task/${item.task_id || item.issue_id}`"
         >
           {{ item.task_title || item.issue_title || `#${item.task_id || item.issue_id}` }}
         </router-link>
-        <span v-else>{{ t("messenger.archive.empty.noIssue") }}</span>
+        <span v-else>{{ t("channel.archive.empty.noIssue") }}</span>
       </p>
     </li>
   </ul>
@@ -66,7 +66,7 @@ const fetchArchivedChannels = async () => {
     items.value = res.data || [];
   } catch (error) {
     items.value = [];
-    errorMessage.value = error?.response?.data?.message || t("messenger.archive.status.errorLoad");
+    errorMessage.value = error?.response?.data?.message || t("channel.archive.status.errorLoad");
   } finally {
     isLoading.value = false;
   }
@@ -74,7 +74,7 @@ const fetchArchivedChannels = async () => {
 
 const formatDate = (value) => {
   if (!value) {
-    return t("messenger.archive.empty.noMessages");
+    return t("channel.archive.empty.noMessages");
   }
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) {

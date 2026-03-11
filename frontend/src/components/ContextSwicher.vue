@@ -114,7 +114,11 @@
           :disabled="isLoggingOut"
           @click="logout"
         >
-          {{ isLoggingOut ? t("profile.actions.loggingOut") : t("profile.actions.logout") }}
+          {{
+            isLoggingOut
+              ? t("contextSwitcher.actions.loggingOut")
+              : t("contextSwitcher.actions.logout")
+          }}
         </button>
         <p v-if="logoutError" class="account-menu__status account-menu__status--error">
           {{ logoutError }}
@@ -254,7 +258,7 @@ const logout = async () => {
     closeMenu();
     await router.push("/login");
   } catch (error) {
-    logoutError.value = error?.response?.data?.message || t("profile.status.logoutError");
+    logoutError.value = error?.response?.data?.message || t("contextSwitcher.status.logoutError");
   } finally {
     isLoggingOut.value = false;
   }

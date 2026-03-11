@@ -1,6 +1,6 @@
-﻿<template>
+<template>
   <BackLinkButton @click="$router.back()">
-    {{ t("messenger.settings.actions.back") }}
+    {{ t("channel.settings.actions.back") }}
   </BackLinkButton>
   <hgroup>
     <div>

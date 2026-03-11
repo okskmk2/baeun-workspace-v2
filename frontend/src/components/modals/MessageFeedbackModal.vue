@@ -1,5 +1,5 @@
 <template>
-  <BaseModal :open="open" :title="t('messenger.room.feedback.modal.title')" @close="handleClose">
+  <BaseModal :open="open" :title="t('channel.room.feedback.modal.title')" @close="handleClose">
     <div class="feedback-modal">
       <button
         v-for="option in feedbackOptions"
@@ -45,10 +45,10 @@ const props = defineProps({
 const emit = defineEmits(["close", "selected"]);
 
 const feedbackOptions = [
-  { key: "done", emoji: "✅", labelKey: "messenger.room.feedback.done" },
-  { key: "like", emoji: "👍", labelKey: "messenger.room.feedback.like" },
-  { key: "checking", emoji: "👀", labelKey: "messenger.room.feedback.checking" },
-  { key: "thanks", emoji: "🙏", labelKey: "messenger.room.feedback.thanks" },
+  { key: "done", emoji: "✅", labelKey: "channel.room.feedback.done" },
+  { key: "like", emoji: "👍", labelKey: "channel.room.feedback.like" },
+  { key: "checking", emoji: "👀", labelKey: "channel.room.feedback.checking" },
+  { key: "thanks", emoji: "🙏", labelKey: "channel.room.feedback.thanks" },
 ];
 
 const isActive = (key) => {

@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <hgroup>
     <div>
       <h1>{{ displayRoomTitle }}</h1>
@@ -8,22 +8,22 @@
         role="status"
         :aria-label="
           isConnected
-            ? t('messenger.room.status.connected')
-            : t('messenger.room.status.disconnected')
+            ? t('channel.room.status.connected')
+            : t('channel.room.status.disconnected')
         "
         :title="
           isConnected
-            ? t('messenger.room.status.connected')
-            : t('messenger.room.status.disconnected')
+            ? t('channel.room.status.connected')
+            : t('channel.room.status.disconnected')
         "
       ></span>
     </div>
     <div class="actions">
       <router-link v-if="linkedIssuePath" class="btn btn--sm btn--secondary" :to="linkedIssuePath">
-        {{ t("messenger.room.actions.linkedIssue") }}
+        {{ t("channel.room.actions.linkedIssue") }}
       </router-link>
       <button type="button" class="btn btn--sm" @click="openInviteModal">
-        {{ t("messenger.room.actions.invite") }}
+        {{ t("channel.room.actions.invite") }}
       </button>
       <button
         v-if="!isDmChannel && !isNoticeChannel && !isChannelOwner"
@@ -31,12 +31,12 @@
         class="btn btn--sm btn--secondary"
         @click="leaveChannel"
       >
-        {{ t("messenger.room.actions.leave") }}
+        {{ t("channel.room.actions.leave") }}
       </button>
       <router-link
         class="btn btn--icon"
-        :aria-label="t('messenger.room.actions.settings')"
-        :title="t('messenger.room.actions.settings')"
+        :aria-label="t('channel.room.actions.settings')"
+        :title="t('channel.room.actions.settings')"
         :to="channelSettingsPath"
       >
         <MaterialSymbol name="settings" :size="18" />
@@ -46,14 +46,14 @@
 
   <div ref="messagesContainer" class="messages" @scroll.passive="onMessagesScroll">
     <p v-if="isLoadingMoreMessages" class="messages-loading-more" role="status" aria-live="polite">
-      {{ t("messenger.room.actions.loadingMore") }}
+      {{ t("channel.room.actions.loadingMore") }}
     </p>
     <div v-if="isIssueChannel" class="message system issue-notice">
-      <div class="message-content">{{ t("messenger.room.system.issueArchiveNotice") }}</div>
+      <div class="message-content">{{ t("channel.room.system.issueArchiveNotice") }}</div>
     </div>
     <div v-if="!messages.length" class="empty-state" role="status" aria-live="polite">
-      <p class="empty-title">{{ t("messenger.room.empty.messages") }}</p>
-      <p class="empty-description">{{ t("messenger.room.empty.description") }}</p>
+      <p class="empty-title">{{ t("channel.room.empty.messages") }}</p>
+      <p class="empty-description">{{ t("channel.room.empty.description") }}</p>
     </div>
     <div
       v-for="message in messages"
@@ -77,7 +77,7 @@
               {{ getMessageAuthor(message) }}
             </span>
             <span v-if="isAgentMessage(message)" class="message-type-badge">
-              {{ t("messenger.room.messageType.agent") }}
+              {{ t("channel.room.messageType.agent") }}
             </span>
             <span class="message-time">{{ formatTime(message.created_at) }}</span>
           </div>
@@ -99,7 +99,7 @@
             <button
               type="button"
               class="feedback-button"
-              :aria-label="t('messenger.room.feedback.add')"
+              :aria-label="t('channel.room.feedback.add')"
               @click="openFeedbackModal(message)"
             >
               <MaterialSymbol name="add_reaction" :size="16" />
@@ -114,15 +114,15 @@
     <input
       v-model.trim="draft"
       type="text"
-      :placeholder="t('messenger.room.composer.placeholder')"
+      :placeholder="t('channel.room.composer.placeholder')"
       :disabled="isSending || !canPostMessage"
     />
     <button type="submit" class="btn" :disabled="isSending || !draft || !canPostMessage">
-      {{ t("messenger.room.composer.send") }}
+      {{ t("channel.room.composer.send") }}
     </button>
   </form>
   <p v-if="!canPostMessage" class="composer-notice">
-    {{ t("messenger.room.status.readOnlyNotice") }}
+    {{ t("channel.room.status.readOnlyNotice") }}
   </p>
 
   <AddChannelMemberModal
@@ -211,7 +211,7 @@ const displayRoomTitle = computed(() => {
   if (isDmChannel.value && dmPeerName.value) {
     return dmPeerName.value;
   }
-  return roomTitle.value || t("messenger.room.fallback.roomTitle");
+  return roomTitle.value || t("channel.room.fallback.roomTitle");
 });
 const isIssueChannel = computed(() =>
   Boolean(channelDetail.value?.task_id || channelDetail.value?.issue_id)
@@ -232,10 +232,10 @@ const projectMembers = computed(() => projectMemberStore.getProjectMembers(proje
 const isFeedbackOpen = ref(false);
 const activeFeedbackMessageId = ref(null);
 const feedbackOptions = [
-  { key: "done", emoji: "✅", labelKey: "messenger.room.feedback.done" },
-  { key: "like", emoji: "👍", labelKey: "messenger.room.feedback.like" },
-  { key: "checking", emoji: "👀", labelKey: "messenger.room.feedback.checking" },
-  { key: "thanks", emoji: "🙏", labelKey: "messenger.room.feedback.thanks" },
+  { key: "done", emoji: "✅", labelKey: "channel.room.feedback.done" },
+  { key: "like", emoji: "👍", labelKey: "channel.room.feedback.like" },
+  { key: "checking", emoji: "👀", labelKey: "channel.room.feedback.checking" },
+  { key: "thanks", emoji: "🙏", labelKey: "channel.room.feedback.thanks" },
 ];
 
 const fetchchannelDetail = async () => {
@@ -426,9 +426,9 @@ const getMessageType = (message) => {
 
 const getMessageAuthor = (message) => {
   if (isAgentMessage(message)) {
-    return message?.creator_name || t("messenger.room.messageType.agent");
+    return message?.creator_name || t("channel.room.messageType.agent");
   }
-  return message?.creator_name || t("messenger.room.fallback.unknownUser");
+  return message?.creator_name || t("channel.room.fallback.unknownUser");
 };
 
 const getFeedbackCount = (message, key) => {
@@ -494,15 +494,15 @@ const onMemberInvited = () => {
 
 const leaveChannel = async () => {
   if (!roomId.value) return;
-  const confirmed = window.confirm(t("messenger.room.confirm.leave"));
+  const confirmed = window.confirm(t("channel.room.confirm.leave"));
   if (!confirmed) return;
 
   try {
     await api.post(`/channels/${roomId.value}/leave`);
-    addToast({ message: t("messenger.room.status.left"), type: "success" });
+    addToast({ message: t("channel.room.status.left"), type: "success" });
     router.push(`/project/${projectId.value}/channel`);
   } catch (error) {
-    const message = error?.response?.data?.message || t("messenger.room.status.errorLeave");
+    const message = error?.response?.data?.message || t("channel.room.status.errorLeave");
     addToast({ message, type: "error" });
   }
 };

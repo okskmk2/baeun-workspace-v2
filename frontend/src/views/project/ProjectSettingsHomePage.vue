@@ -51,15 +51,21 @@
     </div>
   </form>
 
-  <section class="danger-zone">
-    <div>
-      <h2>{{ t("settings.home.danger.title") }}</h2>
-      <p class="danger-desc">{{ t("settings.home.danger.description") }}</p>
-    </div>
-    <button type="button" class="btn btn--danger" :disabled="isDeleting" @click="openDeleteModal">
-      {{ isDeleting ? t("settings.home.actions.deleting") : t("settings.home.actions.delete") }}
-    </button>
-  </section>
+  <DangerZone
+    :title="t('settings.home.danger.title')"
+    :description="t('settings.home.danger.description')"
+  >
+    <template #actions>
+      <button
+        type="button"
+        class="btn btn--danger"
+        :disabled="isDeleting"
+        @click="openDeleteModal"
+      >
+        {{ isDeleting ? t("settings.home.actions.deleting") : t("settings.home.actions.delete") }}
+      </button>
+    </template>
+  </DangerZone>
 
   <BaseModal
     :open="isDeleteModalOpen"
@@ -98,6 +104,7 @@ import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 import api from "../../lib/axios";
 import BaseModal from "../../components/BaseModal.vue";
+import DangerZone from "../../components/DangerZone.vue";
 import { addToast } from "../../lib/toast";
 import { useAppStore } from "../../stores/appStore";
 import { useWorkspaceStore } from "../../stores/workspaceStore";
@@ -363,29 +370,6 @@ onBeforeUnmount(() => {
 .form-actions {
   display: flex;
   justify-content: flex-start;
-}
-
-.danger-zone {
-  margin-top: 16px;
-  border: 1px solid color-mix(in srgb, var(--color-danger) 35%, var(--color-border));
-  border-radius: 12px;
-  padding: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  background-color: var(--color-surface);
-}
-
-.danger-zone h2 {
-  margin: 0;
-  font-size: 16px;
-}
-
-.danger-desc {
-  margin: 4px 0 0;
-  color: var(--color-text-muted);
-  font-size: 13px;
 }
 
 .delete-modal-body {

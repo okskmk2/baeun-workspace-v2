@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="ProjectLayout">
     <header :style="gnbStyle">
       <div class="left">
@@ -243,13 +243,13 @@ const resolveChannelName = (payload) => {
   if (directName) return directName;
 
   const channelId = String(payload?.channel_id || "");
-  if (!channelId) return t("messenger.layout.fallback.channelName");
+  if (!channelId) return t("channel.layout.fallback.channelName");
 
   const room = chatStore
     .getRooms(projectId.value)
     .find((item) => String(item?.id || "") === channelId);
   if (room?.name) return String(room.name);
-  return t("messenger.layout.fallback.channelName");
+  return t("channel.layout.fallback.channelName");
 };
 
 const showChannelMessageNotification = async (payload) => {
@@ -263,7 +263,7 @@ const showChannelMessageNotification = async (payload) => {
 
   const channelName = resolveChannelName(payload);
   const senderName =
-    String(payload?.creator_name || "").trim() || t("messenger.room.fallback.unknownUser");
+    String(payload?.creator_name || "").trim() || t("channel.room.fallback.unknownUser");
   const messageText = String(payload?.content || "").trim() || "(내용 없음)";
   const body = `${senderName}: ${messageText}`;
 

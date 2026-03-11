@@ -18,7 +18,7 @@
           class="ownership-guide__item"
         >
           <div class="ownership-guide__item-main">
-            <Tag variant="danger">{{ item.typeLabel }}</Tag>
+            <Tag>{{ item.typeLabel }}</Tag>
             <span class="title">{{ item.name }}</span>
           </div>
           <router-link
@@ -27,7 +27,7 @@
             :to="item.route"
             @click="handleClose"
           >
-            {{ t("profile.danger.guide.open") }}
+            <MaterialSymbol name="chevron_right" type="rounded" :size="16" alt="" />
           </router-link>
         </li>
       </ul>
@@ -47,6 +47,7 @@ import { useI18n } from "vue-i18n";
 import api from "../../lib/axios";
 import BaseModal from "../BaseModal.vue";
 import Tag from "../Tag.vue";
+import MaterialSymbol from "../MaterialSymbol.vue";
 
 const { t } = useI18n();
 
@@ -179,26 +180,27 @@ watch(
   display: flex;
   align-items: center;
   justify-content: space-between;
+  align-items: center;
   padding: 0.75rem 1rem;
   border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border-radius: 4px;
   background-color: var(--color-surface);
 }
 
 .ownership-guide__item-main {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 6px;
 }
 
 .ownership-guide__item-main .title {
   font-weight: 500;
+  font-size: 15px;
 }
 
 .ownership-guide__link {
-  color: var(--color-primary);
-  text-decoration: none;
-  font-size: 0.875rem;
+  color: var(--color-text);
+  display: inline-flex;
 }
 
 .ownership-guide__link:hover {
