@@ -1,12 +1,12 @@
 <template>
   <div class="LnbLayout ChannelLayout">
     <aside>
-      <div>
+      <div class="lnb-shell">
         <button class="btn" type="button" @click="openModal">
           {{ t("channel.layout.actions.createChannel") }}
         </button>
 
-        <nav>
+        <nav class="lnb-scroll">
           <p v-if="isLoading">{{ t("channel.layout.status.loading") }}</p>
           <p v-else-if="errorMessage">{{ errorMessage }}</p>
           <p v-else-if="rooms.length === 0">{{ t("channel.layout.empty.channels") }}</p>
@@ -27,10 +27,10 @@
             </section>
           </template>
         </nav>
+        <router-link class="lnb-bottom" :to="archivePath">
+          {{ t("channel.layout.actions.archiveInbox") }}
+        </router-link>
       </div>
-      <router-link class="archive-link" :to="archivePath">
-        {{ t("channel.layout.actions.archiveInbox") }}
-      </router-link>
     </aside>
     <main>
       <router-view />
@@ -193,21 +193,6 @@ watch(projectId, fetchRooms);
 <style>
 .ChannelLayout main {
   padding-bottom: 2rem;
-}
-
-.archive-link {
-  font-size: 14px;
-  color: var(--color-text-muted);
-}
-
-.archive-link:hover {
-  color: var(--color-text);
-}
-
-.ChannelLayout aside {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
 }
 
 .layout-actions {

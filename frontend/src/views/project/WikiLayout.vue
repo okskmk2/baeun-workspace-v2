@@ -1,15 +1,17 @@
 ﻿<template>
   <div class="LnbLayout WikiLayout">
     <aside>
-      <button class="btn" type="button" @click="openModal">
-        {{ t("wiki.layout.actions.create") }}
-      </button>
-      <nav class="page-nav">
-        <p v-if="isLoading">{{ t("wiki.layout.status.loading") }}</p>
-        <p v-else-if="errorMessage">{{ errorMessage }}</p>
-        <p v-else-if="pages.length === 0">{{ t("wiki.layout.empty.pages") }}</p>
-        <PageTree v-else :nodes="pages" :project-id="projectId" @reorder="handleReorder" />
-      </nav>
+      <div class="lnb-shell">
+        <button class="btn" type="button" @click="openModal">
+          {{ t("wiki.layout.actions.create") }}
+        </button>
+        <nav class="lnb-scroll page-nav">
+          <p v-if="isLoading">{{ t("wiki.layout.status.loading") }}</p>
+          <p v-else-if="errorMessage">{{ errorMessage }}</p>
+          <p v-else-if="pages.length === 0">{{ t("wiki.layout.empty.pages") }}</p>
+          <PageTree v-else :nodes="pages" :project-id="projectId" @reorder="handleReorder" />
+        </nav>
+      </div>
     </aside>
     <main>
       <router-view />

@@ -213,6 +213,7 @@ button.btn--icon {
   gap: 1rem;
   padding: 1rem;
   flex-grow: 1;
+  min-height: 0;
 }
 
 .LnbLayout > aside {
@@ -221,14 +222,14 @@ button.btn--icon {
   width: 12rem;
   flex-shrink: 0;
   border-radius: 8px;
+  display: flex;
+  height: calc(100dvh - 134px);
 }
 
 .LnbLayout > aside nav {
   gap: 8px;
   display: flex;
   flex-direction: column;
-  max-height: 77dvh;
-  overflow-y: auto;
 }
 
 .LnbLayout > aside nav a {
@@ -259,6 +260,32 @@ button.btn--icon {
 
 .LnbLayout > aside button {
   width: 100%;
+}
+
+/* Shared shell for project LNB variants with fixed top/bottom and scrollable menu body */
+.LnbLayout > aside .lnb-shell {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  min-height: 0;
+  width: 100%;
+}
+
+.LnbLayout > aside .lnb-scroll {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.LnbLayout > aside .lnb-bottom {
+  font-size: 14px;
+  color: var(--color-text-muted);
+  margin-top: 8px;
+}
+
+.LnbLayout > aside .lnb-bottom:hover {
+  color: var(--color-text);
 }
 
 .LnbLayout > main {

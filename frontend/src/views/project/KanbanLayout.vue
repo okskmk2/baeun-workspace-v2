@@ -1,11 +1,11 @@
 ﻿<template>
   <div class="LnbLayout KanbanLayout">
     <aside>
-      <div>
+      <div class="lnb-shell">
         <button type="button" class="btn" @click="openModal">
           {{ t("kanban.layout.actions.create") }}
         </button>
-        <nav>
+        <nav class="lnb-scroll">
           <p v-if="isLoading">{{ t("kanban.layout.status.loading") }}</p>
           <p v-else-if="errorMessage">{{ errorMessage }}</p>
           <p v-else-if="activeKanbans.length === 0">{{ t("kanban.layout.empty.kanbans") }}</p>
@@ -33,10 +33,10 @@
             {{ t("kanban.layout.nav.gantt") }}
           </router-link>
         </nav>
+        <router-link class="lnb-bottom" :to="archivePath">
+          {{ t("kanban.layout.actions.archiveInbox") }}
+        </router-link>
       </div>
-      <router-link class="archive-link" :to="archivePath">
-        {{ t("kanban.layout.actions.archiveInbox") }}
-      </router-link>
     </aside>
     <main>
       <router-view />
@@ -166,25 +166,6 @@ onMounted(fetchKanbans);
 watch(projectId, fetchKanbans);
 </script>
 <style scoped>
-.KanbanLayout aside nav {
-  gap: 4px;
-}
-
-.KanbanLayout aside {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-}
-
-.archive-link {
-  font-size: 14px;
-  color: var(--color-text-muted);
-}
-
-.archive-link:hover {
-  color: var(--color-text);
-}
-
 .KanbanLayout main {
   padding: 18px 24px 3rem;
 }
