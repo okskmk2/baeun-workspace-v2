@@ -4,6 +4,11 @@
       <h1>{{ t("settings.home.header.title") }}</h1>
       <p class="subtitle">{{ t("settings.home.header.subtitle") }}</p>
     </div>
+    <div class="actions">
+      <button type="button" class="btn" :disabled="isSaving" @click="saveSettings">
+        {{ isSaving ? t("settings.home.actions.saving") : t("settings.home.actions.save") }}
+      </button>
+    </div>
   </hgroup>
 
   <p v-if="isLoading" class="status">{{ t("settings.home.status.loading") }}</p>
@@ -25,6 +30,15 @@
       </div>
       <div class="theme-grid">
         <label
+          class="theme-item theme-item--inherit"
+          :class="{ selected: !form.themeId }"
+        >
+          <input type="radio" name="theme" value="" v-model="form.themeId" />
+          <div class="swatch swatch--inherit">WS</div>
+          <span class="theme-name">{{ t("settings.home.theme.inheritName") }}</span>
+          <span class="theme-desc-small">{{ t("settings.home.theme.inheritSubtitle") }}</span>
+        </label>
+        <label
           v-for="item in themeOptions"
           :key="item.id"
           class="theme-item"
@@ -44,11 +58,6 @@
 
     <p v-if="formError" class="status error">{{ formError }}</p>
 
-    <div class="form-actions">
-      <button type="submit" class="btn" :disabled="isSaving">
-        {{ isSaving ? t("settings.home.actions.saving") : t("settings.home.actions.save") }}
-      </button>
-    </div>
   </form>
 
   <DangerZone
@@ -153,7 +162,7 @@ const resolveThemeId = (theme) => {
   if (theme?.themeId && themeOptionsBase.some((id) => id === theme.themeId)) {
     return theme.themeId;
   }
-  return "classic";
+  return "";
 };
 
 const fetchProject = async () => {
@@ -180,11 +189,7 @@ const saveSettings = async () => {
     return;
   }
 
-  const selected = themeOptionsBase.find((id) => id === form.value.themeId);
-  if (!selected) {
-    formError.value = t("settings.home.validation.themeRequired");
-    return;
-  }
+  const selected = themeOptionsBase.find((id) => id === form.value.themeId) || "";
 
   isSaving.value = true;
   formError.value = "";
@@ -192,11 +197,13 @@ const saveSettings = async () => {
   try {
     await api.patch(`/projects/${projectId.value}`, {
       name: form.value.name,
-      theme_json: {
-        gnb: {
-          themeId: selected,
-        },
-      },
+      theme_json: selected
+        ? {
+            gnb: {
+              themeId: selected,
+            },
+          }
+        : {},
     });
     if (projectId.value) {
       const current = workspaceStore.getProject(projectId.value) || {};
@@ -205,9 +212,15 @@ const saveSettings = async () => {
         name: form.value.name,
         theme_json: {
           ...(current.theme_json || {}),
-          gnb: {
-            themeId: selected,
-          },
+          ...(selected
+            ? {
+                gnb: {
+                  themeId: selected,
+                },
+              }
+            : {
+                gnb: {},
+              }),
         },
       };
     }
@@ -332,6 +345,10 @@ onBeforeUnmount(() => {
   cursor: pointer;
 }
 
+.theme-item--inherit {
+  background: color-mix(in srgb, var(--color-surface) 85%, var(--color-border) 15%);
+}
+
 .theme-item input {
   display: none;
 }
@@ -352,9 +369,25 @@ onBeforeUnmount(() => {
   color: var(--swatch-fg, var(--color-text));
 }
 
+.swatch--inherit {
+  background: repeating-linear-gradient(
+    45deg,
+    color-mix(in srgb, var(--color-border) 70%, transparent) 0,
+    color-mix(in srgb, var(--color-border) 70%, transparent) 8px,
+    transparent 8px,
+    transparent 16px
+  );
+  color: var(--color-text-muted);
+}
+
 .theme-name {
   font-size: 12px;
   color: var(--color-text);
+}
+
+.theme-desc-small {
+  font-size: 11px;
+  color: var(--color-text-muted);
 }
 
 .status {
@@ -365,11 +398,6 @@ onBeforeUnmount(() => {
 
 .status.error {
   color: var(--color-danger);
-}
-
-.form-actions {
-  display: flex;
-  justify-content: flex-start;
 }
 
 .delete-modal-body {

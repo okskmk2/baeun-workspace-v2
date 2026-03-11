@@ -1,6 +1,6 @@
 ﻿<template>
   <div class="WorkspaceLayout">
-    <header>
+    <header :style="gnbStyle">
       <div class="container inner-gnb">
         <router-link class="brand" :to="workspaceProjectsTo">
           <Avatar
@@ -35,14 +35,18 @@
 
 <script setup>
 import { computed, watch } from "vue";
+import { storeToRefs } from "pinia";
 import { useRoute } from "vue-router";
 import ContextSwicher from "../../components/ContextSwicher.vue";
 import MaterialSymbol from "../../components/MaterialSymbol.vue";
 import Avatar from "../../components/Avatar.vue";
 import { useWorkspaceStore } from "../../stores/workspaceStore";
+import { useAppStore } from "../../stores/appStore";
 
 const route = useRoute();
 const workspaceStore = useWorkspaceStore();
+const appStore = useAppStore();
+const { gnbPreviewTheme } = storeToRefs(appStore);
 
 const workspaceId = computed(() => route.params.workspaceId);
 const workspaceRouteParams = computed(() => ({ workspaceId: workspaceId.value }));
@@ -56,6 +60,27 @@ const workspaceInitials = computed(() => {
   const name = workspaceName.value;
   if (!name) return "W";
   return name.slice(0, 2).toUpperCase();
+});
+
+const themeTokenId = computed(() => {
+  const preview = gnbPreviewTheme.value;
+  const theme = currentWorkspace.value?.theme_json?.gnb;
+  return preview?.themeId || theme?.themeId || "";
+});
+
+const gnbStyle = computed(() => {
+  if (themeTokenId.value) {
+    return {
+      "--dl-gnb-bg": `var(--theme-${themeTokenId.value}-bg)`,
+      "--dl-gnb-text": `var(--theme-${themeTokenId.value}-fg)`,
+    };
+  }
+
+  const theme = currentWorkspace.value?.theme_json?.gnb;
+  return {
+    "--dl-gnb-bg": theme?.background || "#ffffff",
+    "--dl-gnb-text": theme?.foreground || "#111827",
+  };
 });
 
 const workspaceProjectsTo = computed(() => ({

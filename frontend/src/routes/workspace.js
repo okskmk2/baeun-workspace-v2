@@ -1,6 +1,8 @@
 import WorkspaceLayout from "../views/workspace/WorkspaceLayout.vue";
 import WorkspaceProjectsPage from "../views/workspace/WorkspaceProjectsPage.vue";
 import WorkspaceSettingsPage from "../views/workspace/WorkspaceSettingsPage.vue";
+import WorkspaceSettingsLayout from "../views/workspace/WorkspaceSettingsLayout.vue";
+import WorkspaceSettingsMembersPage from "../views/workspace/WorkspaceSettingsMembersPage.vue";
 import WorkspaceRankPage from "../views/workspace/WorkspaceRankPage.vue";
 import WorkspaceBoardLayout from "../views/workspace/WorkspaceBoardLayout.vue";
 import WorkspaceBoardHomePage from "../views/workspace/WorkspaceBoardHomePage.vue";
@@ -77,8 +79,20 @@ export const workspaceRoutes = [
       },
       {
         path: "settings",
-        name: "workspace-settings",
-        component: WorkspaceSettingsPage,
+        component: WorkspaceSettingsLayout,
+        children: [
+          {
+            path: "",
+            name: "workspace-settings",
+            alias: ["general"],
+            component: WorkspaceSettingsPage,
+          },
+          {
+            path: "members",
+            name: "workspace-settings-members",
+            component: WorkspaceSettingsMembersPage,
+          },
+        ],
       },
     ],
   },

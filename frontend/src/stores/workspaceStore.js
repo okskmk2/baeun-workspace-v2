@@ -73,9 +73,9 @@ export const useWorkspaceStore = defineStore("workspace", {
       }
       return project;
     },
-    async updateWorkspaceName(workspaceId, name) {
+    async updateWorkspaceSettings(workspaceId, payload = {}) {
       if (!workspaceId) return null;
-      const res = await api.put(`/workspaces/${workspaceId}`, { name });
+      const res = await api.put(`/workspaces/${workspaceId}`, payload);
       const updated = res.data || null;
       if (updated) {
         const current = this.workspaceById[workspaceId] || {};
@@ -85,6 +85,9 @@ export const useWorkspaceStore = defineStore("workspace", {
         );
       }
       return updated;
+    },
+    async updateWorkspaceName(workspaceId, name) {
+      return this.updateWorkspaceSettings(workspaceId, { name });
     },
     async updateWorkspaceImage(workspaceId, file) {
       if (!workspaceId || !file) return null;

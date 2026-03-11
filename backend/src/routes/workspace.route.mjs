@@ -29,6 +29,34 @@ const MIME_TO_EXTENSION = {
   "image/gif": "gif",
 };
 
+const normalizeThemeJsonInput = (themeJson) => {
+  if (!themeJson || typeof themeJson !== "object") return themeJson;
+  const gnb = themeJson.gnb || {};
+  const themeId = gnb.themeId;
+  if (!themeId) return themeJson;
+  return {
+    ...themeJson,
+    gnb: {
+      ...gnb,
+      themeId,
+    },
+  };
+};
+
+const normalizeThemeJsonOutput = (themeJson) => {
+  if (!themeJson || typeof themeJson !== "object") return themeJson;
+  const gnb = themeJson.gnb || {};
+  const themeId = gnb.themeId;
+  if (!themeId) return themeJson;
+  return {
+    ...themeJson,
+    gnb: {
+      ...gnb,
+      themeId,
+    },
+  };
+};
+
 const getWorkspaceMemberRole = async (workspaceId, memberId) => {
   const result = await pool.query(
     "SELECT role_name FROM workspace_member WHERE workspace_id = $1 AND member_id = $2",
@@ -208,7 +236,12 @@ router.get("/my", isAuth, async (req, res) => {
         `;
     const result = await pool.query(query, [req.session.userId]);
 
-    res.json(result.rows);
+    const data = result.rows.map((workspace) => ({
+      ...workspace,
+      theme_json: normalizeThemeJsonOutput(workspace.theme_json),
+    }));
+
+    res.json(data);
   } catch (error) {
     res.status(500).json({ name: "InternalServerError", message: error.message });
   }
@@ -296,7 +329,10 @@ router.get("/:workspaceId", isAuth, async (req, res) => {
       return res.status(404).json({ name: "NotFound", message: "Workspace not found." });
     }
 
-    res.json(workspace);
+    res.json({
+      ...workspace,
+      theme_json: normalizeThemeJsonOutput(workspace.theme_json),
+    });
   } catch (error) {
     res.status(500).json({ name: "InternalServerError", message: error.message });
   }
@@ -304,11 +340,18 @@ router.get("/:workspaceId", isAuth, async (req, res) => {
 
 router.put("/:workspaceId", isAuth, async (req, res) => {
   const { workspaceId } = req.params;
-  const { name } = req.body;
+  const { name, theme_json } = req.body;
+  const normalizedThemeJson = normalizeThemeJsonInput(theme_json);
   const userId = req.session.userId;
 
+  const hasName = Object.prototype.hasOwnProperty.call(req.body || {}, "name");
+  const hasThemeJson = Object.prototype.hasOwnProperty.call(req.body || {}, "theme_json");
+  if (!hasName && !hasThemeJson) {
+    return res.status(400).json({ name: "BadRequest", message: "Update fields are required." });
+  }
+
   const nextName = String(name || "").trim();
-  if (!nextName) {
+  if (hasName && !nextName) {
     return res.status(400).json({ name: "BadRequest", message: "Workspace name is required." });
   }
 
@@ -321,9 +364,27 @@ router.put("/:workspaceId", isAuth, async (req, res) => {
       return res.status(403).json({ name: "Forbidden", message: "No permission to update workspace." });
     }
 
+    const fields = [];
+    const values = [];
+    let paramIndex = 1;
+
+    if (hasName) {
+      fields.push(`name = $${paramIndex}`);
+      values.push(nextName);
+      paramIndex += 1;
+    }
+
+    if (hasThemeJson) {
+      fields.push(`theme_json = $${paramIndex}`);
+      values.push(normalizedThemeJson ?? null);
+      paramIndex += 1;
+    }
+
+    values.push(workspaceId);
+
     const updateRes = await pool.query(
-      "UPDATE workspace SET name = $1 WHERE id = $2 RETURNING id, name",
-      [nextName, workspaceId]
+      `UPDATE workspace SET ${fields.join(", ")} WHERE id = $${paramIndex} RETURNING id, name, theme_json`,
+      values
     );
 
     if (updateRes.rows.length === 0) {
@@ -331,8 +392,9 @@ router.put("/:workspaceId", isAuth, async (req, res) => {
     }
 
     res.json({
-      message: "Workspace name updated.",
+      message: "Workspace updated.",
       ...updateRes.rows[0],
+      theme_json: normalizeThemeJsonOutput(updateRes.rows[0]?.theme_json),
     });
   } catch (error) {
     res.status(500).json({ name: "InternalServerError", message: error.message });

@@ -204,6 +204,8 @@
       "theme": {
         "title": "GNB 테마",
         "subtitle": "배경과 글자색 조합을 선택하세요.",
+        "inheritName": "워크스페이스 기본값",
+        "inheritSubtitle": "프로젝트 테마를 별도로 지정하지 않습니다.",
         "themes": {
           "light": "라이트",
           "dark": "다크",

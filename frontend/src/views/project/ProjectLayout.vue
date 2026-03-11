@@ -163,13 +163,23 @@ const canAccessProjectSettings = computed(() =>
   ["OWNER", "ADMIN"].includes(currentProjectRole.value)
 );
 const projectThemeMode = computed(() => {
-  const theme = currentProject.value?.theme_json || {};
-  return theme.mode || theme.theme?.mode || theme.colorScheme || "";
+  const projectTheme = currentProject.value?.theme_json || {};
+  const workspaceTheme = currentWorkspace.value?.theme_json || {};
+  return (
+    projectTheme.mode ||
+    projectTheme.theme?.mode ||
+    projectTheme.colorScheme ||
+    workspaceTheme.mode ||
+    workspaceTheme.theme?.mode ||
+    workspaceTheme.colorScheme ||
+    ""
+  );
 });
 const themeTokenId = computed(() => {
   const preview = gnbPreviewTheme.value;
-  const theme = currentProject.value?.theme_json?.gnb;
-  return preview?.themeId || theme?.themeId || "";
+  const projectTheme = currentProject.value?.theme_json?.gnb;
+  const workspaceTheme = currentWorkspace.value?.theme_json?.gnb;
+  return preview?.themeId || projectTheme?.themeId || workspaceTheme?.themeId || "";
 });
 const gnbStyle = computed(() => {
   if (themeTokenId.value) {
@@ -178,7 +188,9 @@ const gnbStyle = computed(() => {
       "--gnb-fg": `var(--theme-${themeTokenId.value}-fg)`,
     };
   }
-  const theme = currentProject.value?.theme_json?.gnb;
+  const projectTheme = currentProject.value?.theme_json?.gnb;
+  const workspaceTheme = currentWorkspace.value?.theme_json?.gnb;
+  const theme = projectTheme || workspaceTheme;
   const background = theme?.background || "#ffffff";
   const foreground = theme?.foreground || "#111827";
   return {

@@ -299,6 +299,7 @@ watch(locale, (value) => {
 <style scoped>
 .account-menu {
   position: relative;
+  display: inline-flex;
 }
 
 .account-menu__trigger {

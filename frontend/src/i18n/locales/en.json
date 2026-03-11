@@ -204,6 +204,8 @@
       "theme": {
         "title": "GNB Theme",
         "subtitle": "Select a background and foreground pair.",
+        "inheritName": "Use Workspace Default",
+        "inheritSubtitle": "Do not set a project-specific theme.",
         "themes": {
           "light": "Light",
           "dark": "Dark",
