@@ -51,6 +51,7 @@ const ensureProjectExists = async (projectId, res) => {
  */
 router.get("/", isAuth, async (req, res) => {
   const { projectId } = req.query;
+  const isActiveParam = String(req.query.isActive || "").toLowerCase();
   const userId = req.session.userId;
 
   if (!projectId) {
@@ -69,6 +70,13 @@ router.get("/", isAuth, async (req, res) => {
     if (memberCheck.rows.length === 0) {
       return res.status(403).json({ name: "Forbidden", message: "접근 권한이 없습니다." });
     }
+
+    const activeFilter =
+      isActiveParam === "true" || isActiveParam === "1"
+        ? true
+        : isActiveParam === "false" || isActiveParam === "0"
+          ? false
+          : true;
 
     const kanbans = await pool.query(
       `SELECT
@@ -94,12 +102,12 @@ router.get("/", isAuth, async (req, res) => {
       LEFT JOIN
           task t ON k.id = t.kanban_id
       WHERE
-          k.project_id = $1 AND k.is_active = TRUE
+          k.project_id = $1 AND k.is_active = $2
       GROUP BY
           k.id
       ORDER BY
           k.sort_order ASC, k.created_at DESC;`,
-      [projectId]
+        [projectId, activeFilter]
     );
 
     res.json(kanbans.rows);
@@ -305,15 +313,21 @@ router.get("/:kanbanId", isAuth, async (req, res) => {
  */
 router.patch("/:kanbanId", isAuth, async (req, res) => {
   const { kanbanId } = req.params;
-  const { name, summary } = req.body;
+  const { name, summary, is_active } = req.body;
   const userId = req.session.userId;
 
-  if (name === undefined && summary === undefined) {
+  if (name === undefined && summary === undefined && is_active === undefined) {
     return res.status(400).json({ name: "BadRequest", message: "수정할 항목이 필요합니다." });
   }
 
   if (name !== undefined && !name) {
     return res.status(400).json({ name: "BadRequest", message: "칸반 이름은 필수입니다." });
+  }
+
+  if (is_active !== undefined && typeof is_active !== "boolean") {
+    return res
+      .status(400)
+      .json({ name: "BadRequest", message: "is_active는 boolean 이어야 합니다." });
   }
 
   try {
@@ -324,6 +338,18 @@ router.patch("/:kanbanId", isAuth, async (req, res) => {
 
     if (!authCheck.rows[0] || authCheck.rows[0].role_name !== "OWNER") {
       return res.status(403).json({ name: "Forbidden", message: "칸반 수정 권한이 없습니다." });
+    }
+
+    if (is_active !== undefined) {
+      const kanbanTypeRes = await pool.query("SELECT type FROM kanban WHERE id = $1", [kanbanId]);
+      if (kanbanTypeRes.rows.length === 0) {
+        return res.status(404).json({ name: "NotFound", message: "칸반을 찾을 수 없습니다." });
+      }
+      if (kanbanTypeRes.rows[0].type === "BACKLOG" && is_active === false) {
+        return res
+          .status(403)
+          .json({ name: "Forbidden", message: "백로그 보드는 비활성화할 수 없습니다." });
+      }
     }
 
     const fields = [];
@@ -339,6 +365,12 @@ router.patch("/:kanbanId", isAuth, async (req, res) => {
     if (summary !== undefined) {
       fields.push(`summary = $${paramIndex}`);
       values.push(summary);
+      paramIndex += 1;
+    }
+
+    if (is_active !== undefined) {
+      fields.push(`is_active = $${paramIndex}`);
+      values.push(is_active);
       paramIndex += 1;
     }
 

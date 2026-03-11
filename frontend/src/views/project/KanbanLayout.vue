@@ -1,42 +1,42 @@
 ﻿<template>
   <div class="LnbLayout KanbanLayout">
     <aside>
-      <button type="button" class="btn" @click="openModal">
-        {{ t("kanban.layout.actions.create") }}
-      </button>
-      <nav>
-        <!-- <span class="lnb-item">
-          <MaterialSymbol name="view_kanban" :size="18" alt="" />
-          칸반 목록
-        </span> -->
-        <p v-if="isLoading">{{ t("kanban.layout.status.loading") }}</p>
-        <p v-else-if="errorMessage">{{ errorMessage }}</p>
-        <p v-else-if="kanbans.length === 0">{{ t("kanban.layout.empty.kanbans") }}</p>
-        <template v-else>
+      <div>
+        <button type="button" class="btn" @click="openModal">
+          {{ t("kanban.layout.actions.create") }}
+        </button>
+        <nav>
+          <p v-if="isLoading">{{ t("kanban.layout.status.loading") }}</p>
+          <p v-else-if="errorMessage">{{ errorMessage }}</p>
+          <p v-else-if="activeKanbans.length === 0">{{ t("kanban.layout.empty.kanbans") }}</p>
+          <template v-else>
+            <router-link
+              v-for="kanban in activeKanbans"
+              :key="kanban.id"
+              :to="`/project/${projectId}/kanban/${kanban.id}`"
+              @dragover.prevent
+              @drop.prevent.stop="moveTaskToKanban($event, kanban.id)"
+            >
+              {{ kanban.name }}
+            </router-link>
+          </template>
+          <hr />
           <router-link
-            v-for="kanban in kanbans.filter((k) => k.type !== 'BACKLOG')"
-            :key="kanban.id"
-            :to="`/project/${projectId}/kanban/${kanban.id}`"
+            class="lnb-item"
+            :to="`/project/${projectId}/kanban/backlog`"
             @dragover.prevent
-            @drop.prevent.stop="moveTaskToKanban($event, kanban.id)"
+            @drop.prevent.stop="moveTaskToBacklog"
           >
-            {{ kanban.name }}
+            {{ t("backlog.page.header.title") }}
           </router-link>
-        </template>
-        <hr />
-        <router-link
-          class="lnb-item"
-          :to="`/project/${projectId}/kanban/backlog`"
-          @dragover.prevent
-          @drop.prevent.stop="moveTaskToBacklog"
-        >
-          <!-- <MaterialSymbol name="low_priority" size="18" /> -->
-          {{ t("backlog.page.header.title") }}
-        </router-link>
-        <router-link class="lnb-item" :to="`/project/${projectId}/kanban/gantt`">
-          {{ t("kanban.layout.nav.gantt") }}
-        </router-link>
-      </nav>
+          <router-link class="lnb-item" :to="`/project/${projectId}/kanban/gantt`">
+            {{ t("kanban.layout.nav.gantt") }}
+          </router-link>
+        </nav>
+      </div>
+      <router-link class="archive-link" :to="archivePath">
+        {{ t("kanban.layout.actions.archiveInbox") }}
+      </router-link>
     </aside>
     <main>
       <router-view />
@@ -66,12 +66,16 @@ const router = useRouter();
 const kanbanStore = useKanbanStore();
 const projectSearchStore = useProjectSearchStore();
 const kanbans = computed(() => kanbanStore.getKanbans(projectId.value));
+const activeKanbans = computed(() =>
+  kanbans.value.filter((kanban) => kanban.type !== "BACKLOG" && kanban.is_active !== false)
+);
 const backlogKanban = computed(() => kanbans.value.find((kanban) => kanban.type === "BACKLOG") || null);
 const isLoading = ref(false);
 const errorMessage = ref("");
 const isModalOpen = ref(false);
 
 const projectId = computed(() => route.params.projectId);
+const archivePath = computed(() => `/project/${projectId.value}/kanban/archive`);
 
 const fetchKanbans = async () => {
   if (!projectId.value) {
@@ -163,9 +167,24 @@ watch(projectId, fetchKanbans);
 </script>
 <style scoped>
 .KanbanLayout aside nav {
-  /* font-size: 14px; */
   gap: 4px;
 }
+
+.KanbanLayout aside {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.archive-link {
+  font-size: 14px;
+  color: var(--color-text-muted);
+}
+
+.archive-link:hover {
+  color: var(--color-text);
+}
+
 .KanbanLayout main {
   padding: 18px 24px 3rem;
 }

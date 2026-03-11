@@ -43,6 +43,20 @@
     :description="t('kanban.settings.danger.description')"
   >
     <template #actions>
+      <button
+        v-if="canDeactivate"
+        type="button"
+        class="btn btn--secondary"
+        :disabled="isDeactivating"
+        @click="deactivateKanban"
+      >
+        {{
+          isDeactivating
+            ? t("kanban.settings.actions.deactivating")
+            : t("kanban.settings.actions.deactivate")
+        }}
+      </button>
+      <p v-if="deactivateError" class="status error">{{ deactivateError }}</p>
       <button type="button" class="btn btn--danger" :disabled="isDeleting" @click="deleteKanban">
         {{ isDeleting ? t("kanban.settings.actions.deleting") : t("kanban.settings.actions.delete") }}
       </button>
@@ -72,10 +86,13 @@ const kanbanId = computed(() => route.params.kanbanId);
 const isLoading = ref(false);
 const isSaving = ref(false);
 const isDeleting = ref(false);
+const isDeactivating = ref(false);
 const errorMessage = ref("");
 const formError = ref("");
 const deleteError = ref("");
+const deactivateError = ref("");
 const kanbanType = ref("KANBAN");
+const isActive = ref(true);
 
 const form = ref({
   name: "",
@@ -83,6 +100,7 @@ const form = ref({
 });
 
 const isBacklog = computed(() => String(kanbanType.value || "").toUpperCase() === "BACKLOG");
+const canDeactivate = computed(() => !isBacklog.value && isActive.value);
 
 const fetchKanban = async () => {
   if (!kanbanId.value) return;
@@ -96,6 +114,7 @@ const fetchKanban = async () => {
     form.value.name = data.name || "";
     form.value.summary = data.summary || "";
     kanbanType.value = data.type || "KANBAN";
+    isActive.value = data.is_active !== false;
   } catch (error) {
     if (error?.response?.status === 404) {
       router.push("/not-found");
@@ -154,6 +173,30 @@ const deleteKanban = async () => {
     deleteError.value = error?.response?.data?.message || t("kanban.settings.status.errorDelete");
   } finally {
     isDeleting.value = false;
+  }
+};
+
+const deactivateKanban = async () => {
+  if (!kanbanId.value || !projectId.value || !canDeactivate.value) return;
+
+  const confirmed = window.confirm(t("kanban.settings.confirm.deactivate"));
+  if (!confirmed) return;
+
+  isDeactivating.value = true;
+  deactivateError.value = "";
+
+  try {
+    const res = await api.patch(`/kanbans/${kanbanId.value}`, { is_active: false });
+    isActive.value = res.data?.is_active !== false ? true : false;
+    kanbanStore.updateKanbanDetails(kanbanId.value, projectId.value, { is_active: false });
+    addToast({ message: t("kanban.settings.toast.deactivated"), type: "success" });
+    router.push(`/project/${projectId.value}/kanban/archive`);
+  } catch (error) {
+    const message = error?.response?.data?.message || t("kanban.settings.status.errorDeactivate");
+    deactivateError.value = message;
+    addToast({ message, type: "error" });
+  } finally {
+    isDeactivating.value = false;
   }
 };
 

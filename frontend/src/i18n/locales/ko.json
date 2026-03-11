@@ -366,6 +366,7 @@
     "layout": {
       "actions": {
         "create": "보드 만들기",
+        "archiveInbox": "보관함",
         "cancel": "취소",
         "submit": "생성",
         "creating": "생성 중..."
@@ -392,6 +393,24 @@
       "nav": {
         "backlog": "백로그",
         "gantt": "간트"
+      }
+    },
+    "archive": {
+      "header": {
+        "title": "보드 보관함"
+      },
+      "status": {
+        "loading": "불러오는 중...",
+        "errorLoad": "보관된 보드 목록을 불러오지 못했습니다."
+      },
+      "fields": {
+        "createdAt": "생성 일자",
+        "totalTaskCount": "총 작업 수",
+        "summary": "요약"
+      },
+      "empty": {
+        "kanbans": "보관된 보드가 없습니다.",
+        "noSummary": "요약 없음"
       }
     },
     "gantt": {
@@ -487,6 +506,8 @@
         "back": "보드로 돌아가기",
         "save": "저장",
         "saving": "저장 중...",
+        "deactivate": "보드 비활성화",
+        "deactivating": "비활성화 중...",
         "delete": "보드 삭제",
         "deleting": "삭제 중..."
       },
@@ -494,6 +515,7 @@
         "loading": "불러오는 중...",
         "errorLoad": "보드 정보를 불러오지 못했습니다.",
         "errorUpdate": "보드를 수정하지 못했습니다.",
+        "errorDeactivate": "보드를 비활성화하지 못했습니다.",
         "errorDelete": "보드를 삭제하지 못했습니다."
       },
       "validation": {
@@ -504,10 +526,12 @@
         "description": "보드를 삭제하면 복구할 수 없습니다."
       },
       "confirm": {
-        "delete": "이 보드를 삭제할까요?"
+        "delete": "이 보드를 삭제할까요?",
+        "deactivate": "이 보드를 비활성화할까요?"
       },
       "toast": {
-        "updated": "보드가 저장되었습니다."
+        "updated": "보드가 저장되었습니다.",
+        "deactivated": "보드가 비활성화되었습니다."
       }
     }
   },

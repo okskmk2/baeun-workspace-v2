@@ -366,6 +366,7 @@
     "layout": {
       "actions": {
         "create": "Create Board",
+        "archiveInbox": "Archive",
         "cancel": "Cancel",
         "submit": "Create",
         "creating": "Creating..."
@@ -392,6 +393,24 @@
       "nav": {
         "backlog": "Backlog",
         "gantt": "Gantt"
+      }
+    },
+    "archive": {
+      "header": {
+        "title": "Board Archive"
+      },
+      "status": {
+        "loading": "Loading...",
+        "errorLoad": "Failed to load archived boards."
+      },
+      "fields": {
+        "createdAt": "Created at",
+        "totalTaskCount": "Total tasks",
+        "summary": "Summary"
+      },
+      "empty": {
+        "kanbans": "No archived boards.",
+        "noSummary": "No summary"
       }
     },
     "gantt": {
@@ -487,6 +506,8 @@
         "back": "Back to board",
         "save": "Save",
         "saving": "Saving...",
+        "deactivate": "Deactivate Board",
+        "deactivating": "Deactivating...",
         "delete": "Delete Board",
         "deleting": "Deleting..."
       },
@@ -494,6 +515,7 @@
         "loading": "Loading...",
         "errorLoad": "Failed to load board details.",
         "errorUpdate": "Failed to update board.",
+        "errorDeactivate": "Failed to deactivate board.",
         "errorDelete": "Failed to delete board."
       },
       "validation": {
@@ -504,10 +526,12 @@
         "description": "Deleting a board is permanent."
       },
       "confirm": {
-        "delete": "Delete this board?"
+        "delete": "Delete this board?",
+        "deactivate": "Deactivate this board?"
       },
       "toast": {
-        "updated": "Board saved."
+        "updated": "Board saved.",
+        "deactivated": "Board deactivated."
       }
     }
   },

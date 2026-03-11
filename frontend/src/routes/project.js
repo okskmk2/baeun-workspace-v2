@@ -13,6 +13,7 @@ import ChannelArchivePage from "../views/project/ChannelArchivePage.vue";
 import ChannelRoomPage from "../views/project/ChannelRoomPage.vue";
 import ChannelSettingsPage from "../views/project/ChannelSettingsPage.vue";
 import KanbanSettingsPage from "../views/project/KanbanSettingsPage.vue";
+import KanbanArchivePage from "../views/project/KanbanArchivePage.vue";
 import ProjectSettingsLayout from "../views/project/ProjectSettingsLayout.vue";
 import ProjectSettingsHomePage from "../views/project/ProjectSettingsHomePage.vue";
 import ProjectSettingsMemberPage from "../views/project/ProjectSettingsMemberPage.vue";
@@ -44,6 +45,10 @@ export const projectRoutes = [
           {
             path: "gantt",
             component: GanttPage,
+          },
+          {
+            path: "archive",
+            component: KanbanArchivePage,
           },
           {
             path: ":kanbanId",
