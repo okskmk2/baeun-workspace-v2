@@ -15,6 +15,11 @@ body {
   box-sizing: border-box;
 }
 
+.px {
+  padding-right: 1rem;
+  padding-right: 1rem;
+}
+
 * {
   scrollbar-width: thin;
 }
@@ -80,7 +85,7 @@ nav a:hover {
 .PublicLayout .inner-gnb {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  padding: 20px 40px;
+  padding: 20px 24px;
   color: var(--dl-gnb-text);
 }
 
@@ -163,7 +168,7 @@ nav a:hover {
 .ProjectLayout > header {
   display: flex;
   justify-content: space-between;
-  padding: 16px 40px;
+  padding: 16px 24px;
   color: var(--gnb-fg);
   background-color: var(--gnb-bg);
   white-space: nowrap;
@@ -191,7 +196,7 @@ nav a:hover {
   color: var(--gnb-fg);
 }
 
-.ProjectLayout > header .utilnav a,
+header .utilnav a,
 button.btn--icon {
   color: var(--gnb-fg);
 }
