@@ -3,6 +3,7 @@ import WorkspaceProjectsPage from "../views/workspace/WorkspaceProjectsPage.vue"
 import WorkspaceSettingsPage from "../views/workspace/WorkspaceSettingsPage.vue";
 import WorkspaceSettingsLayout from "../views/workspace/WorkspaceSettingsLayout.vue";
 import WorkspaceSettingsMembersPage from "../views/workspace/WorkspaceSettingsMembersPage.vue";
+import WorkspaceSettingsProjectsPage from "../views/workspace/WorkspaceSettingsProjectsPage.vue";
 import WorkspaceSettingsLicensePage from "../views/workspace/WorkspaceSettingsLicensePage.vue";
 import WorkspaceSettingsBillingPage from "../views/workspace/WorkspaceSettingsBillingPage.vue";
 import WorkspaceRankPage from "../views/workspace/WorkspaceRankPage.vue";
@@ -93,6 +94,11 @@ export const workspaceRoutes = [
             path: "members",
             name: "workspace-settings-members",
             component: WorkspaceSettingsMembersPage,
+          },
+          {
+            path: "projects",
+            name: "workspace-settings-projects",
+            component: WorkspaceSettingsProjectsPage,
           },
           {
             path: "license",
