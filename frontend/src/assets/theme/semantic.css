@@ -1,0 +1,74 @@
+:root {
+  --theme-swatch-bg-l: 28%;
+  --theme-swatch-fg-l: 99%;
+
+  --theme-h: var(--theme-light-h);
+  --theme-s: var(--theme-light-s);
+
+  /* Role tokens (light defaults) */
+  --role-body-s: 25%;
+  --role-body-l: 94%;
+  --role-surface-l: 98%;
+  --role-surface-alt-l: 94%;
+  --role-text-l: 12%;
+  --role-text-muted-l: 39%;
+  --role-border-l: 86%;
+  --role-page-l: 99%;
+  --role-card-l: 100%;
+  --role-input-l: 100%;
+  --role-input-border-l: 84%;
+  --role-gnb-l: 26%;
+  --role-gnb-text-l: 92%;
+  --role-lnb-l: 24%;
+  --role-lnb-text-l: 88%;
+  --role-accent-l: 36%;
+  --role-accent-hover-l: 42%;
+  --role-accent-soft-s: 30%;
+  --role-accent-soft-l: 90%;
+
+  /* Backward-compatible theme aliases */
+  --theme-body-s: var(--role-body-s);
+  --theme-body-l: var(--role-body-l);
+  --theme-surface-l: var(--role-surface-l);
+  --theme-surface-alt-l: var(--role-surface-alt-l);
+  --theme-text-l: var(--role-text-l);
+  --theme-text-muted-l: var(--role-text-muted-l);
+  --theme-border-l: var(--role-border-l);
+  --theme-page-l: var(--role-page-l);
+  --theme-card-l: var(--role-card-l);
+  --theme-input-l: var(--role-input-l);
+  --theme-input-border-l: var(--role-input-border-l);
+  --theme-gnb-l: var(--role-gnb-l);
+  --theme-gnb-text-l: var(--role-gnb-text-l);
+  --theme-lnb-l: var(--role-lnb-l);
+  --theme-lnb-text-l: var(--role-lnb-text-l);
+  --theme-accent-l: var(--role-accent-l);
+  --theme-accent-hover-l: var(--role-accent-hover-l);
+  --theme-accent-soft-s: var(--role-accent-soft-s);
+  --theme-accent-soft-l: var(--role-accent-soft-l);
+}
+
+:root {
+  --color-bg: hsl(var(--theme-h), var(--theme-body-s), var(--theme-body-l));
+  --color-surface: hsl(var(--theme-h), var(--theme-body-s), var(--theme-surface-l));
+  --color-surface-alt: hsl(var(--theme-h), var(--theme-body-s), var(--theme-surface-alt-l));
+  --color-surface-muted: hsl(var(--theme-h), var(--theme-body-s), var(--theme-surface-alt-l));
+  --color-text: hsl(var(--theme-h), 20%, var(--theme-text-l));
+  --color-text-muted: hsl(var(--theme-h), 13%, var(--theme-text-muted-l));
+  --color-text-inverse: #ffffff;
+  --color-border: hsl(var(--theme-h), 10%, var(--theme-border-l));
+  --color-divider: hsl(var(--theme-h), 10%, var(--theme-border-l));
+  --color-accent: hsl(var(--theme-h), var(--theme-s), var(--theme-accent-l));
+  --color-accent-hover: hsl(var(--theme-h), var(--theme-s), var(--theme-accent-hover-l));
+  --color-accent-soft: hsl(var(--theme-h), var(--theme-accent-soft-s), var(--theme-accent-soft-l));
+  --color-success: #16a34a;
+  --color-warning: #f59e0b;
+  --color-danger: #dc2626;
+  --color-info: #0ea5e9;
+  --color-gnb-bg: hsl(var(--theme-h), var(--theme-s), var(--theme-gnb-l));
+  --color-gnb-text: hsl(var(--theme-h), 70%, var(--theme-gnb-text-l));
+  --color-page-bg: hsl(var(--theme-h), var(--theme-body-s), var(--theme-page-l));
+  --color-card-bg: hsl(var(--theme-h), var(--theme-body-s), var(--theme-card-l));
+  --color-input-bg: hsl(var(--theme-h), var(--theme-body-s), var(--theme-input-l));
+  --color-input-border: hsl(var(--theme-h), 10%, var(--theme-input-border-l));
+}

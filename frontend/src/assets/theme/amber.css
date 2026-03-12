@@ -1,0 +1,11 @@
+:root {
+  --theme-amber-h: 32;
+  --theme-amber-s: 70%;
+  --theme-amber-bg: hsl(var(--theme-amber-h), var(--theme-amber-s), 38%);
+  --theme-amber-fg: hsl(var(--theme-amber-h), 80%, var(--theme-swatch-fg-l));
+}
+
+:root[data-theme="amber"] {
+  --theme-h: var(--theme-amber-h);
+  --theme-s: var(--theme-amber-s);
+}

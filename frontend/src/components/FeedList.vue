@@ -68,7 +68,7 @@ const handleItemClick = (item, index, event) => {
 
 .feed-date {
   font-size: 12px;
-  color: var(--dl-text-muted, var(--color-text-muted));
+  color: var(--color-text-muted);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -79,19 +79,19 @@ const handleItemClick = (item, index, event) => {
   gap: 12px;
   padding: 12px;
   border-radius: 4px;
-  background-color: var(--dl-surface, var(--color-surface));
-  border: 1px solid var(--dl-border, var(--color-border));
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
 }
 
 :slotted(.feed-title) {
   font-size: 14px;
   font-weight: 600;
-  color: var(--dl-text, var(--color-text));
+  color: var(--color-text);
 }
 
 :slotted(.feed-meta) {
   font-size: 12px;
-  color: var(--dl-text-muted, var(--color-text-muted));
+  color: var(--color-text-muted);
   margin-top: 4px;
 }
 

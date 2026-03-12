@@ -1,0 +1,12 @@
+:root {
+  --theme-custom-h: 220;
+  --theme-custom-s: 70%;
+  --theme-custom-l: 50%;
+  --theme-custom-bg: hsl(var(--theme-custom-h), var(--theme-custom-s), var(--role-gnb-l));
+  --theme-custom-fg: hsl(var(--theme-custom-h), 35%, var(--role-gnb-text-l));
+}
+
+:root[data-theme="custom"] {
+  --theme-h: var(--theme-custom-h);
+  --theme-s: var(--theme-custom-s);
+}

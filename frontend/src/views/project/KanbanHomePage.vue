@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <hgroup>
     <h1>{{ t("kanban.home.header.title") }}</h1>
   </hgroup>

@@ -1,14 +1,6 @@
 .PublicLayout {
   display: flex;
   flex-direction: column;
-  --dl-bg: #f5f5f5;
-  --dl-surface: #f9fafb;
-  --dl-text: #111827;
-  --dl-text-muted: #6b7280;
-  --dl-border: #e5e7eb;
-  --dl-gnb-bg: #ffffff;
-  --dl-gnb-text: #111827;
-  --dl-page-bg: #ffffff;
 }
 
 .PublicLayout .brand {
@@ -32,14 +24,14 @@
 }
 
 .PublicLayout > header {
-  background-color: var(--dl-gnb-bg);
+  background-color: var(--color-gnb-bg);
 }
 
 .PublicLayout .inner-gnb {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   padding: 20px 24px;
-  color: var(--dl-gnb-text);
+  color: var(--color-gnb-text);
 }
 
 .PublicLayout .inner-gnb > nav {
@@ -61,7 +53,7 @@
 }
 
 .PublicLayout main {
-  background-color: var(--dl-page-bg);
+  background-color: var(--color-page-bg);
   padding: 2rem 3rem 4rem;
   margin-top: 1rem;
   margin-bottom: 3rem;
@@ -70,24 +62,11 @@
 
 .PublicLayout,
 .PublicLayout main {
-  color: var(--dl-text);
+  color: var(--color-text);
 }
 
 .PublicLayout .subtitle {
-  color: var(--dl-text-muted);
-}
-
-@media (prefers-color-scheme: dark) {
-  .PublicLayout {
-    --dl-bg: #0f1115;
-    --dl-surface: #1b1f2a;
-    --dl-text: #e5e7eb;
-    --dl-text-muted: #9ca3af;
-    --dl-border: #2b3242;
-    --dl-gnb-bg: #141824;
-    --dl-gnb-text: #e5e7eb;
-    --dl-page-bg: #111520;
-  }
+  color: var(--color-text-muted);
 }
 
 .PublicLayout > header .projectselect {
@@ -98,8 +77,6 @@
 .ProjectLayout {
   display: flex;
   flex-direction: column;
-  --gnb-bg: var(--color-gnb-bg);
-  --gnb-fg: var(--color-gnb-text);
   color: var(--color-text);
   min-height: 100%;
 }
@@ -113,8 +90,8 @@
   display: flex;
   justify-content: space-between;
   padding: 16px 24px;
-  color: var(--gnb-fg);
-  background-color: var(--gnb-bg);
+  color: var(--color-gnb-text);
+  background-color: var(--color-gnb-bg);
   white-space: nowrap;
   /* background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 8 8'%3E%3Cg fill='%23000000' fill-opacity='0.03'%3E%3Cpath fill-rule='evenodd' d='M0 0h4v4H0V0zm4 4h4v4H4V4z'/%3E%3C/g%3E%3C/svg%3E"); */
 }
@@ -137,12 +114,12 @@
 }
 
 .ProjectLayout > header a {
-  color: var(--gnb-fg);
+  color: var(--color-gnb-text);
 }
 
 .ProjectLayout header .utilnav a,
 .ProjectLayout button.btn--icon {
-  color: var(--gnb-fg);
+  color: var(--color-gnb-text);
 }
 
 .ProjectLayout .utilnav {
@@ -247,14 +224,14 @@
 
 .AdminLayout {
   min-height: 100vh;
-  background: #f3f4f6;
-  color: #111827;
+  background: var(--color-surface-alt);
+  color: var(--color-text);
 }
 
 .AdminLayout .admin-gnb {
   height: 64px;
-  border-bottom: 1px solid #d1d5db;
-  background: #ffffff;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-page-bg);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -273,8 +250,8 @@
 }
 
 .AdminLayout .admin-lnb {
-  border-right: 1px solid #d1d5db;
-  background: #ffffff;
+  border-right: 1px solid var(--color-border);
+  background: var(--color-page-bg);
   padding: 18px 14px;
 }
 
@@ -282,7 +259,7 @@
   margin: 0 0 10px;
   font-size: 12px;
   text-transform: uppercase;
-  color: #6b7280;
+  color: var(--color-text-muted);
 }
 
 .AdminLayout .admin-lnb__nav {
@@ -292,13 +269,13 @@
 
 .AdminLayout .admin-lnb__nav a {
   text-decoration: none;
-  color: #111827;
+  color: var(--color-text);
   border-radius: 8px;
   padding: 10px 12px;
 }
 
 .AdminLayout .admin-lnb__nav a.router-link-active {
-  background: #e5e7eb;
+  background: var(--color-surface-muted);
   font-weight: 700;
 }
 
@@ -313,7 +290,7 @@
 
   .AdminLayout .admin-lnb {
     border-right: 0;
-    border-bottom: 1px solid #d1d5db;
+    border-bottom: 1px solid var(--color-border);
   }
 
   .AdminLayout .admin-lnb__nav {
@@ -324,14 +301,6 @@
 .WorkspaceLayout {
   display: flex;
   flex-direction: column;
-  --dl-bg: #f5f5f5;
-  --dl-surface: #f9fafb;
-  --dl-text: #111827;
-  --dl-text-muted: #6b7280;
-  --dl-border: #e5e7eb;
-  --dl-gnb-bg: #ffffff;
-  --dl-gnb-text: #111827;
-  --dl-page-bg: #ffffff;
 }
 
 .WorkspaceLayout .brand {
@@ -355,14 +324,23 @@
 }
 
 .WorkspaceLayout > header {
-  background-color: var(--dl-gnb-bg);
+  background-color: var(--color-gnb-bg);
 }
 
 .WorkspaceLayout .inner-gnb {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   padding: 20px 40px;
-  color: var(--dl-gnb-text);
+  color: var(--color-gnb-text);
+}
+
+.WorkspaceLayout > header a {
+  color: var(--color-gnb-text);
+}
+
+.WorkspaceLayout header .utilnav a,
+.WorkspaceLayout button.btn--icon {
+  color: var(--color-gnb-text);
 }
 
 .WorkspaceLayout .inner-gnb > nav {
@@ -384,7 +362,7 @@
 }
 
 .WorkspaceLayout main {
-  background-color: var(--dl-page-bg);
+  background-color: var(--color-page-bg);
   padding: 2rem 3rem 4rem;
   margin-top: 1rem;
   margin-bottom: 3rem;

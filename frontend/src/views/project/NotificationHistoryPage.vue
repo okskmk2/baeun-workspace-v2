@@ -257,7 +257,7 @@ onMounted(() => {
 }
 
 .actions .btn.active {
-  border-color: color-mix(in srgb, var(--color-primary) 50%, var(--color-border));
+  border-color: color-mix(in srgb, var(--color-accent) 50%, var(--color-border));
 }
 
 .notification-item {
@@ -278,7 +278,7 @@ onMounted(() => {
 }
 
 .notification-item.unread {
-  border-color: color-mix(in srgb, var(--color-primary) 60%, var(--color-border));
+  border-color: color-mix(in srgb, var(--color-accent) 60%, var(--color-border));
 }
 
 .notification-item__title {

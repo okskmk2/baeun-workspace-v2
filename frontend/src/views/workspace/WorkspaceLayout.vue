@@ -34,7 +34,7 @@
 </template>
 
 <script setup>
-import { computed, watch } from "vue";
+import { computed, onBeforeUnmount, watch } from "vue";
 import { storeToRefs } from "pinia";
 import { useRoute } from "vue-router";
 import ContextSwicher from "../../components/ContextSwicher.vue";
@@ -42,6 +42,12 @@ import MaterialSymbol from "../../components/MaterialSymbol.vue";
 import Avatar from "../../components/Avatar.vue";
 import { useWorkspaceStore } from "../../stores/workspaceStore";
 import { useAppStore } from "../../stores/appStore";
+import {
+  applyThemeSeedToRoot,
+  clearThemeSeedFromRoot,
+  isPresetThemeId,
+  resolveThemeSeed,
+} from "../../lib/themeSeed";
 
 const route = useRoute();
 const workspaceStore = useWorkspaceStore();
@@ -62,24 +68,37 @@ const workspaceInitials = computed(() => {
   return name.slice(0, 2).toUpperCase();
 });
 
-const themeTokenId = computed(() => {
+const gnbTheme = computed(() => {
   const preview = gnbPreviewTheme.value;
-  const theme = currentWorkspace.value?.theme_json?.gnb;
-  return preview?.themeId || theme?.themeId || "";
+  if (preview && typeof preview === "object") return preview;
+  return currentWorkspace.value?.theme_json?.gnb || null;
 });
+const themeTokenId = computed(() => {
+  const themeId = gnbTheme.value?.themeId;
+  if (isPresetThemeId(themeId)) return themeId;
+  return "";
+});
+const customThemeSeed = computed(() => resolveThemeSeed(gnbTheme.value));
 
 const gnbStyle = computed(() => {
   if (themeTokenId.value) {
     return {
-      "--dl-gnb-bg": `var(--theme-${themeTokenId.value}-bg)`,
-      "--dl-gnb-text": `var(--theme-${themeTokenId.value}-fg)`,
+      "--color-gnb-bg": `var(--theme-${themeTokenId.value}-bg)`,
+      "--color-gnb-text": `var(--theme-${themeTokenId.value}-fg)`,
     };
   }
 
-  const theme = currentWorkspace.value?.theme_json?.gnb;
+  if (customThemeSeed.value) {
+    return {
+      "--color-gnb-bg": "var(--theme-custom-bg)",
+      "--color-gnb-text": "var(--theme-custom-fg)",
+    };
+  }
+
+  const theme = gnbTheme.value;
   return {
-    "--dl-gnb-bg": theme?.background || "#ffffff",
-    "--dl-gnb-text": theme?.foreground || "#111827",
+    "--color-gnb-bg": theme?.background || "#ffffff",
+    "--color-gnb-text": theme?.foreground || "#111827",
   };
 });
 
@@ -109,4 +128,20 @@ watch(
   },
   { immediate: true }
 );
+
+watch(
+  customThemeSeed,
+  (value) => {
+    if (!value) {
+      clearThemeSeedFromRoot();
+      return;
+    }
+    applyThemeSeedToRoot(value);
+  },
+  { immediate: true }
+);
+
+onBeforeUnmount(() => {
+  clearThemeSeedFromRoot();
+});
 </script>

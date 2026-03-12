@@ -1,0 +1,11 @@
+:root {
+  --theme-rose-h: 340;
+  --theme-rose-s: 60%;
+  --theme-rose-bg: hsl(var(--theme-rose-h), var(--theme-rose-s), var(--theme-swatch-bg-l));
+  --theme-rose-fg: hsl(var(--theme-rose-h), 70%, var(--theme-swatch-fg-l));
+}
+
+:root[data-theme="rose"] {
+  --theme-h: var(--theme-rose-h);
+  --theme-s: var(--theme-rose-s);
+}

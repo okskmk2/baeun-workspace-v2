@@ -1,0 +1,33 @@
+:root {
+  --theme-dark-h: 220;
+  --theme-dark-s: 50%;
+  --theme-dark-bg: hsl(var(--theme-dark-h), 16%, 14%);
+  --theme-dark-fg: hsl(var(--theme-dark-h), 20%, 90%);
+}
+
+:root[data-theme="dark"] {
+  --theme-h: var(--theme-dark-h);
+  --theme-s: var(--theme-dark-s);
+  --color-bg: hsl(0, 0%, 6%);
+  --color-surface: hsl(220, 18%, 14%);
+  --color-surface-alt: hsl(220, 16%, 18%);
+  --color-surface-muted: hsl(220, 16%, 18%);
+  --color-text: hsl(0, 0%, 90%);
+  --color-text-muted: hsl(215, 10%, 65%);
+  --color-text-inverse: hsl(0, 0%, 6%);
+  --color-border: hsl(215, 14%, 22%);
+  --color-divider: hsl(215, 14%, 22%);
+  --color-accent: hsl(var(--theme-h), 70%, 62%);
+  --color-accent-hover: hsl(var(--theme-h), 70%, 56%);
+  --color-accent-soft: hsl(var(--theme-h), 40%, 28%);
+  --color-success: hsl(142, 60%, 45%);
+  --color-warning: hsl(38, 90%, 55%);
+  --color-danger: hsl(0, 80%, 65%);
+  --color-info: hsl(200, 80%, 60%);
+  --color-gnb-bg: hsl(var(--theme-h), 18%, 12%);
+  --color-gnb-text: hsl(var(--theme-h), 20%, 88%);
+  --color-page-bg: hsl(220, 16%, 10%);
+  --color-card-bg: hsl(220, 18%, 14%);
+  --color-input-bg: hsl(220, 18%, 12%);
+  --color-input-border: hsl(220, 16%, 24%);
+}

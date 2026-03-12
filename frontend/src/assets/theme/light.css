@@ -1,0 +1,17 @@
+:root {
+  --theme-light-h: 220;
+  --theme-light-s: 70%;
+  --theme-swatch-light-bg-l: 98%;
+  --theme-swatch-light-fg-l: 18%;
+  --theme-light-bg: hsl(var(--theme-light-h), 12%, var(--theme-swatch-light-bg-l));
+  --theme-light-fg: hsl(var(--theme-light-h), 20%, var(--theme-swatch-light-fg-l));
+}
+
+:root[data-theme="light"] {
+  --theme-h: var(--theme-light-h);
+  --theme-s: var(--theme-light-s);
+  --theme-gnb-l: 99%;
+  --theme-gnb-text-l: 18%;
+  --theme-lnb-l: 97%;
+  --theme-lnb-text-l: 24%;
+}

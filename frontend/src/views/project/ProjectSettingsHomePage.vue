@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <hgroup>
     <div>
       <h1>{{ t("settings.home.header.title") }}</h1>

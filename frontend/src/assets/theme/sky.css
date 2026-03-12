@@ -1,0 +1,11 @@
+:root {
+  --theme-sky-h: 200;
+  --theme-sky-s: 60%;
+  --theme-sky-bg: hsl(var(--theme-sky-h), var(--theme-sky-s), var(--theme-swatch-bg-l));
+  --theme-sky-fg: hsl(var(--theme-sky-h), 70%, var(--theme-swatch-fg-l));
+}
+
+:root[data-theme="sky"] {
+  --theme-h: var(--theme-sky-h);
+  --theme-s: var(--theme-sky-s);
+}

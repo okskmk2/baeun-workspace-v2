@@ -157,7 +157,7 @@ const planGroups = computed(() => [
   display: flex;
   flex-direction: column;
   gap: 40px;
-  color: var(--dl-text);
+  color: var(--color-text);
 }
 
 .store-hero {
@@ -167,7 +167,7 @@ const planGroups = computed(() => [
   gap: 18px;
   padding: 28px;
   border-radius: 18px;
-  border: 1px solid var(--dl-border);
+  border: 1px solid var(--color-border);
   background: linear-gradient(
     135deg,
     var(--color-accent-soft, rgba(37, 99, 235, 0.12)),
@@ -180,7 +180,7 @@ const planGroups = computed(() => [
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.2em;
-  color: var(--dl-text-muted);
+  color: var(--color-text-muted);
 }
 
 .store-hero h1 {
@@ -190,7 +190,7 @@ const planGroups = computed(() => [
 
 .store-hero__subtitle {
   margin: 0;
-  color: var(--dl-text-muted);
+  color: var(--color-text-muted);
   max-width: 520px;
 }
 
@@ -213,7 +213,7 @@ const planGroups = computed(() => [
 
 .plan-group__header p {
   margin: 0;
-  color: var(--dl-text-muted);
+  color: var(--color-text-muted);
   font-size: 14px;
 }
 
@@ -227,8 +227,8 @@ const planGroups = computed(() => [
 .plan-card {
   padding: 18px 20px;
   border-radius: 16px;
-  border: 1px solid var(--dl-border);
-  background-color: var(--dl-surface);
+  border: 1px solid var(--color-border);
+  background-color: var(--color-surface);
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -253,7 +253,7 @@ const planGroups = computed(() => [
   color: var(--color-text);
   font-size: 12px;
   font-weight: 700;
-  border: 1px solid color-mix(in srgb, var(--color-accent) 10%, #fff);
+  border: 1px solid color-mix(in srgb, var(--color-accent) 10%, var(--color-page-bg));
 }
 
 .plan-card__price {
@@ -265,7 +265,7 @@ const planGroups = computed(() => [
 
 .plan-card__period {
   margin: 0;
-  color: var(--dl-text-muted);
+  color: var(--color-text-muted);
   font-size: 12px;
 }
 
@@ -275,7 +275,7 @@ const planGroups = computed(() => [
   display: grid;
   gap: 6px;
   font-size: 13px;
-  color: var(--dl-text);
+  color: var(--color-text);
 }
 
 .plan-card {
@@ -285,7 +285,7 @@ const planGroups = computed(() => [
 }
 .plan-card:hover {
   transform: translateY(-6px);
-  box-shadow: 0 18px 30px color-mix(in srgb, var(--color-accent) 8%, #0000);
+  box-shadow: 0 18px 30px color-mix(in srgb, var(--color-accent) 8%, transparent);
 }
 
 .store-details {
@@ -297,8 +297,8 @@ const planGroups = computed(() => [
 .detail-card {
   padding: 20px;
   border-radius: 16px;
-  border: 1px solid var(--dl-border);
-  background-color: var(--dl-surface);
+  border: 1px solid var(--color-border);
+  background-color: var(--color-surface);
 }
 
 .detail-card h2 {
@@ -311,7 +311,7 @@ const planGroups = computed(() => [
   padding-left: 18px;
   display: grid;
   gap: 12px;
-  color: var(--dl-text);
+  color: var(--color-text);
 }
 
 .detail-steps h3 {
@@ -321,7 +321,7 @@ const planGroups = computed(() => [
 
 .detail-steps p {
   margin: 0;
-  color: var(--dl-text-muted);
+  color: var(--color-text-muted);
   font-size: 13px;
 }
 
@@ -330,7 +330,7 @@ const planGroups = computed(() => [
   padding-left: 18px;
   display: grid;
   gap: 8px;
-  color: var(--dl-text);
+  color: var(--color-text);
   font-size: 13px;
 }
 
@@ -343,7 +343,7 @@ const planGroups = computed(() => [
     var(--color-accent-soft, rgba(37, 99, 235, 0.06)),
     transparent
   );
-  border: 1px solid color-mix(in srgb, var(--color-accent) 8%, #fff);
+  border: 1px solid color-mix(in srgb, var(--color-accent) 8%, var(--color-page-bg));
 }
 .pricing-ex h3 {
   margin: 0 0 8px;
@@ -351,7 +351,7 @@ const planGroups = computed(() => [
 }
 .pricing-ex p {
   margin: 0 0 8px;
-  color: var(--dl-text-muted);
+  color: var(--color-text-muted);
 }
 .pricing-ex ul {
   margin: 0;

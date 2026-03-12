@@ -1,0 +1,11 @@
+:root {
+  --theme-stone-h: 20;
+  --theme-stone-s: 10%;
+  --theme-stone-bg: hsl(var(--theme-stone-h), var(--theme-stone-s), 24%);
+  --theme-stone-fg: hsl(var(--theme-stone-h), 10%, var(--theme-swatch-fg-l));
+}
+
+:root[data-theme="stone"] {
+  --theme-h: var(--theme-stone-h);
+  --theme-s: var(--theme-stone-s);
+}

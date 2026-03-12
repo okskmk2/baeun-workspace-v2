@@ -163,7 +163,7 @@ const paymentNotes = computed(() => [
 
 .hero {
   padding: 16px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-border);
   border-radius: 12px;
   background: linear-gradient(135deg, rgba(37, 99, 235, 0.1), transparent 60%);
 }
@@ -173,7 +173,7 @@ const paymentNotes = computed(() => [
   font-size: 12px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: #6b7280;
+  color: var(--color-text-muted);
 }
 
 .hero h1 {
@@ -183,7 +183,7 @@ const paymentNotes = computed(() => [
 
 .hero-subtitle {
   margin: 0;
-  color: #6b7280;
+  color: var(--color-text-muted);
 }
 
 .plan-groups {
@@ -192,7 +192,7 @@ const paymentNotes = computed(() => [
 }
 
 .group-card {
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-border);
   border-radius: 12px;
   padding: 16px;
 }
@@ -203,7 +203,7 @@ const paymentNotes = computed(() => [
 
 .group-header p {
   margin: 0;
-  color: #6b7280;
+  color: var(--color-text-muted);
 }
 
 .plan-grid {
@@ -214,12 +214,12 @@ const paymentNotes = computed(() => [
 }
 
 .plan-card {
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-border);
   border-radius: 10px;
   padding: 14px;
   display: grid;
   gap: 8px;
-  background-color: #fff;
+  background-color: var(--color-page-bg);
 }
 
 .plan-head {
@@ -250,7 +250,7 @@ const paymentNotes = computed(() => [
 .period {
   margin: 0;
   font-size: 12px;
-  color: #6b7280;
+  color: var(--color-text-muted);
 }
 
 .plan-card ul,
@@ -269,10 +269,10 @@ const paymentNotes = computed(() => [
 }
 
 .policy-card {
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-border);
   border-radius: 12px;
   padding: 16px;
-  background-color: #fff;
+  background-color: var(--color-page-bg);
 }
 
 .policy-card h2 {
@@ -282,7 +282,7 @@ const paymentNotes = computed(() => [
 
 .policy-card p {
   margin: 4px 0 0;
-  color: #6b7280;
+  color: var(--color-text-muted);
   font-size: 13px;
 }
 </style>

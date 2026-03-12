@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <hgroup>
     <div>
       <h1>{{ t("profile.header.title") }}</h1>

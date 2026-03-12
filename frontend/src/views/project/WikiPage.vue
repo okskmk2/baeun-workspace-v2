@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <hgroup>
     <h1>{{ page.title || t("wiki.page.header.fallbackTitle") }}</h1>
     <div class="actions">

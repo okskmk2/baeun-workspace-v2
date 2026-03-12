@@ -99,6 +99,12 @@ import { useChatStore } from "../../stores/chatStore";
 import { useProjectSearchStore } from "../../stores/projectSearchStore";
 import { useRealtimeStore } from "../../stores/realtimeStore";
 import { convertSnakeToCamel } from "../../lib/utils";
+import {
+  applyThemeSeedToRoot,
+  clearThemeSeedFromRoot,
+  isPresetThemeId,
+  resolveThemeSeed,
+} from "../../lib/themeSeed";
 import MaterialSymbol from "../../components/MaterialSymbol.vue";
 import Avatar from "../../components/Avatar.vue";
 import SearchInput from "../../components/SearchInput.vue";
@@ -175,33 +181,47 @@ const projectThemeMode = computed(() => {
     ""
   );
 });
-const themeTokenId = computed(() => {
+const gnbTheme = computed(() => {
   const preview = gnbPreviewTheme.value;
+  if (preview && typeof preview === "object") return preview;
   const projectTheme = currentProject.value?.theme_json?.gnb;
   const workspaceTheme = currentWorkspace.value?.theme_json?.gnb;
-  return preview?.themeId || projectTheme?.themeId || workspaceTheme?.themeId || "";
+  return projectTheme || workspaceTheme || null;
 });
+const themeTokenId = computed(() => {
+  const themeId = gnbTheme.value?.themeId;
+  if (isPresetThemeId(themeId)) return themeId;
+  return "";
+});
+const customThemeSeed = computed(() => resolveThemeSeed(gnbTheme.value));
 const gnbStyle = computed(() => {
   if (themeTokenId.value) {
     return {
-      "--gnb-bg": `var(--theme-${themeTokenId.value}-bg)`,
-      "--gnb-fg": `var(--theme-${themeTokenId.value}-fg)`,
+      "--color-gnb-bg": `var(--theme-${themeTokenId.value}-bg)`,
+      "--color-gnb-text": `var(--theme-${themeTokenId.value}-fg)`,
     };
   }
-  const projectTheme = currentProject.value?.theme_json?.gnb;
-  const workspaceTheme = currentWorkspace.value?.theme_json?.gnb;
-  const theme = projectTheme || workspaceTheme;
+
+  if (customThemeSeed.value) {
+    return {
+      "--color-gnb-bg": "var(--theme-custom-bg)",
+      "--color-gnb-text": "var(--theme-custom-fg)",
+    };
+  }
+
+  const theme = gnbTheme.value;
   const background = theme?.background || "#ffffff";
   const foreground = theme?.foreground || "#111827";
   return {
-    "--gnb-bg": background,
-    "--gnb-fg": foreground,
+    "--color-gnb-bg": background,
+    "--color-gnb-text": foreground,
   };
 });
 
 const themeId = computed(() => {
   const mode = projectThemeMode.value;
   if (themeTokenId.value) return themeTokenId.value;
+  if (customThemeSeed.value) return "custom";
   if (mode === "dark" || mode === "light") return mode;
   return "";
 });
@@ -403,10 +423,20 @@ const applyTheme = (value) => {
   if (typeof document === "undefined") return;
   const root = document.documentElement;
   if (!value) {
+    clearThemeSeedFromRoot();
     root.removeAttribute("data-theme-source");
     applySystemTheme();
     return;
   }
+
+  if (value === "custom" && customThemeSeed.value) {
+    applyThemeSeedToRoot(customThemeSeed.value, {
+      isDark: projectThemeMode.value === "dark",
+    });
+  } else {
+    clearThemeSeedFromRoot();
+  }
+
   root.setAttribute("data-theme", value);
   root.setAttribute("data-theme-source", "project");
 };
@@ -415,6 +445,18 @@ watch(
   themeId,
   (value) => {
     applyTheme(value);
+  },
+  { immediate: true }
+);
+
+watch(
+  customThemeSeed,
+  (value) => {
+    if (themeId.value !== "custom") return;
+    if (!value) return;
+    applyThemeSeedToRoot(value, {
+      isDark: projectThemeMode.value === "dark",
+    });
   },
   { immediate: true }
 );
@@ -501,14 +543,14 @@ onBeforeUnmount(() => {
   gap: 8px;
   padding: 4px 12px;
   border-radius: 4px;
-  color: var(--gnb-fg);
+  color: var(--color-gnb-text);
   text-decoration: none;
   line-height: 1;
   font-weight: bold;
 }
 
 .mainnav-link:hover {
-  background-color: color-mix(in srgb, var(--gnb-bg) 95%, var(--gnb-fg) 5%);
+  background-color: color-mix(in srgb, var(--color-gnb-bg) 95%, var(--color-gnb-text) 5%);
 }
 
 .mainnav-link__label {

@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <BackLinkButton @click="goBackToKanban"> {{ backButtonLabel }} </BackLinkButton>
   <hgroup>
     <div>

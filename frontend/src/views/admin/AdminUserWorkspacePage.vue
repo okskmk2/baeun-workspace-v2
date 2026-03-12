@@ -43,9 +43,9 @@
 }
 
 .wire-card {
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--color-border);
   border-radius: 10px;
-  background: #ffffff;
+  background: var(--color-page-bg);
   padding: 14px;
 }
 
@@ -56,13 +56,13 @@
 }
 
 .wire-input {
-  border: 1px dashed #9ca3af;
+  border: 1px dashed var(--color-text-muted);
   border-radius: 8px;
   min-height: 38px;
   display: flex;
   align-items: center;
   padding: 0 10px;
-  color: #6b7280;
+  color: var(--color-text-muted);
 }
 
 .wire-card--tall {
@@ -73,15 +73,15 @@
   display: grid;
   place-items: center;
   min-height: 230px;
-  border: 1px dashed #9ca3af;
+  border: 1px dashed var(--color-text-muted);
   border-radius: 8px;
-  color: #6b7280;
+  color: var(--color-text-muted);
 }
 
 .wire-button {
-  border: 1px solid #111827;
+  border: 1px solid var(--color-text);
   border-radius: 8px;
-  background: #ffffff;
+  background: var(--color-page-bg);
   padding: 8px 12px;
   font-weight: 600;
   cursor: pointer;

@@ -1,0 +1,11 @@
+:root {
+  --theme-violet-h: 270;
+  --theme-violet-s: 55%;
+  --theme-violet-bg: hsl(var(--theme-violet-h), var(--theme-violet-s), var(--theme-swatch-bg-l));
+  --theme-violet-fg: hsl(var(--theme-violet-h), 70%, var(--theme-swatch-fg-l));
+}
+
+:root[data-theme="violet"] {
+  --theme-h: var(--theme-violet-h);
+  --theme-s: var(--theme-violet-s);
+}

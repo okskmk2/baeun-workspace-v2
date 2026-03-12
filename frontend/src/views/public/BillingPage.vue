@@ -84,9 +84,9 @@ const lifecycleSteps = computed(() => [
 
 .hero,
 .card {
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-border);
   border-radius: 12px;
-  background-color: #fff;
+  background-color: var(--color-page-bg);
   padding: 16px;
 }
 
@@ -101,7 +101,7 @@ const lifecycleSteps = computed(() => [
 
 .hero p {
   margin: 0;
-  color: #6b7280;
+  color: var(--color-text-muted);
 }
 
 .grid {
@@ -134,7 +134,7 @@ ol {
 
 li p {
   margin: 4px 0 0;
-  color: #6b7280;
+  color: var(--color-text-muted);
   font-size: 13px;
 }
 </style>

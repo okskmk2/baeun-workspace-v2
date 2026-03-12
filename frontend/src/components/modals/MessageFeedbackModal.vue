@@ -105,13 +105,13 @@ const handleSelect = async (key) => {
 }
 
 .feedback-option:hover {
-  border-color: var(--color-primary);
-  background-color: var(--color-primary-light, #f0f9ff);
+  border-color: var(--color-accent);
+  background-color: var(--color-accent-soft);
 }
 
 .feedback-option.is-active {
-  border-color: var(--color-primary);
-  background-color: var(--color-primary);
+  border-color: var(--color-accent);
+  background-color: var(--color-accent);
   color: white;
 }
 

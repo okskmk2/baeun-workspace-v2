@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <hgroup>
     <div>
       <h1>{{ t("workspace.detail.header.title") }}</h1>
@@ -523,11 +523,11 @@ watch(() => route.params.workspaceId, fetchWorkspaceData);
   display: flex;
   flex-direction: column;
   gap: 24px;
-  color: var(--dl-text);
+  color: var(--color-text);
 }
 
 .status {
-  color: var(--dl-text-muted);
+  color: var(--color-text-muted);
   font-size: 14px;
 }
 
@@ -536,11 +536,11 @@ watch(() => route.params.workspaceId, fetchWorkspaceData);
 }
 
 .status.success {
-  color: #166534;
+  color: var(--color-success);
 }
 
 .status.muted {
-  color: var(--dl-text-muted);
+  color: var(--color-text-muted);
 }
 
 .detail-grid {
@@ -552,8 +552,8 @@ watch(() => route.params.workspaceId, fetchWorkspaceData);
 .card {
   padding: 18px 20px;
   border-radius: 16px;
-  border: 1px solid var(--dl-border);
-  background-color: var(--dl-surface);
+  border: 1px solid var(--color-border);
+  background-color: var(--color-surface);
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -588,7 +588,7 @@ watch(() => route.params.workspaceId, fetchWorkspaceData);
 
 .summary-list dt {
   font-size: 12px;
-  color: var(--dl-text-muted);
+  color: var(--color-text-muted);
 }
 
 .summary-list dd {
@@ -606,8 +606,8 @@ watch(() => route.params.workspaceId, fetchWorkspaceData);
 .stat {
   padding: 12px 14px;
   border-radius: 12px;
-  border: 1px solid var(--dl-border);
-  background-color: var(--dl-page-bg);
+  border: 1px solid var(--color-border);
+  background-color: var(--color-page-bg);
 }
 
 .stat__value {
@@ -619,7 +619,7 @@ watch(() => route.params.workspaceId, fetchWorkspaceData);
 .stat__label {
   margin: 0;
   font-size: 12px;
-  color: var(--dl-text-muted);
+  color: var(--color-text-muted);
 }
 
 .project-list {
@@ -631,7 +631,7 @@ watch(() => route.params.workspaceId, fetchWorkspaceData);
 }
 
 .project-item a {
-  color: var(--dl-text);
+  color: var(--color-text);
   text-decoration: none;
   font-weight: 600;
 }
@@ -642,7 +642,7 @@ watch(() => route.params.workspaceId, fetchWorkspaceData);
 
 .empty {
   margin: 0;
-  color: var(--dl-text-muted);
+  color: var(--color-text-muted);
   font-size: 14px;
 }
 
@@ -655,7 +655,7 @@ watch(() => route.params.workspaceId, fetchWorkspaceData);
 .inline-form label,
 .invite-form label {
   font-size: 12px;
-  color: var(--dl-text-muted);
+  color: var(--color-text-muted);
 }
 
 .inline-form__row {
@@ -670,9 +670,9 @@ watch(() => route.params.workspaceId, fetchWorkspaceData);
   width: 100%;
   min-height: 38px;
   border-radius: 10px;
-  border: 1px solid var(--dl-border);
-  background: var(--dl-page-bg);
-  color: var(--dl-text);
+  border: 1px solid var(--color-border);
+  background: var(--color-page-bg);
+  color: var(--color-text);
   padding: 8px 10px;
 }
 
@@ -705,8 +705,8 @@ watch(() => route.params.workspaceId, fetchWorkspaceData);
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  border: 1px solid var(--dl-border);
-  background: var(--dl-page-bg);
+  border: 1px solid var(--color-border);
+  background: var(--color-page-bg);
   border-radius: 12px;
   padding: 10px 12px;
 }
@@ -724,7 +724,7 @@ watch(() => route.params.workspaceId, fetchWorkspaceData);
 .member-email {
   margin: 2px 0 0;
   font-size: 12px;
-  color: var(--dl-text-muted);
+  color: var(--color-text-muted);
 }
 
 .member-actions {

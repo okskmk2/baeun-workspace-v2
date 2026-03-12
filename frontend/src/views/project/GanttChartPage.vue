@@ -578,7 +578,7 @@ function formatDate(date) {
   top: 50%;
   transform: translateY(-50%);
   border-radius: 6px;
-  background: var(--color-primary);
+  background: var(--color-accent);
   color: var(--color-text-inverse);
   padding: 0 8px;
   display: inline-flex;
@@ -714,7 +714,7 @@ function formatDate(date) {
 .link-btn {
   border: 0;
   background: transparent;
-  color: var(--color-primary);
+  color: var(--color-accent);
   cursor: pointer;
 }
 </style>

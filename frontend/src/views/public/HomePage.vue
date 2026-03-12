@@ -276,7 +276,7 @@ onMounted(() => {
   flex-direction: column;
   gap: 48px;
 
-  color: var(--dl-text);
+  color: var(--color-text);
 }
 
 .hero {
@@ -291,7 +291,7 @@ onMounted(() => {
   font-size: 13px;
   text-transform: uppercase;
   letter-spacing: 0.2em;
-  color: var(--dl-text-muted);
+  color: var(--color-text-muted);
 }
 
 .hero__title {
@@ -302,7 +302,7 @@ onMounted(() => {
 
 .hero__subtitle {
   margin: 0 0 24px;
-  color: var(--dl-text-muted);
+  color: var(--color-text-muted);
   font-size: 15px;
   max-width: 480px;
 }
@@ -317,7 +317,7 @@ onMounted(() => {
 .hero__presence {
   margin: 0 0 16px;
   font-size: 12px;
-  color: var(--dl-text-muted);
+  color: var(--color-text-muted);
 }
 
 .hero__stats {
@@ -329,8 +329,8 @@ onMounted(() => {
 .stat {
   padding: 12px 14px;
   border-radius: 12px;
-  background: linear-gradient(135deg, var(--dl-surface), transparent);
-  border: 1px solid var(--dl-border);
+  background: linear-gradient(135deg, var(--color-surface), transparent);
+  border: 1px solid var(--color-border);
 }
 
 .stat__value {
@@ -342,13 +342,13 @@ onMounted(() => {
 .stat__label {
   margin: 0;
   font-size: 12px;
-  color: var(--dl-text-muted);
+  color: var(--color-text-muted);
 }
 
 .hero__panel {
   background:
-    radial-gradient(circle at top, rgba(37, 99, 235, 0.2), transparent 55%), var(--dl-surface);
-  border: 1px solid var(--dl-border);
+    radial-gradient(circle at top, rgba(37, 99, 235, 0.2), transparent 55%), var(--color-surface);
+  border: 1px solid var(--color-border);
   border-radius: 18px;
   padding: 22px;
   display: flex;
@@ -365,7 +365,7 @@ onMounted(() => {
 .panel__header p {
   margin: 0;
   font-size: 13px;
-  color: var(--dl-text-muted);
+  color: var(--color-text-muted);
 }
 
 .panel__chips {
@@ -378,14 +378,14 @@ onMounted(() => {
   padding: 6px 10px;
   border-radius: 999px;
   background-color: rgba(37, 99, 235, 0.12);
-  color: var(--dl-text);
+  color: var(--color-text);
   font-size: 12px;
   border: 1px solid rgba(37, 99, 235, 0.2);
 }
 
 .chip--muted {
-  background-color: var(--dl-surface);
-  border-color: var(--dl-border);
+  background-color: var(--color-surface);
+  border-color: var(--color-border);
 }
 
 .panel__footer {
@@ -397,11 +397,11 @@ onMounted(() => {
 .panel__row {
   display: flex;
   justify-content: space-between;
-  color: var(--dl-text-muted);
+  color: var(--color-text-muted);
 }
 
 .panel__value {
-  color: var(--dl-text);
+  color: var(--color-text);
   font-weight: 600;
 }
 
@@ -418,7 +418,7 @@ onMounted(() => {
 
 .section-heading p {
   margin: 0;
-  color: var(--dl-text-muted);
+  color: var(--color-text-muted);
   font-size: 14px;
 }
 
@@ -431,8 +431,8 @@ onMounted(() => {
 .feature-card {
   padding: 18px 20px;
   border-radius: 16px;
-  border: 1px solid var(--dl-border);
-  background-color: var(--dl-surface);
+  border: 1px solid var(--color-border);
+  background-color: var(--color-surface);
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -445,14 +445,14 @@ onMounted(() => {
 
 .feature-card__desc {
   margin: 0;
-  color: var(--dl-text-muted);
+  color: var(--color-text-muted);
   font-size: 13px;
 }
 
 .feature-card__list {
   margin: 0;
   padding-left: 18px;
-  color: var(--dl-text);
+  color: var(--color-text);
   font-size: 13px;
   display: grid;
   gap: 6px;
@@ -470,7 +470,7 @@ onMounted(() => {
   gap: 16px;
   padding: 20px 24px;
   border-radius: 16px;
-  border: 1px solid var(--dl-border);
+  border: 1px solid var(--color-border);
   background: linear-gradient(120deg, rgba(37, 99, 235, 0.15), transparent 60%);
 }
 
@@ -481,7 +481,7 @@ onMounted(() => {
 
 .cta p {
   margin: 0;
-  color: var(--dl-text-muted);
+  color: var(--color-text-muted);
 }
 
 @media (max-width: 720px) {
@@ -507,7 +507,7 @@ onMounted(() => {
 .controls label {
   display: block;
   margin: 12px 0 6px;
-  color: var(--dl-text-muted);
+  color: var(--color-text-muted);
 }
 .controls input[type="range"] {
   width: 100%;
@@ -521,10 +521,14 @@ onMounted(() => {
   width: 280px;
 }
 .summary-card {
-  background: linear-gradient(180deg, var(--color-accent-soft, rgba(37, 99, 235, 0.12)), #fff);
+  background: linear-gradient(
+    180deg,
+    var(--color-accent-soft, color-mix(in srgb, var(--color-accent) 12%, transparent)),
+    var(--color-page-bg)
+  );
   padding: 18px;
   border-radius: 12px;
-  border: 1px solid var(--dl-border);
+  border: 1px solid var(--color-border);
   text-align: center;
 }
 .summary-card .price {
@@ -539,7 +543,7 @@ onMounted(() => {
   justify-content: center;
 }
 .pricing-note {
-  color: var(--dl-text-muted);
+  color: var(--color-text-muted);
   margin-top: 8px;
 }
 

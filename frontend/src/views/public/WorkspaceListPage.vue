@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <hgroup>
     <div>
       <h1>{{ t("workspaceList.header.title") }}</h1>

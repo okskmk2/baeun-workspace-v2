@@ -305,7 +305,7 @@ onBeforeUnmount(() => {
 }
 
 .notification-menu__item.unread {
-  border-color: color-mix(in srgb, var(--color-primary) 60%, var(--color-border));
+  border-color: color-mix(in srgb, var(--color-accent) 60%, var(--color-border));
 }
 
 .notification-menu__item-title {

@@ -1,0 +1,15 @@
+:root {
+  --theme-emerald-h: 160;
+  --theme-emerald-s: 45%;
+  --theme-emerald-bg: hsl(
+    var(--theme-emerald-h),
+    var(--theme-emerald-s),
+    var(--theme-swatch-bg-l)
+  );
+  --theme-emerald-fg: hsl(var(--theme-emerald-h), 70%, var(--theme-swatch-fg-l));
+}
+
+:root[data-theme="emerald"] {
+  --theme-h: var(--theme-emerald-h);
+  --theme-s: var(--theme-emerald-s);
+}

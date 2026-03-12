@@ -1,0 +1,11 @@
+:root {
+  --theme-teal-h: 175;
+  --theme-teal-s: 50%;
+  --theme-teal-bg: hsl(var(--theme-teal-h), var(--theme-teal-s), var(--theme-swatch-bg-l));
+  --theme-teal-fg: hsl(var(--theme-teal-h), 70%, var(--theme-swatch-fg-l));
+}
+
+:root[data-theme="teal"] {
+  --theme-h: var(--theme-teal-h);
+  --theme-s: var(--theme-teal-s);
+}

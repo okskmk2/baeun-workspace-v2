@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="login">
     <header class="login__header">
       <h1>{{ t("auth.login.title") }}</h1>
@@ -133,7 +133,7 @@ const onSubmit = async () => {
   place-items: center;
   padding: 32px 16px 48px;
   font-family: "Manrope", "Noto Sans KR", sans-serif;
-  color: #0f172a;
+  color: var(--color-text);
 }
 
 .login__header {
@@ -150,7 +150,7 @@ const onSubmit = async () => {
 
 .login__header p {
   margin: 0;
-  color: #6b7280;
+  color: var(--color-text-muted);
   font-size: 14px;
 }
 
@@ -159,9 +159,9 @@ const onSubmit = async () => {
   display: grid;
   gap: 16px;
   padding: var(--card-padding);
-  background-color: #ffffff;
+  background-color: var(--color-page-bg);
   border-radius: 18px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-border);
   box-shadow: 0 18px 50px rgba(15, 23, 42, 0.08);
 }
 
@@ -170,15 +170,15 @@ const onSubmit = async () => {
   margin-bottom: 6px;
   font-size: 13px;
   font-weight: 600;
-  color: #1f2937;
+  color: var(--color-text);
 }
 
 .login__field input {
   width: 100%;
   padding: 10px 12px;
   border-radius: 10px;
-  border: 1px solid #e2e8f0;
-  background-color: #f8fafc;
+  border: 1px solid var(--color-input-border);
+  background-color: var(--color-input-bg);
   font-size: 14px;
   transition:
     border-color 0.15s ease,
@@ -187,9 +187,9 @@ const onSubmit = async () => {
 
 .login__field input:focus {
   outline: none;
-  border-color: #2563eb;
+  border-color: var(--color-accent);
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
-  background-color: #ffffff;
+  background-color: var(--color-page-bg);
 }
 
 .login__remember {
@@ -197,7 +197,7 @@ const onSubmit = async () => {
   align-items: center;
   gap: 8px;
   font-size: 13px;
-  color: #475569;
+  color: var(--color-text-muted);
 }
 
 .login__remember input {
@@ -208,7 +208,7 @@ const onSubmit = async () => {
 .login__error {
   margin: 6px 0 0;
   font-size: 12px;
-  color: #b91c1c;
+  color: var(--color-danger);
 }
 
 .login__form .btn {
@@ -220,12 +220,12 @@ const onSubmit = async () => {
 .login__signup {
   margin-top: 18px;
   font-size: 13px;
-  color: #475569;
+  color: var(--color-text-muted);
   text-align: center;
 }
 
 .login__signup a {
-  color: #1d4ed8;
+  color: var(--color-accent);
   font-weight: 600;
 }
 

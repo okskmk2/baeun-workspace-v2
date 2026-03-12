@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="signup">
     <header class="signup__header">
       <h1>{{ t("auth.signup.title") }}</h1>
@@ -201,7 +201,7 @@ const onSubmit = async () => {
   place-items: center;
   padding: 32px 16px 48px;
   font-family: "Manrope", "Noto Sans KR", sans-serif;
-  color: #0f172a;
+  color: var(--color-text);
 }
 
 .signup__header {
@@ -218,7 +218,7 @@ const onSubmit = async () => {
 
 .signup__header p {
   margin: 0;
-  color: #6b7280;
+  color: var(--color-text-muted);
   font-size: 14px;
 }
 
@@ -227,9 +227,9 @@ const onSubmit = async () => {
   display: grid;
   gap: 16px;
   padding: var(--card-padding);
-  background-color: #ffffff;
+  background-color: var(--color-page-bg);
   border-radius: 18px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-border);
   box-shadow: 0 18px 50px rgba(15, 23, 42, 0.08);
 }
 
@@ -238,15 +238,15 @@ const onSubmit = async () => {
   margin-bottom: 6px;
   font-size: 13px;
   font-weight: 600;
-  color: #1f2937;
+  color: var(--color-text);
 }
 
 .signup__field input {
   width: 100%;
   padding: 10px 12px;
   border-radius: 10px;
-  border: 1px solid #e2e8f0;
-  background-color: #f8fafc;
+  border: 1px solid var(--color-input-border);
+  background-color: var(--color-input-bg);
   font-size: 14px;
   transition:
     border-color 0.15s ease,
@@ -255,15 +255,15 @@ const onSubmit = async () => {
 
 .signup__field input:focus {
   outline: none;
-  border-color: #2563eb;
+  border-color: var(--color-accent);
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
-  background-color: #ffffff;
+  background-color: var(--color-page-bg);
 }
 
 .signup__error {
   margin: 6px 0 0;
   font-size: 12px;
-  color: #b91c1c;
+  color: var(--color-danger);
 }
 
 .signup__strength {
@@ -277,7 +277,7 @@ const onSubmit = async () => {
   width: 100%;
   height: 6px;
   border-radius: 999px;
-  background-color: #e2e8f0;
+  background-color: var(--color-border);
   overflow: hidden;
 }
 
@@ -292,26 +292,26 @@ const onSubmit = async () => {
 
 .signup__strength-fill.empty,
 .signup__strength-fill.weak {
-  background-color: #f87171;
+  background-color: var(--color-danger);
 }
 
 .signup__strength-fill.medium {
-  background-color: #fbbf24;
+  background-color: var(--color-warning);
 }
 
 .signup__strength-fill.strong {
-  background-color: #22c55e;
+  background-color: var(--color-success);
 }
 
 .signup__strength-text {
   font-size: 12px;
-  color: #64748b;
+  color: var(--color-text-muted);
 }
 
 .signup__success {
   margin: 6px 0 0;
   font-size: 12px;
-  color: #16a34a;
+  color: var(--color-success);
 }
 
 .signup__form .btn {
@@ -323,12 +323,12 @@ const onSubmit = async () => {
 .signup__signin {
   margin-top: 18px;
   font-size: 13px;
-  color: #475569;
+  color: var(--color-text-muted);
   text-align: center;
 }
 
 .signup__signin a {
-  color: #1d4ed8;
+  color: var(--color-accent);
   font-weight: 600;
 }
 

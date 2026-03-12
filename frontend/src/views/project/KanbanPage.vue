@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <hgroup>
     <div>
       <h1>{{ kanban.name || t("kanban.page.header.fallbackTitle") }}</h1>

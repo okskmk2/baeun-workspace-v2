@@ -1,0 +1,11 @@
+:root {
+  --theme-indigo-h: 238;
+  --theme-indigo-s: 55%;
+  --theme-indigo-bg: hsl(var(--theme-indigo-h), var(--theme-indigo-s), var(--theme-swatch-bg-l));
+  --theme-indigo-fg: hsl(var(--theme-indigo-h), 70%, var(--theme-swatch-fg-l));
+}
+
+:root[data-theme="indigo"] {
+  --theme-h: var(--theme-indigo-h);
+  --theme-s: var(--theme-indigo-s);
+}

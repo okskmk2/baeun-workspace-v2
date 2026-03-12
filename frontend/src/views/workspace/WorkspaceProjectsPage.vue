@@ -482,7 +482,7 @@ onMounted(() => {
 
 .chip--active {
   color: var(--color-text);
-  border-color: var(--color-primary);
+  border-color: var(--color-accent);
 }
 
 .content-section {
@@ -590,7 +590,7 @@ onMounted(() => {
 }
 
 .badge--highlight {
-  color: var(--color-primary);
+  color: var(--color-accent);
 }
 
 .badge--warning {

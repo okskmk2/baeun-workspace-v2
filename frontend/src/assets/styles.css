@@ -1,6 +1,6 @@
 @import url(./font.css);
 @import url(./variables.css);
-@import url(./theme.css);
+@import url(./theme/index.css);
 @import url(./button.css);
 @import url(./markdown.css);
 @import url(./layout.css);
