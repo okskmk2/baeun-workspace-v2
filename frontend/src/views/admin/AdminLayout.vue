@@ -12,6 +12,7 @@
           <router-link :to="{ name: 'AdminDashboard' }">Dashboard</router-link>
           <router-link :to="{ name: 'AdminUserWorkspaceManager' }">Users & Workspaces</router-link>
           <router-link :to="{ name: 'AdminBillingManager' }">Billing</router-link>
+          <router-link :to="{ name: 'AdminLicenseManager' }">Licenses</router-link>
           <router-link :to="{ name: 'AdminNotificationManager' }">Notifications</router-link>
         </nav>
       </aside>

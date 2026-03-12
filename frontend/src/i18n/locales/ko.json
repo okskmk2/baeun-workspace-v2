@@ -362,6 +362,111 @@
         "date": "-",
         "count": "-"
       }
+    },
+    "license": {
+      "header": {
+        "title": "워크스페이스 라이선스 센터",
+        "subtitle": "현재 사용량을 확인하고 필요한 슬롯을 빠르게 구매하세요."
+      },
+      "status": {
+        "loading": "라이선스 정보를 불러오는 중...",
+        "errorLoad": "라이선스 정보를 불러오지 못했습니다. 잠시 후 다시 시도하세요."
+      },
+      "sections": {
+        "projectSummaryAria": "프로젝트 슬롯 요약",
+        "memberSummaryAria": "워크스페이스 멤버 슬롯 요약",
+        "purchaseAria": "라이선스 구매 링크",
+        "guideAria": "라이선스 사용 가이드"
+      },
+      "project": {
+        "summary": {
+          "totalLabel": "보유 프로젝트 슬롯",
+          "totalMeta": "ACTIVE 상태의 프로젝트용 라이선스로 확보된 용량",
+          "usedLabel": "사용 중 슬롯",
+          "usedMeta": "현재 존재하는 프로젝트 수(프로젝트당 1 슬롯)",
+          "remainingLabel": "잔여 슬롯",
+          "remainingMeta": "즉시 생성 가능한 프로젝트 슬롯",
+          "overLimit": "현재 {count}개 슬롯이 부족합니다."
+        },
+        "table": {
+          "title": "프로젝트 슬롯 할당 현황",
+          "count": "총 {count}개 프로젝트",
+          "empty": "아직 프로젝트가 없습니다.",
+          "columns": {
+            "project": "프로젝트",
+            "coverage": "커버 상태",
+            "action": "조치"
+          },
+          "fallbackName": "Project {id}",
+          "states": {
+            "inUse": "사용 중",
+            "overflow": "슬롯 초과"
+          },
+          "actions": {
+            "resolve": "해결하기",
+            "none": "문제 없음"
+          },
+          "judgement": {
+            "available": "추가 조치 없이 사용 가능",
+            "buyRequired": "추가 구매 필요"
+          },
+          "modal": {
+            "title": "슬롯 초과 해결",
+            "summary": "현재 프로젝트 슬롯이 {count}개 부족합니다.",
+            "projectLabel": "대상 프로젝트",
+            "priorityLabel": "슬롯 커버 순서",
+            "priorityValue": "{covered}개 커버 기준 {order}번째",
+            "description": "프로젝트 슬롯을 추가 구매하면 초과 상태를 바로 해소할 수 있습니다.",
+            "primaryAction": "프로젝트 슬롯 구매하기",
+            "secondaryAction": "닫기"
+          }
+        }
+      },
+      "member": {
+        "summary": {
+          "totalLabel": "보유 워크스페이스 멤버 슬롯",
+          "totalMeta": "WORKSPACE_MEMBER 라이선스로 확보된 멤버 수용량",
+          "usedLabel": "사용 중 멤버 슬롯",
+          "usedMeta": "현재 워크스페이스 멤버 수",
+          "remainingLabel": "잔여 멤버 슬롯",
+          "remainingMeta": "추가로 초대 가능한 멤버 수",
+          "overLimit": "현재 멤버 슬롯이 {count}개 부족합니다."
+        }
+      },
+      "purchase": {
+        "title": "라이선스 구입",
+        "subtitle": "아래 버튼을 누르면 퍼블릭 라이선스 구매 페이지로 이동합니다.",
+        "projectButton": "프로젝트 슬롯 구입하기",
+        "memberButton": "워크스페이스 멤버 슬롯 구입하기"
+      },
+      "compact": {
+        "title": "슬롯 현황 및 구매",
+        "subtitle": "프로젝트/멤버 슬롯 현황을 한 번에 확인하고 필요한 항목을 바로 구매하세요.",
+        "columns": {
+          "type": "구분",
+          "total": "보유",
+          "used": "사용",
+          "remaining": "잔여",
+          "status": "상태",
+          "action": "바로가기"
+        },
+        "types": {
+          "project": "프로젝트 슬롯",
+          "member": "워크스페이스 멤버 슬롯"
+        },
+        "status": {
+          "ok": "정상",
+          "shortage": "{count}개 부족"
+        }
+      },
+      "guide": {
+        "title": "라이선스 사용 가이드",
+        "items": [
+          "잔여 슬롯이 음수면 현재 인원/프로젝트를 유지하려면 즉시 구매가 필요합니다.",
+          "신규 프로젝트 생성 전 프로젝트 슬롯 잔여 수를 먼저 확인하세요.",
+          "신규 멤버 초대 전 멤버 슬롯 잔여 수를 먼저 확인하세요."
+        ]
+      }
     }
   },
   "kanban": {

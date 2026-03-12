@@ -362,6 +362,111 @@
         "date": "-",
         "count": "-"
       }
+    },
+    "license": {
+      "header": {
+        "title": "Workspace License Center",
+        "subtitle": "Check current usage and quickly purchase the slots your team needs."
+      },
+      "status": {
+        "loading": "Loading license data...",
+        "errorLoad": "Failed to load license data. Please try again later."
+      },
+      "sections": {
+        "projectSummaryAria": "Project slot summary",
+        "memberSummaryAria": "Workspace member slot summary",
+        "purchaseAria": "License purchase links",
+        "guideAria": "License usage guide"
+      },
+      "project": {
+        "summary": {
+          "totalLabel": "Total project slots",
+          "totalMeta": "Capacity secured by ACTIVE project licenses",
+          "usedLabel": "Used slots",
+          "usedMeta": "Current project count (1 slot per project)",
+          "remainingLabel": "Remaining slots",
+          "remainingMeta": "Project slots available right now",
+          "overLimit": "You are short by {count} slots."
+        },
+        "table": {
+          "title": "Project slot allocation",
+          "count": "{count} projects total",
+          "empty": "No projects yet.",
+          "columns": {
+            "project": "Project",
+            "coverage": "Coverage",
+            "action": "Action"
+          },
+          "fallbackName": "Project {id}",
+          "states": {
+            "inUse": "In use",
+            "overflow": "Over slot limit"
+          },
+          "actions": {
+            "resolve": "Resolve",
+            "none": "No action needed"
+          },
+          "judgement": {
+            "available": "Usable without extra action",
+            "buyRequired": "Additional purchase required"
+          },
+          "modal": {
+            "title": "Resolve slot overflow",
+            "summary": "Project slots are short by {count}.",
+            "projectLabel": "Target project",
+            "priorityLabel": "Coverage priority",
+            "priorityValue": "{order}th with {covered} slots covered",
+            "description": "You can resolve the overflow immediately by purchasing additional project slots.",
+            "primaryAction": "Buy project slots",
+            "secondaryAction": "Close"
+          }
+        }
+      },
+      "member": {
+        "summary": {
+          "totalLabel": "Total workspace member slots",
+          "totalMeta": "Member capacity secured by WORKSPACE_MEMBER licenses",
+          "usedLabel": "Used member slots",
+          "usedMeta": "Current workspace member count",
+          "remainingLabel": "Remaining member slots",
+          "remainingMeta": "Additional members you can invite",
+          "overLimit": "You are short by {count} member slots."
+        }
+      },
+      "purchase": {
+        "title": "Purchase licenses",
+        "subtitle": "These buttons open the public license purchase page.",
+        "projectButton": "Buy project slots",
+        "memberButton": "Buy workspace member slots"
+      },
+      "compact": {
+        "title": "Slot overview and purchase",
+        "subtitle": "See project/member slot usage at a glance and buy what you need right away.",
+        "columns": {
+          "type": "Type",
+          "total": "Total",
+          "used": "Used",
+          "remaining": "Remaining",
+          "status": "Status",
+          "action": "Action"
+        },
+        "types": {
+          "project": "Project slots",
+          "member": "Workspace member slots"
+        },
+        "status": {
+          "ok": "Healthy",
+          "shortage": "Short by {count}"
+        }
+      },
+      "guide": {
+        "title": "License usage guide",
+        "items": [
+          "If remaining slots are negative, purchase is required to maintain current usage.",
+          "Check project slot balance before creating new projects.",
+          "Check member slot balance before inviting new members."
+        ]
+      }
     }
   },
   "kanban": {

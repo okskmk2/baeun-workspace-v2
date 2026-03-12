@@ -5,6 +5,8 @@
         <nav class="lnb-scroll">
           <router-link :to="generalTo">기본 정보</router-link>
           <router-link :to="membersTo">멤버 관리</router-link>
+          <router-link :to="licenseTo">라이선스</router-link>
+          <router-link :to="billingTo">결제 관리</router-link>
         </nav>
       </div>
     </aside>
@@ -23,6 +25,8 @@ const workspaceId = computed(() => route.params.workspaceId);
 
 const generalTo = computed(() => `/workspace/${workspaceId.value}/settings/general`);
 const membersTo = computed(() => `/workspace/${workspaceId.value}/settings/members`);
+const licenseTo = computed(() => `/workspace/${workspaceId.value}/settings/license`);
+const billingTo = computed(() => `/workspace/${workspaceId.value}/settings/billing`);
 </script>
 
 <style scoped>

@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <hgroup>
     <div>
       <h1>{{ t("settings.home.header.title") }}</h1>
@@ -50,6 +50,26 @@
           <div class="swatch">Aa</div>
           <span class="theme-name">{{ item.label }}</span>
         </label>
+        <label
+          class="theme-item"
+          :class="{ selected: form.themeId === 'custom' }"
+          :style="{
+            '--swatch-bg': form.customBackground,
+            '--swatch-fg': form.customForeground,
+          }"
+        >
+          <input type="radio" name="theme" value="custom" v-model="form.themeId" />
+          <div class="swatch">Aa</div>
+          <span class="theme-name">Custom</span>
+        </label>
+      </div>
+
+      <div v-if="form.themeId === 'custom'" class="custom-theme-controls">
+        <label for="project-theme-bg">GNB Background</label>
+        <input id="project-theme-bg" v-model="form.customBackground" type="color" />
+
+        <label for="project-theme-fg">GNB Foreground</label>
+        <input id="project-theme-fg" v-model="form.customForeground" type="color" />
       </div>
     </div>
 
@@ -127,6 +147,8 @@ const projectWorkspaceId = ref(null);
 const form = ref({
   name: "",
   themeId: "",
+  customBackground: "#1f2937",
+  customForeground: "#ffffff",
 });
 
 const themeOptionsBase = [
@@ -150,11 +172,30 @@ const themeOptions = computed(() =>
 );
 
 const resolveThemeId = (theme) => {
+  if (theme?.themeId === "custom") return "custom";
+  if (theme?.background || theme?.foreground) return "custom";
   if (theme?.themeId && themeOptionsBase.some((id) => id === theme.themeId)) {
     return theme.themeId;
   }
   return "";
 };
+
+const normalizeHexColor = (value, fallback) => {
+  const input = String(value || "").trim();
+  if (/^#[0-9a-fA-F]{6}$/.test(input)) return input;
+  if (/^#[0-9a-fA-F]{3}$/.test(input)) {
+    const r = input[1];
+    const g = input[2];
+    const b = input[3];
+    return `#${r}${r}${g}${g}${b}${b}`;
+  }
+  return fallback;
+};
+
+const resolveCustomColors = (theme) => ({
+  background: normalizeHexColor(theme?.background, "#1f2937"),
+  foreground: normalizeHexColor(theme?.foreground, "#ffffff"),
+});
 
 const fetchProject = async () => {
   if (!projectId.value) return;
@@ -165,7 +206,11 @@ const fetchProject = async () => {
     const res = await api.get(`/projects/${projectId.value}`);
     const data = res.data || {};
     form.value.name = data.name || "";
-    form.value.themeId = resolveThemeId(data.theme_json?.gnb);
+    const gnbTheme = data.theme_json?.gnb || null;
+    form.value.themeId = resolveThemeId(gnbTheme);
+    const customColors = resolveCustomColors(gnbTheme);
+    form.value.customBackground = customColors.background;
+    form.value.customForeground = customColors.foreground;
     projectWorkspaceId.value = data.workspace_id || null;
   } catch (error) {
     errorMessage.value = t("settings.home.status.errorLoad");
@@ -181,6 +226,15 @@ const saveSettings = async () => {
   }
 
   const selected = themeOptionsBase.find((id) => id === form.value.themeId) || "";
+  const isCustom = form.value.themeId === "custom";
+  const isInherit = !selected && !isCustom;
+
+  const customBackground = normalizeHexColor(form.value.customBackground, "");
+  const customForeground = normalizeHexColor(form.value.customForeground, "");
+  if (isCustom && (!customBackground || !customForeground)) {
+    formError.value = "Please check custom theme colors.";
+    return;
+  }
 
   isSaving.value = true;
   formError.value = "";
@@ -188,13 +242,19 @@ const saveSettings = async () => {
   try {
     await api.patch(`/projects/${projectId.value}`, {
       name: form.value.name,
-      theme_json: selected
-        ? {
-            gnb: {
-              themeId: selected,
-            },
-          }
-        : {},
+      theme_json: isInherit
+        ? {}
+        : {
+            gnb: isCustom
+              ? {
+                  themeId: "custom",
+                  background: customBackground,
+                  foreground: customForeground,
+                }
+              : {
+                  themeId: selected,
+                },
+          },
     });
     if (projectId.value) {
       const current = workspaceStore.getProject(projectId.value) || {};
@@ -203,15 +263,23 @@ const saveSettings = async () => {
         name: form.value.name,
         theme_json: {
           ...(current.theme_json || {}),
-          ...(selected
+          ...(isInherit
             ? {
-                gnb: {
-                  themeId: selected,
-                },
-              }
-            : {
                 gnb: {},
-              }),
+              }
+            : isCustom
+              ? {
+                  gnb: {
+                    themeId: "custom",
+                    background: customBackground,
+                    foreground: customForeground,
+                  },
+                }
+              : {
+                  gnb: {
+                    themeId: selected,
+                  },
+                }),
         },
       };
     }
@@ -267,12 +335,33 @@ onMounted(fetchProject);
 watch(
   () => form.value.themeId,
   (value) => {
+    if (value === "custom") {
+      appStore.setGnbPreviewTheme({
+        themeId: "custom",
+        background: form.value.customBackground,
+        foreground: form.value.customForeground,
+      });
+      return;
+    }
+
     const selected = themeOptions.value.find((item) => item.id === value);
     if (!selected) {
       appStore.clearGnbPreviewTheme();
       return;
     }
     appStore.setGnbPreviewTheme({ themeId: selected.id });
+  }
+);
+
+watch(
+  () => [form.value.customBackground, form.value.customForeground],
+  ([background, foreground]) => {
+    if (form.value.themeId !== "custom") return;
+    appStore.setGnbPreviewTheme({
+      themeId: "custom",
+      background,
+      foreground,
+    });
   }
 );
 
@@ -325,6 +414,24 @@ onBeforeUnmount(() => {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
   gap: 12px;
+}
+
+.custom-theme-controls {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: auto auto;
+  align-items: center;
+  gap: 8px 12px;
+  max-width: 320px;
+}
+
+.custom-theme-controls input[type="color"] {
+  width: 44px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--color-input-border);
+  border-radius: 6px;
+  background: transparent;
 }
 
 .theme-item {

@@ -95,6 +95,36 @@
           <div class="swatch">Aa</div>
           <span class="theme-name">{{ item.label }}</span>
         </label>
+        <label
+          class="theme-item"
+          :class="{ selected: form.themeId === 'custom' }"
+          :style="{
+            '--swatch-bg': form.customBackground,
+            '--swatch-fg': form.customForeground,
+          }"
+        >
+          <input type="radio" name="theme" value="custom" v-model="form.themeId" />
+          <div class="swatch">Aa</div>
+          <span class="theme-name">Custom</span>
+        </label>
+      </div>
+
+      <div v-if="form.themeId === 'custom'" class="custom-theme-controls">
+        <label for="workspace-theme-bg">GNB 배경색</label>
+        <input
+          id="workspace-theme-bg"
+          v-model="form.customBackground"
+          type="color"
+          :disabled="!canManageWorkspace || isUpdatingName"
+        />
+
+        <label for="workspace-theme-fg">GNB 글자색</label>
+        <input
+          id="workspace-theme-fg"
+          v-model="form.customForeground"
+          type="color"
+          :disabled="!canManageWorkspace || isUpdatingName"
+        />
       </div>
     </div>
   </form>
@@ -105,6 +135,7 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 import Avatar from "../../components/Avatar.vue";
+import { addToast } from "../../lib/toast";
 import { useWorkspaceStore } from "../../stores/workspaceStore";
 import { useAppStore } from "../../stores/appStore";
 
@@ -139,6 +170,8 @@ const workspaceImageError = ref("");
 const workspaceImageSuccess = ref("");
 const form = ref({
   themeId: "light",
+  customBackground: "#1f2937",
+  customForeground: "#ffffff",
 });
 
 const themeOptionsBase = [
@@ -162,11 +195,30 @@ const themeOptions = computed(() =>
 );
 
 const resolveThemeId = (theme) => {
+  if (theme?.themeId === "custom") return "custom";
+  if (theme?.background || theme?.foreground) return "custom";
   if (theme?.themeId && themeOptionsBase.some((id) => id === theme.themeId)) {
     return theme.themeId;
   }
   return "light";
 };
+
+const normalizeHexColor = (value, fallback) => {
+  const input = String(value || "").trim();
+  if (/^#[0-9a-fA-F]{6}$/.test(input)) return input;
+  if (/^#[0-9a-fA-F]{3}$/.test(input)) {
+    const r = input[1];
+    const g = input[2];
+    const b = input[3];
+    return `#${r}${r}${g}${g}${b}${b}`;
+  }
+  return fallback;
+};
+
+const resolveCustomColors = (theme) => ({
+  background: normalizeHexColor(theme?.background, "#1f2937"),
+  foreground: normalizeHexColor(theme?.foreground, "#ffffff"),
+});
 
 const fetchWorkspaceDetail = async () => {
   if (!workspaceId.value) return;
@@ -176,9 +228,12 @@ const fetchWorkspaceDetail = async () => {
   try {
     await workspaceStore.fetchWorkspace(workspaceId.value);
     nameForm.value = workspaceStore.workspaceById[workspaceId.value]?.name || "";
-    form.value.themeId = resolveThemeId(
-      workspaceStore.workspaceById[workspaceId.value]?.theme_json?.gnb
-    );
+    const currentTheme = workspaceStore.workspaceById[workspaceId.value]?.theme_json?.gnb;
+    const resolvedThemeId = resolveThemeId(currentTheme);
+    const customColors = resolveCustomColors(currentTheme);
+    form.value.themeId = resolvedThemeId;
+    form.value.customBackground = customColors.background;
+    form.value.customForeground = customColors.foreground;
   } catch (error) {
     errorMessage.value =
       error?.response?.data?.message || "워크스페이스 정보를 불러오지 못했습니다.";
@@ -191,6 +246,7 @@ const saveSettings = async () => {
   if (!canManageWorkspace.value) return;
   const nextName = String(nameForm.value || "").trim();
   const selected = themeOptionsBase.find((id) => id === form.value.themeId);
+  const isCustom = form.value.themeId === "custom";
   nameError.value = "";
   nameSuccess.value = "";
 
@@ -199,14 +255,31 @@ const saveSettings = async () => {
     return;
   }
 
-  if (!selected) {
+  if (!selected && !isCustom) {
     nameError.value = "테마를 선택하세요.";
     return;
   }
 
+  const customBackground = normalizeHexColor(form.value.customBackground, "");
+  const customForeground = normalizeHexColor(form.value.customForeground, "");
+  if (isCustom && (!customBackground || !customForeground)) {
+    nameError.value = "사용자 정의 테마 색상을 확인하세요.";
+    return;
+  }
+
   const currentThemeId = resolveThemeId(workspace.value?.theme_json?.gnb);
-  if (nextName === workspaceName.value && currentThemeId === selected) {
+  const currentTheme = workspace.value?.theme_json?.gnb || {};
+  const sameCustomTheme =
+    isCustom &&
+    normalizeHexColor(currentTheme.background, "") === customBackground &&
+    normalizeHexColor(currentTheme.foreground, "") === customForeground;
+  if (
+    nextName === workspaceName.value &&
+    ((isCustom && currentThemeId === "custom" && sameCustomTheme) ||
+      (!isCustom && currentThemeId === selected))
+  ) {
     nameSuccess.value = "변경 사항이 없습니다.";
+    addToast({ message: "변경 사항이 없습니다.", type: "info" });
     return;
   }
 
@@ -216,14 +289,24 @@ const saveSettings = async () => {
       name: nextName,
       theme_json: {
         gnb: {
-          themeId: selected,
+          ...(isCustom
+            ? {
+                themeId: "custom",
+                background: customBackground,
+                foreground: customForeground,
+              }
+            : {
+                themeId: selected,
+              }),
         },
       },
     });
     nameSuccess.value = "워크스페이스 설정이 저장되었습니다.";
+    addToast({ message: "워크스페이스 설정이 저장되었습니다.", type: "success" });
     await workspaceStore.fetchWorkspace(workspaceId.value);
   } catch (error) {
     nameError.value = error?.response?.data?.message || "워크스페이스 설정을 변경하지 못했습니다.";
+    addToast({ message: nameError.value, type: "error" });
   } finally {
     isUpdatingName.value = false;
   }
@@ -303,12 +386,33 @@ watch(() => route.params.workspaceId, fetchPageData);
 watch(
   () => form.value.themeId,
   (value) => {
+    if (value === "custom") {
+      appStore.setGnbPreviewTheme({
+        themeId: "custom",
+        background: form.value.customBackground,
+        foreground: form.value.customForeground,
+      });
+      return;
+    }
+
     const selected = themeOptions.value.find((item) => item.id === value);
     if (!selected) {
       appStore.clearGnbPreviewTheme();
       return;
     }
     appStore.setGnbPreviewTheme({ themeId: selected.id });
+  }
+);
+
+watch(
+  () => [form.value.customBackground, form.value.customForeground],
+  ([background, foreground]) => {
+    if (form.value.themeId !== "custom") return;
+    appStore.setGnbPreviewTheme({
+      themeId: "custom",
+      background,
+      foreground,
+    });
   }
 );
 
@@ -395,6 +499,24 @@ onBeforeUnmount(() => {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
   gap: 12px;
+}
+
+.custom-theme-controls {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: auto auto;
+  align-items: center;
+  gap: 8px 12px;
+  max-width: 320px;
+}
+
+.custom-theme-controls input[type="color"] {
+  width: 44px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--color-input-border);
+  border-radius: 6px;
+  background: transparent;
 }
 
 .theme-item {

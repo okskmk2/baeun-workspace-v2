@@ -1,0 +1,451 @@
+{
+  "frontendRouteHierarchy": [
+    {
+      "path": "/",
+      "name": "PublicRoot",
+      "component": "PublicLayout",
+      "componentType": "layout",
+      "description": "공개 영역 공통 레이아웃",
+      "children": [
+        {
+          "path": "",
+          "fullPath": "/",
+          "component": "HomePage",
+          "componentType": "page",
+          "description": "랜딩 홈"
+        },
+        {
+          "path": "store",
+          "fullPath": "/store",
+          "component": "StorePage",
+          "componentType": "page",
+          "description": "스토어/플랜 소개"
+        },
+        {
+          "path": "not-found",
+          "fullPath": "/not-found",
+          "component": "NotFoundPage",
+          "componentType": "page",
+          "description": "404 안내"
+        },
+        {
+          "path": "login",
+          "fullPath": "/login",
+          "component": "LoginPage",
+          "componentType": "page",
+          "description": "로그인"
+        },
+        {
+          "path": "signup",
+          "fullPath": "/signup",
+          "component": "SigupPage",
+          "componentType": "page",
+          "description": "회원가입"
+        },
+        {
+          "path": "settings",
+          "fullPath": "/settings",
+          "component": "SettingsLayout",
+          "componentType": "layout",
+          "description": "사용자 설정 레이아웃",
+          "meta": {
+            "requiresAuth": true
+          },
+          "children": [
+            {
+              "path": "",
+              "fullPath": "/settings",
+              "redirect": "/settings/profile",
+              "description": "기본 진입 리다이렉트"
+            },
+            {
+              "path": "profile",
+              "fullPath": "/settings/profile",
+              "component": "ProfilePage",
+              "componentType": "page",
+              "description": "프로필 설정"
+            },
+            {
+              "path": "security",
+              "fullPath": "/settings/security",
+              "component": "SecurityPage",
+              "componentType": "page",
+              "description": "보안 설정"
+            },
+            {
+              "path": "plan",
+              "fullPath": "/settings/plan",
+              "component": "PlanLicensePage",
+              "componentType": "page",
+              "description": "요금제/라이선스"
+            },
+            {
+              "path": "billing",
+              "fullPath": "/settings/billing",
+              "component": "BillingPage",
+              "componentType": "page",
+              "description": "결제 정보 관리"
+            },
+            {
+              "path": "workspaces",
+              "fullPath": "/settings/workspaces",
+              "component": "WorkspaceListPage",
+              "componentType": "page",
+              "description": "워크스페이스 목록"
+            },
+            {
+              "path": "workspaces/:workspaceId",
+              "fullPath": "/settings/workspaces/:workspaceId",
+              "component": "WorkspaceDetailPage",
+              "componentType": "page",
+              "description": "워크스페이스 상세"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "/workspace/:workspaceId",
+      "name": "WorkspaceRoot",
+      "component": "WorkspaceLayout",
+      "componentType": "layout",
+      "description": "워크스페이스 영역 공통 레이아웃",
+      "meta": {
+        "requiresAuth": true
+      },
+      "children": [
+        {
+          "path": "",
+          "fullPath": "/workspace/:workspaceId",
+          "redirectTemplate": "/workspace/:workspaceId/projects",
+          "description": "기본 진입 리다이렉트"
+        },
+        {
+          "path": "projects",
+          "fullPath": "/workspace/:workspaceId/projects",
+          "name": "workspace-projects",
+          "component": "WorkspaceProjectsPage",
+          "componentType": "page",
+          "description": "프로젝트 목록"
+        },
+        {
+          "path": "board",
+          "fullPath": "/workspace/:workspaceId/board",
+          "name": "workspace-board",
+          "component": "WorkspaceBoardLayout",
+          "componentType": "layout",
+          "description": "워크스페이스 보드 레이아웃",
+          "children": [
+            {
+              "path": "",
+              "fullPath": "/workspace/:workspaceId/board",
+              "redirectTemplate": "/workspace/:workspaceId/board/home",
+              "description": "보드 기본 리다이렉트"
+            },
+            {
+              "path": "home",
+              "fullPath": "/workspace/:workspaceId/board/home",
+              "component": "WorkspaceBoardHomePage",
+              "componentType": "page",
+              "description": "보드 홈"
+            },
+            {
+              "path": "notice",
+              "fullPath": "/workspace/:workspaceId/board/notice",
+              "component": "WorkspaceBoardNoticePage",
+              "componentType": "page",
+              "description": "공지 보드"
+            },
+            {
+              "path": "events",
+              "fullPath": "/workspace/:workspaceId/board/events",
+              "component": "WorkspaceBoardCelebrationPage",
+              "componentType": "page",
+              "description": "이벤트/축하 보드"
+            },
+            {
+              "path": "market",
+              "fullPath": "/workspace/:workspaceId/board/market",
+              "component": "WorkspaceBoardMarketPage",
+              "componentType": "page",
+              "description": "마켓 보드"
+            },
+            {
+              "path": "resource",
+              "fullPath": "/workspace/:workspaceId/board/resource",
+              "component": "WorkspaceBoardResourcePage",
+              "componentType": "page",
+              "description": "리소스 보드"
+            },
+            {
+              "path": "celebration",
+              "fullPath": "/workspace/:workspaceId/board/celebration",
+              "redirectTemplate": "/workspace/:workspaceId/board/events",
+              "description": "레거시 경로 리다이렉트"
+            },
+            {
+              "path": "people",
+              "fullPath": "/workspace/:workspaceId/board/people",
+              "redirectTemplate": "/workspace/:workspaceId/board/resource",
+              "description": "레거시 경로 리다이렉트"
+            }
+          ]
+        },
+        {
+          "path": "rank",
+          "fullPath": "/workspace/:workspaceId/rank",
+          "name": "workspace-rank",
+          "component": "WorkspaceRankPage",
+          "componentType": "page",
+          "description": "워크스페이스 랭킹"
+        },
+        {
+          "path": "settings",
+          "fullPath": "/workspace/:workspaceId/settings",
+          "component": "WorkspaceSettingsLayout",
+          "componentType": "layout",
+          "description": "워크스페이스 설정 레이아웃",
+          "children": [
+            {
+              "path": "",
+              "fullPath": "/workspace/:workspaceId/settings",
+              "alias": ["/workspace/:workspaceId/settings/general"],
+              "component": "WorkspaceSettingsPage",
+              "componentType": "page",
+              "description": "일반 설정"
+            },
+            {
+              "path": "members",
+              "fullPath": "/workspace/:workspaceId/settings/members",
+              "component": "WorkspaceSettingsMembersPage",
+              "componentType": "page",
+              "description": "멤버 관리"
+            },
+            {
+              "path": "license",
+              "fullPath": "/workspace/:workspaceId/settings/license",
+              "component": "WorkspaceSettingsLicensePage",
+              "componentType": "page",
+              "description": "라이선스 설정"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "/project/:projectId",
+      "name": "ProjectRoot",
+      "component": "ProjectLayout",
+      "componentType": "layout",
+      "description": "프로젝트 영역 공통 레이아웃",
+      "children": [
+        {
+          "path": "",
+          "fullPath": "/project/:projectId",
+          "redirectTemplate": "/project/:projectId/kanban",
+          "component": "BlankPage",
+          "componentType": "page",
+          "description": "프로젝트 기본 진입 리다이렉트"
+        },
+        {
+          "path": "kanban",
+          "fullPath": "/project/:projectId/kanban",
+          "component": "KanbanLayout",
+          "componentType": "layout",
+          "description": "칸반 영역 레이아웃",
+          "children": [
+            {
+              "path": "",
+              "fullPath": "/project/:projectId/kanban",
+              "component": "KanbanHomePage",
+              "componentType": "page",
+              "description": "칸반 홈"
+            },
+            {
+              "path": "gantt",
+              "fullPath": "/project/:projectId/kanban/gantt",
+              "component": "GanttPage",
+              "componentType": "page",
+              "description": "간트 뷰"
+            },
+            {
+              "path": "archive",
+              "fullPath": "/project/:projectId/kanban/archive",
+              "component": "KanbanArchivePage",
+              "componentType": "page",
+              "description": "칸반 아카이브"
+            },
+            {
+              "path": ":kanbanId",
+              "fullPath": "/project/:projectId/kanban/:kanbanId",
+              "component": "KanbanPage",
+              "componentType": "page",
+              "description": "특정 칸반 보드"
+            },
+            {
+              "path": ":kanbanId/settings",
+              "fullPath": "/project/:projectId/kanban/:kanbanId/settings",
+              "component": "KanbanSettingsPage",
+              "componentType": "page",
+              "description": "칸반 보드 설정"
+            },
+            {
+              "path": ":kanbanId/task/:taskId",
+              "fullPath": "/project/:projectId/kanban/:kanbanId/task/:taskId",
+              "component": "TaskDetailPage",
+              "componentType": "page",
+              "description": "태스크 상세"
+            },
+            {
+              "path": "backlog",
+              "fullPath": "/project/:projectId/kanban/backlog",
+              "component": "BacklogPage",
+              "componentType": "page",
+              "description": "백로그"
+            }
+          ]
+        },
+        {
+          "path": "wiki",
+          "fullPath": "/project/:projectId/wiki",
+          "component": "WikiLayout",
+          "componentType": "layout",
+          "description": "위키 영역 레이아웃",
+          "children": [
+            {
+              "path": "",
+              "fullPath": "/project/:projectId/wiki",
+              "component": "WikiHomePage",
+              "componentType": "page",
+              "description": "위키 홈"
+            },
+            {
+              "path": ":pageId",
+              "fullPath": "/project/:projectId/wiki/:pageId",
+              "component": "WikiPage",
+              "componentType": "page",
+              "description": "위키 문서 상세"
+            }
+          ]
+        },
+        {
+          "path": "channel",
+          "fullPath": "/project/:projectId/channel",
+          "component": "ChannelLayout",
+          "componentType": "layout",
+          "description": "채널 영역 레이아웃",
+          "children": [
+            {
+              "path": "",
+              "fullPath": "/project/:projectId/channel",
+              "component": "ChannelHomePage",
+              "componentType": "page",
+              "description": "채널 홈"
+            },
+            {
+              "path": "archive",
+              "fullPath": "/project/:projectId/channel/archive",
+              "component": "ChannelArchivePage",
+              "componentType": "page",
+              "description": "채널 아카이브"
+            },
+            {
+              "path": ":roomId/settings",
+              "fullPath": "/project/:projectId/channel/:roomId/settings",
+              "component": "ChannelSettingsPage",
+              "componentType": "page",
+              "description": "채널 설정"
+            },
+            {
+              "path": ":roomId",
+              "fullPath": "/project/:projectId/channel/:roomId",
+              "component": "ChannelRoomPage",
+              "componentType": "page",
+              "description": "채팅방 상세"
+            }
+          ]
+        },
+        {
+          "path": "settings",
+          "fullPath": "/project/:projectId/settings",
+          "component": "ProjectSettingsLayout",
+          "componentType": "layout",
+          "description": "프로젝트 설정 레이아웃",
+          "meta": {
+            "requiresProjectAdmin": true
+          },
+          "children": [
+            {
+              "path": "",
+              "fullPath": "/project/:projectId/settings",
+              "component": "ProjectSettingsHomePage",
+              "componentType": "page",
+              "description": "프로젝트 설정 홈"
+            },
+            {
+              "path": "member",
+              "fullPath": "/project/:projectId/settings/member",
+              "component": "ProjectSettingsMemberPage",
+              "componentType": "page",
+              "description": "프로젝트 멤버 관리"
+            },
+            {
+              "path": "notifications",
+              "fullPath": "/project/:projectId/settings/notifications",
+              "component": "NotificationHistoryPage",
+              "componentType": "page",
+              "description": "알림 이력"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "/admin",
+      "name": "AdminRoot",
+      "component": "AdminLayout",
+      "componentType": "layout",
+      "description": "관리자 영역 공통 레이아웃",
+      "meta": {
+        "requiresAuth": true
+      },
+      "redirect": {
+        "name": "AdminDashboard"
+      },
+      "children": [
+        {
+          "path": "dashboard",
+          "fullPath": "/admin/dashboard",
+          "name": "AdminDashboard",
+          "component": "AdminDashboardPage",
+          "componentType": "page",
+          "description": "관리자 대시보드"
+        },
+        {
+          "path": "users",
+          "fullPath": "/admin/users",
+          "name": "AdminUserWorkspaceManager",
+          "component": "AdminUserWorkspacePage",
+          "componentType": "page",
+          "description": "사용자/워크스페이스 관리"
+        },
+        {
+          "path": "billing",
+          "fullPath": "/admin/billing",
+          "name": "AdminBillingManager",
+          "component": "AdminBillingPage",
+          "componentType": "page",
+          "description": "관리자 과금 관리"
+        },
+        {
+          "path": "notifications",
+          "fullPath": "/admin/notifications",
+          "name": "AdminNotificationManager",
+          "component": "AdminNotificationPage",
+          "componentType": "page",
+          "description": "관리자 알림 관리"
+        }
+      ]
+    }
+  ]
+}
