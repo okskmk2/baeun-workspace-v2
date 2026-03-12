@@ -173,17 +173,6 @@ watch(
   justify-self: end;
 }
 
-.WorkspaceLayout .mainnav__link,
-.WorkspaceLayout .utilnav__link {
-  color: inherit;
-  text-decoration: none;
-}
-
-.WorkspaceLayout .mainnav__link.router-link-active,
-.WorkspaceLayout .utilnav__link.router-link-active {
-  color: var(--color-primary);
-}
-
 .WorkspaceLayout main {
   background-color: var(--dl-page-bg);
   padding: 2rem 3rem 4rem;
