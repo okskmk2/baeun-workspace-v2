@@ -11,7 +11,7 @@ import { broadcastToRoom, broadcastToUsers, joinRoom, registerUserSocket, remove
 import { createNotifications, NOTIFICATION_TYPES } from "./notification.mjs";
 import path from "path";
 import { fileURLToPath } from "url";
-import { SESSION_TTL_MS, SESSION_TTL_SECONDS } from "./config/session.mjs";
+import { REMEMBER_SESSION_TTL_SECONDS, SESSION_TTL_SECONDS } from "./config/session.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -50,7 +50,7 @@ const sessionParser = session({
   store: new pgSession({
     pool: pool,
     tableName: "session",
-    ttl: SESSION_TTL_SECONDS,
+    ttl: Math.max(SESSION_TTL_SECONDS, REMEMBER_SESSION_TTL_SECONDS),
   }),
   secret: process.env.SESSION_SECRET || "secret",
   resave: false,
@@ -59,7 +59,6 @@ const sessionParser = session({
     httpOnly: true,
     secure: isProduction, // Use secure cookies in production (HTTPS).
     sameSite: "lax", // Cross-site cookie delivery setting.
-    maxAge: SESSION_TTL_MS,
   },
 });
 

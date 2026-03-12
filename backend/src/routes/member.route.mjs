@@ -9,6 +9,7 @@ import {
   DEFAULT_PROJECT_WIKI_CONTENT,
   DEFAULT_PROJECT_WIKI_TITLE,
 } from "../constants/defaultProjectWiki.mjs";
+import { REMEMBER_SESSION_TTL_MS } from "../config/session.mjs";
 
 const router = express.Router();
 const SALT_ROUNDS = 10; // Hash cost (higher is more secure but slower).
@@ -29,6 +30,16 @@ const MIME_TO_EXTENSION = {
   "image/png": "png",
   "image/webp": "webp",
   "image/gif": "gif",
+};
+
+const normalizeRememberValue = (value) => {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "number") return value === 1;
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+    return normalized === "1" || normalized === "true" || normalized === "on";
+  }
+  return false;
 };
 
 const getOwnedResourceItems = async (client, userId) => {
@@ -355,7 +366,7 @@ router.post("/signup", isGuest, async (req, res) => {
  *         $ref: "#/components/responses/ErrorResponse"
  */
 router.post("/login", async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password, remember } = req.body;
 
   try {
     // 1. Find user by email.
@@ -378,6 +389,11 @@ router.post("/login", async (req, res) => {
     // 3. Set session.
     req.session.userId = user.id;
     req.session.userName = user.name;
+    if (normalizeRememberValue(remember)) {
+      req.session.cookie.maxAge = REMEMBER_SESSION_TTL_MS;
+    } else {
+      req.session.cookie.expires = false;
+    }
     await new Promise((resolve, reject) => {
       req.session.save((err) => {
         if (err) return reject(err);

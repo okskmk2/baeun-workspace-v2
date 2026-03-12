@@ -104,6 +104,7 @@ const onSubmit = async () => {
     const response = await api.post("/members/login", {
       email: email.value,
       password: password.value,
+      remember: remember.value,
     });
 
     appStore.setCurrentUser(response.data);
