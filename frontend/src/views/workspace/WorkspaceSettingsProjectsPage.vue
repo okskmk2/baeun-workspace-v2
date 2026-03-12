@@ -25,33 +25,17 @@
     <section v-else class="card">
       <div class="card__header">
         <h2>프로젝트 목록</h2>
-        <CountChip :count="projects.length" />
+        <CountChip :count="projectTotal" />
       </div>
 
-      <p v-if="!projects.length" class="status muted">등록된 프로젝트가 없습니다.</p>
-
-      <ul v-else class="project-list">
-        <li v-for="project in projects" :key="project.id" class="project-item">
-          <div class="project-info">
-            <p class="project-name">{{ project.name || `Project ${project.id}` }}</p>
-            <p class="project-summary">{{ project.summary || "프로젝트 설명이 없습니다." }}</p>
-          </div>
-
-          <div class="project-actions">
-            <router-link class="btn btn--sm btn--secondary" :to="`/project/${project.id}`">
-              프로젝트 이동
-            </router-link>
-            <button
-              type="button"
-              class="btn btn--sm"
-              :disabled="!canManageWorkspace || isLoadingMemberModal(project.id)"
-              @click="openMemberModal(project)"
-            >
-              {{ isLoadingMemberModal(project.id) ? "불러오는 중..." : "멤버 설정" }}
-            </button>
-          </div>
-        </li>
-      </ul>
+      <DataTable
+        :headers="projectHeaders"
+        :data="projects"
+        :pagination="projectPagination"
+        empty-text="등록된 프로젝트가 없습니다."
+        min-width="720px"
+        @page-change="onProjectPageChange"
+      />
     </section>
 
     <p v-if="memberModalError" class="status error">{{ memberModalError }}</p>
@@ -75,9 +59,10 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch } from "vue";
-import { useRoute } from "vue-router";
+import { computed, h, onMounted, ref, watch } from "vue";
+import { RouterLink, useRoute } from "vue-router";
 import CountChip from "../../components/CountChip.vue";
+import DataTable from "../../components/DataTable.vue";
 import AddProjectMemberModal from "../../components/modals/AddProjectMemberModal.vue";
 import CreateProjectModal from "../../components/modals/CreateProjectModal.vue";
 import { addToast } from "../../lib/toast";
@@ -90,7 +75,8 @@ const projectMemberStore = useProjectMemberStore();
 
 const workspaceId = computed(() => route.params.workspaceId);
 const workspace = computed(() => workspaceStore.workspaceById[workspaceId.value] || null);
-const projects = computed(() => workspaceStore.getProjects(workspaceId.value) || []);
+const projects = computed(() => workspaceStore.getProjects(workspaceId.value, { paginated: true }) || []);
+const projectTotal = computed(() => Number(projectPagination.value.total || projects.value.length));
 
 const workspaceRoleUpper = computed(() => String(workspace.value?.role_name || "").toUpperCase());
 const canManageWorkspace = computed(() => ["OWNER", "ADMIN"].includes(workspaceRoleUpper.value));
@@ -98,6 +84,7 @@ const canManageWorkspace = computed(() => ["OWNER", "ADMIN"].includes(workspaceR
 const isLoading = ref(false);
 const errorMessage = ref("");
 const memberModalError = ref("");
+const projectPagination = ref({ page: 1, pageSize: 10, total: 0 });
 
 const isCreateModalOpen = ref(false);
 const isMemberModalOpen = ref(false);
@@ -111,6 +98,67 @@ const selectedProjectMembers = computed(() => {
   return projectMemberStore.getProjectMembers(selectedProjectId.value);
 });
 
+const projectHeaders = computed(() => [
+  {
+    text: "프로젝트",
+    key: "name",
+    align: "left",
+    render: (value, row) => h("p", { class: "project-name" }, value || `Project ${row.id}`),
+  },
+  {
+    text: "설명",
+    key: "summary",
+    align: "left",
+    render: (value) => h("p", { class: "project-summary" }, value || "프로젝트 설명이 없습니다."),
+  },
+  {
+    text: "관리",
+    key: "id",
+    align: "left",
+    render: (_value, row) =>
+      h("div", { class: "project-actions" }, [
+        h(
+          RouterLink,
+          {
+            class: "btn btn--sm btn--secondary",
+            to: `/project/${row.id}`,
+          },
+          () => "프로젝트 이동"
+        ),
+        h(
+          "button",
+          {
+            type: "button",
+            class: "btn btn--sm",
+            disabled: !canManageWorkspace.value || isLoadingMemberModal(row.id),
+            onClick: () => openMemberModal(row),
+          },
+          isLoadingMemberModal(row.id) ? "불러오는 중..." : "멤버 설정"
+        ),
+      ]),
+  },
+]);
+
+const syncPagination = () => {
+  const pagination = workspaceStore.getProjectPagination(workspaceId.value);
+  if (pagination) {
+    projectPagination.value = {
+      page: Number(pagination.page) > 0 ? Number(pagination.page) : projectPagination.value.page,
+      pageSize:
+        Number(pagination.pageSize) > 0
+          ? Number(pagination.pageSize)
+          : projectPagination.value.pageSize,
+      total: Number(pagination.total) >= 0 ? Number(pagination.total) : projects.value.length,
+    };
+    return;
+  }
+
+  projectPagination.value = {
+    ...projectPagination.value,
+    total: projects.value.length,
+  };
+};
+
 const fetchData = async () => {
   if (!workspaceId.value) return;
 
@@ -120,8 +168,12 @@ const fetchData = async () => {
   try {
     await Promise.all([
       workspaceStore.fetchWorkspace(workspaceId.value),
-      workspaceStore.fetchProjects(workspaceId.value),
+      workspaceStore.fetchProjects(workspaceId.value, {
+        page: projectPagination.value.page,
+        pageSize: projectPagination.value.pageSize,
+      }),
     ]);
+    syncPagination();
   } catch (error) {
     errorMessage.value =
       error?.response?.data?.message || "프로젝트 정보를 불러오지 못했습니다.";
@@ -141,8 +193,27 @@ const closeCreateModal = () => {
 
 const onProjectCreated = async () => {
   try {
-    await workspaceStore.fetchProjects(workspaceId.value);
+    await workspaceStore.fetchProjects(workspaceId.value, {
+      page: projectPagination.value.page,
+      pageSize: projectPagination.value.pageSize,
+    });
+    syncPagination();
     addToast({ message: "프로젝트를 생성했습니다.", type: "success" });
+  } catch (error) {
+    addToast({ message: "프로젝트 목록 갱신에 실패했습니다.", type: "error" });
+  }
+};
+
+const onProjectPageChange = async ({ page, pageSize }) => {
+  projectPagination.value = {
+    ...projectPagination.value,
+    page,
+    pageSize,
+  };
+
+  try {
+    await workspaceStore.fetchProjects(workspaceId.value, { page, pageSize });
+    syncPagination();
   } catch (error) {
     addToast({ message: "프로젝트 목록 갱신에 실패했습니다.", type: "error" });
   }
@@ -249,36 +320,13 @@ h1 {
   color: var(--color-text-muted);
 }
 
-.project-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: 8px;
-}
-
-.project-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-  background: var(--color-page-bg);
-  padding: 12px;
-}
-
-.project-info {
-  min-width: 0;
-}
-
 .project-name {
   margin: 0;
   font-weight: 600;
 }
 
 .project-summary {
-  margin: 4px 0 0;
+  margin: 0;
   color: var(--color-text-muted);
   font-size: 0.9rem;
 }
@@ -286,6 +334,7 @@ h1 {
 .project-actions {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
 }
 
@@ -293,16 +342,6 @@ h1 {
   hgroup {
     flex-direction: column;
     align-items: flex-start;
-  }
-
-  .project-item {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .project-actions {
-    width: 100%;
-    flex-wrap: wrap;
   }
 }
 </style>

@@ -14,68 +14,15 @@
       <h2>라이선스 목록</h2>
       <p v-if="isLoading" class="status">라이선스 목록을 불러오는 중...</p>
       <p v-else-if="loadError" class="status error">{{ loadError }}</p>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th scope="col">이름</th>
-              <th scope="col">리소스</th>
-              <th scope="col">주기</th>
-              <th scope="col">가격</th>
-              <th scope="col">판매 수량</th>
-              <th scope="col">상태</th>
-              <th scope="col">관리</th>
-              <th scope="col">상세</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-if="!isLoading && !loadError && !licenses.length">
-              <td colspan="8" class="status muted">등록된 라이선스가 없습니다.</td>
-            </tr>
-            <tr v-for="license in licenses" :key="license.id">
-              <td>{{ license.name || license.display_name || license.name_i18n_key }}</td>
-              <td>{{ license.target_resource }}</td>
-              <td>{{ license.billing_cycle }}</td>
-              <td>{{ formatPrice(license.price, license.currency) }}</td>
-              <td>{{ Number(license.sold_quantity || 0) }}</td>
-              <td>
-                <span :class="['status-pill', license.is_active ? 'ok' : 'muted']">
-                  {{ license.is_active ? "판매중" : "중단" }}
-                </span>
-              </td>
-              <td>
-                <button
-                  type="button"
-                  class="wire-button wire-button--sm"
-                  :disabled="updatingLicenseId === license.id"
-                  @click="toggleLicenseActive(license)"
-                >
-                  {{
-                    updatingLicenseId === license.id
-                      ? "처리 중..."
-                      : license.is_active
-                        ? "중단"
-                        : "재개"
-                  }}
-                </button>
-              </td>
-              <td>
-                <router-link
-                  v-if="resourceDetailRoute[license.target_resource]"
-                  class="link"
-                  :to="{
-                    name: resourceDetailRoute[license.target_resource],
-                    query: { licenseId: license.id },
-                  }"
-                >
-                  보기
-                </router-link>
-                <span v-else class="status muted">-</span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      <DataTable
+        v-else
+        :headers="licenseHeaders"
+        :data="licenses"
+        :pagination="pagination"
+        empty-text="등록된 라이선스가 없습니다."
+        min-width="960px"
+        @page-change="onLicensePageChange"
+      />
     </section>
 
     <BaseModal
@@ -148,11 +95,14 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from "vue";
+import { computed, h, onMounted, ref } from "vue";
+import { RouterLink } from "vue-router";
 import BaseModal from "../../components/BaseModal.vue";
+import DataTable from "../../components/DataTable.vue";
 import api from "../../lib/axios";
 
 const licenses = ref([]);
+const pagination = ref({ page: 1, pageSize: 10, total: 0 });
 
 const createForm = ref({
   name: "",
@@ -176,13 +126,48 @@ const loadError = ref("");
 const isCreating = ref(false);
 const updatingLicenseId = ref(null);
 
-const fetchLicenses = async () => {
+const fetchLicenses = async ({ page = pagination.value.page, pageSize = pagination.value.pageSize } = {}) => {
   isLoading.value = true;
   loadError.value = "";
+  pagination.value = {
+    ...pagination.value,
+    page,
+    pageSize,
+  };
 
   try {
-    const res = await api.get("/licenses");
-    licenses.value = Array.isArray(res.data) ? res.data : [];
+    const res = await api.get("/licenses", {
+      params: {
+        page,
+        pageSize,
+      },
+    });
+
+    if (Array.isArray(res.data)) {
+      licenses.value = res.data;
+      pagination.value = {
+        ...pagination.value,
+        page,
+        pageSize,
+        total: res.data.length,
+      };
+      return;
+    }
+
+    const items = Array.isArray(res.data?.items) ? res.data.items : [];
+    const serverPagination = res.data?.pagination || {};
+
+    const nextPage = Number(serverPagination.page);
+    const nextPageSize = Number(serverPagination.pageSize);
+    const nextTotal = Number(serverPagination.total);
+
+    licenses.value = items;
+    pagination.value = {
+      ...pagination.value,
+      page: Number.isInteger(nextPage) && nextPage > 0 ? nextPage : page,
+      pageSize: Number.isInteger(nextPageSize) && nextPageSize > 0 ? nextPageSize : pageSize,
+      total: Number.isInteger(nextTotal) && nextTotal >= 0 ? nextTotal : items.length,
+    };
   } catch (error) {
     loadError.value =
       error?.response?.data?.message || "라이선스 목록을 불러오지 못했습니다. 잠시 후 다시 시도하세요.";
@@ -199,6 +184,81 @@ const formatPrice = (value, currency) => {
     maximumFractionDigits: currency === "KRW" ? 0 : 2,
   }).format(value || 0);
 };
+
+const licenseHeaders = computed(() => [
+  {
+    text: "이름",
+    key: "display_name",
+    align: "left",
+    render: (_value, row) => row.name || row.display_name || row.name_i18n_key || "-",
+  },
+  {
+    text: "리소스",
+    key: "target_resource",
+    align: "left",
+  },
+  {
+    text: "주기",
+    key: "billing_cycle",
+    align: "left",
+  },
+  {
+    text: "가격",
+    key: "price",
+    align: "right",
+    render: (value, row) => formatPrice(value, row.currency),
+  },
+  {
+    text: "판매 수량",
+    key: "sold_quantity",
+    align: "right",
+    render: (value) => String(Number(value || 0)),
+  },
+  {
+    text: "상태",
+    key: "is_active",
+    align: "left",
+    render: (value) =>
+      h("span", { class: ["status-pill", value ? "ok" : "muted"] }, value ? "판매중" : "중단"),
+  },
+  {
+    text: "관리",
+    key: "id",
+    align: "left",
+    render: (_value, row) =>
+      h(
+        "button",
+        {
+          type: "button",
+          class: "wire-button wire-button--sm",
+          disabled: updatingLicenseId.value === row.id,
+          onClick: () => toggleLicenseActive(row),
+        },
+        updatingLicenseId.value === row.id ? "처리 중..." : row.is_active ? "중단" : "재개"
+      ),
+  },
+  {
+    text: "상세",
+    key: "target_resource",
+    align: "left",
+    render: (_value, row) => {
+      const routeName = resourceDetailRoute[row.target_resource];
+      if (!routeName) return h("span", { class: "status muted" }, "-");
+
+      return h(
+        RouterLink,
+        {
+          class: "link",
+          to: {
+            name: routeName,
+            query: { licenseId: row.id },
+          },
+        },
+        () => "보기"
+      );
+    },
+  },
+]);
 
 const addLicenseType = async () => {
   formError.value = "";
@@ -228,7 +288,7 @@ const addLicenseType = async () => {
     };
 
     isCreateModalOpen.value = false;
-    await fetchLicenses();
+    await fetchLicenses({ page: 1, pageSize: pagination.value.pageSize });
   } catch (error) {
     formError.value = error?.response?.data?.message || "라이선스 추가에 실패했습니다.";
   } finally {
@@ -256,6 +316,10 @@ const toggleLicenseActive = async (license) => {
   } finally {
     updatingLicenseId.value = null;
   }
+};
+
+const onLicensePageChange = async ({ page, pageSize }) => {
+  await fetchLicenses({ page, pageSize });
 };
 
 onMounted(fetchLicenses);
@@ -339,28 +403,6 @@ h1 {
   min-height: 30px;
   padding: 4px 10px;
   font-size: 0.8rem;
-}
-
-.table-wrap {
-  overflow-x: auto;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-  min-width: 760px;
-}
-
-th,
-td {
-  text-align: left;
-  padding: 10px 8px;
-  border-bottom: 1px solid var(--color-border);
-}
-
-th {
-  font-size: 0.875rem;
-  color: var(--color-text-muted);
 }
 
 .status {

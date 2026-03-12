@@ -1,6 +1,7 @@
 import express from "express";
 import pool from "../db.mjs";
 import { isAuth } from "../middlewares/auth.middleware.mjs";
+import { withPagination } from "../middlewares/pagination.middleware.mjs";
 import logger from "../logger.mjs";
 
 const router = express.Router();
@@ -68,9 +69,10 @@ const normalizeThemeJsonOutput = (themeJson) => {
  *       500:
  *         $ref: "#/components/responses/ErrorResponse"
  */
-router.get("/", isAuth, async (req, res) => {
+router.get("/", isAuth, withPagination({ defaultPageSize: 10, maxPageSize: 100 }), async (req, res) => {
   const { workspaceId } = req.query;
   const userId = req.session.userId;
+  const { hasPageQuery, page, pageSize } = req.pagination;
 
   if (!workspaceId) {
     return res.status(400).json({ name: "BadRequest", message: "workspaceId is required." });
@@ -84,6 +86,43 @@ router.get("/", isAuth, async (req, res) => {
 
     if (memberCheck.rows.length === 0) {
       return res.status(403).json({ name: "Forbidden", message: "Access denied." });
+    }
+
+    if (hasPageQuery) {
+      const countRes = await pool.query(
+        "SELECT COUNT(*)::int AS total FROM project WHERE workspace_id = $1",
+        [workspaceId]
+      );
+
+      const total = Number(countRes.rows?.[0]?.total || 0);
+      const totalPages = Math.max(1, Math.ceil(total / pageSize));
+      const normalizedPage = Math.min(Math.max(page, 1), totalPages);
+      const offset = (normalizedPage - 1) * pageSize;
+
+      const projectsRes = await pool.query(
+        `SELECT *
+         FROM project
+         WHERE workspace_id = $1
+         ORDER BY sort_order ASC, id DESC
+         LIMIT $2
+         OFFSET $3`,
+        [workspaceId, pageSize, offset]
+      );
+
+      const items = projectsRes.rows.map((project) => ({
+        ...project,
+        theme_json: normalizeThemeJsonOutput(project.theme_json),
+      }));
+
+      return res.json({
+        items,
+        pagination: {
+          page: normalizedPage,
+          pageSize,
+          total,
+          totalPages,
+        },
+      });
     }
 
     const projectsRes = await pool.query(

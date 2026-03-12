@@ -1,13 +1,14 @@
 import express from "express";
 import pool from "../db.mjs";
 import { isAuth } from "../middlewares/auth.middleware.mjs";
+import { withPagination } from "../middlewares/pagination.middleware.mjs";
 import logger from "../logger.mjs";
 
 const router = express.Router();
 
-router.get("/", isAuth, async (req, res) => {
+router.get("/", isAuth, withPagination({ defaultLimit: 30, maxLimit: 100 }), async (req, res) => {
   const userId = req.session.userId;
-  const limit = Math.min(Math.max(Number.parseInt(String(req.query.limit || "30"), 10) || 30, 1), 100);
+  const { limit } = req.pagination;
   const beforeId = Number.parseInt(String(req.query.before_id || ""), 10);
   const readFilter = String(req.query.read || "all").toLowerCase();
   const normalizedReadFilter = ["all", "read", "unread"].includes(readFilter)

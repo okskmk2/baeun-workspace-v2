@@ -1,6 +1,7 @@
 import express from "express";
 import pool from "../db.mjs";
 import { isAuth } from "../middlewares/auth.middleware.mjs";
+import { withPagination } from "../middlewares/pagination.middleware.mjs";
 import { normalizeUpper, parseBooleanQuery, parsePositiveInt } from "../utils/parsers.mjs";
 
 const router = express.Router();
@@ -28,10 +29,11 @@ const attachSalesStats = async (licenseId) => {
   return statsRes.rows[0] || { sold_quantity: 0, active_quantity: 0, purchased_count: 0 };
 };
 
-router.get("/", isAuth, async (req, res) => {
+router.get("/", isAuth, withPagination({ defaultPageSize: 10, maxPageSize: 100 }), async (req, res) => {
   const targetResource = normalizeUpper(req.query.targetResource);
   const billingCycle = normalizeUpper(req.query.billingCycle);
   const activeOnly = parseBooleanQuery(req.query.activeOnly);
+  const { hasPageQuery: hasPaginationQuery, page, pageSize } = req.pagination;
 
   if (targetResource && !VALID_TARGET_RESOURCES.has(targetResource)) {
     return res.status(400).json({ name: "BadRequest", message: "Invalid targetResource." });
@@ -61,6 +63,51 @@ router.get("/", isAuth, async (req, res) => {
     }
 
     const whereClause = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
+
+    if (hasPaginationQuery) {
+      const totalRes = await pool.query(
+        `SELECT COUNT(*)::integer AS total
+         FROM license l
+         ${whereClause}`,
+        values
+      );
+
+      const total = Number(totalRes.rows?.[0]?.total || 0);
+      const totalPages = Math.max(1, Math.ceil(total / pageSize));
+      const normalizedPage = Math.min(Math.max(page, 1), totalPages);
+      const offset = (normalizedPage - 1) * pageSize;
+
+      const pagedValues = [...values, pageSize, offset];
+      const limitParam = `$${pagedValues.length - 1}`;
+      const offsetParam = `$${pagedValues.length}`;
+
+      const result = await pool.query(
+        `SELECT
+          l.*,
+          COALESCE(NULLIF(l.name, ''), l.name_i18n_key) AS display_name,
+          COALESCE(SUM(pl.quantity), 0)::integer AS sold_quantity,
+          COALESCE(SUM(CASE WHEN pl.status = 'ACTIVE' THEN pl.quantity ELSE 0 END), 0)::integer AS active_quantity,
+          COALESCE(COUNT(pl.id), 0)::integer AS purchased_count
+        FROM license l
+        LEFT JOIN purchased_license pl ON pl.license_id = l.id
+        ${whereClause}
+        GROUP BY l.id
+        ORDER BY l.id DESC
+        LIMIT ${limitParam}
+        OFFSET ${offsetParam}`,
+        pagedValues
+      );
+
+      return res.json({
+        items: result.rows,
+        pagination: {
+          page: normalizedPage,
+          pageSize,
+          total,
+          totalPages,
+        },
+      });
+    }
 
     const result = await pool.query(
       `SELECT

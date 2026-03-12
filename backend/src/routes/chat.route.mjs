@@ -1,6 +1,7 @@
 import express from "express";
 import pool from "../db.mjs";
 import { isAuth } from "../middlewares/auth.middleware.mjs";
+import { withPagination } from "../middlewares/pagination.middleware.mjs";
 import { broadcastToRoom } from "../ws.mjs";
 import logger from "../logger.mjs";
 import { createNotifications, NOTIFICATION_TYPES } from "../notification.mjs";
@@ -620,28 +621,34 @@ router.patch("/:channelId", isAuth, async (req, res) => {
  *       500:
  *         $ref: "#/components/responses/ErrorResponse"
  */
-router.get("/:channelId/messages", isAuth, async (req, res) => {
-  const { channelId } = req.params;
-  const userId = req.session.userId;
-  const parsedLimit = Number.parseInt(String(req.query.limit || ""), 10);
-  const limit = Number.isInteger(parsedLimit) && parsedLimit > 0 ? Math.min(parsedLimit, 100) : 30;
+router.get(
+  "/:channelId/messages",
+  isAuth,
+  withPagination({ defaultLimit: 30, maxLimit: 100 }),
+  async (req, res) => {
+    const { channelId } = req.params;
+    const userId = req.session.userId;
+    const { limit } = req.pagination;
 
-  const rawBeforeId = req.query.before_id;
-  const hasBeforeId = rawBeforeId !== undefined && rawBeforeId !== null && String(rawBeforeId).trim() !== "";
-  const beforeMessageId = hasBeforeId ? Number.parseInt(String(rawBeforeId), 10) : null;
+    const rawBeforeId = req.query.before_id;
+    const hasBeforeId =
+      rawBeforeId !== undefined && rawBeforeId !== null && String(rawBeforeId).trim() !== "";
+    const beforeMessageId = hasBeforeId ? Number.parseInt(String(rawBeforeId), 10) : null;
 
-  if (hasBeforeId && (!Number.isInteger(beforeMessageId) || beforeMessageId <= 0)) {
-    return res.status(400).json({ name: "BadRequest", message: "before_id must be a positive integer." });
-  }
-
-  try {
-    const channelRes = await pool.query(
-      "SELECT id, type, scope, project_id, workspace_id FROM channel WHERE id = $1",
-      [channelId]
-    );
-    if (channelRes.rows.length === 0) {
-      return res.status(404).json({ name: "NotFound", message: "채널을 찾을 수 없습니다." });
+    if (hasBeforeId && (!Number.isInteger(beforeMessageId) || beforeMessageId <= 0)) {
+      return res
+        .status(400)
+        .json({ name: "BadRequest", message: "before_id must be a positive integer." });
     }
+
+    try {
+      const channelRes = await pool.query(
+        "SELECT id, type, scope, project_id, workspace_id FROM channel WHERE id = $1",
+        [channelId]
+      );
+      if (channelRes.rows.length === 0) {
+        return res.status(404).json({ name: "NotFound", message: "채널을 찾을 수 없습니다." });
+      }
 
     const channel = channelRes.rows[0];
     const channelType = String(channel.type || "").toUpperCase();
@@ -730,23 +737,24 @@ router.get("/:channelId/messages", isAuth, async (req, res) => {
       [messageIds, userId]
     );
 
-    const countsByMessage = buildFeedbackCountsMap(feedbackRes.rows);
-    const mineByMessage = buildFeedbackMineMap(mineRes.rows);
-    const data = msgsRes.rows.map((message) => ({
-      ...message,
-      feedback_counts: countsByMessage[String(message.id)] || {},
-      feedback_mine: mineByMessage[String(message.id)] || [],
-    }));
+      const countsByMessage = buildFeedbackCountsMap(feedbackRes.rows);
+      const mineByMessage = buildFeedbackMineMap(mineRes.rows);
+      const data = msgsRes.rows.map((message) => ({
+        ...message,
+        feedback_counts: countsByMessage[String(message.id)] || {},
+        feedback_mine: mineByMessage[String(message.id)] || [],
+      }));
 
-    res.json(data);
-  } catch (error) {
-    logger.error("channel messages error", {
-      err: error?.message,
-      stack: error?.stack,
-    });
-    res.status(500).json({ name: "InternalServerError", message: error.message });
+      res.json(data);
+    } catch (error) {
+      logger.error("channel messages error", {
+        err: error?.message,
+        stack: error?.stack,
+      });
+      res.status(500).json({ name: "InternalServerError", message: error.message });
+    }
   }
-});
+);
 
 /**
  * @swagger
