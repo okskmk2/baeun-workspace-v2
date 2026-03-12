@@ -6,44 +6,52 @@
     @close="handleClose"
   >
     <form class="modal-form" @submit.prevent="handleSubmit">
-      <label for="task-title">{{ t("backlog.page.modal.titleLabel") }}</label>
-      <input
-        id="task-title"
-        v-model.trim="form.title"
-        type="text"
-        :placeholder="t('backlog.page.modal.titlePlaceholder')"
-      />
+      <div class="form-field">
+        <label for="task-title">{{ t("backlog.page.modal.titleLabel") }}</label>
+        <input
+          id="task-title"
+          v-model.trim="form.title"
+          type="text"
+          :placeholder="t('backlog.page.modal.titlePlaceholder')"
+        />
+      </div>
 
-      <label for="task-content">{{ t("backlog.page.modal.descriptionLabel") }}</label>
-      <textarea
-        id="task-content"
-        v-model.trim="form.content"
-        rows="10"
-        :placeholder="t('backlog.page.modal.descriptionPlaceholder')"
-      ></textarea>
+      <div class="form-field">
+        <label for="task-content">{{ t("backlog.page.modal.descriptionLabel") }}</label>
+        <textarea
+          id="task-content"
+          v-model.trim="form.content"
+          rows="10"
+          :placeholder="t('backlog.page.modal.descriptionPlaceholder')"
+        ></textarea>
+      </div>
 
       <template v-if="showStatusSelect">
-        <label for="task-status">{{ t("kanban.page.modal.statusLabel") }}</label>
-        <select id="task-status" v-model="form.status">
-          <option v-for="status in statuses" :key="status" :value="status">
-            {{ getStatusLabel(status) }}
-          </option>
-        </select>
+        <div class="form-field">
+          <label for="task-status">{{ t("kanban.page.modal.statusLabel") }}</label>
+          <select id="task-status" v-model="form.status">
+            <option v-for="status in statuses" :key="status" :value="status">
+              {{ getStatusLabel(status) }}
+            </option>
+          </select>
+        </div>
       </template>
 
-      <label for="task-priority">{{ t("backlog.page.modal.priorityLabel") }}</label>
-      <div class="priority-select-row">
-        <MaterialSymbol
-          :name="getPriorityIconName(form.priority)"
-          :size="18"
-          class="priority-icon"
-          :style="{ color: getPriorityColor(form.priority) }"
-        />
-        <select id="task-priority" v-model.number="form.priority">
-          <option v-for="option in priorityOptions" :key="option.value" :value="option.value">
-            {{ t(option.labelKey) }}
-          </option>
-        </select>
+      <div class="form-field">
+        <label for="task-priority">{{ t("backlog.page.modal.priorityLabel") }}</label>
+        <div class="priority-select-row">
+          <MaterialSymbol
+            :name="getPriorityIconName(form.priority)"
+            :size="18"
+            class="priority-icon"
+            :style="{ color: getPriorityColor(form.priority) }"
+          />
+          <select id="task-priority" v-model.number="form.priority">
+            <option v-for="option in priorityOptions" :key="option.value" :value="option.value">
+              {{ t(option.labelKey) }}
+            </option>
+          </select>
+        </div>
       </div>
 
       <p v-if="formError" class="form-error">{{ formError }}</p>
@@ -180,22 +188,6 @@ watch(
 </script>
 
 <style scoped>
-.modal-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-.form-error {
-  color: var(--color-danger);
-  font-size: 0.85rem;
-}
-.modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.5rem;
-  margin-top: 1rem;
-}
-
 .priority-select-row {
   display: inline-flex;
   align-items: center;

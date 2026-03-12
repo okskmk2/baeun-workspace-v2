@@ -1,16 +1,18 @@
 <template>
   <BaseModal :open="open" :title="t('channel.room.invite.modal.title')" @close="handleClose">
     <form class="modal-form" @submit.prevent="handleSubmit">
-      <label for="invite-member">{{ t("channel.room.invite.modal.membersLabel") }}</label>
-      <select id="invite-member" v-model="selectedMemberId" :disabled="!inviteableMembers.length">
-        <option value="">{{ t("channel.room.invite.modal.selectPlaceholder") }}</option>
-        <option v-for="member in inviteableMembers" :key="member.id" :value="member.id">
-          {{ member.name }} ({{ member.email }})
-        </option>
-      </select>
-      <p v-if="!inviteableMembers.length" class="form-help">
-        {{ t("channel.room.invite.empty.noInviteable") }}
-      </p>
+      <div class="form-field">
+        <label for="invite-member">{{ t("channel.room.invite.modal.membersLabel") }}</label>
+        <select id="invite-member" v-model="selectedMemberId" :disabled="!inviteableMembers.length">
+          <option value="">{{ t("channel.room.invite.modal.selectPlaceholder") }}</option>
+          <option v-for="member in inviteableMembers" :key="member.id" :value="member.id">
+            {{ member.name }} ({{ member.email }})
+          </option>
+        </select>
+        <p v-if="!inviteableMembers.length" class="form-help">
+          {{ t("channel.room.invite.empty.noInviteable") }}
+        </p>
+      </div>
       <p v-if="formError" class="form-error">{{ formError }}</p>
       <div class="modal-actions">
         <button type="button" class="btn btn--secondary" @click="handleClose">
@@ -118,23 +120,8 @@ watch(
 </script>
 
 <style scoped>
-.modal-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-.form-error {
-  color: var(--color-danger);
-  font-size: 0.85rem;
-}
 .form-help {
   color: var(--color-text-muted);
   font-size: 0.85rem;
-}
-.modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.5rem;
-  margin-top: 1rem;
 }
 </style>

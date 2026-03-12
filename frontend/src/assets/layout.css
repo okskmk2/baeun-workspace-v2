@@ -1,0 +1,392 @@
+.PublicLayout {
+  display: flex;
+  flex-direction: column;
+  --dl-bg: #f5f5f5;
+  --dl-surface: #f9fafb;
+  --dl-text: #111827;
+  --dl-text-muted: #6b7280;
+  --dl-border: #e5e7eb;
+  --dl-gnb-bg: #ffffff;
+  --dl-gnb-text: #111827;
+  --dl-page-bg: #ffffff;
+}
+
+.PublicLayout .brand {
+  text-decoration: none;
+  color: inherit;
+  font-size: 18px;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 800;
+}
+
+.PublicLayout .brand-logo {
+  height: 24px;
+  width: 24px;
+  display: block;
+}
+
+.PublicLayout .brand-text {
+  line-height: 1;
+}
+
+.PublicLayout > header {
+  background-color: var(--dl-gnb-bg);
+}
+
+.PublicLayout .inner-gnb {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  padding: 20px 24px;
+  color: var(--dl-gnb-text);
+}
+
+.PublicLayout .inner-gnb > nav {
+  display: flex;
+  align-items: center;
+}
+
+.PublicLayout .mainnav {
+  font-size: 18px;
+  gap: 60px;
+  font-weight: 600;
+  justify-self: center;
+}
+
+.PublicLayout .utilnav {
+  font-size: 15px;
+  gap: 20px;
+  justify-self: end;
+}
+
+.PublicLayout main {
+  background-color: var(--dl-page-bg);
+  padding: 2rem 3rem 4rem;
+  margin-top: 1rem;
+  margin-bottom: 3rem;
+  border-radius: 8px;
+}
+
+.PublicLayout,
+.PublicLayout main {
+  color: var(--dl-text);
+}
+
+.PublicLayout .subtitle {
+  color: var(--dl-text-muted);
+}
+
+@media (prefers-color-scheme: dark) {
+  .PublicLayout {
+    --dl-bg: #0f1115;
+    --dl-surface: #1b1f2a;
+    --dl-text: #e5e7eb;
+    --dl-text-muted: #9ca3af;
+    --dl-border: #2b3242;
+    --dl-gnb-bg: #141824;
+    --dl-gnb-text: #e5e7eb;
+    --dl-page-bg: #111520;
+  }
+}
+
+.PublicLayout > header .projectselect {
+  margin-left: 2rem;
+  padding: 4px;
+}
+
+.ProjectLayout {
+  display: flex;
+  flex-direction: column;
+  --gnb-bg: var(--color-gnb-bg);
+  --gnb-fg: var(--color-gnb-text);
+  color: var(--color-text);
+  min-height: 100%;
+}
+
+.ProjectLayout .workspaceName {
+  text-decoration: none;
+  color: inherit;
+}
+
+.ProjectLayout > header {
+  display: flex;
+  justify-content: space-between;
+  padding: 16px 24px;
+  color: var(--gnb-fg);
+  background-color: var(--gnb-bg);
+  white-space: nowrap;
+  /* background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 8 8'%3E%3Cg fill='%23000000' fill-opacity='0.03'%3E%3Cpath fill-rule='evenodd' d='M0 0h4v4H0V0zm4 4h4v4H4V4z'/%3E%3C/g%3E%3C/svg%3E"); */
+}
+
+.ProjectLayout > header > nav {
+  display: flex;
+  align-items: center;
+}
+
+.ProjectLayout .left {
+  display: flex;
+  gap: 4rem;
+  align-items: center;
+}
+
+.ProjectLayout .mainnav {
+  font-size: 16px;
+  gap: 24px;
+  display: flex;
+}
+
+.ProjectLayout > header a {
+  color: var(--gnb-fg);
+}
+
+.ProjectLayout header .utilnav a,
+.ProjectLayout button.btn--icon {
+  color: var(--gnb-fg);
+}
+
+.ProjectLayout .utilnav {
+  font-size: 15px;
+  gap: 8px;
+  display: flex;
+}
+
+.ProjectLayout main {
+  background-color: var(--color-page-bg);
+  padding: 2rem 3rem;
+  margin: 1rem;
+}
+
+.LnbLayout {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+  flex-grow: 1;
+  min-height: 0;
+}
+
+.LnbLayout > aside {
+  background-color: var(--color-page-bg);
+  padding: 18px 20px;
+  width: 12rem;
+  flex-shrink: 0;
+  border-radius: 8px;
+  display: flex;
+  height: calc(100dvh - 134px);
+}
+
+.LnbLayout > aside nav {
+  gap: 8px;
+  display: flex;
+  flex-direction: column;
+}
+
+.LnbLayout > aside nav a {
+  padding: 6px 8px;
+  font-size: 15px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.LnbLayout > aside nav hr {
+  width: 100%;
+  background-color: var(--color-border);
+  height: 1px;
+  border: 0;
+}
+
+.LnbLayout > aside nav .lnb-item {
+  padding: 6px 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.LnbLayout > aside button + nav {
+  margin-top: 1rem;
+}
+
+.LnbLayout > aside button {
+  width: 100%;
+}
+
+/* Shared shell for project LNB variants with fixed top/bottom and scrollable menu body */
+.LnbLayout > aside .lnb-shell {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  min-height: 0;
+  width: 100%;
+}
+
+.LnbLayout > aside .lnb-scroll {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.LnbLayout > aside .lnb-bottom {
+  font-size: 14px;
+  color: var(--color-text-muted);
+  margin-top: 8px;
+}
+
+.LnbLayout > aside .lnb-bottom:hover {
+  color: var(--color-text);
+}
+
+.LnbLayout > main {
+  flex-grow: 1;
+  background-color: var(--color-page-bg);
+  padding: 2rem 3rem 4rem;
+  margin: 0;
+  border-radius: 8px;
+}
+
+.AdminLayout {
+  min-height: 100vh;
+  background: #f3f4f6;
+  color: #111827;
+}
+
+.AdminLayout .admin-gnb {
+  height: 64px;
+  border-bottom: 1px solid #d1d5db;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+}
+
+.AdminLayout .admin-gnb__brand {
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.AdminLayout .admin-shell {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  min-height: calc(100vh - 64px);
+}
+
+.AdminLayout .admin-lnb {
+  border-right: 1px solid #d1d5db;
+  background: #ffffff;
+  padding: 18px 14px;
+}
+
+.AdminLayout .admin-lnb__title {
+  margin: 0 0 10px;
+  font-size: 12px;
+  text-transform: uppercase;
+  color: #6b7280;
+}
+
+.AdminLayout .admin-lnb__nav {
+  display: grid;
+  gap: 6px;
+}
+
+.AdminLayout .admin-lnb__nav a {
+  text-decoration: none;
+  color: #111827;
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.AdminLayout .admin-lnb__nav a.router-link-active {
+  background: #e5e7eb;
+  font-weight: 700;
+}
+
+.AdminLayout .admin-content {
+  padding: 20px;
+}
+
+@media (max-width: 860px) {
+  .AdminLayout .admin-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .AdminLayout .admin-lnb {
+    border-right: 0;
+    border-bottom: 1px solid #d1d5db;
+  }
+
+  .AdminLayout .admin-lnb__nav {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.WorkspaceLayout {
+  display: flex;
+  flex-direction: column;
+  --dl-bg: #f5f5f5;
+  --dl-surface: #f9fafb;
+  --dl-text: #111827;
+  --dl-text-muted: #6b7280;
+  --dl-border: #e5e7eb;
+  --dl-gnb-bg: #ffffff;
+  --dl-gnb-text: #111827;
+  --dl-page-bg: #ffffff;
+}
+
+.WorkspaceLayout .brand {
+  text-decoration: none;
+  color: inherit;
+  font-size: 18px;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 800;
+}
+
+.WorkspaceLayout .brand-logo {
+  height: 24px;
+  width: 24px;
+  display: block;
+}
+
+.WorkspaceLayout .brand-text {
+  line-height: 1;
+}
+
+.WorkspaceLayout > header {
+  background-color: var(--dl-gnb-bg);
+}
+
+.WorkspaceLayout .inner-gnb {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  padding: 20px 40px;
+  color: var(--dl-gnb-text);
+}
+
+.WorkspaceLayout .inner-gnb > nav {
+  display: flex;
+  align-items: center;
+}
+
+.WorkspaceLayout .mainnav {
+  font-size: 18px;
+  gap: 60px;
+  font-weight: 600;
+  justify-self: center;
+}
+
+.WorkspaceLayout .utilnav {
+  font-size: 15px;
+  gap: 20px;
+  justify-self: end;
+}
+
+.WorkspaceLayout main {
+  background-color: var(--dl-page-bg);
+  padding: 2rem 3rem 4rem;
+  margin-top: 1rem;
+  margin-bottom: 3rem;
+  border-radius: 8px;
+}

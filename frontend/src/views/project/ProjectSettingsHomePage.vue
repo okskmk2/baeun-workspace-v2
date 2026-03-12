@@ -29,10 +29,7 @@
         <span class="theme-desc">{{ t("settings.home.theme.subtitle") }}</span>
       </div>
       <div class="theme-grid">
-        <label
-          class="theme-item theme-item--inherit"
-          :class="{ selected: !form.themeId }"
-        >
+        <label class="theme-item theme-item--inherit" :class="{ selected: !form.themeId }">
           <input type="radio" name="theme" value="" v-model="form.themeId" />
           <div class="swatch swatch--inherit">WS</div>
           <span class="theme-name">{{ t("settings.home.theme.inheritName") }}</span>
@@ -57,7 +54,6 @@
     </div>
 
     <p v-if="formError" class="status error">{{ formError }}</p>
-
   </form>
 
   <DangerZone
@@ -65,12 +61,7 @@
     :description="t('settings.home.danger.description')"
   >
     <template #actions>
-      <button
-        type="button"
-        class="btn btn--danger"
-        :disabled="isDeleting"
-        @click="openDeleteModal"
-      >
+      <button type="button" class="btn btn--danger" :disabled="isDeleting" @click="openDeleteModal">
         {{ isDeleting ? t("settings.home.actions.deleting") : t("settings.home.actions.delete") }}
       </button>
     </template>
@@ -414,12 +405,4 @@ onBeforeUnmount(() => {
   color: var(--color-danger);
   font-size: 13px;
 }
-
-.modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  margin-top: 8px;
-}
 </style>
-

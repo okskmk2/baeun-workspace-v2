@@ -1,18 +1,20 @@
 <template>
   <BaseModal :open="open" :title="t('settings.member.modal.title')" @close="handleClose">
     <form class="modal-form" @submit.prevent="handleSubmit">
-      <label for="workspace-member">{{ t("settings.member.modal.membersLabel") }}</label>
-      <select id="workspace-member" v-model="selectedMemberId">
-        <option value="">{{ t("settings.member.modal.selectPlaceholder") }}</option>
-        <option
-          v-for="member in availableMembers"
-          :key="member.id"
-          :value="member.id"
-          :disabled="member.isAlreadyMember"
-        >
-          {{ member.name }} ({{ member.email }})
-        </option>
-      </select>
+      <div class="form-field">
+        <label for="workspace-member">{{ t("settings.member.modal.membersLabel") }}</label>
+        <select id="workspace-member" v-model="selectedMemberId">
+          <option value="">{{ t("settings.member.modal.selectPlaceholder") }}</option>
+          <option
+            v-for="member in availableMembers"
+            :key="member.id"
+            :value="member.id"
+            :disabled="member.isAlreadyMember"
+          >
+            {{ member.name }} ({{ member.email }})
+          </option>
+        </select>
+      </div>
       <p v-if="formError" class="form-error">{{ formError }}</p>
       <div class="modal-actions">
         <button type="button" class="btn btn--secondary" @click="handleClose">
@@ -108,20 +110,3 @@ watch(
 );
 </script>
 
-<style scoped>
-.modal-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-.form-error {
-  color: var(--color-danger);
-  font-size: 0.85rem;
-}
-.modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.5rem;
-  margin-top: 1rem;
-}
-</style>

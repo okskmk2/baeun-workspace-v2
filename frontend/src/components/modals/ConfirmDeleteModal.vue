@@ -93,11 +93,4 @@ watch(
   font-weight: 600;
   font-size: 0.9rem;
 }
-
-.modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.5rem;
-  margin-top: 1rem;
-}
 </style>

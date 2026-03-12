@@ -1,19 +1,23 @@
 <template>
   <BaseModal :open="open" :title="t('wiki.page.permissions.modal.title')" @close="handleClose">
     <form class="modal-form" @submit.prevent="handleSubmit">
-      <label for="permission-member">{{ t("wiki.page.permissions.membersLabel") }}</label>
-      <select id="permission-member" v-model="form.memberId">
-        <option value="">{{ t("wiki.page.permissions.selectPlaceholder") }}</option>
-        <option v-for="member in projectMembers" :key="member.id" :value="member.id">
-          {{ member.name }} ({{ member.email }})
-        </option>
-      </select>
-      <label for="permission-role">{{ t("wiki.page.permissions.roleLabel") }}</label>
-      <select id="permission-role" v-model="form.roleName">
-        <option v-for="option in permissionRoleOptions" :key="option.value" :value="option.value">
-          {{ option.label }}
-        </option>
-      </select>
+      <div class="form-field">
+        <label for="permission-member">{{ t("wiki.page.permissions.membersLabel") }}</label>
+        <select id="permission-member" v-model="form.memberId">
+          <option value="">{{ t("wiki.page.permissions.selectPlaceholder") }}</option>
+          <option v-for="member in projectMembers" :key="member.id" :value="member.id">
+            {{ member.name }} ({{ member.email }})
+          </option>
+        </select>
+      </div>
+      <div class="form-field">
+        <label for="permission-role">{{ t("wiki.page.permissions.roleLabel") }}</label>
+        <select id="permission-role" v-model="form.roleName">
+          <option v-for="option in permissionRoleOptions" :key="option.value" :value="option.value">
+            {{ option.label }}
+          </option>
+        </select>
+      </div>
       <p v-if="formError" class="form-error">{{ formError }}</p>
       <div class="modal-actions">
         <button type="button" class="btn btn--secondary" @click="handleClose">
@@ -116,21 +120,6 @@ watch(
 </script>
 
 <style scoped>
-.modal-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-.form-error {
-  color: var(--color-danger);
-  font-size: 0.85rem;
-}
-.modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.5rem;
-  margin-top: 1rem;
-}
 .permission-list {
   margin-top: 1.5rem;
   padding-top: 1.5rem;

@@ -328,23 +328,6 @@ watch(projectId, async () => {
   overflow-y: auto;
 }
 
-/* Modal specific styles, might need adjustment */
-.modal-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-.form-error {
-  color: var(--color-danger);
-  font-size: 0.85rem;
-}
-.modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.5rem;
-  margin-top: 1rem;
-}
-
 @media (max-width: 900px) {
   .backlog-layout {
     grid-template-columns: 1fr; /* Stack columns on smaller screens */

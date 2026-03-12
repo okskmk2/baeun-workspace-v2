@@ -1,19 +1,23 @@
 <template>
   <BaseModal :open="open" :title="t('workspace.home.members.modal.title')" @close="handleClose">
     <form class="modal-form" @submit.prevent="handleSubmit">
-      <label for="member-email">{{ t("workspace.home.members.emailLabel") }}</label>
-      <input
-        id="member-email"
-        v-model.trim="form.email"
-        type="email"
-        placeholder="member@example.com"
-      />
-      <label for="member-role">{{ t("workspace.home.members.roleLabel") }}</label>
-      <select id="member-role" v-model="form.role">
-        <option value="OWNER">{{ t("roles.workspace_member.owner") }}</option>
-        <option value="ADMIN">{{ t("roles.workspace_member.admin") }}</option>
-        <option value="MEMBER">{{ t("roles.workspace_member.member") }}</option>
-      </select>
+      <div class="form-field">
+        <label for="member-email">{{ t("workspace.home.members.emailLabel") }}</label>
+        <input
+          id="member-email"
+          v-model.trim="form.email"
+          type="email"
+          placeholder="member@example.com"
+        />
+      </div>
+      <div class="form-field">
+        <label for="member-role">{{ t("workspace.home.members.roleLabel") }}</label>
+        <select id="member-role" v-model="form.role">
+          <option value="OWNER">{{ t("roles.workspace_member.owner") }}</option>
+          <option value="ADMIN">{{ t("roles.workspace_member.admin") }}</option>
+          <option value="MEMBER">{{ t("roles.workspace_member.member") }}</option>
+        </select>
+      </div>
       <p v-if="formError" class="form-error">{{ formError }}</p>
       <div class="modal-actions">
         <button type="button" class="btn btn--secondary" @click="handleClose">
@@ -95,20 +99,3 @@ watch(
 );
 </script>
 
-<style scoped>
-.modal-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-.form-error {
-  color: var(--color-danger);
-  font-size: 0.85rem;
-}
-.modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.5rem;
-  margin-top: 1rem;
-}
-</style>

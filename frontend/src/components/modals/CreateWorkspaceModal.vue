@@ -1,13 +1,15 @@
 <template>
   <BaseModal :open="open" :title="t('workspaceList.modal.title')" @close="handleClose">
     <form class="modal-form" @submit.prevent="handleSubmit">
-      <label for="workspace-name">{{ t("workspaceList.modal.nameLabel") }}</label>
-      <input
-        id="workspace-name"
-        v-model.trim="form.name"
-        type="text"
-        :placeholder="t('workspaceList.modal.namePlaceholder')"
-      />
+      <div class="form-field">
+        <label for="workspace-name">{{ t("workspaceList.modal.nameLabel") }}</label>
+        <input
+          id="workspace-name"
+          v-model.trim="form.name"
+          type="text"
+          :placeholder="t('workspaceList.modal.namePlaceholder')"
+        />
+      </div>
       <p v-if="formError" class="form-error">{{ formError }}</p>
       <div class="modal-actions">
         <button type="button" class="btn btn--secondary" @click="handleClose">
@@ -80,20 +82,3 @@ watch(
 );
 </script>
 
-<style scoped>
-.modal-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-.form-error {
-  color: var(--color-danger);
-  font-size: 0.85rem;
-}
-.modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.5rem;
-  margin-top: 1rem;
-}
-</style>

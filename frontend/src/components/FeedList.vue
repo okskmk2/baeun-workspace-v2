@@ -54,6 +54,47 @@ const handleItemClick = (item, index, event) => {
 </script>
 
 <style scoped>
+.feed {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.feed-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.feed-date {
+  font-size: 12px;
+  color: var(--dl-text-muted, var(--color-text-muted));
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.feed-item {
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 4px;
+  background-color: var(--dl-surface, var(--color-surface));
+  border: 1px solid var(--dl-border, var(--color-border));
+}
+
+:slotted(.feed-title) {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--dl-text, var(--color-text));
+}
+
+:slotted(.feed-meta) {
+  font-size: 12px;
+  color: var(--dl-text-muted, var(--color-text-muted));
+  margin-top: 4px;
+}
+
 .feed-item--clickable {
   cursor: pointer;
 }

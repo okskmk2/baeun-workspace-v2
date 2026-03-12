@@ -1,22 +1,26 @@
 <template>
   <BaseModal :open="open" :title="t('kanban.layout.modal.title')" @close="handleClose">
     <form class="modal-form" @submit.prevent="handleSubmit">
-      <label for="kanban-name">{{ t("kanban.layout.modal.nameLabel") }}</label>
-      <input
-        id="kanban-name"
-        v-model.trim="form.name"
-        type="text"
-        :placeholder="t('kanban.layout.modal.namePlaceholder')"
-      />
+      <div class="form-field">
+        <label for="kanban-name">{{ t("kanban.layout.modal.nameLabel") }}</label>
+        <input
+          id="kanban-name"
+          v-model.trim="form.name"
+          type="text"
+          :placeholder="t('kanban.layout.modal.namePlaceholder')"
+        />
+      </div>
 
-      <label for="kanban-summary">{{ t("kanban.layout.modal.summaryLabel") }}</label>
-      <input
-        id="kanban-summary"
-        v-model.trim="form.summary"
-        type="text"
-        maxlength="80"
-        :placeholder="t('kanban.layout.modal.summaryPlaceholder')"
-      />
+      <div class="form-field">
+        <label for="kanban-summary">{{ t("kanban.layout.modal.summaryLabel") }}</label>
+        <input
+          id="kanban-summary"
+          v-model.trim="form.summary"
+          type="text"
+          maxlength="80"
+          :placeholder="t('kanban.layout.modal.summaryPlaceholder')"
+        />
+      </div>
 
       <p v-if="formError" class="form-error">{{ formError }}</p>
       <div class="modal-actions">
@@ -97,20 +101,3 @@ watch(
 );
 </script>
 
-<style scoped>
-.modal-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-.form-error {
-  color: var(--color-danger);
-  font-size: 0.85rem;
-}
-.modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.5rem;
-  margin-top: 1rem;
-}
-</style>

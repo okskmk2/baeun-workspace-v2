@@ -1,42 +1,47 @@
 <template>
   <BaseModal :open="open" :title="t('channel.layout.modal.title')" @close="handleClose">
     <form class="modal-form" @submit.prevent="handleSubmit">
-      <label for="channel-type">{{ t("channel.layout.modal.typeLabel") }}</label>
-      <select id="channel-type" v-model="form.type">
-        <option value="GENERAL">{{ t("channel.layout.modal.types.general") }}</option>
-        <option value="DM">{{ t("channel.layout.modal.types.dm") }}</option>
-        <option value="AGENT">{{ t("channel.layout.modal.types.agent") }}</option>
-      </select>
+      <div class="form-field">
+        <label for="channel-type">{{ t("channel.layout.modal.typeLabel") }}</label>
+        <select id="channel-type" v-model="form.type">
+          <option value="GENERAL">{{ t("channel.layout.modal.types.general") }}</option>
+          <option value="DM">{{ t("channel.layout.modal.types.dm") }}</option>
+          <option value="AGENT">{{ t("channel.layout.modal.types.agent") }}</option>
+        </select>
+      </div>
 
-      <label v-if="form.type !== 'DM'" for="channel-name">{{
-        t("channel.layout.modal.nameLabel")
-      }}</label>
-      <input
-        v-if="form.type !== 'DM'"
-        id="channel-name"
-        v-model.trim="form.name"
-        type="text"
-        :placeholder="t('channel.layout.modal.namePlaceholder')"
-      />
+      <div v-if="form.type !== 'DM'" class="form-field">
+        <label for="channel-name">{{ t("channel.layout.modal.nameLabel") }}</label>
+        <input
+          id="channel-name"
+          v-model.trim="form.name"
+          type="text"
+          :placeholder="t('channel.layout.modal.namePlaceholder')"
+        />
+      </div>
 
       <template v-if="form.type === 'DM'">
-        <label for="dm-target">{{ t("channel.layout.modal.dmTargetLabel") }}</label>
-        <select id="dm-target" v-model="form.targetMemberId">
-          <option value="">{{ t("channel.layout.modal.dmTargetPlaceholder") }}</option>
-          <option v-for="member in dmCandidates" :key="member.id" :value="String(member.id)">
-            {{ member.name }}
-          </option>
-        </select>
+        <div class="form-field">
+          <label for="dm-target">{{ t("channel.layout.modal.dmTargetLabel") }}</label>
+          <select id="dm-target" v-model="form.targetMemberId">
+            <option value="">{{ t("channel.layout.modal.dmTargetPlaceholder") }}</option>
+            <option v-for="member in dmCandidates" :key="member.id" :value="String(member.id)">
+              {{ member.name }}
+            </option>
+          </select>
+        </div>
       </template>
 
       <template v-if="form.type === 'AGENT'">
-        <label for="agent-key">{{ t("channel.layout.modal.agentKeyLabel") }}</label>
-        <input
-          id="agent-key"
-          v-model.trim="form.agentKey"
-          type="text"
-          :placeholder="t('channel.layout.modal.agentKeyPlaceholder')"
-        />
+        <div class="form-field">
+          <label for="agent-key">{{ t("channel.layout.modal.agentKeyLabel") }}</label>
+          <input
+            id="agent-key"
+            v-model.trim="form.agentKey"
+            type="text"
+            :placeholder="t('channel.layout.modal.agentKeyPlaceholder')"
+          />
+        </div>
       </template>
 
       <p v-if="formError" class="form-error">{{ formError }}</p>
@@ -177,20 +182,3 @@ watch(
 );
 </script>
 
-<style scoped>
-.modal-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-.form-error {
-  color: var(--color-danger);
-  font-size: 0.85rem;
-}
-.modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.5rem;
-  margin-top: 1rem;
-}
-</style>
