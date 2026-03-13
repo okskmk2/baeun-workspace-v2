@@ -178,6 +178,13 @@
               "description": "리소스 보드"
             },
             {
+              "path": "qna",
+              "fullPath": "/workspace/:workspaceId/board/qna",
+              "component": "WorkspaceBoardQnaPage",
+              "componentType": "page",
+              "description": "묻고 답하기 보드"
+            },
+            {
               "path": "celebration",
               "fullPath": "/workspace/:workspaceId/board/celebration",
               "redirectTemplate": "/workspace/:workspaceId/board/events",

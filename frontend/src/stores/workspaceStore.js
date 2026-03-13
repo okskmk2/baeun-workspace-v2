@@ -1,9 +1,15 @@
 import { defineStore } from "pinia";
 import api from "../lib/axios";
+import { useAppStore } from "./appStore";
+
+let fetchWorkspacesInflight = null;
+let fetchWorkspacesInflightMemberId = null;
 
 export const useWorkspaceStore = defineStore("workspace", {
   state: () => ({
     workspaces: [],
+    hasFetchedWorkspaces: false,
+    workspacesLoadedForMemberId: null,
     workspaceById: {},
     projectsByWorkspace: {},
     pagedProjectsByWorkspace: {},
@@ -11,13 +17,75 @@ export const useWorkspaceStore = defineStore("workspace", {
     projectById: {},
   }),
   actions: {
-    async fetchWorkspaces() {
-      const res = await api.get("/workspaces/my");
-      this.workspaces = res.data || [];
-      this.workspaces.forEach((workspace) => {
-        this.workspaceById[workspace.id] = workspace;
-      });
-      return this.workspaces;
+    resetWorkspaceCache() {
+      this.workspaces = [];
+      this.hasFetchedWorkspaces = false;
+      this.workspacesLoadedForMemberId = null;
+      this.workspaceById = {};
+      this.projectsByWorkspace = {};
+      this.pagedProjectsByWorkspace = {};
+      this.projectPaginationByWorkspace = {};
+      this.projectById = {};
+      fetchWorkspacesInflight = null;
+      fetchWorkspacesInflightMemberId = null;
+    },
+    async fetchWorkspaces({ force = false } = {}) {
+      const appStore = useAppStore();
+      const memberId =
+        appStore.currentUser?.id === undefined || appStore.currentUser?.id === null
+          ? null
+          : String(appStore.currentUser.id);
+
+      if (
+        this.hasFetchedWorkspaces &&
+        this.workspacesLoadedForMemberId !== null &&
+        this.workspacesLoadedForMemberId !== memberId
+      ) {
+        this.resetWorkspaceCache();
+      }
+
+      const hasValidCache =
+        !force &&
+        this.hasFetchedWorkspaces &&
+        this.workspacesLoadedForMemberId === memberId;
+      if (hasValidCache) {
+        return this.workspaces;
+      }
+
+      if (fetchWorkspacesInflight && fetchWorkspacesInflightMemberId === memberId) {
+        return fetchWorkspacesInflight;
+      }
+
+      fetchWorkspacesInflightMemberId = memberId;
+      fetchWorkspacesInflight = (async () => {
+        const res = await api.get("/workspaces/my");
+        const currentMemberId =
+          appStore.currentUser?.id === undefined || appStore.currentUser?.id === null
+            ? null
+            : String(appStore.currentUser.id);
+
+        if (currentMemberId !== memberId) {
+          return this.workspaces;
+        }
+
+        this.workspaces = Array.isArray(res.data) ? res.data : [];
+        this.workspaceById = {};
+        this.workspaces.forEach((workspace) => {
+          this.workspaceById[workspace.id] = workspace;
+        });
+        this.hasFetchedWorkspaces = true;
+        this.workspacesLoadedForMemberId = memberId;
+        return this.workspaces;
+      })();
+
+      try {
+        return await fetchWorkspacesInflight;
+      } finally {
+        if (fetchWorkspacesInflightMemberId === memberId) {
+          fetchWorkspacesInflight = null;
+          fetchWorkspacesInflightMemberId = null;
+        }
+      }
     },
     async fetchWorkspace(workspaceId) {
       if (!workspaceId) return null;

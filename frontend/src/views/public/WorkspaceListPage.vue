@@ -105,6 +105,7 @@ import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import CreateWorkspaceModal from "../../components/modals/CreateWorkspaceModal.vue";
 import BaseModal from "../../components/BaseModal.vue";
+import { useAppStore } from "../../stores/appStore";
 import { useWorkspaceStore } from "../../stores/workspaceStore";
 import Tag from "../../components/Tag.vue";
 import Avatar from "../../components/Avatar.vue";
@@ -113,6 +114,7 @@ import { addToast } from "../../lib/toast";
 
 const { t } = useI18n();
 const { getRoleLabel } = useRoleLabels();
+const appStore = useAppStore();
 const workspaceStore = useWorkspaceStore();
 const workspaces = ref([]);
 const isLoading = ref(false);
@@ -127,12 +129,28 @@ const isDeleting = computed(
   () => !!deleteTarget.value && deletingWorkspaceId.value === deleteTarget.value.id
 );
 
-const fetchWorkspaces = async () => {
+const hasWorkspaceCacheForCurrentMember = () => {
+  const currentMemberId =
+    appStore.currentUser?.id === undefined || appStore.currentUser?.id === null
+      ? null
+      : String(appStore.currentUser.id);
+  return (
+    workspaceStore.hasFetchedWorkspaces &&
+    workspaceStore.workspacesLoadedForMemberId === currentMemberId
+  );
+};
+
+const fetchWorkspaces = async ({ force = false } = {}) => {
   isLoading.value = true;
   errorMessage.value = "";
 
   try {
-    workspaces.value = await workspaceStore.fetchWorkspaces();
+    if (!force && hasWorkspaceCacheForCurrentMember()) {
+      workspaces.value = workspaceStore.workspaces || [];
+    } else {
+      workspaces.value = await workspaceStore.fetchWorkspaces({ force });
+    }
+
     await Promise.all(
       workspaces.value.map((workspace) => workspaceStore.fetchProjects(workspace.id))
     );
@@ -155,7 +173,7 @@ const closeModal = () => {
 };
 
 const onWorkspaceCreated = async () => {
-  await fetchWorkspaces();
+  await fetchWorkspaces({ force: true });
   addToast({ message: t("workspaceList.toast.created"), type: "success" });
 };
 
@@ -180,7 +198,7 @@ const confirmDeleteWorkspace = async () => {
 
   try {
     await workspaceStore.deleteWorkspace(workspaceId);
-    await fetchWorkspaces();
+    await fetchWorkspaces({ force: true });
     addToast({ message: t("workspaceList.toast.deleted"), type: "success" });
     deletingWorkspaceId.value = null;
     closeDeleteModal();
