@@ -26,7 +26,9 @@
         </option>
       </select>
       <template v-if="isEditing">
-        <label for="task-priority" class="task-priority-label">{{ t("task.detail.fields.priorityLabel") }}</label>
+        <label for="task-priority" class="task-priority-label">{{
+          t("task.detail.fields.priorityLabel")
+        }}</label>
         <div class="task-priority-field">
           <MaterialSymbol
             :name="getPriorityIconName(editForm.priority)"
@@ -34,7 +36,11 @@
             class="task-priority-icon"
             :style="{ color: getPriorityColor(editForm.priority) }"
           />
-          <select id="task-priority" v-model.number="editForm.priority" class="task-priority-select">
+          <select
+            id="task-priority"
+            v-model.number="editForm.priority"
+            class="task-priority-select"
+          >
             <option v-for="option in priorityOptions" :key="option.value" :value="option.value">
               {{ t(option.labelKey) }}
             </option>
@@ -626,7 +632,7 @@ const addRelatedMemberByRole = async (role, memberId) => {
 
 .task-content-input {
   width: 100%;
-  min-height: 180px;
+  min-height: 35rem;
   padding: 10px;
   border-radius: 4px;
   border: 1px solid #e5e7eb;
