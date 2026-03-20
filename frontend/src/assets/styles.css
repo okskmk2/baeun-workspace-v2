@@ -13,7 +13,8 @@ body {
 
 .container {
   width: 80rem;
-  margin: 0 auto;
+  margin-left: auto;
+  margin-right: auto;
   box-sizing: border-box;
 }
 
@@ -36,6 +37,14 @@ nav a:hover {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+aside + main {
+  margin-top: 0;
+}
+
+main {
+  margin-top: 1rem;
 }
 
 .px {

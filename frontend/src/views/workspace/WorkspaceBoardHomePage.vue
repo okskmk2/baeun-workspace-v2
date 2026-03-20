@@ -51,6 +51,14 @@
             <li>추천 요청 C</li>
           </ul>
         </article>
+        <article class="board-activity-card">
+          <h3>묻고 답하기</h3>
+          <ul>
+            <li>질문 A</li>
+            <li>질문 B</li>
+            <li>질문 C</li>
+          </ul>
+        </article>
       </div>
     </article>
 
@@ -104,7 +112,7 @@
 .board-activity-grid {
   margin-top: 10px;
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 10px;
 }
 

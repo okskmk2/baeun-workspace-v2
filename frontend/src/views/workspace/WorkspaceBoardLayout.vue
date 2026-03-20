@@ -1,5 +1,5 @@
 <template>
-  <main class="workspace-board-layout container">
+  <div class="workspace-board-layout container">
     <aside class="board-snb">
       <h2 class="board-snb__title">게시판</h2>
       <nav class="board-snb__nav">
@@ -19,14 +19,15 @@
         <nav class="board-snb__nav">
           <router-link :to="marketTo">중고시장</router-link>
           <router-link :to="resourceTo">인력 수소문</router-link>
+          <router-link :to="qnaTo">묻고 답하기</router-link>
         </nav>
       </div>
     </aside>
 
-    <section class="board-content">
+    <main class="board-content">
       <router-view />
-    </section>
-  </main>
+    </main>
+  </div>
 </template>
 
 <script setup>
@@ -60,6 +61,11 @@ const resourceTo = computed(() => ({
   name: "workspace-board-resource",
   params: { workspaceId: workspaceId.value },
 }));
+
+const qnaTo = computed(() => ({
+  name: "workspace-board-qna",
+  params: { workspaceId: workspaceId.value },
+}));
 </script>
 
 <style scoped>
@@ -71,9 +77,8 @@ const resourceTo = computed(() => ({
 }
 
 .board-snb {
-  border: 1px solid var(--color-border);
   border-radius: 10px;
-  background: var(--color-surface);
+  background-color: white;
   padding: 12px;
   height: fit-content;
 }

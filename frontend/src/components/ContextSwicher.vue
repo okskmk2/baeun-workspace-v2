@@ -133,6 +133,7 @@ import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import { useAppStore } from "../stores/appStore";
+import { useWorkspaceStore } from "../stores/workspaceStore";
 import { persistLocale, supportedLocales } from "../i18n";
 import api from "../lib/axios";
 import Avatar from "./Avatar.vue";
@@ -141,6 +142,7 @@ import MaterialSymbol from "./MaterialSymbol.vue";
 const { t, locale } = useI18n();
 const router = useRouter();
 const appStore = useAppStore();
+const workspaceStore = useWorkspaceStore();
 const isAuthenticated = computed(() => Boolean(appStore.currentUser));
 const currentMemberId = computed(() => appStore.currentUser?.id || null);
 
@@ -202,13 +204,11 @@ const ensureWorkspaceTree = async ({ force = false } = {}) => {
 
   inflightLoad.value = (async () => {
     try {
-      const workspaceRes = await api.get("/workspaces/my");
-      const workspaces = Array.isArray(workspaceRes.data) ? workspaceRes.data : [];
+      const workspaces = await workspaceStore.fetchWorkspaces();
 
       const projectsPerWorkspace = await Promise.all(
         workspaces.map(async (workspace) => {
-          const projectsRes = await api.get(`/projects?workspaceId=${workspace.id}`);
-          const projects = Array.isArray(projectsRes.data) ? projectsRes.data : [];
+          const projects = await workspaceStore.fetchProjects(workspace.id);
           return {
             ...workspace,
             projects,
@@ -284,7 +284,6 @@ watch(
     if (String(memberId) !== String(prevMemberId) || !prevAuthed) {
       hasLoadedTree.value = false;
       loadedMemberId.value = null;
-      ensureWorkspaceTree();
     }
   },
   { immediate: true }

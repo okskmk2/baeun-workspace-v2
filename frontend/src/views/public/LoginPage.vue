@@ -101,15 +101,17 @@ const onSubmit = async () => {
 
   loading.value = true;
   try {
-    const response = await api.post("/members/login", {
+    await api.post("/members/login", {
       email: email.value,
       password: password.value,
       remember: remember.value,
     });
 
+    const response = await api.get("/members/me");
+
     appStore.setCurrentUser(response.data);
 
-    const workspaces = await workspaceStore.fetchWorkspaces();
+    const workspaces = await workspaceStore.fetchWorkspaces({ force: true });
     if (workspaces.length > 0) {
       router.push("/settings/workspaces");
     } else {
@@ -239,4 +241,3 @@ const onSubmit = async () => {
   }
 }
 </style>
-

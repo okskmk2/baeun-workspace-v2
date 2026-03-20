@@ -93,8 +93,7 @@ import ConfirmCancelEditModal from "../../components/modals/ConfirmCancelEditMod
 import { useAppStore } from "../../stores/appStore";
 import { useProjectMemberStore } from "../../stores/projectMemberStore";
 import { usePageStore } from "../../stores/pageStore";
-import MarkdownIt from "markdown-it";
-import hljs from "highlight.js";
+import { createMarkdownRenderer } from "../../lib/markdown";
 import "highlight.js/styles/github.css";
 import { useRoleLabels } from "../../lib/roleLabels";
 
@@ -129,17 +128,7 @@ const currentUserId = computed(() => appStore.currentUser?.id);
 const router = useRouter();
 const projectMembers = computed(() => projectMemberStore.getProjectMembers(projectId.value));
 
-const markdown = new MarkdownIt({
-  html: false,
-  linkify: true,
-  breaks: true,
-  highlight: (code, language) => {
-    if (language && hljs.getLanguage(language)) {
-      return hljs.highlight(code, { language }).value;
-    }
-    return hljs.highlightAuto(code).value;
-  },
-});
+const markdown = createMarkdownRenderer();
 
 const renderedContent = computed(() =>
   page.value.content ? markdown.render(page.value.content) : ""

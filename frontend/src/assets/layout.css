@@ -367,7 +367,6 @@
 .WorkspaceLayout main {
   background-color: var(--color-page-bg);
   padding: 2rem 3rem 4rem;
-  margin-top: 1rem;
   margin-bottom: 3rem;
   border-radius: 8px;
 }
