@@ -114,13 +114,11 @@ const currentMood = ref("light");
 
 const moods = [
   { id: "light", icon: "☀️" },
-  { id: "vivid", icon: "💎" },
   { id: "dark", icon: "🌙" },
 ];
 
 const moodConfigs = {
   light: { bgL: 98, bgS: 0.05, sSR: 0.08, aH: 120, aSR: 0.9 },
-  vivid: { bgL: 94, bgS: 0.3, sSR: 0.15, aH: 90, aSR: 1.0 },
   dark: { bgL: 8, bgS: 0.2, sSR: 0.12, aH: 120, aSR: 0.9 },
 };
 

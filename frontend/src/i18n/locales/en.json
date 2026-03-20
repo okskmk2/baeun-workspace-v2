@@ -227,7 +227,6 @@
         "mood": "Mood",
         "moods": {
           "light": "Light",
-          "vivid": "Vivid",
           "dark": "Dark"
         }
       },

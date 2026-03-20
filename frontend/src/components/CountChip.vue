@@ -15,8 +15,8 @@ defineProps({
 .count-chip {
   margin-left: 6px;
   font-size: 10px;
-  color: var(--color-text);
-  background-color: #e2e8f0;
+  color: var(--color-text-muted);
+  background-color: var(--color-surface-alt);
   border-radius: 999px;
   width: 18px;
   height: 18px;
