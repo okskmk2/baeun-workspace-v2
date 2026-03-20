@@ -136,7 +136,9 @@ watch(
       clearThemeSeedFromRoot();
       return;
     }
-    applyThemeSeedToRoot(value);
+    applyThemeSeedToRoot(value, {
+      isDark: gnbTheme.value?.isDark === true,
+    });
   },
   { immediate: true }
 );

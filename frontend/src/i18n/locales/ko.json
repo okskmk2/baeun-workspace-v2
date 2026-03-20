@@ -219,6 +219,18 @@
           "teal": "틸"
         }
       },
+      "themeBuilder": {
+        "title": "테마 빌더",
+        "open": "테마 빌더 열기",
+        "apply": "적용",
+        "brandHint": "선택한 주색이 GNB 색상의 기반이 됩니다.",
+        "mood": "무드",
+        "moods": {
+          "light": "라이트",
+          "vivid": "비비드",
+          "dark": "다크"
+        }
+      },
       "actions": {
         "save": "저장",
         "saving": "저장 중...",

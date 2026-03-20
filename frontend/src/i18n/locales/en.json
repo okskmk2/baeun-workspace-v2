@@ -219,6 +219,18 @@
           "teal": "Teal"
         }
       },
+      "themeBuilder": {
+        "title": "Theme Builder",
+        "open": "Open Theme Builder",
+        "apply": "Apply",
+        "brandHint": "The selected primary color becomes the basis for GNB colors.",
+        "mood": "Mood",
+        "moods": {
+          "light": "Light",
+          "vivid": "Vivid",
+          "dark": "Dark"
+        }
+      },
       "actions": {
         "save": "Save",
         "saving": "Saving...",

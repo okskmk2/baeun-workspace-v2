@@ -431,7 +431,7 @@ const applyTheme = (value) => {
 
   if (value === "custom" && customThemeSeed.value) {
     applyThemeSeedToRoot(customThemeSeed.value, {
-      isDark: projectThemeMode.value === "dark",
+      isDark: gnbTheme.value?.isDark === true || projectThemeMode.value === "dark",
     });
   } else {
     clearThemeSeedFromRoot();
@@ -455,7 +455,7 @@ watch(
     if (themeId.value !== "custom") return;
     if (!value) return;
     applyThemeSeedToRoot(value, {
-      isDark: projectThemeMode.value === "dark",
+      isDark: gnbTheme.value?.isDark === true || projectThemeMode.value === "dark",
     });
   },
   { immediate: true }

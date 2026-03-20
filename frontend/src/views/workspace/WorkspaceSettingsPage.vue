@@ -125,9 +125,25 @@
           type="color"
           :disabled="!canManageWorkspace || isUpdatingName"
         />
+
+        <button type="button" class="btn btn--secondary btn--builder" :disabled="!canManageWorkspace" @click="isThemeBuilderOpen = true">
+          {{ t("settings.home.themeBuilder.open") }}
+        </button>
       </div>
     </div>
   </form>
+
+  <ThemeBuilderModal
+    :open="isThemeBuilderOpen"
+    :initial-background="form.customBackground"
+    :initial-foreground="form.customForeground"
+    :initial-seed-h="form.seedH"
+    :initial-seed-s="form.seedS"
+    :initial-seed-l="form.seedL"
+    :initial-is-dark="form.isDark"
+    @close="isThemeBuilderOpen = false"
+    @apply="onThemeBuilderApply"
+  />
 </template>
 
 <script setup>
@@ -135,6 +151,7 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 import Avatar from "../../components/Avatar.vue";
+import ThemeBuilderModal from "../../components/modals/ThemeBuilderModal.vue";
 import { addToast } from "../../lib/toast";
 import { useWorkspaceStore } from "../../stores/workspaceStore";
 import { useAppStore } from "../../stores/appStore";
@@ -168,10 +185,15 @@ const isUploadingWorkspaceImage = ref(false);
 const isRemovingWorkspaceImage = ref(false);
 const workspaceImageError = ref("");
 const workspaceImageSuccess = ref("");
+const isThemeBuilderOpen = ref(false);
 const form = ref({
   themeId: "light",
   customBackground: "#1f2937",
   customForeground: "#ffffff",
+  seedH: null,
+  seedS: null,
+  seedL: null,
+  isDark: false,
 });
 
 const themeOptionsBase = [
@@ -234,6 +256,10 @@ const fetchWorkspaceDetail = async () => {
     form.value.themeId = resolvedThemeId;
     form.value.customBackground = customColors.background;
     form.value.customForeground = customColors.foreground;
+    form.value.seedH = currentTheme?.seedH ?? null;
+    form.value.seedS = currentTheme?.seedS ?? null;
+    form.value.seedL = currentTheme?.seedL ?? null;
+    form.value.isDark = currentTheme?.isDark === true;
   } catch (error) {
     errorMessage.value =
       error?.response?.data?.message || "워크스페이스 정보를 불러오지 못했습니다.";
@@ -272,7 +298,11 @@ const saveSettings = async () => {
   const sameCustomTheme =
     isCustom &&
     normalizeHexColor(currentTheme.background, "") === customBackground &&
-    normalizeHexColor(currentTheme.foreground, "") === customForeground;
+    normalizeHexColor(currentTheme.foreground, "") === customForeground &&
+    currentTheme.seedH === form.value.seedH &&
+    currentTheme.seedS === form.value.seedS &&
+    currentTheme.seedL === form.value.seedL &&
+    (currentTheme.isDark === true) === form.value.isDark;
   if (
     nextName === workspaceName.value &&
     ((isCustom && currentThemeId === "custom" && sameCustomTheme) ||
@@ -294,6 +324,10 @@ const saveSettings = async () => {
                 themeId: "custom",
                 background: customBackground,
                 foreground: customForeground,
+                seedH: form.value.seedH,
+                seedS: form.value.seedS,
+                seedL: form.value.seedL,
+                isDark: form.value.isDark,
               }
             : {
                 themeId: selected,
@@ -310,6 +344,16 @@ const saveSettings = async () => {
   } finally {
     isUpdatingName.value = false;
   }
+};
+
+const onThemeBuilderApply = ({ background, foreground, seedH, seedS, seedL, isDark }) => {
+  form.value.customBackground = background;
+  form.value.customForeground = foreground;
+  form.value.seedH = seedH;
+  form.value.seedS = seedS;
+  form.value.seedL = seedL;
+  form.value.isDark = isDark;
+  form.value.themeId = "custom";
 };
 
 const openWorkspaceImagePicker = () => {
@@ -391,6 +435,10 @@ watch(
         themeId: "custom",
         background: form.value.customBackground,
         foreground: form.value.customForeground,
+        seedH: form.value.seedH,
+        seedS: form.value.seedS,
+        seedL: form.value.seedL,
+        isDark: form.value.isDark,
       });
       return;
     }
@@ -412,6 +460,10 @@ watch(
       themeId: "custom",
       background,
       foreground,
+      seedH: form.value.seedH,
+      seedS: form.value.seedS,
+      seedL: form.value.seedL,
+      isDark: form.value.isDark,
     });
   }
 );
@@ -517,6 +569,12 @@ onBeforeUnmount(() => {
   border: 1px solid var(--color-input-border);
   border-radius: 6px;
   background: transparent;
+}
+
+.btn--builder {
+  grid-column: 1 / -1;
+  margin-top: 4px;
+  width: fit-content;
 }
 
 .theme-item {

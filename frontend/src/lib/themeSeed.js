@@ -138,12 +138,32 @@ const getNeutralSaturation = (hue, saturation) => {
   return clamp(Math.round(reduced), 6, 28);
 };
 
+const hslChannelToLinear = (c) =>
+  c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+
+const getRelativeLuminance = (h, s, l) => {
+  const sn = s / 100;
+  const ln = l / 100;
+  const a = sn * Math.min(ln, 1 - ln);
+  const f = (n) => {
+    const k = (n + h / 30) % 12;
+    return ln - a * Math.max(-1, Math.min(k - 3, Math.min(9 - k, 1)));
+  };
+  return (
+    0.2126 * hslChannelToLinear(f(0)) +
+    0.7152 * hslChannelToLinear(f(8)) +
+    0.0722 * hslChannelToLinear(f(4))
+  );
+};
+
 const buildRoleTokens = (seed, isDark) => {
   const hue = seed.h;
   const accentS = clamp(seed.s, isDark ? 50 : 42, isDark ? 82 : 78);
   const neutralS = getNeutralSaturation(hue, accentS);
 
   if (isDark) {
+    const accentL = 62;
+    const lum = getRelativeLuminance(hue, accentS, accentL);
     return {
       "--role-body-s": toPercent(clamp(neutralS + 6, 12, 30)),
       "--role-body-l": "8%",
@@ -158,13 +178,16 @@ const buildRoleTokens = (seed, isDark) => {
       "--role-input-border-l": "26%",
       "--role-gnb-l": "12%",
       "--role-gnb-text-l": "88%",
-      "--role-accent-l": "62%",
+      "--role-accent-l": `${accentL}%`,
       "--role-accent-hover-l": "56%",
       "--role-accent-soft-s": toPercent(clamp(accentS * 0.6, 22, 48)),
       "--role-accent-soft-l": "28%",
+      "--color-text-inverse": lum > 0.4 ? "hsl(0,0%,6%)" : "#ffffff",
     };
   }
 
+  const accentL = 40;
+  const lum = getRelativeLuminance(hue, accentS, accentL);
   return {
     "--role-body-s": toPercent(neutralS),
     "--role-body-l": "94%",
@@ -179,10 +202,11 @@ const buildRoleTokens = (seed, isDark) => {
     "--role-input-border-l": "84%",
     "--role-gnb-l": "30%",
     "--role-gnb-text-l": "96%",
-    "--role-accent-l": "40%",
+    "--role-accent-l": `${accentL}%`,
     "--role-accent-hover-l": "35%",
     "--role-accent-soft-s": toPercent(clamp(accentS * 0.45, 20, 40)),
     "--role-accent-soft-l": "90%",
+    "--color-text-inverse": lum > 0.4 ? "hsl(0,0%,6%)" : "#ffffff",
   };
 };
 
@@ -237,6 +261,7 @@ export const clearThemeSeedFromRoot = () => {
     "--role-accent-hover-l",
     "--role-accent-soft-s",
     "--role-accent-soft-l",
+    "--color-text-inverse",
   ];
 
   keys.forEach((name) => root.style.removeProperty(name));
