@@ -128,37 +128,12 @@ const getOwnedResourceTypes = (items = []) => {
   return types;
 };
 
-const getGcsPublicUrl = (bucketName, objectPath) => {
-  const encodedPath = objectPath
-    .split("/")
-    .map((segment) => encodeURIComponent(segment))
-    .join("/");
-  return `https://storage.googleapis.com/${bucketName}/${encodedPath}`;
-};
+const getProfileImageApiUrl = (memberId) => `/api/members/${memberId}/profile/image`;
 
-const getObjectPathFromGcsUrl = (url, bucketName) => {
-  if (!url) return null;
-
-  const normalizedUrl = String(url).trim();
-  if (!normalizedUrl) return null;
-
-  const publicPrefix = `https://storage.googleapis.com/${bucketName}/`;
-  const virtualHostPrefix = `https://${bucketName}.storage.googleapis.com/`;
-
-  let rawPath = "";
-  if (normalizedUrl.startsWith(publicPrefix)) {
-    rawPath = normalizedUrl.slice(publicPrefix.length);
-  } else if (normalizedUrl.startsWith(virtualHostPrefix)) {
-    rawPath = normalizedUrl.slice(virtualHostPrefix.length);
-  } else {
-    return null;
-  }
-
-  if (!rawPath) return null;
-  return rawPath
-    .split("/")
-    .map((segment) => decodeURIComponent(segment))
-    .join("/");
+const listMemberProfileFiles = async (memberId) => {
+  const prefix = `members/${memberId}/profile.`;
+  const [files] = await bucket.getFiles({ prefix });
+  return files || [];
 };
 
 const enforceSessionLimit = async (userId, currentSid) => {
@@ -460,8 +435,14 @@ router.get("/me", isAuth, async (req, res) => {
   try {
     const query = "SELECT id, name, email, img_url, role_name, created_at FROM member WHERE id = $1";
     const result = await pool.query(query, [req.session.userId]);
-
-    res.json(result.rows[0]);
+    const row = result.rows[0];
+    if (!row) {
+      return res.status(404).json({ name: "NotFound", message: "Member not found." });
+    }
+    res.json({
+      ...row,
+      img_url: row.img_url ? getProfileImageApiUrl(row.id) : null,
+    });
   } catch (error) {
     res.status(500).json({ name: "InternalServerError", message: error.message });
   }
@@ -514,18 +495,54 @@ router.get("/me", isAuth, async (req, res) => {
  *         $ref: "#/components/responses/ErrorResponse"
  */
 router.put("/profile", isAuth, async (req, res) => {
-  const { name, img_url } = req.body;
+  const { name } = req.body;
   try {
     const query = `
             UPDATE member 
-            SET name = COALESCE($1, name), 
-                img_url = COALESCE($2, img_url) 
-            WHERE id = $3 
+            SET name = COALESCE($1, name)
+            WHERE id = $2 
             RETURNING id, name, email, img_url;
         `;
-    const result = await pool.query(query, [name, img_url, req.session.userId]);
+    const result = await pool.query(query, [name, req.session.userId]);
 
-    res.json({ message: "Profile updated.", ...result.rows[0] });
+    const row = result.rows[0];
+    res.json({
+      message: "Profile updated.",
+      ...row,
+      img_url: row?.img_url ? getProfileImageApiUrl(row.id) : null,
+    });
+  } catch (error) {
+    res.status(500).json({ name: "InternalServerError", message: error.message });
+  }
+});
+
+router.get("/:memberId/profile/image", async (req, res) => {
+  const { memberId } = req.params;
+
+  try {
+    const files = await listMemberProfileFiles(memberId);
+    if (!files.length) {
+      return res.status(404).json({ name: "NotFound", message: "Profile image not found." });
+    }
+
+    const gcsFile = files[0];
+    const [metadata] = await gcsFile.getMetadata();
+    res.setHeader("Content-Type", metadata?.contentType || "application/octet-stream");
+    if (metadata?.size) {
+      res.setHeader("Content-Length", String(metadata.size));
+    }
+    res.setHeader("Cache-Control", "private, no-store");
+
+    gcsFile
+      .createReadStream()
+      .on("error", () => {
+        if (!res.headersSent) {
+          res.status(500).json({ name: "InternalServerError", message: "Failed to stream image." });
+        } else {
+          res.end();
+        }
+      })
+      .pipe(res);
   } catch (error) {
     res.status(500).json({ name: "InternalServerError", message: error.message });
   }
@@ -605,22 +622,20 @@ router.post(
     }
 
     try {
-      const currentMember = await pool.query("SELECT img_url FROM member WHERE id = $1", [userId]);
-      const previousImageUrl = currentMember.rows[0]?.img_url || "";
-      const previousObjectPath = getObjectPathFromGcsUrl(previousImageUrl, PROFILE_IMAGE_BUCKET);
-
       const extension = MIME_TO_EXTENSION[file.mimetype] || "bin";
-      const objectPath = `members/${userId}/${Date.now()}-${randomUUID()}.${extension}`;
+      const objectPath = `members/${userId}/profile.${extension}`;
       const gcsFile = bucket.file(objectPath);
+
+      const previousFiles = await listMemberProfileFiles(userId);
 
       await gcsFile.save(file.buffer, {
         metadata: {
           contentType: file.mimetype,
-          cacheControl: "public, max-age=31536000, immutable",
+          cacheControl: "private, no-store",
         },
       });
 
-      const imageUrl = getGcsPublicUrl(PROFILE_IMAGE_BUCKET, objectPath);
+      const imageUrl = getProfileImageApiUrl(userId);
 
       const updatedMember = await pool.query(
         `UPDATE member
@@ -635,17 +650,11 @@ router.post(
         return res.status(404).json({ name: "NotFound", message: "Member not found." });
       }
 
-      if (previousObjectPath && previousObjectPath !== objectPath) {
-        try {
-          await bucket.file(previousObjectPath).delete({ ignoreNotFound: true });
-        } catch (error) {
-          await gcsFile.delete({ ignoreNotFound: true });
-          return res.status(500).json({
-            name: "InternalServerError",
-            message: "Failed to replace previous profile image.",
-          });
-        }
-      }
+      await Promise.all(
+        previousFiles
+          .filter((fileRef) => fileRef.name !== objectPath)
+          .map((fileRef) => fileRef.delete({ ignoreNotFound: true }))
+      );
 
       res.json({ message: "Profile image uploaded.", ...updatedMember.rows[0] });
     } catch (error) {
@@ -674,17 +683,13 @@ router.delete("/profile/image", isAuth, async (req, res) => {
   const userId = req.session.userId;
 
   try {
-    const currentMember = await pool.query("SELECT img_url FROM member WHERE id = $1", [userId]);
+    const currentMember = await pool.query("SELECT id FROM member WHERE id = $1", [userId]);
     if (currentMember.rows.length === 0) {
       return res.status(404).json({ name: "NotFound", message: "Member not found." });
     }
 
-    const currentImageUrl = currentMember.rows[0]?.img_url || "";
-    const objectPath = getObjectPathFromGcsUrl(currentImageUrl, PROFILE_IMAGE_BUCKET);
-
-    if (objectPath) {
-      await bucket.file(objectPath).delete({ ignoreNotFound: true });
-    }
+    const previousFiles = await listMemberProfileFiles(userId);
+    await Promise.all(previousFiles.map((fileRef) => fileRef.delete({ ignoreNotFound: true })));
 
     const updatedMember = await pool.query(
       `UPDATE member

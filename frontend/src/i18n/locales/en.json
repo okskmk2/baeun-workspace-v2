@@ -624,8 +624,6 @@
         "back": "Back to board",
         "save": "Save",
         "saving": "Saving...",
-        "deactivate": "Deactivate Board",
-        "deactivating": "Deactivating...",
         "delete": "Delete Board",
         "deleting": "Deleting..."
       },
@@ -633,11 +631,18 @@
         "loading": "Loading...",
         "errorLoad": "Failed to load board details.",
         "errorUpdate": "Failed to update board.",
+        "errorActivate": "Failed to activate board.",
         "errorDeactivate": "Failed to deactivate board.",
         "errorDelete": "Failed to delete board."
       },
       "validation": {
         "nameRequired": "Please enter a board name."
+      },
+      "active": {
+        "title": "Board availability",
+        "description": "Use the toggle to switch this board between active and inactive.",
+        "enabled": "Active",
+        "disabled": "Inactive"
       },
       "danger": {
         "title": "Danger zone",
@@ -645,10 +650,12 @@
       },
       "confirm": {
         "delete": "Delete this board?",
+        "activate": "Reactivate this board?",
         "deactivate": "Deactivate this board?"
       },
       "toast": {
         "updated": "Board saved.",
+        "activated": "Board activated.",
         "deactivated": "Board deactivated."
       }
     }
@@ -1016,7 +1023,11 @@
       },
       "composer": {
         "placeholder": "Type a message",
-        "send": "Send"
+        "send": "Send",
+        "attach": "Attach file",
+        "removeFile": "Remove file",
+        "filesTooMany": "You can attach up to 10 files.",
+        "fileTooBig": "File size cannot exceed 20MB."
       },
       "feedback": {
         "like": "Like",

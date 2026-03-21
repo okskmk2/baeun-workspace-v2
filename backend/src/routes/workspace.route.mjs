@@ -65,37 +65,12 @@ const getWorkspaceMemberRole = async (workspaceId, memberId) => {
   return result.rows[0]?.role_name || null;
 };
 
-const getGcsPublicUrl = (bucketName, objectPath) => {
-  const encodedPath = objectPath
-    .split("/")
-    .map((segment) => encodeURIComponent(segment))
-    .join("/");
-  return `https://storage.googleapis.com/${bucketName}/${encodedPath}`;
-};
+const getWorkspaceImageApiUrl = (workspaceId) => `/api/workspaces/${workspaceId}/image`;
 
-const getObjectPathFromGcsUrl = (url, bucketName) => {
-  if (!url) return null;
-
-  const normalizedUrl = String(url).trim();
-  if (!normalizedUrl) return null;
-
-  const publicPrefix = `https://storage.googleapis.com/${bucketName}/`;
-  const virtualHostPrefix = `https://${bucketName}.storage.googleapis.com/`;
-
-  let rawPath = "";
-  if (normalizedUrl.startsWith(publicPrefix)) {
-    rawPath = normalizedUrl.slice(publicPrefix.length);
-  } else if (normalizedUrl.startsWith(virtualHostPrefix)) {
-    rawPath = normalizedUrl.slice(virtualHostPrefix.length);
-  } else {
-    return null;
-  }
-
-  if (!rawPath) return null;
-  return rawPath
-    .split("/")
-    .map((segment) => decodeURIComponent(segment))
-    .join("/");
+const listWorkspaceProfileFiles = async (workspaceId) => {
+  const prefix = `workspaces/${workspaceId}/profile.`;
+  const [files] = await bucket.getFiles({ prefix });
+  return files || [];
 };
 
 /**
@@ -482,26 +457,24 @@ router.post(
         return res.status(403).json({ name: "Forbidden", message: "No permission to update workspace." });
       }
 
-      const currentWorkspace = await pool.query("SELECT img_url FROM workspace WHERE id = $1", [workspaceId]);
+      const currentWorkspace = await pool.query("SELECT id FROM workspace WHERE id = $1", [workspaceId]);
       if (currentWorkspace.rows.length === 0) {
         return res.status(404).json({ name: "NotFound", message: "Workspace not found." });
       }
 
-      const previousImageUrl = currentWorkspace.rows[0]?.img_url || "";
-      const previousObjectPath = getObjectPathFromGcsUrl(previousImageUrl, WORKSPACE_IMAGE_BUCKET);
-
       const extension = MIME_TO_EXTENSION[file.mimetype] || "bin";
-      const objectPath = `workspaces/${workspaceId}/${Date.now()}-${userId}.${extension}`;
+      const objectPath = `workspaces/${workspaceId}/profile.${extension}`;
       const gcsFile = bucket.file(objectPath);
+      const previousFiles = await listWorkspaceProfileFiles(workspaceId);
 
       await gcsFile.save(file.buffer, {
         metadata: {
           contentType: file.mimetype,
-          cacheControl: "public, max-age=31536000, immutable",
+          cacheControl: "private, no-store",
         },
       });
 
-      const imageUrl = getGcsPublicUrl(WORKSPACE_IMAGE_BUCKET, objectPath);
+      const imageUrl = getWorkspaceImageApiUrl(workspaceId);
 
       const updateRes = await pool.query(
         `UPDATE workspace
@@ -516,17 +489,11 @@ router.post(
         return res.status(404).json({ name: "NotFound", message: "Workspace not found." });
       }
 
-      if (previousObjectPath && previousObjectPath !== objectPath) {
-        try {
-          await bucket.file(previousObjectPath).delete({ ignoreNotFound: true });
-        } catch (error) {
-          await gcsFile.delete({ ignoreNotFound: true });
-          return res.status(500).json({
-            name: "InternalServerError",
-            message: "Failed to replace previous workspace image.",
-          });
-        }
-      }
+      await Promise.all(
+        previousFiles
+          .filter((fileRef) => fileRef.name !== objectPath)
+          .map((fileRef) => fileRef.delete({ ignoreNotFound: true }))
+      );
 
       res.json({ message: "Workspace image uploaded.", ...updateRes.rows[0] });
     } catch (error) {
@@ -572,16 +539,13 @@ router.delete("/:workspaceId/image", isAuth, async (req, res) => {
       return res.status(403).json({ name: "Forbidden", message: "No permission to update workspace." });
     }
 
-    const currentWorkspace = await pool.query("SELECT img_url FROM workspace WHERE id = $1", [workspaceId]);
+    const currentWorkspace = await pool.query("SELECT id FROM workspace WHERE id = $1", [workspaceId]);
     if (currentWorkspace.rows.length === 0) {
       return res.status(404).json({ name: "NotFound", message: "Workspace not found." });
     }
 
-    const currentImageUrl = currentWorkspace.rows[0]?.img_url || "";
-    const objectPath = getObjectPathFromGcsUrl(currentImageUrl, WORKSPACE_IMAGE_BUCKET);
-    if (objectPath) {
-      await bucket.file(objectPath).delete({ ignoreNotFound: true });
-    }
+    const previousFiles = await listWorkspaceProfileFiles(workspaceId);
+    await Promise.all(previousFiles.map((fileRef) => fileRef.delete({ ignoreNotFound: true })));
 
     const updateRes = await pool.query(
       `UPDATE workspace
@@ -596,6 +560,38 @@ router.delete("/:workspaceId/image", isAuth, async (req, res) => {
     }
 
     res.json({ message: "Workspace image removed.", ...updateRes.rows[0] });
+  } catch (error) {
+    res.status(500).json({ name: "InternalServerError", message: error.message });
+  }
+});
+
+router.get("/:workspaceId/image", async (req, res) => {
+  const { workspaceId } = req.params;
+
+  try {
+    const files = await listWorkspaceProfileFiles(workspaceId);
+    if (!files.length) {
+      return res.status(404).json({ name: "NotFound", message: "Workspace image not found." });
+    }
+
+    const gcsFile = files[0];
+    const [metadata] = await gcsFile.getMetadata();
+    res.setHeader("Content-Type", metadata?.contentType || "application/octet-stream");
+    if (metadata?.size) {
+      res.setHeader("Content-Length", String(metadata.size));
+    }
+    res.setHeader("Cache-Control", "private, no-store");
+
+    gcsFile
+      .createReadStream()
+      .on("error", () => {
+        if (!res.headersSent) {
+          res.status(500).json({ name: "InternalServerError", message: "Failed to stream image." });
+        } else {
+          res.end();
+        }
+      })
+      .pipe(res);
   } catch (error) {
     res.status(500).json({ name: "InternalServerError", message: error.message });
   }

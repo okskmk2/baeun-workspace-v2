@@ -81,7 +81,29 @@
             </span>
             <span class="message-time">{{ formatTime(message.created_at) }}</span>
           </div>
-          <div class="message-content">{{ message.content }}</div>
+          <div v-if="message.content" class="message-content">{{ message.content }}</div>
+          <div v-if="message.attachments && message.attachments.length" class="message-attachments">
+            <a
+              v-for="attachment in message.attachments"
+              :key="attachment.id"
+              :href="attachment.url"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="message-attachment"
+            >
+              <img
+                v-if="isImageAttachment(attachment)"
+                :src="attachment.url"
+                :alt="attachment.original_file_name"
+                class="attachment-image"
+              />
+              <template v-else>
+                <MaterialSymbol name="attach_file" :size="16" />
+                <span class="attachment-file-name">{{ attachment.original_file_name }}</span>
+                <span class="attachment-file-size">{{ formatFileSize(attachment.file_size_bytes) }}</span>
+              </template>
+            </a>
+          </div>
           <div class="message-feedback">
             <div class="feedback-items">
               <div
@@ -110,17 +132,60 @@
     </div>
   </div>
 
-  <form class="composer" @submit.prevent="sendMessage">
-    <input
-      v-model.trim="draft"
-      type="text"
-      :placeholder="t('channel.room.composer.placeholder')"
-      :disabled="isSending || !canPostMessage"
-    />
-    <button type="submit" class="btn" :disabled="isSending || !draft || !canPostMessage">
-      {{ t("channel.room.composer.send") }}
-    </button>
-  </form>
+  <div class="composer-wrap">
+    <div v-if="pendingFiles.length" class="pending-files">
+      <div v-for="(file, index) in pendingFiles" :key="index" class="pending-file">
+        <img
+          v-if="isImageFile(file)"
+          :src="pendingFileUrls[index]"
+          :alt="file.name"
+          class="pending-file-thumb"
+        />
+        <MaterialSymbol v-else name="attach_file" :size="16" />
+        <span class="pending-file-name">{{ file.name }}</span>
+        <button
+          type="button"
+          class="pending-file-remove"
+          :aria-label="t('channel.room.composer.removeFile')"
+          @click="removePendingFile(index)"
+        >
+          <MaterialSymbol name="close" :size="14" />
+        </button>
+      </div>
+    </div>
+    <form class="composer" @submit.prevent="sendMessage">
+      <button
+        type="button"
+        class="btn btn--icon"
+        :disabled="isSending || !canPostMessage"
+        :aria-label="t('channel.room.composer.attach')"
+        :title="t('channel.room.composer.attach')"
+        @click="triggerFileInput"
+      >
+        <MaterialSymbol name="attach_file" :size="18" />
+      </button>
+      <input
+        ref="fileInput"
+        type="file"
+        class="composer-file-input"
+        multiple
+        @change="onFilesSelected"
+      />
+      <input
+        v-model.trim="draft"
+        type="text"
+        :placeholder="t('channel.room.composer.placeholder')"
+        :disabled="isSending || !canPostMessage"
+      />
+      <button
+        type="submit"
+        class="btn"
+        :disabled="isSending || (!draft && !pendingFiles.length) || !canPostMessage"
+      >
+        {{ t("channel.room.composer.send") }}
+      </button>
+    </form>
+  </div>
   <p v-if="!canPostMessage" class="composer-notice">
     {{ t("channel.room.status.readOnlyNotice") }}
   </p>
@@ -170,6 +235,11 @@ const messages = ref([]);
 const messagesContainer = ref(null);
 const draft = ref("");
 const isSending = ref(false);
+const fileInput = ref(null);
+const pendingFiles = ref([]);
+const pendingFileUrls = ref([]);
+const MAX_ATTACHMENT_FILES = 10;
+const MAX_ATTACHMENT_SIZE = 20 * 1024 * 1024;
 const isConnected = ref(false);
 const MESSAGE_PAGE_SIZE = 30;
 const LOAD_MORE_TOP_THRESHOLD = 24;
@@ -372,21 +442,84 @@ const connectSocket = () => {
   }
 };
 
-const sendMessage = async () => {
-  if (!draft.value || !roomId.value) return;
-  isSending.value = true;
-  const ok = realtimeStore.send({
-    type: "message",
-    channelId: roomId.value,
-    content: draft.value,
-    messageType: "USER",
-  });
-  if (!ok) {
-    isSending.value = false;
+const triggerFileInput = () => {
+  fileInput.value?.click();
+};
+
+const isImageFile = (file) => file.type.startsWith("image/");
+
+const onFilesSelected = (event) => {
+  const selected = Array.from(event.target.files || []);
+  event.target.value = "";
+  const remaining = MAX_ATTACHMENT_FILES - pendingFiles.value.length;
+  if (remaining <= 0) {
+    addToast({ message: t("channel.room.composer.filesTooMany"), type: "error" });
     return;
   }
-  draft.value = "";
-  isSending.value = false;
+  const toAdd = selected.slice(0, remaining);
+  const oversized = toAdd.filter((f) => f.size > MAX_ATTACHMENT_SIZE);
+  if (oversized.length > 0) {
+    addToast({ message: t("channel.room.composer.fileTooBig"), type: "error" });
+    return;
+  }
+  const urls = toAdd.map((file) => (file.type.startsWith("image/") ? URL.createObjectURL(file) : ""));
+  pendingFiles.value = [...pendingFiles.value, ...toAdd];
+  pendingFileUrls.value = [...pendingFileUrls.value, ...urls];
+};
+
+const removePendingFile = (index) => {
+  const url = pendingFileUrls.value[index];
+  if (url) URL.revokeObjectURL(url);
+  pendingFiles.value = pendingFiles.value.filter((_, i) => i !== index);
+  pendingFileUrls.value = pendingFileUrls.value.filter((_, i) => i !== index);
+};
+
+const clearPendingFiles = () => {
+  pendingFileUrls.value.forEach((url) => { if (url) URL.revokeObjectURL(url); });
+  pendingFiles.value = [];
+  pendingFileUrls.value = [];
+};
+
+const isImageAttachment = (attachment) =>
+  String(attachment?.mime_type || "").startsWith("image/");
+
+const formatFileSize = (bytes) => {
+  if (!bytes || bytes < 0) return "0 B";
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+};
+
+const sendMessage = async () => {
+  if ((!draft.value && !pendingFiles.value.length) || !roomId.value) return;
+  if (isSending.value) return;
+  isSending.value = true;
+  try {
+    let attachments = [];
+    if (pendingFiles.value.length > 0) {
+      const formData = new FormData();
+      pendingFiles.value.forEach((file) => formData.append("files", file));
+      const uploadRes = await api.post(`/channels/${roomId.value}/attachments`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      attachments = Array.isArray(uploadRes.data) ? uploadRes.data : [];
+    }
+    const ok = realtimeStore.send({
+      type: "message",
+      channelId: roomId.value,
+      content: draft.value,
+      messageType: "USER",
+      attachments,
+    });
+    if (!ok) return;
+    draft.value = "";
+    clearPendingFiles();
+  } catch (error) {
+    const message = error?.response?.data?.message || t("channel.room.status.errorSend");
+    addToast({ message, type: "error" });
+  } finally {
+    isSending.value = false;
+  }
 };
 
 const formatTime = (value) => {
@@ -548,6 +681,7 @@ onBeforeUnmount(() => {
   unsubscribeFeedback = null;
   unsubscribeOpen = null;
   unsubscribeClose = null;
+  clearPendingFiles();
 });
 </script>
 
@@ -777,10 +911,26 @@ onBeforeUnmount(() => {
   color: var(--color-text-muted);
 }
 
+.composer-wrap {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
 .composer {
   display: flex;
   gap: 8px;
-  margin-top: 8px;
+}
+
+.composer .btn--icon {
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+
+.composer .btn--icon:hover {
+  color: var(--color-text);
+  background-color: var(--color-surface-alt);
 }
 
 .composer input {
@@ -795,6 +945,118 @@ onBeforeUnmount(() => {
 
 .composer-notice {
   margin: 6px 0 0;
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.composer-file-input {
+  display: none;
+}
+
+.pending-files {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background-color: var(--color-surface-alt);
+}
+
+.pending-file {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--color-border);
+  background-color: var(--color-card-bg);
+  font-size: 12px;
+  max-width: 200px;
+}
+
+.pending-file-thumb {
+  width: 28px;
+  height: 28px;
+  object-fit: cover;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.pending-file-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+  color: var(--color-text);
+}
+
+.pending-file-remove {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  border: none;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  padding: 0;
+}
+
+.pending-file-remove:hover {
+  color: var(--color-danger);
+}
+
+.message-attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.message-attachment {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background-color: var(--color-surface-alt);
+  color: var(--color-text);
+  font-size: 13px;
+  text-decoration: none;
+  max-width: 300px;
+}
+
+.message-attachment:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.attachment-image {
+  max-width: 240px;
+  max-height: 200px;
+  border-radius: 6px;
+  object-fit: cover;
+  display: block;
+  border: none;
+  padding: 0;
+}
+
+.attachment-file-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+
+.attachment-file-size {
+  flex-shrink: 0;
   font-size: 12px;
   color: var(--color-text-muted);
 }

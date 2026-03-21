@@ -172,7 +172,14 @@ wss.on("connection", (ws, request) => {
       const { channelId, content } = payload;
       const rawMessageType = String(payload?.messageType || "USER").toUpperCase();
       const messageType = MESSAGE_TYPES.includes(rawMessageType) ? rawMessageType : "USER";
-      if (!channelId || !content) return;
+      const rawAttachments = Array.isArray(payload.attachments) ? payload.attachments : [];
+      const validAttachments = rawAttachments.filter(
+        (a) =>
+          a &&
+          typeof a.object_path === "string" &&
+          a.object_path.startsWith(`channels/${channelId}/`)
+      );
+      if (!channelId || (!content && !validAttachments.length)) return;
 
       try {
         const channelRes = await pool.query(
@@ -221,9 +228,32 @@ wss.on("connection", (ws, request) => {
 
         const insertRes = await pool.query(
           "INSERT INTO message (channel_id, content, created_by, type) VALUES ($1, $2, $3, $4) RETURNING id, content, created_at, created_by, type",
-          [channelId, content, userId, messageType]
+          [channelId, content || "", userId, messageType]
         );
         const message = insertRes.rows[0];
+
+        let savedAttachments = [];
+        if (validAttachments.length > 0) {
+          for (let i = 0; i < validAttachments.length; i++) {
+            const a = validAttachments[i];
+            const r = await pool.query(
+              "INSERT INTO message_attachment (message_id, object_path, original_file_name, mime_type, file_size_bytes, sort_order) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, object_path, original_file_name, mime_type, file_size_bytes, sort_order",
+              [
+                message.id,
+                a.object_path,
+                String(a.original_file_name || ""),
+                String(a.mime_type || "application/octet-stream"),
+                Number(a.file_size_bytes) || 0,
+                i,
+              ]
+            );
+            savedAttachments.push({
+              ...r.rows[0],
+              url: `/api/channels/${channelId}/attachments/${r.rows[0].id}`,
+            });
+          }
+        }
+
         const creatorRes = await pool.query("SELECT name FROM member WHERE id = $1", [userId]);
         const creatorName = creatorRes.rows[0]?.name || "";
 
@@ -237,6 +267,7 @@ wss.on("connection", (ws, request) => {
             creator_name: creatorName,
             channel_id: channelId,
             type: message.type || messageType,
+            attachments: savedAttachments,
           },
         });
 

@@ -624,8 +624,6 @@
         "back": "보드로 돌아가기",
         "save": "저장",
         "saving": "저장 중...",
-        "deactivate": "보드 비활성화",
-        "deactivating": "비활성화 중...",
         "delete": "보드 삭제",
         "deleting": "삭제 중..."
       },
@@ -633,11 +631,18 @@
         "loading": "불러오는 중...",
         "errorLoad": "보드 정보를 불러오지 못했습니다.",
         "errorUpdate": "보드를 수정하지 못했습니다.",
+        "errorActivate": "보드를 활성화하지 못했습니다.",
         "errorDeactivate": "보드를 비활성화하지 못했습니다.",
         "errorDelete": "보드를 삭제하지 못했습니다."
       },
       "validation": {
         "nameRequired": "보드 이름을 입력하세요."
+      },
+      "active": {
+        "title": "보드 활성 상태",
+        "description": "토글로 보드의 활성 여부를 바로 변경할 수 있습니다.",
+        "enabled": "활성",
+        "disabled": "비활성"
       },
       "danger": {
         "title": "주의 구역",
@@ -645,10 +650,12 @@
       },
       "confirm": {
         "delete": "이 보드를 삭제할까요?",
+        "activate": "이 보드를 다시 활성화할까요?",
         "deactivate": "이 보드를 비활성화할까요?"
       },
       "toast": {
         "updated": "보드가 저장되었습니다.",
+        "activated": "보드가 활성화되었습니다.",
         "deactivated": "보드가 비활성화되었습니다."
       }
     }
@@ -1016,7 +1023,11 @@
       },
       "composer": {
         "placeholder": "메시지를 입력하세요",
-        "send": "전송"
+        "send": "전송",
+        "attach": "파일 첨부",
+        "removeFile": "파일 제거",
+        "filesTooMany": "파일은 최대 10개까지 첨부할 수 있습니다.",
+        "fileTooBig": "파일 크기는 20MB를 초과할 수 없습니다."
       },
       "feedback": {
         "like": "좋아요",

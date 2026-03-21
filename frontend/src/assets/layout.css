@@ -219,6 +219,7 @@
 
 .LnbLayout > main {
   flex-grow: 1;
+  min-width: 0;
   background-color: var(--color-page-bg);
   padding: 2rem 3rem 4rem;
   margin: 0;

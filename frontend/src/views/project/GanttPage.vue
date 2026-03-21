@@ -208,7 +208,11 @@ watch(projectId, fetchGantt);
 
 <style scoped>
 .gantt-wrap {
-  /* overflow: auto; */
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
   border: 1px solid var(--color-border);
   /* border-radius: 10px; */
 }
@@ -308,6 +312,11 @@ watch(projectId, fetchGantt);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.kanban-group {
+  width: max-content;
+  min-width: 100%;
 }
 
 .kanban-group h2 {

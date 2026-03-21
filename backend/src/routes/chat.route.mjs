@@ -1,4 +1,7 @@
 import express from "express";
+import { randomUUID } from "crypto";
+import multer from "multer";
+import { Storage } from "@google-cloud/storage";
 import pool from "../db.mjs";
 import { isAuth } from "../middlewares/auth.middleware.mjs";
 import { withPagination } from "../middlewares/pagination.middleware.mjs";
@@ -8,6 +11,19 @@ import { createNotifications, NOTIFICATION_TYPES } from "../notification.mjs";
 
 const router = express.Router();
 const FEEDBACK_KEYS = ["done", "like", "checking", "thanks"];
+
+const ATTACHMENT_BUCKET = "workspace.baeun.com";
+const ATTACHMENT_MAX_FILE_SIZE = 20 * 1024 * 1024;
+const ATTACHMENT_MAX_FILES = 10;
+const gcsStorage = new Storage();
+const attachmentBucket = gcsStorage.bucket(ATTACHMENT_BUCKET);
+const attachmentUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: ATTACHMENT_MAX_FILE_SIZE, files: ATTACHMENT_MAX_FILES },
+});
+
+const getAttachmentApiUrl = (channelId, attachmentId) =>
+  `/api/channels/${channelId}/attachments/${attachmentId}`;
 const CHANNEL_TYPES = ["GENERAL", "TASK", "DM", "AGENT", "NOTICE"];
 const NOTICE_SCOPES = ["PROJECT", "WORKSPACE"];
 const NOTICE_WRITER_ROLES = ["OWNER", "ADMIN"];
@@ -38,6 +54,36 @@ const resolveNoticeMemberRole = async (channel, userId) => {
     [channel.project_id, userId]
   );
   return String(projectRoleRes.rows[0]?.role_name || "").toUpperCase();
+};
+
+const ensureChannelReadable = async (channelId, userId) => {
+  const channelRes = await pool.query(
+    "SELECT id, type, scope, project_id, workspace_id FROM channel WHERE id = $1",
+    [channelId]
+  );
+  if (channelRes.rows.length === 0) {
+    return { ok: false, status: 404, message: "채널을 찾을 수 없습니다." };
+  }
+
+  const channel = channelRes.rows[0];
+  const channelType = String(channel.type || "").toUpperCase();
+
+  if (channelType === "NOTICE") {
+    const noticeRole = await resolveNoticeMemberRole(channel, userId);
+    if (!noticeRole) {
+      return { ok: false, status: 403, message: "접근 권한이 없습니다." };
+    }
+  } else {
+    const memberCheck = await pool.query(
+      "SELECT id FROM channel_member WHERE channel_id = $1 AND member_id = $2",
+      [channelId, userId]
+    );
+    if (memberCheck.rows.length === 0) {
+      return { ok: false, status: 403, message: "접근 권한이 없습니다." };
+    }
+  }
+
+  return { ok: true, channel };
 };
 
 const createDmPairKey = (memberIdA, memberIdB) => {
@@ -715,6 +761,24 @@ router.get(
       return res.json([]);
     }
 
+    const attachmentsRes = await pool.query(
+      `SELECT ma.id, ma.message_id, ma.object_path, ma.original_file_name, ma.mime_type, ma.file_size_bytes, ma.sort_order, m.channel_id
+       FROM message_attachment ma
+       JOIN message m ON m.id = ma.message_id
+       WHERE ma.message_id = ANY($1::bigint[])
+       ORDER BY ma.message_id, ma.sort_order`,
+      [messageIds]
+    );
+    const attachmentsByMessage = {};
+    for (const row of attachmentsRes.rows) {
+      const key = String(row.message_id);
+      if (!attachmentsByMessage[key]) attachmentsByMessage[key] = [];
+      attachmentsByMessage[key].push({
+        ...row,
+        url: getAttachmentApiUrl(row.channel_id, row.id),
+      });
+    }
+
     const feedbackRes = await pool.query(
       `SELECT
         mf.message_id,
@@ -743,6 +807,7 @@ router.get(
         ...message,
         feedback_counts: countsByMessage[String(message.id)] || {},
         feedback_mine: mineByMessage[String(message.id)] || [],
+        attachments: attachmentsByMessage[String(message.id)] || [],
       }));
 
       res.json(data);
@@ -1472,6 +1537,142 @@ router.delete("/:channelId", isAuth, async (req, res) => {
     res.status(500).json({ name: "InternalServerError", message: error.message });
   } finally {
     client.release();
+  }
+});
+
+router.post(
+  "/:channelId/attachments",
+  isAuth,
+  attachmentUpload.array("files", ATTACHMENT_MAX_FILES),
+  async (req, res) => {
+    const { channelId } = req.params;
+    const userId = req.session.userId;
+    const files = req.files || [];
+
+    if (!files.length) {
+      return res.status(400).json({ name: "BadRequest", message: "파일을 선택해 주세요." });
+    }
+
+    try {
+      const channelRes = await pool.query(
+        "SELECT id, type, scope, project_id, workspace_id FROM channel WHERE id = $1",
+        [channelId]
+      );
+      if (channelRes.rows.length === 0) {
+        return res.status(404).json({ name: "NotFound", message: "채널을 찾을 수 없습니다." });
+      }
+
+      const channel = channelRes.rows[0];
+      const channelType = String(channel.type || "").toUpperCase();
+
+      if (channelType === "NOTICE") {
+        const noticeRole = await resolveNoticeMemberRole(channel, userId);
+        if (!noticeRole) {
+          return res.status(403).json({ name: "Forbidden", message: "접근 권한이 없습니다." });
+        }
+      } else {
+        const memberCheck = await pool.query(
+          "SELECT id FROM channel_member WHERE channel_id = $1 AND member_id = $2",
+          [channelId, userId]
+        );
+        if (memberCheck.rows.length === 0) {
+          return res.status(403).json({ name: "Forbidden", message: "접근 권한이 없습니다." });
+        }
+      }
+
+      const uploadedAttachments = await Promise.all(
+        files.map(async (file, index) => {
+          const rawExt = (file.originalname.split(".").pop() || "bin").toLowerCase().slice(0, 32);
+          const ext = rawExt.replace(/[^a-z0-9]/g, "") || "bin";
+          const objectPath = `channels/${channelId}/${randomUUID()}.${ext}`;
+          const gcsFile = attachmentBucket.file(objectPath);
+          await gcsFile.save(file.buffer, {
+            contentType: file.mimetype,
+            resumable: false,
+          });
+          return {
+            object_path: objectPath,
+            original_file_name: file.originalname,
+            mime_type: file.mimetype,
+            file_size_bytes: file.size,
+            sort_order: index,
+          };
+        })
+      );
+
+      res.json(
+        uploadedAttachments.map((attachment, index) => ({
+          ...attachment,
+          temp_id: index,
+        }))
+      );
+    } catch (error) {
+      logger.error("attachment upload error", {
+        err: error?.message,
+        stack: error?.stack,
+      });
+      res.status(500).json({ name: "InternalServerError", message: error.message });
+    }
+  }
+);
+
+router.get("/:channelId/attachments/:attachmentId", isAuth, async (req, res) => {
+  const { channelId, attachmentId } = req.params;
+  const userId = req.session.userId;
+
+  try {
+    const access = await ensureChannelReadable(channelId, userId);
+    if (!access.ok) {
+      const errorName = access.status === 404 ? "NotFound" : "Forbidden";
+      return res.status(access.status).json({ name: errorName, message: access.message });
+    }
+
+    const attachmentRes = await pool.query(
+      `SELECT ma.id, ma.object_path, ma.original_file_name, ma.mime_type, ma.file_size_bytes
+       FROM message_attachment ma
+       JOIN message m ON m.id = ma.message_id
+       WHERE ma.id = $1 AND m.channel_id = $2`,
+      [attachmentId, channelId]
+    );
+    if (attachmentRes.rows.length === 0) {
+      return res.status(404).json({ name: "NotFound", message: "첨부파일을 찾을 수 없습니다." });
+    }
+
+    const attachment = attachmentRes.rows[0];
+    const file = attachmentBucket.file(attachment.object_path);
+    const [exists] = await file.exists();
+    if (!exists) {
+      return res.status(404).json({ name: "NotFound", message: "파일을 찾을 수 없습니다." });
+    }
+
+    res.setHeader("Content-Type", attachment.mime_type || "application/octet-stream");
+    if (attachment.file_size_bytes) {
+      res.setHeader("Content-Length", String(attachment.file_size_bytes));
+    }
+    res.setHeader(
+      "Content-Disposition",
+      `inline; filename*=UTF-8''${encodeURIComponent(attachment.original_file_name || "file")}`
+    );
+    res.setHeader("Cache-Control", "private, max-age=60");
+
+    file
+      .createReadStream()
+      .on("error", () => {
+        if (!res.headersSent) {
+          res
+            .status(500)
+            .json({ name: "InternalServerError", message: "파일 전송에 실패했습니다." });
+        } else {
+          res.end();
+        }
+      })
+      .pipe(res);
+  } catch (error) {
+    logger.error("attachment download error", {
+      err: error?.message,
+      stack: error?.stack,
+    });
+    res.status(500).json({ name: "InternalServerError", message: error.message });
   }
 });
 

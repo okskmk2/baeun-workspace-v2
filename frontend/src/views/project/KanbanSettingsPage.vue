@@ -37,26 +37,25 @@
     </div>
   </form>
 
+  <section v-if="!isLoading && !errorMessage && !isBacklog" class="status-card">
+    <ToggleSwitch
+      :model-value="isActive"
+      :disabled="isUpdatingActive"
+      :label="t('kanban.settings.active.title')"
+      :description="t('kanban.settings.active.description')"
+      :on-label="t('kanban.settings.active.enabled')"
+      :off-label="t('kanban.settings.active.disabled')"
+      @update:model-value="toggleKanbanActive"
+    />
+    <p v-if="activeError" class="status error">{{ activeError }}</p>
+  </section>
+
   <DangerZone
     v-if="!isLoading && !errorMessage && !isBacklog"
     :title="t('kanban.settings.danger.title')"
     :description="t('kanban.settings.danger.description')"
   >
     <template #actions>
-      <button
-        v-if="canDeactivate"
-        type="button"
-        class="btn btn--secondary"
-        :disabled="isDeactivating"
-        @click="deactivateKanban"
-      >
-        {{
-          isDeactivating
-            ? t("kanban.settings.actions.deactivating")
-            : t("kanban.settings.actions.deactivate")
-        }}
-      </button>
-      <p v-if="deactivateError" class="status error">{{ deactivateError }}</p>
       <button type="button" class="btn btn--danger" :disabled="isDeleting" @click="deleteKanban">
         {{ isDeleting ? t("kanban.settings.actions.deleting") : t("kanban.settings.actions.delete") }}
       </button>
@@ -73,6 +72,7 @@ import api from "../../lib/axios";
 import { addToast } from "../../lib/toast";
 import BackLinkButton from "../../components/BackLinkButton.vue";
 import DangerZone from "../../components/DangerZone.vue";
+import ToggleSwitch from "../../components/ToggleSwitch.vue";
 import { useKanbanStore } from "../../stores/kanbanStore";
 
 const route = useRoute();
@@ -86,11 +86,11 @@ const kanbanId = computed(() => route.params.kanbanId);
 const isLoading = ref(false);
 const isSaving = ref(false);
 const isDeleting = ref(false);
-const isDeactivating = ref(false);
+const isUpdatingActive = ref(false);
 const errorMessage = ref("");
 const formError = ref("");
 const deleteError = ref("");
-const deactivateError = ref("");
+const activeError = ref("");
 const kanbanType = ref("KANBAN");
 const isActive = ref(true);
 
@@ -100,13 +100,13 @@ const form = ref({
 });
 
 const isBacklog = computed(() => String(kanbanType.value || "").toUpperCase() === "BACKLOG");
-const canDeactivate = computed(() => !isBacklog.value && isActive.value);
 
 const fetchKanban = async () => {
   if (!kanbanId.value) return;
 
   isLoading.value = true;
   errorMessage.value = "";
+  activeError.value = "";
 
   try {
     const res = await api.get(`/kanbans/${kanbanId.value}`);
@@ -176,27 +176,41 @@ const deleteKanban = async () => {
   }
 };
 
-const deactivateKanban = async () => {
-  if (!kanbanId.value || !projectId.value || !canDeactivate.value) return;
+const toggleKanbanActive = async (nextValue) => {
+  if (!kanbanId.value || !projectId.value || isBacklog.value) return;
+  if (Boolean(nextValue) === isActive.value) return;
 
-  const confirmed = window.confirm(t("kanban.settings.confirm.deactivate"));
+  const confirmed = window.confirm(
+    t(nextValue ? "kanban.settings.confirm.activate" : "kanban.settings.confirm.deactivate")
+  );
   if (!confirmed) return;
 
-  isDeactivating.value = true;
-  deactivateError.value = "";
+  isUpdatingActive.value = true;
+  activeError.value = "";
 
   try {
-    const res = await api.patch(`/kanbans/${kanbanId.value}`, { is_active: false });
-    isActive.value = res.data?.is_active !== false ? true : false;
-    kanbanStore.updateKanbanDetails(kanbanId.value, projectId.value, { is_active: false });
-    addToast({ message: t("kanban.settings.toast.deactivated"), type: "success" });
-    router.push(`/project/${projectId.value}/kanban/archive`);
+    const res = await api.patch(`/kanbans/${kanbanId.value}`, { is_active: Boolean(nextValue) });
+    const nextIsActive = res.data?.is_active !== false;
+    isActive.value = nextIsActive;
+    kanbanStore.updateKanbanDetails(kanbanId.value, projectId.value, { is_active: nextIsActive });
+
+    await Promise.allSettled([
+      kanbanStore.fetchKanbans(projectId.value, { isActive: true }),
+      kanbanStore.fetchKanbans(projectId.value, { isActive: false }),
+    ]);
+
+    addToast({
+      message: t(nextIsActive ? "kanban.settings.toast.activated" : "kanban.settings.toast.deactivated"),
+      type: "success",
+    });
   } catch (error) {
-    const message = error?.response?.data?.message || t("kanban.settings.status.errorDeactivate");
-    deactivateError.value = message;
+    const message =
+      error?.response?.data?.message ||
+      t(nextValue ? "kanban.settings.status.errorActivate" : "kanban.settings.status.errorDeactivate");
+    activeError.value = message;
     addToast({ message, type: "error" });
   } finally {
-    isDeactivating.value = false;
+    isUpdatingActive.value = false;
   }
 };
 
@@ -234,6 +248,17 @@ watch(kanbanId, (nextId, prevId) => {
 .form-actions {
   display: flex;
   justify-content: flex-end;
+}
+
+.status-card {
+  margin-top: 24px;
+  padding: 16px;
+  border-radius: 10px;
+  border: 1px solid var(--color-border);
+  background: var(--color-page-bg);
+  display: grid;
+  gap: 8px;
+  max-width: 480px;
 }
 
 .status {
