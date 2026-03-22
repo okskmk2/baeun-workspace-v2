@@ -13,6 +13,8 @@ create table license (
     billing_cycle varchar(20) not null check (
         billing_cycle in ('LIFETIME', 'MONTHLY', 'YEARLY')
     ),
+    -- 결제 유예 개월 수 (예: 2개월, 3개월)
+    grace_period_months integer default 0 not null check (grace_period_months >= 0),
     -- (선택) 만약 '14일권', '3개월권' 등 유연한 기간이 필요해진다면
     -- duration_days integer, 또는 duration_months integer 를 추가할 수도 있습니다.
     -- 2. 가격 및 통화 정보

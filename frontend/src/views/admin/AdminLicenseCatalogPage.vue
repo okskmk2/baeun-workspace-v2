@@ -65,6 +65,10 @@
           </select>
         </label>
         <label>
+          결제 유예(개월)
+          <input v-model.number="createForm.gracePeriodMonths" type="number" min="0" step="1" />
+        </label>
+        <label>
           가격
           <input v-model.number="createForm.price" type="number" min="0" step="100" />
         </label>
@@ -109,15 +113,16 @@ const createForm = ref({
   nameI18nKey: "",
   targetResource: "PROJECT",
   billingCycle: "MONTHLY",
+  gracePeriodMonths: 0,
   price: 0,
   currency: "KRW",
 });
 const isCreateModalOpen = ref(false);
 
 const resourceDetailRoute = {
-  WORKSPACE: "AdminLicenseWorkspaceSlotDetail",
-  PROJECT: "AdminLicenseProjectSlotDetail",
-  WORKSPACE_MEMBER: "AdminLicenseWorkspaceMemberSlotDetail",
+  WORKSPACE: "AdminLicenseWorkspaceUsage",
+  PROJECT: "AdminLicenseProjectUsage",
+  WORKSPACE_MEMBER: "AdminLicenseWorkspaceMemberUsage",
 };
 
 const formError = ref("");
@@ -203,6 +208,12 @@ const licenseHeaders = computed(() => [
     align: "left",
   },
   {
+    text: "유예(월)",
+    key: "grace_period_months",
+    align: "right",
+    render: (value) => String(Number(value || 0)),
+  },
+  {
     text: "가격",
     key: "price",
     align: "right",
@@ -267,6 +278,11 @@ const addLicenseType = async () => {
     return;
   }
 
+  if (!Number.isInteger(Number(createForm.value.gracePeriodMonths)) || Number(createForm.value.gracePeriodMonths) < 0) {
+    formError.value = "결제 유예(개월)는 0 이상의 정수여야 합니다.";
+    return;
+  }
+
   isCreating.value = true;
   try {
     await api.post("/licenses", {
@@ -274,6 +290,7 @@ const addLicenseType = async () => {
       name_i18n_key: createForm.value.nameI18nKey || null,
       target_resource: createForm.value.targetResource,
       billing_cycle: createForm.value.billingCycle,
+      grace_period_months: Number(createForm.value.gracePeriodMonths || 0),
       price: Number(createForm.value.price || 0),
       currency: createForm.value.currency,
     });
@@ -283,6 +300,7 @@ const addLicenseType = async () => {
       nameI18nKey: "",
       targetResource: "PROJECT",
       billingCycle: "MONTHLY",
+      gracePeriodMonths: 0,
       price: 0,
       currency: "KRW",
     };

@@ -78,7 +78,19 @@ app.use("/api/metrics", metricsRouter);
 app.use("/api/licenses", licenseRouter);
 
 // Static files serve
+const publicPath = path.join(__dirname, "../public");
 const staticPath = path.join(__dirname, "../../frontend/dist");
+
+app.use(
+  "/favicon.svg",
+  express.static(publicPath, {
+    maxAge: "365d",
+    immutable: true,
+    setHeaders: (res) => {
+      res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+    },
+  })
+);
 
 app.use(
   express.static(staticPath, {

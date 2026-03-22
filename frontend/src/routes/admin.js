@@ -4,9 +4,9 @@ import AdminUserWorkspacePage from "../views/admin/AdminUserWorkspacePage.vue";
 import AdminBillingPage from "../views/admin/AdminBillingPage.vue";
 import AdminNotificationPage from "../views/admin/AdminNotificationPage.vue";
 import AdminLicenseCatalogPage from "../views/admin/AdminLicenseCatalogPage.vue";
-import AdminLicenseWorkspaceSlotDetailPage from "../views/admin/AdminLicenseWorkspaceSlotDetailPage.vue";
-import AdminLicenseProjectSlotDetailPage from "../views/admin/AdminLicenseProjectSlotDetailPage.vue";
-import AdminLicenseWorkspaceMemberSlotDetailPage from "../views/admin/AdminLicenseWorkspaceMemberSlotDetailPage.vue";
+import AdminLicenseWorkspaceUsagePage from "../views/admin/AdminLicenseWorkspaceUsagePage.vue";
+import AdminLicenseProjectUsagePage from "../views/admin/AdminLicenseProjectUsagePage.vue";
+import AdminLicenseWorkspaceMemberUsagePage from "../views/admin/AdminLicenseWorkspaceMemberUsagePage.vue";
 
 export const adminRoutes = [
   {
@@ -42,19 +42,19 @@ export const adminRoutes = [
         component: AdminLicenseCatalogPage,
       },
       {
-        path: "licenses/workspace-slot",
-        name: "AdminLicenseWorkspaceSlotDetail",
-        component: AdminLicenseWorkspaceSlotDetailPage,
+        path: "licenses/workspace",
+        name: "AdminLicenseWorkspaceUsage",
+        component: AdminLicenseWorkspaceUsagePage,
       },
       {
-        path: "licenses/project-slot",
-        name: "AdminLicenseProjectSlotDetail",
-        component: AdminLicenseProjectSlotDetailPage,
+        path: "licenses/project",
+        name: "AdminLicenseProjectUsage",
+        component: AdminLicenseProjectUsagePage,
       },
       {
-        path: "licenses/workspace-member-slot",
-        name: "AdminLicenseWorkspaceMemberSlotDetail",
-        component: AdminLicenseWorkspaceMemberSlotDetailPage,
+        path: "licenses/workspace-member",
+        name: "AdminLicenseWorkspaceMemberUsage",
+        component: AdminLicenseWorkspaceMemberUsagePage,
       },
     ],
   },

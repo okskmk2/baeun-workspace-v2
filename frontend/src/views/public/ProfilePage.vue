@@ -123,8 +123,10 @@ import Avatar from "../../components/Avatar.vue";
 import DangerZone from "../../components/DangerZone.vue";
 import WithdrawAccountModal from "../../components/modals/WithdrawAccountModal.vue";
 import OwnershipGuideModal from "../../components/modals/OwnershipGuideModal.vue";
+import { useAppStore } from "../../stores/appStore";
 
 const { t, locale } = useI18n();
+const appStore = useAppStore();
 
 const isLoading = ref(false);
 const errorMessage = ref("");

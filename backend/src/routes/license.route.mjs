@@ -1,4 +1,5 @@
 import express from "express";
+import { randomUUID } from "crypto";
 import pool from "../db.mjs";
 import { isAuth } from "../middlewares/auth.middleware.mjs";
 import { withPagination } from "../middlewares/pagination.middleware.mjs";
@@ -9,10 +10,26 @@ const router = express.Router();
 const VALID_TARGET_RESOURCES = new Set(["WORKSPACE", "WORKSPACE_MEMBER", "PROJECT"]);
 const VALID_BILLING_CYCLES = new Set(["LIFETIME", "MONTHLY", "YEARLY"]);
 const VALID_CURRENCIES = new Set(["KRW", "USD"]);
+const VALID_MANUAL_TARGET_TYPES = new Set(["MEMBER", "WORKSPACE"]);
+const VALID_PURCHASED_LICENSE_STATUS = new Set(["ACTIVE", "EXPIRED", "CANCELED", "REFUNDED"]);
 
 const normalizeDisplayName = (value) => {
   const normalized = String(value || "").trim();
   return normalized || null;
+};
+
+const parseDateInput = (value) => {
+  if (value === undefined || value === null || String(value).trim() === "") return null;
+  const parsed = new Date(String(value));
+  if (Number.isNaN(parsed.getTime())) return null;
+  return parsed;
+};
+
+const parseGracePeriodMonths = (value) => {
+  if (value === undefined || value === null || String(value).trim() === "") return 0;
+  const parsed = Number.parseInt(String(value), 10);
+  if (!Number.isInteger(parsed) || parsed < 0) return null;
+  return parsed;
 };
 
 const attachSalesStats = async (licenseId) => {
@@ -130,6 +147,268 @@ router.get("/", isAuth, withPagination({ defaultPageSize: 10, maxPageSize: 100 }
   }
 });
 
+router.get(
+  "/manual/users",
+  isAuth,
+  withPagination({ defaultPageSize: 10, maxPageSize: 100 }),
+  async (req, res) => {
+    const keyword = String(req.query.q || "").trim();
+    const { page, pageSize } = req.pagination;
+
+    try {
+      const values = [];
+      let whereClause = "";
+
+      if (keyword) {
+        values.push(`%${keyword}%`);
+        whereClause = `WHERE m.name ILIKE $${values.length} OR m.email ILIKE $${values.length}`;
+      }
+
+      const totalRes = await pool.query(
+        `SELECT COUNT(*)::integer AS total
+         FROM member m
+         ${whereClause}`,
+        values
+      );
+
+      const total = Number(totalRes.rows?.[0]?.total || 0);
+      const totalPages = Math.max(1, Math.ceil(total / pageSize));
+      const normalizedPage = Math.min(Math.max(page, 1), totalPages);
+      const offset = (normalizedPage - 1) * pageSize;
+
+      const listValues = [...values, pageSize, offset];
+      const limitParam = `$${listValues.length - 1}`;
+      const offsetParam = `$${listValues.length}`;
+
+      const result = await pool.query(
+        `SELECT
+          m.id,
+          m.name,
+          m.email,
+          m.role_name,
+          m.created_at,
+          COALESCE(SUM(CASE WHEN pl.status = 'ACTIVE' THEN pl.quantity ELSE 0 END), 0)::integer AS active_license_quantity
+        FROM member m
+        LEFT JOIN purchased_license pl ON pl.owner_member_id = m.id
+        ${whereClause}
+        GROUP BY m.id
+        ORDER BY m.id DESC
+        LIMIT ${limitParam}
+        OFFSET ${offsetParam}`,
+        listValues
+      );
+
+      return res.json({
+        items: result.rows,
+        pagination: {
+          page: normalizedPage,
+          pageSize,
+          total,
+          totalPages,
+        },
+      });
+    } catch (error) {
+      return res.status(500).json({ name: "InternalServerError", message: error.message });
+    }
+  }
+);
+
+router.get(
+  "/manual/workspaces",
+  isAuth,
+  withPagination({ defaultPageSize: 10, maxPageSize: 100 }),
+  async (req, res) => {
+    const keyword = String(req.query.q || "").trim();
+    const { page, pageSize } = req.pagination;
+
+    try {
+      const values = [];
+      let whereClause = "";
+
+      if (keyword) {
+        values.push(`%${keyword}%`);
+        whereClause = `WHERE w.name ILIKE $${values.length}`;
+      }
+
+      const totalRes = await pool.query(
+        `SELECT COUNT(*)::integer AS total
+         FROM workspace w
+         ${whereClause}`,
+        values
+      );
+
+      const total = Number(totalRes.rows?.[0]?.total || 0);
+      const totalPages = Math.max(1, Math.ceil(total / pageSize));
+      const normalizedPage = Math.min(Math.max(page, 1), totalPages);
+      const offset = (normalizedPage - 1) * pageSize;
+
+      const listValues = [...values, pageSize, offset];
+      const limitParam = `$${listValues.length - 1}`;
+      const offsetParam = `$${listValues.length}`;
+
+      const result = await pool.query(
+        `SELECT
+          w.id,
+          w.name,
+          w.member_id,
+          owner.name AS owner_name,
+          COALESCE(COUNT(DISTINCT wm.id), 0)::integer AS member_count,
+          COALESCE(SUM(CASE WHEN pl.status = 'ACTIVE' THEN pl.quantity ELSE 0 END), 0)::integer AS active_license_quantity
+        FROM workspace w
+        LEFT JOIN member owner ON owner.id = w.member_id
+        LEFT JOIN workspace_member wm ON wm.workspace_id = w.id
+        LEFT JOIN purchased_license pl ON pl.target_workspace_id = w.id
+        ${whereClause}
+        GROUP BY w.id, owner.name
+        ORDER BY w.id DESC
+        LIMIT ${limitParam}
+        OFFSET ${offsetParam}`,
+        listValues
+      );
+
+      return res.json({
+        items: result.rows,
+        pagination: {
+          page: normalizedPage,
+          pageSize,
+          total,
+          totalPages,
+        },
+      });
+    } catch (error) {
+      return res.status(500).json({ name: "InternalServerError", message: error.message });
+    }
+  }
+);
+
+router.post("/manual/assign", isAuth, async (req, res) => {
+  const licenseId = parsePositiveInt(req.body.license_id);
+  const targetType = normalizeUpper(req.body.target_type);
+  const targetId = parsePositiveInt(req.body.target_id);
+  const quantity = parsePositiveInt(req.body.quantity) || 1;
+  const status = normalizeUpper(req.body.status || "ACTIVE");
+  const startDate = parseDateInput(req.body.start_date);
+  const endDate = parseDateInput(req.body.end_date);
+
+  if (!licenseId) {
+    return res.status(400).json({ name: "BadRequest", message: "Invalid license_id." });
+  }
+
+  if (!VALID_MANUAL_TARGET_TYPES.has(targetType)) {
+    return res.status(400).json({ name: "BadRequest", message: "target_type must be MEMBER or WORKSPACE." });
+  }
+
+  if (!targetId) {
+    return res.status(400).json({ name: "BadRequest", message: "Invalid target_id." });
+  }
+
+  if (!VALID_PURCHASED_LICENSE_STATUS.has(status)) {
+    return res.status(400).json({ name: "BadRequest", message: "Invalid status." });
+  }
+
+  if (endDate && startDate && endDate.getTime() < startDate.getTime()) {
+    return res.status(400).json({ name: "BadRequest", message: "end_date must be later than start_date." });
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+
+    const licenseRes = await client.query("SELECT * FROM license WHERE id = $1", [licenseId]);
+    if (licenseRes.rows.length === 0) {
+      await client.query("ROLLBACK");
+      return res.status(404).json({ name: "NotFound", message: "License not found." });
+    }
+
+    const license = licenseRes.rows[0];
+    if (!license.is_active) {
+      await client.query("ROLLBACK");
+      return res.status(400).json({ name: "BadRequest", message: "Inactive license cannot be assigned." });
+    }
+
+    const resourceType = String(license.target_resource || "").toUpperCase();
+    if (targetType === "MEMBER" && resourceType !== "WORKSPACE") {
+      await client.query("ROLLBACK");
+      return res.status(400).json({
+        name: "BadRequest",
+        message: "MEMBER assignment supports WORKSPACE resource license only.",
+      });
+    }
+
+    if (targetType === "WORKSPACE" && !["PROJECT", "WORKSPACE_MEMBER"].includes(resourceType)) {
+      await client.query("ROLLBACK");
+      return res.status(400).json({
+        name: "BadRequest",
+        message: "WORKSPACE assignment supports PROJECT/WORKSPACE_MEMBER resource license only.",
+      });
+    }
+
+    if (targetType === "MEMBER") {
+      const memberRes = await client.query("SELECT id, name, email FROM member WHERE id = $1", [targetId]);
+      if (memberRes.rows.length === 0) {
+        await client.query("ROLLBACK");
+        return res.status(404).json({ name: "NotFound", message: "Member not found." });
+      }
+    }
+
+    if (targetType === "WORKSPACE") {
+      const workspaceRes = await client.query("SELECT id, name FROM workspace WHERE id = $1", [targetId]);
+      if (workspaceRes.rows.length === 0) {
+        await client.query("ROLLBACK");
+        return res.status(404).json({ name: "NotFound", message: "Workspace not found." });
+      }
+    }
+
+    const paymentRes = await client.query(
+      `INSERT INTO payment (member_id, total_amount, status, pg_transaction_id)
+       VALUES ($1, 0, 'SUCCESS', $2)
+       RETURNING id`,
+      [req.session.userId, `MANUAL-${randomUUID()}`]
+    );
+
+    const paymentId = paymentRes.rows[0].id;
+    const insertRes = await client.query(
+      `INSERT INTO purchased_license (
+        payment_id,
+        license_id,
+        owner_member_id,
+        target_workspace_id,
+        quantity,
+        status,
+        start_date,
+        end_date
+      ) VALUES ($1, $2, $3, $4, $5, $6, COALESCE($7::timestamptz, CURRENT_TIMESTAMP), $8)
+      RETURNING *`,
+      [
+        paymentId,
+        licenseId,
+        targetType === "MEMBER" ? targetId : null,
+        targetType === "WORKSPACE" ? targetId : null,
+        quantity,
+        status,
+        startDate ? startDate.toISOString() : null,
+        endDate ? endDate.toISOString() : null,
+      ]
+    );
+
+    await client.query("COMMIT");
+    return res.status(201).json({
+      message: "License assigned manually.",
+      assignment: insertRes.rows[0],
+      license: {
+        id: license.id,
+        target_resource: license.target_resource,
+        billing_cycle: license.billing_cycle,
+      },
+    });
+  } catch (error) {
+    await client.query("ROLLBACK");
+    return res.status(500).json({ name: "InternalServerError", message: error.message });
+  } finally {
+    client.release();
+  }
+});
+
 router.get("/:licenseId", isAuth, async (req, res) => {
   const licenseId = parsePositiveInt(req.params.licenseId);
   if (!licenseId) {
@@ -161,6 +440,7 @@ router.post("/", isAuth, async (req, res) => {
   const name = normalizeDisplayName(req.body.name);
   const nameI18nKey = normalizeDisplayName(req.body.name_i18n_key);
   const price = Number(req.body.price);
+  const gracePeriodMonths = parseGracePeriodMonths(req.body.grace_period_months);
   const isActive = req.body.is_active === undefined ? true : Boolean(req.body.is_active);
 
   if (!VALID_TARGET_RESOURCES.has(targetResource)) {
@@ -183,12 +463,34 @@ router.post("/", isAuth, async (req, res) => {
     return res.status(400).json({ name: "BadRequest", message: "price must be a non-negative number." });
   }
 
+  if (gracePeriodMonths === null) {
+    return res.status(400).json({ name: "BadRequest", message: "grace_period_months must be a non-negative integer." });
+  }
+
   try {
     const insertRes = await pool.query(
-      `INSERT INTO license (target_resource, billing_cycle, price, currency, name, name_i18n_key, is_active)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
+      `INSERT INTO license (
+        target_resource,
+        billing_cycle,
+        grace_period_months,
+        price,
+        currency,
+        name,
+        name_i18n_key,
+        is_active
+      )
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING *`,
-      [targetResource, billingCycle, price, currency, name || nameI18nKey, nameI18nKey, isActive]
+      [
+        targetResource,
+        billingCycle,
+        gracePeriodMonths,
+        price,
+        currency,
+        name || nameI18nKey,
+        nameI18nKey,
+        isActive,
+      ]
     );
 
     const created = insertRes.rows[0];
@@ -245,6 +547,18 @@ router.patch("/:licenseId", isAuth, async (req, res) => {
     }
     values.push(price);
     updates.push(`price = $${values.length}`);
+  }
+
+  if (req.body.grace_period_months !== undefined) {
+    const gracePeriodMonths = parseGracePeriodMonths(req.body.grace_period_months);
+    if (gracePeriodMonths === null) {
+      return res.status(400).json({
+        name: "BadRequest",
+        message: "grace_period_months must be a non-negative integer.",
+      });
+    }
+    values.push(gracePeriodMonths);
+    updates.push(`grace_period_months = $${values.length}`);
   }
 
   if (req.body.currency !== undefined) {
@@ -366,104 +680,70 @@ router.get("/:licenseId/usage", isAuth, async (req, res) => {
           pl.start_date,
           pl.end_date,
           pl.created_at,
-          pl.owner_member_id,
-          m.name AS owner_name,
-          pl.target_workspace_id,
-          w.name AS workspace_name
+          m.id AS member_id,
+          m.name AS member_name,
+          m.email AS member_email
          FROM purchased_license pl
-         LEFT JOIN member m ON m.id = pl.owner_member_id
-         LEFT JOIN workspace w ON w.id = pl.target_workspace_id
+         JOIN member m ON m.id = pl.owner_member_id
          WHERE pl.license_id = $1
+           AND pl.owner_member_id IS NOT NULL
          ORDER BY pl.created_at DESC`,
         [licenseId]
       );
 
-      return res.json({ license, usage_type: "WORKSPACE", items: usageRes.rows });
+      return res.json({ license, usage_type: "WORKSPACE_PURCHASERS", items: usageRes.rows });
     }
 
     if (targetResource === "PROJECT") {
       const usageRes = await pool.query(
-        `WITH workspace_capacity AS (
-          SELECT
-            pl.target_workspace_id AS workspace_id,
-            COALESCE(SUM(pl.quantity), 0)::integer AS slot_capacity
-          FROM purchased_license pl
-          WHERE pl.license_id = $1
-            AND pl.status = 'ACTIVE'
-            AND pl.target_workspace_id IS NOT NULL
-          GROUP BY pl.target_workspace_id
-        ), ranked_projects AS (
-          SELECT
-            p.id AS project_id,
-            p.name AS project_name,
-            p.summary,
-            p.workspace_id,
-            w.name AS workspace_name,
-            wc.slot_capacity,
-            ROW_NUMBER() OVER (PARTITION BY p.workspace_id ORDER BY p.created_at ASC, p.id ASC) AS usage_order
-          FROM project p
-          JOIN workspace w ON w.id = p.workspace_id
-          JOIN workspace_capacity wc ON wc.workspace_id = p.workspace_id
-        )
-        SELECT
-          project_id,
-          project_name,
-          summary,
-          workspace_id,
-          workspace_name,
-          slot_capacity,
-          usage_order,
-          (usage_order <= slot_capacity) AS is_covered
-        FROM ranked_projects
-        ORDER BY workspace_id ASC, usage_order ASC`,
+        `SELECT
+          pl.id AS purchased_license_id,
+          pl.status,
+          pl.quantity,
+          pl.start_date,
+          pl.end_date,
+          pl.created_at,
+          w.id AS workspace_id,
+          w.name AS workspace_name,
+          owner.id AS owner_member_id,
+          owner.name AS owner_name,
+          owner.email AS owner_email
+        FROM purchased_license pl
+        JOIN workspace w ON w.id = pl.target_workspace_id
+        LEFT JOIN member owner ON owner.id = w.member_id
+        WHERE pl.license_id = $1
+          AND pl.target_workspace_id IS NOT NULL
+        ORDER BY pl.created_at DESC`,
         [licenseId]
       );
 
-      return res.json({ license, usage_type: "PROJECT", items: usageRes.rows });
+      return res.json({ license, usage_type: "PROJECT_WORKSPACE_PURCHASERS", items: usageRes.rows });
     }
 
     if (targetResource === "WORKSPACE_MEMBER") {
       const usageRes = await pool.query(
-        `WITH workspace_capacity AS (
-          SELECT
-            pl.target_workspace_id AS workspace_id,
-            COALESCE(SUM(pl.quantity), 0)::integer AS slot_capacity
-          FROM purchased_license pl
-          WHERE pl.license_id = $1
-            AND pl.status = 'ACTIVE'
-            AND pl.target_workspace_id IS NOT NULL
-          GROUP BY pl.target_workspace_id
-        ), ranked_members AS (
-          SELECT
-            wm.id AS workspace_member_id,
-            wm.workspace_id,
-            w.name AS workspace_name,
-            wm.member_id,
-            m.name AS member_name,
-            wm.role_name,
-            wc.slot_capacity,
-            ROW_NUMBER() OVER (PARTITION BY wm.workspace_id ORDER BY wm.created_at ASC, wm.id ASC) AS usage_order
-          FROM workspace_member wm
-          JOIN workspace w ON w.id = wm.workspace_id
-          JOIN member m ON m.id = wm.member_id
-          JOIN workspace_capacity wc ON wc.workspace_id = wm.workspace_id
-        )
-        SELECT
-          workspace_member_id,
-          workspace_id,
-          workspace_name,
-          member_id,
-          member_name,
-          role_name,
-          slot_capacity,
-          usage_order,
-          (usage_order <= slot_capacity) AS is_covered
-        FROM ranked_members
-        ORDER BY workspace_id ASC, usage_order ASC`,
+        `SELECT
+          pl.id AS purchased_license_id,
+          pl.status,
+          pl.quantity,
+          pl.start_date,
+          pl.end_date,
+          pl.created_at,
+          w.id AS workspace_id,
+          w.name AS workspace_name,
+          owner.id AS owner_member_id,
+          owner.name AS owner_name,
+          owner.email AS owner_email
+        FROM purchased_license pl
+        JOIN workspace w ON w.id = pl.target_workspace_id
+        LEFT JOIN member owner ON owner.id = w.member_id
+        WHERE pl.license_id = $1
+          AND pl.target_workspace_id IS NOT NULL
+        ORDER BY pl.created_at DESC`,
         [licenseId]
       );
 
-      return res.json({ license, usage_type: "WORKSPACE_MEMBER", items: usageRes.rows });
+      return res.json({ license, usage_type: "WORKSPACE_MEMBER_WORKSPACE_PURCHASERS", items: usageRes.rows });
     }
 
     return res.status(400).json({ name: "BadRequest", message: "Unsupported target_resource." });

@@ -130,6 +130,22 @@ const getOwnedResourceTypes = (items = []) => {
 
 const getProfileImageApiUrl = (memberId) => `/api/members/${memberId}/profile/image`;
 
+const normalizeMemberImageUrl = (memberId, rawImageUrl) => {
+  if (!rawImageUrl) return null;
+  const value = String(rawImageUrl).trim();
+  if (!value) return null;
+
+  if (value.startsWith("http://") || value.startsWith("https://")) {
+    return value;
+  }
+
+  if (/^\/api\/members\/\d+\/profile\/image(\?.*)?$/.test(value)) {
+    return value;
+  }
+
+  return getProfileImageApiUrl(memberId);
+};
+
 const listMemberProfileFiles = async (memberId) => {
   const prefix = `members/${memberId}/profile.`;
   const [files] = await bucket.getFiles({ prefix });
@@ -441,7 +457,7 @@ router.get("/me", isAuth, async (req, res) => {
     }
     res.json({
       ...row,
-      img_url: row.img_url ? getProfileImageApiUrl(row.id) : null,
+      img_url: normalizeMemberImageUrl(row.id, row.img_url),
     });
   } catch (error) {
     res.status(500).json({ name: "InternalServerError", message: error.message });
@@ -509,7 +525,7 @@ router.put("/profile", isAuth, async (req, res) => {
     res.json({
       message: "Profile updated.",
       ...row,
-      img_url: row?.img_url ? getProfileImageApiUrl(row.id) : null,
+      img_url: normalizeMemberImageUrl(row.id, row?.img_url),
     });
   } catch (error) {
     res.status(500).json({ name: "InternalServerError", message: error.message });
@@ -522,6 +538,11 @@ router.get("/:memberId/profile/image", async (req, res) => {
   try {
     const files = await listMemberProfileFiles(memberId);
     if (!files.length) {
+      const memberRes = await pool.query("SELECT img_url FROM member WHERE id = $1", [memberId]);
+      const legacyImageUrl = String(memberRes.rows[0]?.img_url || "").trim();
+      if (legacyImageUrl.startsWith("http://") || legacyImageUrl.startsWith("https://")) {
+        return res.redirect(302, legacyImageUrl);
+      }
       return res.status(404).json({ name: "NotFound", message: "Profile image not found." });
     }
 
@@ -531,7 +552,14 @@ router.get("/:memberId/profile/image", async (req, res) => {
     if (metadata?.size) {
       res.setHeader("Content-Length", String(metadata.size));
     }
-    res.setHeader("Cache-Control", "private, no-store");
+    if (metadata?.etag) {
+      res.setHeader("ETag", metadata.etag);
+    }
+    if (metadata?.updated) {
+      res.setHeader("Last-Modified", new Date(metadata.updated).toUTCString());
+    }
+    // Long-lived immutable cache prevents repeat browser requests for the same versioned URL.
+    res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
 
     gcsFile
       .createReadStream()
@@ -631,11 +659,13 @@ router.post(
       await gcsFile.save(file.buffer, {
         metadata: {
           contentType: file.mimetype,
-          cacheControl: "private, no-store",
+          cacheControl: "public, max-age=31536000, immutable",
         },
       });
 
-      const imageUrl = getProfileImageApiUrl(userId);
+      const [savedMetadata] = await gcsFile.getMetadata();
+      const version = savedMetadata?.generation || Date.now();
+      const imageUrl = `${getProfileImageApiUrl(userId)}?v=${version}`;
 
       const updatedMember = await pool.query(
         `UPDATE member
