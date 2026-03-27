@@ -6,7 +6,7 @@
 .PublicLayout .brand {
   text-decoration: none;
   color: inherit;
-  font-size: 18px;
+  font-size: var(--font-size-body-lg);
   display: inline-flex;
   align-items: center;
   gap: 12px;
@@ -40,14 +40,14 @@
 }
 
 .PublicLayout .mainnav {
-  font-size: 18px;
+  font-size: var(--font-size-body-lg);
   gap: 60px;
   font-weight: 600;
   justify-self: center;
 }
 
 .PublicLayout .utilnav {
-  font-size: 15px;
+  font-size: var(--font-size-body);
   gap: 20px;
   justify-self: end;
 }
@@ -108,7 +108,7 @@
 }
 
 .ProjectLayout .mainnav {
-  font-size: 16px;
+  font-size: var(--font-size-body);
   gap: 24px;
   display: flex;
 }
@@ -123,7 +123,7 @@
 }
 
 .ProjectLayout .utilnav {
-  font-size: 15px;
+  font-size: var(--font-size-body);
   gap: 8px;
   display: flex;
 }
@@ -163,7 +163,7 @@
 
 .LnbLayout > aside nav a {
   padding: 6px 8px;
-  font-size: 15px;
+  font-size: var(--font-size-body);
   white-space: nowrap;
   text-overflow: ellipsis;
   overflow: hidden;
@@ -208,7 +208,7 @@
 }
 
 .LnbLayout > aside .lnb-bottom {
-  font-size: 14px;
+  font-size: var(--font-size-label);
   color: var(--color-text-muted);
   margin-top: 8px;
 }
@@ -243,7 +243,7 @@
 }
 
 .AdminLayout .admin-gnb__brand {
-  font-size: 20px;
+  font-size: var(--font-size-title-sm);
   font-weight: 800;
 }
 

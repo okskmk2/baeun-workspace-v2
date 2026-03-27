@@ -2,14 +2,15 @@
   <main class="home container">
     <section class="hero">
       <div class="hero__copy">
-        <p class="hero__eyebrow">{{ t("home.hero.eyebrow") }}</p>
-        <h1 class="hero__title">{{ t("home.hero.title") }}</h1>
-        <p class="hero__subtitle">{{ t("home.hero.subtitle") }}</p>
+        <p class="hero__eyebrow">몰입을 위한 단 하나의 흐름</p>
+        <h1 class="hero__title">탭 전환 없는 완벽한 몰입</h1>
+        <p class="hero__subtitle">
+          기획과 아이디어는 지식 베이스에, 실행은 작업 관리 보드에, 소통은 메시징 채널에.
+          AI가 세 흐름을 유기적으로 연결합니다.
+        </p>
         <div class="hero__actions">
-          <router-link class="btn" to="/signup">{{ t("home.hero.primaryCta") }}</router-link>
-          <router-link class="btn btn--secondary" to="/store">
-            {{ t("home.hero.secondaryCta") }}
-          </router-link>
+          <router-link class="btn" to="/signup">지금 워크플로우 시작</router-link>
+          <router-link class="btn btn--secondary" to="/store">도입 사례 보기</router-link>
         </div>
         <p class="hero__presence">현재 접속자: {{ onlineCountLabel }}</p>
         <div class="hero__stats">
@@ -19,117 +20,102 @@
           </div>
         </div>
       </div>
-      <div class="hero__panel">
-        <div class="panel__header">
-          <h2>{{ t("home.snapshot.title") }}</h2>
-          <p>{{ t("home.snapshot.description") }}</p>
-        </div>
-        <div class="panel__chips">
-          <span v-for="chip in snapshotChips" :key="chip" class="chip">{{ chip }}</span>
-        </div>
-        <div class="panel__footer">
-          <div class="panel__row">
-            <span class="panel__label">{{ t("home.snapshot.metrics.primaryLabel") }}</span>
-            <span class="panel__value">{{ t("home.snapshot.metrics.primaryValue") }}</span>
+
+      <div
+        class="hero__visual"
+        aria-label="지식 베이스에서 작업 관리 보드로, 작업 관리 보드에서 메시징 채널로 이어지는 흐름 시뮬레이션"
+      >
+        <div class="flow flow--wiki">
+          <header>
+            <span>Wiki</span>
+            <strong>분기 전략 문서</strong>
+          </header>
+          <p>AI 요약 완료 · 핵심 액션 3건 추출</p>
+          <div class="flow__tags">
+            <span>#launch</span>
+            <span>#marketing</span>
+            <span>#priority-high</span>
           </div>
-          <div class="panel__row">
-            <span class="panel__label">{{ t("home.snapshot.metrics.cadenceLabel") }}</span>
-            <span class="panel__value">{{ t("home.snapshot.metrics.cadenceValue") }}</span>
-          </div>
+        </div>
+
+        <div class="flow flow--kanban">
+          <header>
+            <span>Kanban</span>
+            <strong>Q2 런칭 준비</strong>
+          </header>
+          <ul>
+            <li>기획 검토 완료</li>
+            <li>디자인 QA 진행중</li>
+            <li>릴리즈 블로커 1건</li>
+          </ul>
+        </div>
+
+        <div class="flow flow--channel">
+          <header>
+            <span>Channel</span>
+            <strong>#launch-task-thread</strong>
+          </header>
+          <p>
+            "이 카드 기준으로 QA 이슈 정리했어요"<br />
+            "다음 스프린트로 넘기기 전에 PM 확인 부탁"
+          </p>
         </div>
       </div>
     </section>
 
-    <section class="features">
+    <section class="trinity">
       <div class="section-heading">
-        <h2>{{ t("home.features.title") }}</h2>
-        <p>{{ t("home.features.subtitle") }}</p>
+        <h2>The Trinity Loop</h2>
+        <p>지식 베이스, 작업 관리 보드, 메시징 채널이 하나의 흐름으로 이어집니다.</p>
       </div>
-      <div class="feature-grid">
-        <article v-for="card in featureCards" :key="card.title" class="feature-card">
-          <h3>{{ card.title }}</h3>
-          <p class="feature-card__desc">{{ card.description }}</p>
-          <ul class="feature-card__list">
-            <li v-for="item in card.bullets" :key="item">{{ item }}</li>
+
+      <div class="trinity-grid">
+        <article v-for="feature in trinityFeatures" :key="feature.title" class="trinity-card">
+          <p class="trinity-card__kicker">{{ feature.kicker }}</p>
+          <h3>{{ feature.title }}</h3>
+          <p class="trinity-card__description">{{ feature.description }}</p>
+          <ul>
+            <li v-for="item in feature.bullets" :key="item">{{ item }}</li>
           </ul>
-          <div class="feature-card__tables">
-            <span v-for="table in card.tables" :key="table" class="chip chip--muted">
-              {{ table }}
-            </span>
-          </div>
         </article>
       </div>
     </section>
 
-    <section id="pricing" class="pricing">
-      <div class="section-heading">
-        <h2>가격 계산기</h2>
-        <p>슬라이더로 옵션을 조절하면 예상 요금이 실시간 계산됩니다.</p>
+    <section class="insight">
+      <div class="insight__copy">
+        <p class="hero__eyebrow">AI Insight Layer</p>
+        <h2>AI가 지금 확인해야 할 우선순위를 먼저 보여줍니다.</h2>
+        <p>
+          AI가 수천 개의 메시지와 문서 사이에서 지금 당신이 확인해야 할 우선순위를 제안합니다.
+          관리자 화면에서 병목 구간과 지연 리스크를 즉시 파악할 수 있습니다.
+        </p>
       </div>
-      <div class="pricing-panel">
-        <div class="controls">
-          <label
-            >워크스페이스 수: <strong>{{ ws }}</strong></label
-          >
-          <input type="range" min="1" max="50" v-model.number="ws" />
 
-          <label
-            >프로젝트 수: <strong>{{ proj }}</strong></label
-          >
-          <input type="range" min="1" max="100" v-model.number="proj" />
-
-          <label
-            >멤버 수: <strong>{{ mem }}</strong></label
-          >
-          <input type="range" min="1" max="1000" v-model.number="mem" />
-
-          <label
-            >스토리지(GB): <strong>{{ stor }}</strong> GB</label
-          >
-          <input type="range" min="10" max="2024" step="10" v-model.number="stor" />
-
-          <div class="billing-toggle">
-            <label><input type="radio" value="monthly" v-model="billing" /> 월별</label>
-            <label
-              ><input type="radio" value="yearly" v-model="billing" /> 연간(라이선스 15%
-              할인)</label
-            >
-          </div>
+      <aside class="briefing" aria-label="AI 브리핑 예시">
+        <header>
+          <strong>AI 브리핑</strong>
+          <span>09:42 업데이트</span>
+        </header>
+        <div class="briefing__item">
+          <p class="briefing__title">마감 임박</p>
+          <p>Q2 런칭 태스크 4건이 24시간 내 만료됩니다.</p>
         </div>
-
-        <div class="summary">
-          <div class="summary-card">
-            <h3>예상 월 결제</h3>
-            <div class="price">${{ total.toFixed(2) }}</div>
-            <div class="summary-actions">
-              <router-link class="btn" to="/signup">견적서 받기</router-link>
-              <router-link class="btn btn--secondary" to="/demo">데모 예약</router-link>
-            </div>
-          </div>
+        <div class="briefing__item">
+          <p class="briefing__title">협업 병목</p>
+          <p>디자인 검토 대기 11건이 동일 승인자에게 몰려 있습니다.</p>
         </div>
-      </div>
-      <p class="pricing-note">
-        기본 단가: 워크스페이스 $10, 프로젝트 $3, 멤버 $2, 스토리지 $1/10GB (스토리지는 종량제로
-        할인 미적용)
-      </p>
-    </section>
-
-    <section class="cta">
-      <div>
-        <h2>{{ t("home.cta.title") }}</h2>
-        <p>{{ t("home.cta.description") }}</p>
-      </div>
-      <router-link class="btn" to="/signup">{{ t("home.cta.primary") }}</router-link>
+        <div class="briefing__item">
+          <p class="briefing__title">추천 액션</p>
+          <p>우선순위 P1 카드 3건을 오늘 스탠드업 안건으로 등록하세요.</p>
+        </div>
+      </aside>
     </section>
   </main>
 </template>
 
 <script setup>
 import { computed, onMounted, ref } from "vue";
-import { useI18n } from "vue-i18n";
 import api from "../../lib/axios";
-
-const { t } = useI18n();
 
 const onlineCount = ref(null);
 const onlineCountLabel = computed(() => {
@@ -147,123 +133,45 @@ const loadOnlineCount = async () => {
   }
 };
 
-const stats = computed(() => [
-  { value: "3", label: t("home.stats.workspaces") },
-  { value: "12", label: t("home.stats.projects") },
-  { value: "48", label: t("home.stats.boards") },
-  { value: "120+", label: t("home.stats.messages") },
-]);
+const stats = [
+  { value: "1,280", label: "주간 자동화 액션" },
+  { value: "97%", label: "이슈 맥락 연결률" },
+  { value: "3.2x", label: "결정 속도 향상" },
+  { value: "0", label: "탭 왕복 필요" },
+];
 
-const snapshotChips = computed(() => [
-  t("home.snapshot.chips.0"),
-  t("home.snapshot.chips.1"),
-  t("home.snapshot.chips.2"),
-  t("home.snapshot.chips.3"),
-  t("home.snapshot.chips.4"),
-  t("home.snapshot.chips.5"),
-]);
-
-const featureCards = computed(() => [
+const trinityFeatures = computed(() => [
   {
-    title: t("home.features.workspace.title"),
-    description: t("home.features.workspace.description"),
+    kicker: "Wiki",
+    title: "지식 베이스 / 문서",
+    description: "기획과 아이디어를 기록하는 조직의 뇌",
     bullets: [
-      t("home.features.workspace.bullets.0"),
-      t("home.features.workspace.bullets.1"),
-      t("home.features.workspace.bullets.2"),
-    ],
-    tables: [
-      t("home.features.workspace.tags.0"),
-      t("home.features.workspace.tags.1"),
-      t("home.features.workspace.tags.2"),
+      "AI 요약으로 핵심 의사결정 자동 추출",
+      "자동 태그로 문서 연결 맥락 강화",
+      "프로젝트 기준 위키 히스토리 추적",
     ],
   },
   {
-    title: t("home.features.project.title"),
-    description: t("home.features.project.description"),
+    kicker: "Kanban",
+    title: "작업 관리 / 보드",
+    description: "문서 속 할 일을 카드로 바꾸는 실행의 중심",
     bullets: [
-      t("home.features.project.bullets.0"),
-      t("home.features.project.bullets.1"),
-      t("home.features.project.bullets.2"),
-    ],
-    tables: [
-      t("home.features.project.tags.0"),
-      t("home.features.project.tags.1"),
-      t("home.features.project.tags.2"),
+      "문서 블록 드래그로 카드 즉시 생성",
+      "상태 추적과 일정 관리 일원화",
+      "카드별 담당자/우선순위 자동 동기화",
     ],
   },
   {
-    title: t("home.features.board.title"),
-    description: t("home.features.board.description"),
+    kicker: "Channel",
+    title: "소통 / 메시징",
+    description: "작업 맥락을 잃지 않는 실시간 연결",
     bullets: [
-      t("home.features.board.bullets.0"),
-      t("home.features.board.bullets.1"),
-      t("home.features.board.bullets.2"),
-    ],
-    tables: [
-      t("home.features.board.tags.0"),
-      t("home.features.board.tags.1"),
-      t("home.features.board.tags.2"),
-    ],
-  },
-  {
-    title: t("home.features.wiki.title"),
-    description: t("home.features.wiki.description"),
-    bullets: [
-      t("home.features.wiki.bullets.0"),
-      t("home.features.wiki.bullets.1"),
-      t("home.features.wiki.bullets.2"),
-    ],
-    tables: [
-      t("home.features.wiki.tags.0"),
-      t("home.features.wiki.tags.1"),
-      t("home.features.wiki.tags.2"),
-    ],
-  },
-  {
-    title: t("home.features.channel.title"),
-    description: t("home.features.channel.description"),
-    bullets: [
-      t("home.features.channel.bullets.0"),
-      t("home.features.channel.bullets.1"),
-      t("home.features.channel.bullets.2"),
-    ],
-    tables: [
-      t("home.features.channel.tags.0"),
-      t("home.features.channel.tags.1"),
-      t("home.features.channel.tags.2"),
-    ],
-  },
-  {
-    title: t("home.features.billing.title"),
-    description: t("home.features.billing.description"),
-    bullets: [
-      t("home.features.billing.bullets.0"),
-      t("home.features.billing.bullets.1"),
-      t("home.features.billing.bullets.2"),
-    ],
-    tables: [
-      t("home.features.billing.tags.0"),
-      t("home.features.billing.tags.1"),
-      t("home.features.billing.tags.2"),
+      "칸반 카드/위키 페이지 연동 스레드",
+      "업무 단위 알림과 토론 기록 보존",
+      "결정 근거를 채팅과 함께 자동 아카이빙",
     ],
   },
 ]);
-
-// Pricing calculator state
-const ws = ref(1);
-const proj = ref(3);
-const mem = ref(5);
-const stor = ref(50);
-const billing = ref("monthly");
-
-const total = computed(() => {
-  const licenseMonthly = ws.value * 10 + proj.value * 3 + mem.value * 2;
-  const storageMonthly = (stor.value / 10) * 1;
-  const discountedLicense =
-    billing.value === "yearly" ? licenseMonthly * (1 - 0.15) : licenseMonthly;
-  return discountedLicense + storageMonthly;
-});
 
 onMounted(() => {
   loadOnlineCount();
@@ -274,16 +182,15 @@ onMounted(() => {
 .home {
   display: flex;
   flex-direction: column;
-  gap: 48px;
-
+  gap: 56px;
   color: var(--color-text);
 }
 
 .hero {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 32px;
-  align-items: center;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 28px;
+  align-items: stretch;
 }
 
 .hero__eyebrow {
@@ -296,7 +203,7 @@ onMounted(() => {
 
 .hero__title {
   margin: 0 0 12px;
-  font-size: clamp(28px, 4vw, 42px);
+  font-size: clamp(30px, 5vw, 52px);
   line-height: 1.1;
 }
 
@@ -322,14 +229,14 @@ onMounted(() => {
 
 .hero__stats {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
 }
 
 .stat {
   padding: 12px 14px;
   border-radius: 12px;
-  background: linear-gradient(135deg, var(--color-surface), transparent);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--color-accent) 8%, #ffffff), #ffffff);
   border: 1px solid var(--color-border);
 }
 
@@ -345,70 +252,94 @@ onMounted(() => {
   color: var(--color-text-muted);
 }
 
-.hero__panel {
+.hero__visual {
+  position: relative;
+  min-height: 420px;
+  border-radius: 20px;
+  padding: 20px;
   background:
-    radial-gradient(circle at top, rgba(37, 99, 235, 0.2), transparent 55%), var(--color-surface);
+    radial-gradient(circle at 12% 10%, rgba(0, 163, 255, 0.16), transparent 30%),
+    radial-gradient(circle at 84% 90%, rgba(34, 197, 94, 0.16), transparent 34%), #ffffff;
   border: 1px solid var(--color-border);
-  border-radius: 18px;
-  padding: 22px;
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.08);
+  box-shadow: 0 24px 56px rgba(15, 23, 42, 0.08);
+  overflow: hidden;
 }
 
-.panel__header h2 {
-  margin: 0 0 6px;
-  font-size: 18px;
+.flow {
+  position: absolute;
+  width: min(290px, 78%);
+  border-radius: 14px;
+  border: 1px solid var(--color-border);
+  background: #ffffff;
+  padding: 14px;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
 }
 
-.panel__header p {
-  margin: 0;
-  font-size: 13px;
-  color: var(--color-text-muted);
-}
-
-.panel__chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.chip {
-  padding: 6px 10px;
-  border-radius: 999px;
-  background-color: rgba(37, 99, 235, 0.12);
-  color: var(--color-text);
-  font-size: 12px;
-  border: 1px solid rgba(37, 99, 235, 0.2);
-}
-
-.chip--muted {
-  background-color: var(--color-surface);
-  border-color: var(--color-border);
-}
-
-.panel__footer {
-  display: grid;
-  gap: 10px;
-  font-size: 12px;
-}
-
-.panel__row {
+.flow header {
   display: flex;
   justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.flow header span {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.flow header strong {
+  font-size: 13px;
+}
+
+.flow p,
+.flow ul {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
   color: var(--color-text-muted);
 }
 
-.panel__value {
-  color: var(--color-text);
-  font-weight: 600;
+.flow ul {
+  padding-left: 16px;
+  display: grid;
+  gap: 4px;
 }
 
-.features {
+.flow__tags {
   display: flex;
-  flex-direction: column;
-  gap: 24px;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.flow__tags span {
+  font-size: 11px;
+  border-radius: 999px;
+  padding: 4px 8px;
+  border: 1px solid color-mix(in srgb, var(--color-accent) 25%, #ffffff);
+  background: color-mix(in srgb, var(--color-accent) 10%, #ffffff);
+  color: color-mix(in srgb, var(--color-accent) 75%, #000000);
+}
+
+.flow--wiki {
+  top: 16px;
+  left: 18px;
+  animation: drift-y 4.2s ease-in-out infinite;
+}
+
+.flow--kanban {
+  top: 142px;
+  right: 24px;
+  animation: drift-x 4.2s ease-in-out infinite 0.5s;
+}
+
+.flow--channel {
+  bottom: 20px;
+  left: 40px;
+  animation: drift-y 4.2s ease-in-out infinite 1s;
 }
 
 .section-heading h2 {
@@ -422,138 +353,181 @@ onMounted(() => {
   font-size: 14px;
 }
 
-.feature-grid {
+.trinity {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 18px;
+  gap: 20px;
 }
 
-.feature-card {
-  padding: 18px 20px;
-  border-radius: 16px;
+.trinity-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.trinity-card {
+  padding: 20px;
+  border-radius: 14px;
   border: 1px solid var(--color-border);
-  background-color: var(--color-surface);
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+  background: #ffffff;
 }
 
-.feature-card h3 {
+.trinity-card__kicker {
+  margin: 0 0 8px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--color-text-muted);
+}
+
+.trinity-card h3 {
+  margin: 0 0 8px;
+  font-size: 18px;
+}
+
+.trinity-card__description {
   margin: 0;
+  font-size: 14px;
+  color: var(--color-text);
+}
+
+.trinity-card ul {
+  margin: 14px 0 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 6px;
+  color: var(--color-text-muted);
+  font-size: 13px;
+}
+
+.insight {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 18px;
+  align-items: start;
+}
+
+.insight h2 {
+  margin: 0 0 10px;
+  font-size: 28px;
+  line-height: 1.25;
+}
+
+.insight p {
+  margin: 0;
+  color: var(--color-text-muted);
+  line-height: 1.6;
+}
+
+.briefing {
+  padding: 18px;
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  background: linear-gradient(145deg, color-mix(in srgb, var(--color-accent) 8%, #ffffff), #ffffff);
+}
+
+.briefing header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--color-border);
+  margin-bottom: 12px;
+}
+
+.briefing header strong {
   font-size: 16px;
 }
 
-.feature-card__desc {
-  margin: 0;
-  color: var(--color-text-muted);
-  font-size: 13px;
-}
-
-.feature-card__list {
-  margin: 0;
-  padding-left: 18px;
-  color: var(--color-text);
-  font-size: 13px;
-  display: grid;
-  gap: 6px;
-}
-
-.feature-card__tables {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.cta {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  padding: 20px 24px;
-  border-radius: 16px;
-  border: 1px solid var(--color-border);
-  background: linear-gradient(120deg, rgba(37, 99, 235, 0.15), transparent 60%);
-}
-
-.cta h2 {
-  margin: 0 0 6px;
-  font-size: 22px;
-}
-
-.cta p {
-  margin: 0;
+.briefing header span {
+  font-size: 12px;
   color: var(--color-text-muted);
 }
 
-@media (max-width: 720px) {
-  .hero__stats {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .cta {
-    align-items: flex-start;
-  }
-}
-
-/* Pricing styles */
-.pricing-panel {
-  display: flex;
-  gap: 20px;
-  align-items: flex-start;
+.briefing__item + .briefing__item {
   margin-top: 12px;
 }
-.controls {
-  flex: 1;
-}
-.controls label {
-  display: block;
-  margin: 12px 0 6px;
-  color: var(--color-text-muted);
-}
-.controls input[type="range"] {
-  width: 100%;
-}
-.billing-toggle {
-  margin-top: 10px;
-  display: flex;
-  gap: 12px;
-}
-.summary {
-  width: 280px;
-}
-.summary-card {
-  background: linear-gradient(
-    180deg,
-    var(--color-accent-soft, color-mix(in srgb, var(--color-accent) 12%, transparent)),
-    var(--color-page-bg)
-  );
-  padding: 18px;
-  border-radius: 12px;
-  border: 1px solid var(--color-border);
-  text-align: center;
-}
-.summary-card .price {
-  font-size: 28px;
-  margin: 10px 0;
+
+.briefing__title {
+  margin: 0 0 4px;
+  font-size: 13px;
   font-weight: 700;
-  color: var(--color-accent);
-}
-.summary-actions {
-  display: flex;
-  gap: 8px;
-  justify-content: center;
-}
-.pricing-note {
-  color: var(--color-text-muted);
-  margin-top: 8px;
+  color: var(--color-text);
 }
 
-@media (max-width: 900px) {
-  .pricing-panel {
-    flex-direction: column;
+.briefing__item p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+@keyframes drift-y {
+  0%,
+  100% {
+    transform: translateY(0);
   }
-  .summary {
-    width: 100%;
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes drift-x {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(8px);
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 980px) {
+  .hero,
+  .insight {
+    flex-direction: column;
+    grid-template-columns: 1fr;
+  }
+
+  .trinity-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hero__visual {
+    min-height: 500px;
+  }
+}
+
+@media (max-width: 640px) {
+  .hero__stats {
+    grid-template-columns: 1fr;
+  }
+
+  .flow {
+    width: calc(100% - 32px);
+  }
+
+  .flow--wiki {
+    left: 16px;
+    top: 18px;
+  }
+
+  .flow--kanban {
+    right: 16px;
+    top: 186px;
+  }
+
+  .flow--channel {
+    left: 16px;
+    bottom: 20px;
   }
 }
 </style>
-

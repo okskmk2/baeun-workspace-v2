@@ -578,6 +578,55 @@ router.get("/:memberId/profile/image", async (req, res) => {
 
 /**
  * @swagger
+ * /api/members/{memberId}/profile/image:
+ *   get:
+ *     summary: Get profile image
+ *     description: Redirect to profile image URL for the authenticated member
+ *     tags:
+ *       - Member
+ *     parameters:
+ *       - in: path
+ *         name: memberId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Member ID (must match authenticated user)
+ *     responses:
+ *       302:
+ *         description: Redirect to profile image URL
+ *       400:
+ *         $ref: "#/components/responses/ErrorResponse"
+ *       404:
+ *         $ref: "#/components/responses/ErrorResponse"
+ *       500:
+ *         $ref: "#/components/responses/ErrorResponse"
+ */
+router.get("/:memberId/profile/image", isAuth, async (req, res) => {
+  const memberId = Number.parseInt(req.params.memberId, 10);
+
+  if (!Number.isInteger(memberId) || memberId <= 0) {
+    return res.status(400).json({ name: "BadRequest", message: "memberId must be a positive integer." });
+  }
+
+  try {
+    const result = await pool.query("SELECT id, img_url FROM member WHERE id = $1", [memberId]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ name: "NotFound", message: "Member not found." });
+    }
+
+    const imageUrl = result.rows[0]?.img_url || "";
+    if (!imageUrl) {
+      return res.status(404).json({ name: "NotFound", message: "Profile image not found." });
+    }
+
+    return res.redirect(302, imageUrl);
+  } catch (error) {
+    return res.status(500).json({ name: "InternalServerError", message: error.message });
+  }
+});
+
+/**
+ * @swagger
  * /api/members/profile/image:
  *   post:
  *     summary: Upload profile image

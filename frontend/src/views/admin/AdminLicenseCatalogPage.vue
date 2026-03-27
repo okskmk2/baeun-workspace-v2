@@ -28,6 +28,7 @@
     <BaseModal
       :open="isCreateModalOpen"
       title="신규 라이선스 추가"
+      :close-on-backdrop="false"
       max-width="760px"
       @close="closeCreateModal"
     >

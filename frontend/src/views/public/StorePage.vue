@@ -1,369 +1,434 @@
-<template>
+﻿<template>
   <main class="store container">
     <section class="store-hero">
-      <div>
-        <p class="store-hero__eyebrow">{{ t("store.hero.eyebrow") }}</p>
-        <h1>{{ t("store.hero.title") }}</h1>
-        <p class="store-hero__subtitle">{{ t("store.hero.subtitle") }}</p>
-      </div>
+      <h1>쉽게 계산하고, 바로 선택하세요</h1>
+      <p class="store-hero__subtitle">1. 슬롯 수 입력 2. 플랜 선택 3. 시작하기</p>
       <div class="store-hero__actions">
-        <router-link class="btn" to="/signup">{{ t("store.hero.primaryCta") }}</router-link>
-        <button class="btn btn--secondary" type="button">{{ t("store.hero.secondaryCta") }}</button>
+        <a class="btn" href="#calculator">계산 시작</a>
       </div>
     </section>
 
-    <section class="plans">
-      <div v-for="group in planGroups" :key="group.id" class="plan-group">
-        <div class="plan-group__header">
-          <div>
-            <h2>{{ group.title }}</h2>
-            <p>{{ group.description }}</p>
+    <section id="calculator" class="section-card calculator">
+      <div class="section-heading">
+        <h2>1단계. 비용 계산</h2>
+        <p>조직 규모를 입력하면 금액이 즉시 계산됩니다.</p>
+      </div>
+
+      <div class="calculator__body">
+        <div class="calculator__controls">
+          <label>
+            워크스페이스 수
+            <CountChip :count="ws" size="lg" />
+          </label>
+          <input v-model.number="ws" type="range" min="1" max="10" />
+
+          <label>
+            프로젝트 수
+            <CountChip :count="proj" size="lg" />
+          </label>
+          <input v-model.number="proj" type="range" min="1" max="20" />
+
+          <label>
+            멤버 수
+            <CountChip :count="mem" size="lg" />
+          </label>
+          <input v-model.number="mem" type="range" min="1" max="100" />
+
+          <p class="calculator__hint">기본 단가: Workspace $10 / Project $3 / Member $2 (slot / month)</p>
+        </div>
+
+        <aside class="calculator__summary">
+          <div class="summary-item">
+            <Tag label="월간" variant="info" />
+            <strong>${{ formatCurrency(monthlyTotal) }}</strong>
           </div>
-        </div>
-        <div class="plan-grid">
-          <article v-for="plan in group.plans" :key="plan.name" class="plan-card">
-            <div class="plan-card__header">
-              <h3>{{ plan.name }}</h3>
-              <span v-if="plan.badge" class="plan-badge">{{ plan.badge }}</span>
-            </div>
-            <p class="plan-card__price">{{ plan.price }}</p>
-            <p class="plan-card__period">{{ plan.period }}</p>
-            <ul class="plan-card__list">
-              <li v-for="item in plan.includes" :key="item">{{ item }}</li>
-            </ul>
-            <button class="btn btn--secondary" type="button">
-              {{ t("store.actions.select") }}
-            </button>
-          </article>
-        </div>
+          <div class="summary-item">
+            <Tag label="연간 15% 할인" variant="success" />
+            <strong>${{ formatCurrency(yearlyMonthlyEquivalent) }}/mo</strong>
+            <small>연간 일시불 ${{ formatCurrency(yearlyTotal) }}</small>
+          </div>
+          <div class="summary-item summary-item--lifetime">
+            <Tag label="영구 사용권" variant="warning" />
+            <strong>${{ formatCurrency(lifetimeTotal) }}</strong>
+            <small>월간 대비 36배 (3년치)</small>
+          </div>
+        </aside>
       </div>
     </section>
 
-    <section class="store-details">
-      <div class="detail-card">
-        <h2>구매 정책 요약</h2>
-        <ul class="detail-list">
-          <li><strong>판매 라이선스:</strong> 워크스페이스, 프로젝트, 워크스페이스 멤버</li>
-          <li><strong>기본 월 요금 (USD):</strong> 워크스페이스 $10 / 프로젝트 $3 / 멤버 $2</li>
-          <li><strong>기본 결제:</strong> 모든 라이선스는 월 단위 구매</li>
-          <li><strong>연간 결제:</strong> 월 요금 기준 연간 구매 시 <strong>10% 할인</strong></li>
-          <li><strong>영구 사용권:</strong> <strong>3년치 금액</strong>을 한 번에 결제</li>
-          <li><strong>스토리지:</strong> 종량제 과금 ($1 / 10GB, 사용량 기준)</li>
-        </ul>
+    <section class="section-card license">
+      <div class="section-heading">
+        <h2>2단계. 플랜 선택</h2>
+        <p>팀 운영 방식에 맞는 플랜 하나만 고르세요.</p>
       </div>
 
-      <div class="detail-card">
-        <h2>라이선스 관리</h2>
-        <p class="detail-note">
-          구매한 라이선스와 스토리지 사용량은 사용자 설정 화면에서 관리할 수 있습니다.
+      <div class="license-grid">
+        <article
+          v-for="tier in tiers"
+          :key="tier.key"
+          class="license-card"
+          :class="[tier.tone, { 'license-card--active': selectedTier === tier.key }]"
+          @click="selectedTier = tier.key"
+        >
+          <p class="license-card__kicker">{{ tier.kicker }}</p>
+          <h3>{{ tier.name }}</h3>
+          <p class="license-card__target">{{ tier.target }}</p>
+          <ul>
+            <li v-for="benefit in tier.benefits" :key="benefit">{{ benefit }}</li>
+          </ul>
+          <p class="license-card__price">{{ tier.price }}</p>
+        </article>
+      </div>
+
+      <div class="license-action">
+        <p>
+          선택 플랜: <strong>{{ selectedTierData.name }}</strong>
         </p>
-        <router-link class="btn" to="/settings">사용자 설정에서 관리하기</router-link>
+        <button class="btn" type="button">3단계. {{ selectedTierData.cta }}</button>
+      </div>
+    </section>
+
+    <section class="section-card faq">
+      <h2>FAQ</h2>
+      <div class="faq-list">
+        <details>
+          <summary>슬롯은 매월 자동 조정 가능한가요?</summary>
+          <p>월간 플랜은 수량을 언제든 조정할 수 있습니다.</p>
+        </details>
+        <details>
+          <summary>연간 할인은 어디에 적용되나요?</summary>
+          <p>워크스페이스, 프로젝트, 멤버 슬롯 라이선스에 15% 할인 적용됩니다.</p>
+        </details>
       </div>
     </section>
   </main>
 </template>
 
 <script setup>
-import { computed } from "vue";
-import { useI18n } from "vue-i18n";
+import { computed, ref } from "vue";
+import CountChip from "../../components/CountChip.vue";
+import Tag from "../../components/Tag.vue";
 
-const { t } = useI18n();
+const BASE_PRICES = {
+  workspace: 10,
+  project: 3,
+  member: 2,
+};
 
-const planGroups = computed(() => [
+const ws = ref(2);
+const proj = ref(14);
+const mem = ref(64);
+
+const monthlyTotal = computed(() => ws.value * BASE_PRICES.workspace + proj.value * BASE_PRICES.project + mem.value * BASE_PRICES.member);
+const yearlyMonthlyEquivalent = computed(() => monthlyTotal.value * 0.85);
+const yearlyTotal = computed(() => yearlyMonthlyEquivalent.value * 12);
+const lifetimeTotal = computed(() => monthlyTotal.value * 36);
+
+const tiers = [
   {
-    id: "workspace",
-    title: "워크스페이스 라이선스",
-    description: "워크스페이스 기본 운영 단위",
-    plans: [
-      {
-        name: "월간 (USD)",
-        price: "$10",
-        period: "워크스페이스 / 월",
-        includes: ["기본 운영 단위", "월 단위 자동 갱신", "사용자 설정에서 관리"],
-      },
-      {
-        name: "연간 (USD)",
-        price: "$108",
-        period: "월 기준 10% 할인 적용",
-
-        includes: ["12개월 선결제", "월 결제 대비 10% 절감", "중앙 결제 관리"],
-      },
-      {
-        name: "영구 (USD)",
-        price: "$360",
-        period: "3년치 선결제로 영구 사용",
-        badge: "추천",
-        includes: ["초기 비용 확정", "장기 운영 팀에 유리", "설정 화면에서 상태 확인"],
-      },
-    ],
+    key: "monthly",
+    kicker: "Monthly",
+    name: "월간 결제",
+    target: "유연한 운영이 필요한 팀",
+    benefits: ["언제든 해지 가능", "실시간 수량 조정", "단기 대응 최적"],
+    price: "슬롯당 정가",
+    cta: "바로 시작하기",
+    tone: "license-card--monthly",
   },
   {
-    id: "project",
-    title: "프로젝트 라이선스",
-    description: "프로젝트 단위 확장 비용",
-    plans: [
-      {
-        name: "월간 (USD)",
-        price: "$3",
-        period: "프로젝트 / 월",
-        badge: "추천",
-        includes: ["프로젝트별 과금", "필요 수량만 추가", "월 단위 조정 가능"],
-      },
-      {
-        name: "연간 (USD)",
-        price: "$32.40",
-        period: "월 기준 10% 할인 적용",
-        includes: ["12개월 선결제", "예산 계획 수립 용이", "운영비 절감"],
-      },
-      {
-        name: "영구 (USD)",
-        price: "$108",
-        period: "3년치 선결제로 영구 사용",
-        includes: ["장기 프로젝트 최적", "갱신 관리 부담 감소", "설정 화면에서 수량 관리"],
-      },
-    ],
+    key: "yearly",
+    kicker: "Yearly",
+    name: "연간 결제",
+    target: "안정적 성장을 원하는 조직",
+    benefits: ["15% 할인", "예산 계획 고정", "회계 단순화"],
+    price: "슬롯당 15% DC",
+    cta: "할인받고 시작하기",
+    tone: "license-card--yearly",
   },
   {
-    id: "member",
-    title: "워크스페이스 멤버 라이선스",
-    description: "참여 인원 기준 과금",
-    plans: [
-      {
-        name: "월간 (USD)",
-        price: "$2",
-        period: "멤버 / 월",
-        includes: ["활성 멤버 기준", "팀 규모에 맞춰 증감", "월 단위 관리"],
-      },
-      {
-        name: "연간 (USD)",
-        price: "$21.60",
-        period: "월 기준 10% 할인 적용",
-        badge: "추천",
-        includes: ["12개월 선결제", "대규모 팀 비용 절감", "회계 처리 단순화"],
-      },
-      {
-        name: "영구 (USD)",
-        price: "$72",
-        period: "3년치 선결제로 영구 사용",
-        includes: ["핵심 멤버 장기 운영", "예산 고정", "설정 화면에서 좌석 관리"],
-      },
-    ],
+    key: "lifetime",
+    kicker: "Lifetime",
+    name: "영구 사용권",
+    target: "장기 운영에 유리",
+    benefits: ["단 한 번 결제", "36배(3년치)", "장기 총비용 절감"],
+    price: "월간 대비 36배",
+    cta: "한정 수량 구매하기",
+    tone: "license-card--lifetime",
   },
-]);
+];
+
+const selectedTier = ref("yearly");
+const selectedTierData = computed(() => tiers.find((tier) => tier.key === selectedTier.value) || tiers[0]);
+
+const formatCurrency = (value) => Number(value).toLocaleString("en-US", { maximumFractionDigits: 0 });
 </script>
 
 <style scoped>
 .store {
   display: flex;
   flex-direction: column;
-  gap: 40px;
+  gap: 28px;
   color: var(--color-text);
 }
 
-.store-hero {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-  padding: 28px;
-  border-radius: 18px;
+.store-hero,
+.section-card {
   border: 1px solid var(--color-border);
-  background: linear-gradient(
-    135deg,
-    var(--color-accent-soft, rgba(37, 99, 235, 0.12)),
-    transparent 60%
-  );
+  border-radius: 16px;
+  background: var(--color-card-bg);
 }
 
-.store-hero__eyebrow {
-  margin: 0 0 8px;
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.2em;
-  color: var(--color-text-muted);
+.store-hero {
+  padding: 32px;
+  display: grid;
+  gap: 16px;
+  background: var(--color-card-bg);
 }
 
 .store-hero h1 {
-  margin: 0 0 10px;
-  font-size: clamp(26px, 3.6vw, 38px);
+  margin: 0;
+  font-size: clamp(var(--font-size-title-lg), 5vw, var(--font-size-display));
+  line-height: var(--line-height-tight);
 }
 
 .store-hero__subtitle {
   margin: 0;
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-relaxed);
   color: var(--color-text-muted);
-  max-width: 520px;
 }
 
 .store-hero__actions {
   display: flex;
   gap: 12px;
-  flex-wrap: wrap;
 }
 
-.plans {
-  display: flex;
-  flex-direction: column;
-  gap: 28px;
+.section-card {
+  padding: 28px;
 }
 
-.plan-group__header h2 {
-  margin: 0 0 6px;
-  font-size: 22px;
+.section-heading h2 {
+  margin: 0 0 8px;
+  font-size: clamp(var(--font-size-title-md), 3vw, var(--font-size-title-lg));
 }
 
-.plan-group__header p {
+.section-heading p {
   margin: 0;
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-relaxed);
   color: var(--color-text-muted);
-  font-size: 14px;
 }
 
-.plan-grid {
+.calculator {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 16px;
-  margin-top: 16px;
+  gap: 20px;
 }
 
-.plan-card {
-  padding: 18px 20px;
-  border-radius: 16px;
-  border: 1px solid var(--color-border);
-  background-color: var(--color-surface);
+.calculator__body {
+  display: grid;
+  grid-template-columns: 1.15fr 1fr;
+  gap: 20px;
+}
+
+.calculator__controls {
+  display: grid;
+  gap: 14px;
+}
+
+.calculator__controls label {
   display: flex;
-  flex-direction: column;
-  gap: 12px;
+  justify-content: space-between;
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-body);
+  color: var(--color-text-muted);
 }
 
-.plan-card__header {
+.calculator__controls input[type="range"] {
+  width: 100%;
+}
+
+.calculator__hint {
+  margin: 10px 0 0;
+  font-size: var(--font-size-label);
+  line-height: var(--line-height-relaxed);
+  color: var(--color-text-muted);
+}
+
+.calculator__summary {
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  padding: 14px;
+  display: grid;
+  gap: 12px;
+  background: var(--color-card-bg);
+}
+
+.summary-item {
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  padding: 14px;
+  display: grid;
+  gap: 4px;
+}
+
+.summary-item small {
+  font-size: var(--font-size-label);
+  line-height: var(--line-height-body);
+  color: var(--color-text-muted);
+}
+
+.summary-item :deep(.tag) {
+  width: fit-content;
+  font-size: var(--font-size-label);
+  line-height: var(--line-height-body);
+}
+
+.summary-item strong {
+  font-size: clamp(var(--font-size-title-lg), 3.5vw, var(--font-size-display));
+  line-height: var(--line-height-tight);
+}
+
+.summary-item--lifetime strong {
+  color: var(--color-accent);
+}
+
+.license-grid {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.license-card {
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  padding: 18px;
+  background: var(--color-card-bg);
+  cursor: pointer;
+}
+
+.license-card--active {
+  border-color: color-mix(in srgb, var(--color-accent) 45%, var(--color-border));
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-accent) 20%, transparent);
+}
+
+.license-card__kicker,
+.license-card__target,
+.license-card__price,
+.license-card h3,
+.license-card ul {
+  margin: 0;
+}
+
+.license-card__kicker {
+  font-size: var(--font-size-label);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  line-height: 1.4;
+  color: var(--color-text-muted);
+}
+
+.license-card h3 {
+  margin-top: 8px;
+  font-size: var(--font-size-title-md);
+  line-height: var(--line-height-tight);
+}
+
+.license-card__target {
+  margin-top: 8px;
+  font-size: var(--font-size-label);
+  line-height: var(--line-height-relaxed);
+  color: var(--color-text-muted);
+}
+
+.license-card ul {
+  margin-top: 14px;
+  padding-left: 20px;
+  font-size: var(--font-size-label);
+  line-height: var(--line-height-relaxed);
+  display: grid;
+  gap: 6px;
+}
+
+.license-card__price {
+  margin-top: 14px;
+  font-size: var(--font-size-body);
+  font-weight: 700;
+}
+
+.license-action {
+  margin-top: 16px;
+  border-top: 1px solid var(--color-border);
+  padding-top: 16px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 8px;
+  gap: 16px;
 }
 
-.plan-card__header h3 {
+.license-action p {
   margin: 0;
-  font-size: 16px;
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-body);
 }
 
-.plan-badge {
-  padding: 6px 12px;
-  border-radius: 999px;
-  background-color: var(--color-accent-soft, rgba(37, 99, 235, 0.12));
-  color: var(--color-text);
-  font-size: 12px;
-  font-weight: 700;
-  border: 1px solid color-mix(in srgb, var(--color-accent) 10%, var(--color-page-bg));
-}
-
-.plan-card__price {
-  margin: 0;
-  font-size: 22px;
-  font-weight: 800;
-  color: var(--color-accent);
-}
-
-.plan-card__period {
-  margin: 0;
-  color: var(--color-text-muted);
-  font-size: 12px;
-}
-
-.plan-card__list {
-  margin: 0;
-  padding-left: 18px;
-  display: grid;
-  gap: 6px;
-  font-size: 13px;
-  color: var(--color-text);
-}
-
-.plan-card {
-  transition:
-    box-shadow 0.18s ease,
-    transform 0.12s ease;
-}
-.plan-card:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 18px 30px color-mix(in srgb, var(--color-accent) 8%, transparent);
-}
-
-.store-details {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 18px;
-}
-
-.detail-card {
-  padding: 20px;
-  border-radius: 16px;
-  border: 1px solid var(--color-border);
-  background-color: var(--color-surface);
-}
-
-.detail-card h2 {
+.faq h2 {
   margin: 0 0 14px;
-  font-size: 18px;
+  font-size: var(--font-size-title-md);
 }
 
-.detail-steps {
-  margin: 0;
-  padding-left: 18px;
+.faq-list {
   display: grid;
   gap: 12px;
-  color: var(--color-text);
 }
 
-.detail-steps h3 {
-  margin: 0 0 4px;
-  font-size: 14px;
+.faq-list details {
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  padding: 16px;
 }
 
-.detail-steps p {
-  margin: 0;
-  color: var(--color-text-muted);
-  font-size: 13px;
+.faq-list summary {
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-body);
 }
 
-.detail-list {
-  margin: 0;
-  padding-left: 18px;
-  display: grid;
-  gap: 8px;
-  color: var(--color-text);
-  font-size: 13px;
-}
-
-.pricing-ex {
-  margin-top: 12px;
-  padding: 12px;
-  border-radius: 10px;
-  background: linear-gradient(
-    180deg,
-    var(--color-accent-soft, rgba(37, 99, 235, 0.06)),
-    transparent
-  );
-  border: 1px solid color-mix(in srgb, var(--color-accent) 8%, var(--color-page-bg));
-}
-.pricing-ex h3 {
-  margin: 0 0 8px;
-  font-size: 14px;
-}
-.pricing-ex p {
-  margin: 0 0 8px;
+.faq-list p {
+  margin: 10px 0 0;
+  font-size: var(--font-size-label);
+  line-height: var(--line-height-relaxed);
   color: var(--color-text-muted);
 }
-.pricing-ex ul {
-  margin: 0;
-  padding-left: 18px;
-}
-.pricing-ex strong {
-  color: var(--color-accent);
+
+@media (max-width: 980px) {
+  .calculator__body,
+  .license-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .license-action {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }
 
 @media (max-width: 720px) {
-  .store-hero {
+  .store {
+    gap: 20px;
+  }
+
+  .store-hero,
+  .section-card {
     padding: 20px;
+  }
+
+  .store-hero h1 {
+    font-size: clamp(var(--font-size-title-md), 8vw, var(--font-size-display));
+  }
+
+  .section-heading h2,
+  .faq h2 {
+    font-size: var(--font-size-title-md);
   }
 }
 </style>

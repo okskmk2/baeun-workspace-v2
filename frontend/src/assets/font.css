@@ -6,6 +6,21 @@
   font-display: swap;
 }
 
+:root {
+  --font-size-caption: 12px;
+  --font-size-label: 14px;
+  --font-size-body: 16px;
+  --font-size-body-lg: 18px;
+  --font-size-title-sm: 20px;
+  --font-size-title-md: 24px;
+  --font-size-title-lg: 32px;
+  --font-size-display: 40px;
+
+  --line-height-tight: 1.2;
+  --line-height-body: 1.5;
+  --line-height-relaxed: 1.6;
+}
+
 body,
 select,
 input,
