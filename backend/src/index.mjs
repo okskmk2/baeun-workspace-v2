@@ -7,7 +7,13 @@ import pool from "./db.mjs";
 import logger from "./logger.mjs";
 import http from "http";
 import { WebSocketServer } from "ws";
-import { broadcastToRoom, broadcastToUsers, joinRoom, registerUserSocket, removeSocket } from "./ws.mjs";
+import {
+  broadcastToRoom,
+  broadcastToUsers,
+  joinRoom,
+  registerUserSocket,
+  removeSocket,
+} from "./ws.mjs";
 import { createNotifications, NOTIFICATION_TYPES } from "./notification.mjs";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -78,19 +84,7 @@ app.use("/api/metrics", metricsRouter);
 app.use("/api/licenses", licenseRouter);
 
 // Static files serve
-const publicPath = path.join(__dirname, "../public");
 const staticPath = path.join(__dirname, "../../frontend/dist");
-
-app.use(
-  "/favicon.svg",
-  express.static(publicPath, {
-    maxAge: "365d",
-    immutable: true,
-    setHeaders: (res) => {
-      res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
-    },
-  })
-);
 
 app.use(
   express.static(staticPath, {
@@ -409,5 +403,3 @@ wss.on("connection", (ws, request) => {
 });
 
 server.listen(PORT, () => logger.info(`Server listening on ${PORT}`));
-
-
