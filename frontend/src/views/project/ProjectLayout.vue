@@ -34,6 +34,10 @@
                 <UnreadDot v-if="hasUnreadChannelMessage" />
               </span>
             </router-link>
+            <router-link class="mainnav-link" :to="`/project/${projectId}/data`">
+              <MaterialSymbol name="table_chart" :size="20" alt="" />
+              <span>{{ t("layout.project.nav.data") }}</span>
+            </router-link>
           </nav>
         </template>
       </div>
@@ -540,6 +544,7 @@ onBeforeUnmount(() => {
   position: relative;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   padding: 4px 12px;
   border-radius: 4px;
@@ -547,6 +552,7 @@ onBeforeUnmount(() => {
   text-decoration: none;
   line-height: 1;
   font-weight: bold;
+  width: 100%;
 }
 
 .mainnav-link:hover {

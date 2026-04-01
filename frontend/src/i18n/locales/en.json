@@ -73,7 +73,8 @@
       "nav": {
         "kanban": "Issue Board",
         "wiki": "Wiki",
-        "messenger": "Messenger"
+        "messenger": "Messenger",
+        "data": "Data"
       },
       "search": {
         "placeholder": "Search in project",
@@ -1486,6 +1487,21 @@
       "actions": {
         "workspaces": "Go to workspaces",
         "home": "Go home"
+      }
+    }
+  },
+  "data": {
+    "layout": {
+      "nav": {
+        "home": "Data Home"
+      }
+    },
+    "home": {
+      "header": {
+        "title": "Data"
+      },
+      "empty": {
+        "description": "No data available."
       }
     }
   }

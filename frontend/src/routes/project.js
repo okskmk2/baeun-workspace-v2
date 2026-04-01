@@ -3,6 +3,9 @@ import KanbanHomePage from "../views/project/KanbanHomePage.vue";
 import KanbanLayout from "../views/project/KanbanLayout.vue";
 import WikiLayout from "../views/project/WikiLayout.vue";
 import ChannelLayout from "../views/project/ChannelLayout.vue";
+import DataLayout from "../views/project/DataLayout.vue";
+import DataHomePage from "../views/project/DataHomePage.vue";
+import DataTablePage from "../views/project/DataTablePage.vue";
 import ProjectLayout from "../views/project/ProjectLayout.vue";
 import KanbanPage from "../views/project/KanbanPage.vue";
 import GanttPage from "../views/project/GanttPage.vue";
@@ -102,6 +105,20 @@ export const projectRoutes = [
           {
             path: ":roomId",
             component: ChannelRoomPage,
+          },
+        ],
+      },
+      {
+        path: "data",
+        component: DataLayout,
+        children: [
+          {
+            path: "",
+            component: DataHomePage,
+          },
+          {
+            path: ":tableId/:pageType(list|form|chart)",
+            component: DataTablePage,
           },
         ],
       },

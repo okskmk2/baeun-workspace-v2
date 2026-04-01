@@ -1,0 +1,767 @@
+{
+  "product": "바은 워크스페이스",
+  "version": "1.0.0",
+  "description": "GNB + 섹션별 사이드바 네비게이션 UI 설계",
+
+  "design_tokens": {
+    "colors": {
+      "primary": "#5B5BD6",
+      "surface": "#FFFFFF",
+      "surface_secondary": "#F7F7F8",
+      "surface_tertiary": "#EFEFEF",
+      "border": "#E4E4E7",
+      "text_primary": "#18181B",
+      "text_secondary": "#71717A",
+      "text_muted": "#A1A1AA",
+      "danger": "#E24B4A",
+      "success": "#3B8BD4",
+      "warning": "#BA7517"
+    },
+    "spacing": {
+      "gnb_height": "56px",
+      "sidebar_width": "240px",
+      "sidebar_collapsed_width": "56px"
+    },
+    "typography": {
+      "gnb_label": { "size": "13px", "weight": "500" },
+      "sidebar_section": { "size": "11px", "weight": "600", "transform": "uppercase", "color": "text_muted" },
+      "sidebar_item": { "size": "14px", "weight": "400" },
+      "sidebar_item_active": { "size": "14px", "weight": "500" }
+    }
+  },
+
+  "layout": {
+    "type": "app_shell",
+    "description": "전체 레이아웃 — GNB(상단 고정) + Sidebar(좌측 고정) + Main Content(나머지 영역)",
+    "regions": [
+      {
+        "id": "gnb",
+        "role": "global_navigation",
+        "position": "top",
+        "height": "56px",
+        "z_index": 100,
+        "description": "전체 서비스 최상단 고정 바. 워크스페이스 전환, 5개 섹션 진입, 검색, 알림, 프로필"
+      },
+      {
+        "id": "sidebar",
+        "role": "section_navigation",
+        "position": "left",
+        "width": "240px",
+        "collapsible": true,
+        "collapsed_width": "56px",
+        "description": "현재 활성 섹션의 하위 네비게이션. GNB 섹션 전환 시 내용 교체"
+      },
+      {
+        "id": "main",
+        "role": "content",
+        "position": "remaining",
+        "description": "메인 콘텐츠 영역. 라우트에 따라 렌더링"
+      },
+      {
+        "id": "panel",
+        "role": "context_panel",
+        "position": "right",
+        "width": "320px",
+        "default_state": "hidden",
+        "description": "태스크 상세, 문서 미리보기, AI 답변 등 컨텍스트 패널. 필요 시 슬라이드인"
+      }
+    ]
+  },
+
+  "gnb": {
+    "id": "gnb",
+    "height": "56px",
+    "layout": "horizontal",
+    "description": "좌측: 로고 + 워크스페이스 전환 / 중앙: 5개 섹션 탭 / 우측: 검색·알림·프로필",
+    "regions": [
+      {
+        "id": "gnb_left",
+        "flex": "0 0 auto",
+        "items": [
+          {
+            "id": "logo",
+            "type": "image",
+            "src": "/assets/baun-logo.svg",
+            "alt": "바은",
+            "width": "28px",
+            "height": "28px",
+            "action": { "type": "navigate", "path": "/:workspaceId" }
+          },
+          {
+            "id": "workspace_switcher",
+            "type": "button_menu",
+            "label": "{workspaceName}",
+            "icon": "chevron_down",
+            "description": "현재 워크스페이스 이름 표시. 클릭 시 워크스페이스 목록 드롭다운",
+            "dropdown": {
+              "sections": [
+                {
+                  "label": "내 워크스페이스",
+                  "items": [
+                    { "type": "workspace_list", "description": "참여 중인 워크스페이스 목록. 클릭 시 전환" }
+                  ]
+                },
+                {
+                  "label": "",
+                  "items": [
+                    { "id": "create_workspace", "type": "action", "label": "새 워크스페이스 만들기", "icon": "plus", "action": { "type": "modal", "modal_id": "create_workspace_modal" } }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "id": "gnb_center",
+        "flex": "1 1 auto",
+        "layout": "horizontal",
+        "align": "center",
+        "justify": "center",
+        "items": [
+          {
+            "id": "nav_home",
+            "type": "nav_tab",
+            "label": "홈",
+            "icon": "home",
+            "path": "/:workspaceId",
+            "active_match": "exact",
+            "description": "워크스페이스 홈 대시보드"
+          },
+          {
+            "id": "nav_wiki",
+            "type": "nav_tab",
+            "label": "위키",
+            "icon": "file_text",
+            "path": "/:workspaceId/wiki",
+            "active_match": "prefix",
+            "description": "문서·지식베이스 섹션 진입",
+            "activates_sidebar": "sidebar_wiki"
+          },
+          {
+            "id": "nav_kanban",
+            "type": "nav_tab",
+            "label": "칸반",
+            "icon": "layout_kanban",
+            "path": "/:workspaceId/kanban",
+            "active_match": "prefix",
+            "description": "태스크·프로젝트 관리 섹션 진입",
+            "activates_sidebar": "sidebar_kanban"
+          },
+          {
+            "id": "nav_channel",
+            "type": "nav_tab",
+            "label": "채널",
+            "icon": "message_square",
+            "path": "/:workspaceId/channel",
+            "active_match": "prefix",
+            "badge": { "type": "unread_count", "color": "danger" },
+            "description": "메시지·AI 에이전트 섹션 진입",
+            "activates_sidebar": "sidebar_channel"
+          },
+          {
+            "id": "nav_data",
+            "type": "nav_tab",
+            "label": "데이터",
+            "icon": "database",
+            "path": "/:workspaceId/data",
+            "active_match": "prefix",
+            "description": "데이터 테이블·폼·시각화 섹션 진입",
+            "activates_sidebar": "sidebar_data"
+          }
+        ]
+      },
+      {
+        "id": "gnb_right",
+        "flex": "0 0 auto",
+        "layout": "horizontal",
+        "align": "center",
+        "gap": "4px",
+        "items": [
+          {
+            "id": "global_search",
+            "type": "search_trigger",
+            "icon": "search",
+            "placeholder": "검색 (⌘K)",
+            "shortcut": "cmd+k",
+            "description": "전체 통합 검색 모달 트리거",
+            "action": { "type": "modal", "modal_id": "global_search_modal" }
+          },
+          {
+            "id": "notifications",
+            "type": "icon_button",
+            "icon": "bell",
+            "badge": { "type": "unread_count", "color": "danger", "max": 99 },
+            "description": "알림 센터 패널 토글",
+            "action": { "type": "panel", "panel_id": "notification_panel" }
+          },
+          {
+            "id": "profile",
+            "type": "avatar_menu",
+            "description": "사용자 프로필 아바타. 클릭 시 드롭다운",
+            "dropdown": {
+              "items": [
+                { "id": "my_profile", "type": "link", "label": "내 프로필", "icon": "user", "path": "/profile" },
+                { "id": "preferences", "type": "link", "label": "환경설정", "icon": "settings", "path": "/preferences" },
+                { "id": "divider_1", "type": "divider" },
+                { "id": "workspace_settings", "type": "link", "label": "워크스페이스 설정", "icon": "building", "path": "/:workspaceId/settings" },
+                { "id": "divider_2", "type": "divider" },
+                { "id": "logout", "type": "action", "label": "로그아웃", "icon": "log_out", "action": { "type": "auth", "action": "logout" } }
+              ]
+            }
+          }
+        ]
+      }
+    ]
+  },
+
+  "sidebars": [
+
+    {
+      "id": "sidebar_wiki",
+      "section": "wiki",
+      "label": "위키",
+      "description": "위키 섹션 사이드바 — 문서 트리 + 폴더 관리",
+      "header": {
+        "title": "위키",
+        "actions": [
+          { "id": "new_doc", "type": "icon_button", "icon": "plus", "tooltip": "새 문서", "action": { "type": "create", "target": "wiki_doc" } },
+          { "id": "wiki_search", "type": "icon_button", "icon": "search", "tooltip": "위키 검색", "action": { "type": "focus_search", "scope": "wiki" } }
+        ]
+      },
+      "sections": [
+        {
+          "id": "wiki_pinned",
+          "label": "즐겨찾기",
+          "collapsible": true,
+          "default_open": true,
+          "items": [
+            {
+              "type": "dynamic_list",
+              "source": "pinned_docs",
+              "item_template": {
+                "type": "nav_item",
+                "icon": "file_text",
+                "label": "{doc.title}",
+                "path": "/:workspaceId/wiki/:docId",
+                "context_menu": ["open", "unpin", "copy_link"]
+              },
+              "empty_state": { "text": "즐겨찾기한 문서가 없습니다" }
+            }
+          ]
+        },
+        {
+          "id": "wiki_private",
+          "label": "내 문서",
+          "collapsible": true,
+          "default_open": true,
+          "actions": [
+            { "id": "add_private_doc", "type": "icon_button", "icon": "plus", "tooltip": "새 개인 문서", "action": { "type": "create", "target": "wiki_doc", "scope": "private" } }
+          ],
+          "items": [
+            {
+              "type": "tree",
+              "source": "private_docs",
+              "node_template": {
+                "type": "nav_item",
+                "icon_file": "file_text",
+                "icon_folder": "folder",
+                "label": "{node.title}",
+                "path": "/:workspaceId/wiki/:docId",
+                "indent_per_level": "16px",
+                "draggable": true,
+                "context_menu": ["open", "rename", "duplicate", "move", "pin", "delete"]
+              },
+              "empty_state": { "text": "새 문서를 만들어 보세요", "action": "add_private_doc" }
+            }
+          ]
+        },
+        {
+          "id": "wiki_shared",
+          "label": "공유 문서",
+          "collapsible": true,
+          "default_open": true,
+          "actions": [
+            { "id": "add_shared_doc", "type": "icon_button", "icon": "plus", "tooltip": "새 공유 문서", "action": { "type": "create", "target": "wiki_doc", "scope": "shared" } },
+            { "id": "add_folder", "type": "icon_button", "icon": "folder_plus", "tooltip": "새 폴더", "action": { "type": "create", "target": "wiki_folder" } }
+          ],
+          "items": [
+            {
+              "type": "tree",
+              "source": "shared_docs",
+              "node_template": {
+                "type": "nav_item",
+                "icon_file": "file_text",
+                "icon_folder": "folder",
+                "label": "{node.title}",
+                "path": "/:workspaceId/wiki/:docId",
+                "indent_per_level": "16px",
+                "draggable": true,
+                "context_menu": ["open", "rename", "duplicate", "move", "pin", "share", "delete"]
+              },
+              "empty_state": { "text": "팀과 공유할 문서를 만들어 보세요", "action": "add_shared_doc" }
+            }
+          ]
+        },
+        {
+          "id": "wiki_trash",
+          "label": "",
+          "items": [
+            { "id": "wiki_trash_link", "type": "nav_item", "icon": "trash_2", "label": "휴지통", "path": "/:workspaceId/wiki/trash", "style": "muted" }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "sidebar_kanban",
+      "section": "kanban",
+      "label": "칸반",
+      "description": "칸반 섹션 사이드바 — 프로젝트 목록 + 스프린트 + 내 태스크",
+      "header": {
+        "title": "칸반",
+        "actions": [
+          { "id": "new_board", "type": "icon_button", "icon": "plus", "tooltip": "새 프로젝트 보드", "action": { "type": "modal", "modal_id": "create_board_modal" } }
+        ]
+      },
+      "sections": [
+        {
+          "id": "kanban_my_tasks",
+          "label": "나의 작업",
+          "collapsible": false,
+          "items": [
+            { "id": "my_tasks", "type": "nav_item", "icon": "check_square", "label": "내 태스크", "path": "/:workspaceId/kanban/my-tasks", "badge": { "type": "count", "source": "my_open_tasks" } },
+            { "id": "my_overdue", "type": "nav_item", "icon": "alert_circle", "label": "기한 초과", "path": "/:workspaceId/kanban/overdue", "badge": { "type": "count", "source": "overdue_tasks", "color": "danger" } },
+            { "id": "all_tasks", "type": "nav_item", "icon": "list", "label": "전체 태스크", "path": "/:workspaceId/kanban/all" }
+          ]
+        },
+        {
+          "id": "kanban_projects",
+          "label": "프로젝트",
+          "collapsible": true,
+          "default_open": true,
+          "actions": [
+            { "id": "add_project", "type": "icon_button", "icon": "plus", "tooltip": "새 프로젝트", "action": { "type": "modal", "modal_id": "create_board_modal" } }
+          ],
+          "items": [
+            {
+              "type": "dynamic_list",
+              "source": "boards",
+              "item_template": {
+                "type": "nav_item_expandable",
+                "icon": "layout_kanban",
+                "icon_color": "{board.color}",
+                "label": "{board.name}",
+                "path": "/:workspaceId/kanban/:boardId",
+                "context_menu": ["open", "edit", "archive", "delete"],
+                "children": [
+                  { "type": "nav_item", "icon": "grid", "label": "칸반 보드", "path": "/:workspaceId/kanban/:boardId?view=kanban" },
+                  { "type": "nav_item", "icon": "list", "label": "목록", "path": "/:workspaceId/kanban/:boardId?view=list" },
+                  { "type": "nav_item", "icon": "calendar", "label": "타임라인", "path": "/:workspaceId/kanban/:boardId?view=timeline" },
+                  { "type": "nav_item", "icon": "bar_chart_2", "label": "통계", "path": "/:workspaceId/kanban/:boardId/analytics" },
+                  {
+                    "type": "nav_section",
+                    "label": "스프린트",
+                    "source": "board_sprints",
+                    "item_template": {
+                      "type": "nav_item",
+                      "icon": "zap",
+                      "label": "{sprint.name}",
+                      "badge": { "type": "status", "source": "sprint.status", "map": { "active": { "label": "진행중", "color": "success" } } },
+                      "path": "/:workspaceId/kanban/:boardId/sprints/:sprintId"
+                    }
+                  }
+                ]
+              },
+              "empty_state": { "text": "프로젝트를 만들어 보세요", "action": "add_project" }
+            }
+          ]
+        },
+        {
+          "id": "kanban_views",
+          "label": "전체 뷰",
+          "collapsible": true,
+          "default_open": false,
+          "items": [
+            { "id": "workload_view", "type": "nav_item", "icon": "users", "label": "팀 워크로드", "path": "/:workspaceId/kanban/workload" },
+            { "id": "roadmap_view", "type": "nav_item", "icon": "map", "label": "로드맵", "path": "/:workspaceId/kanban/roadmap" }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "sidebar_channel",
+      "section": "channel",
+      "label": "채널",
+      "description": "채널 섹션 사이드바 — AI 에이전트 + 채널 목록 + DM",
+      "header": {
+        "title": "채널",
+        "actions": [
+          { "id": "new_channel", "type": "icon_button", "icon": "plus", "tooltip": "새 채널 만들기", "action": { "type": "modal", "modal_id": "create_channel_modal" } },
+          { "id": "browse_channels", "type": "icon_button", "icon": "compass", "tooltip": "채널 탐색", "action": { "type": "modal", "modal_id": "browse_channels_modal" } }
+        ]
+      },
+      "sections": [
+        {
+          "id": "channel_ai",
+          "label": "AI",
+          "collapsible": false,
+          "items": [
+            {
+              "id": "ai_agent",
+              "type": "nav_item",
+              "icon": "cpu",
+              "icon_color": "primary",
+              "label": "AI 에이전트",
+              "description": "프로젝트 통찰·보고서·데이터 질의",
+              "path": "/:workspaceId/channel/ai",
+              "style": "highlight"
+            }
+          ]
+        },
+        {
+          "id": "channel_pinned",
+          "label": "즐겨찾기",
+          "collapsible": true,
+          "default_open": true,
+          "items": [
+            {
+              "type": "dynamic_list",
+              "source": "pinned_channels",
+              "item_template": {
+                "type": "nav_item",
+                "icon": "hash",
+                "label": "{channel.name}",
+                "badge": { "type": "unread_count", "color": "danger" },
+                "path": "/:workspaceId/channel/:channelId",
+                "context_menu": ["open", "unpin", "mute", "leave"]
+              },
+              "empty_state": { "text": "즐겨찾는 채널을 고정하세요" }
+            }
+          ]
+        },
+        {
+          "id": "channel_public",
+          "label": "채널",
+          "collapsible": true,
+          "default_open": true,
+          "actions": [
+            { "id": "add_channel", "type": "icon_button", "icon": "plus", "tooltip": "채널 추가", "action": { "type": "modal", "modal_id": "create_channel_modal" } }
+          ],
+          "items": [
+            {
+              "type": "dynamic_list",
+              "source": "joined_channels",
+              "filter": { "type": "public" },
+              "sort": "name_asc",
+              "item_template": {
+                "type": "nav_item",
+                "icon": "hash",
+                "label": "{channel.name}",
+                "badge": { "type": "unread_count", "color": "danger" },
+                "path": "/:workspaceId/channel/:channelId",
+                "context_menu": ["open", "pin", "mute", "copy_link", "leave"]
+              },
+              "empty_state": { "text": "참여 중인 채널이 없습니다", "action": "add_channel" }
+            }
+          ]
+        },
+        {
+          "id": "channel_private",
+          "label": "비공개 채널",
+          "collapsible": true,
+          "default_open": true,
+          "items": [
+            {
+              "type": "dynamic_list",
+              "source": "joined_channels",
+              "filter": { "type": "private" },
+              "item_template": {
+                "type": "nav_item",
+                "icon": "lock",
+                "label": "{channel.name}",
+                "badge": { "type": "unread_count", "color": "danger" },
+                "path": "/:workspaceId/channel/:channelId",
+                "context_menu": ["open", "pin", "mute", "leave"]
+              },
+              "empty_state": { "text": "비공개 채널이 없습니다" }
+            }
+          ]
+        },
+        {
+          "id": "channel_dm",
+          "label": "다이렉트 메시지",
+          "collapsible": true,
+          "default_open": true,
+          "actions": [
+            { "id": "new_dm", "type": "icon_button", "icon": "edit", "tooltip": "새 DM", "action": { "type": "modal", "modal_id": "new_dm_modal" } }
+          ],
+          "items": [
+            {
+              "type": "dynamic_list",
+              "source": "dm_list",
+              "item_template": {
+                "type": "nav_item",
+                "icon_type": "avatar",
+                "icon_src": "{user.avatar}",
+                "label": "{user.name}",
+                "meta": { "type": "presence", "source": "user.presence" },
+                "badge": { "type": "unread_count", "color": "danger" },
+                "path": "/:workspaceId/channel/dm/:userId",
+                "context_menu": ["open", "pin", "mute"]
+              },
+              "empty_state": { "text": "새 DM을 시작하세요", "action": "new_dm" }
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "sidebar_data",
+      "section": "data",
+      "label": "데이터",
+      "description": "데이터 섹션 사이드바 — 테이블 목록 + 뷰 전환",
+      "header": {
+        "title": "데이터",
+        "actions": [
+          { "id": "new_table", "type": "icon_button", "icon": "plus", "tooltip": "새 테이블", "action": { "type": "modal", "modal_id": "create_table_modal" } },
+          { "id": "import_table", "type": "icon_button", "icon": "upload", "tooltip": "CSV·Excel 가져오기", "action": { "type": "modal", "modal_id": "import_table_modal" } }
+        ]
+      },
+      "sections": [
+        {
+          "id": "data_pinned",
+          "label": "즐겨찾기",
+          "collapsible": true,
+          "default_open": true,
+          "items": [
+            {
+              "type": "dynamic_list",
+              "source": "pinned_tables",
+              "item_template": {
+                "type": "nav_item",
+                "icon": "table",
+                "label": "{table.name}",
+                "path": "/:workspaceId/data/:tableId/list",
+                "context_menu": ["open", "unpin"]
+              },
+              "empty_state": { "text": "즐겨찾는 테이블을 고정하세요" }
+            }
+          ]
+        },
+        {
+          "id": "data_tables",
+          "label": "테이블",
+          "collapsible": true,
+          "default_open": true,
+          "actions": [
+            { "id": "add_table", "type": "icon_button", "icon": "plus", "tooltip": "새 테이블", "action": { "type": "modal", "modal_id": "create_table_modal" } }
+          ],
+          "items": [
+            {
+              "type": "dynamic_list",
+              "source": "tables",
+              "item_template": {
+                "type": "nav_item_expandable",
+                "icon": "table",
+                "icon_color": "{table.color}",
+                "label": "{table.name}",
+                "path": "/:workspaceId/data/:tableId/list",
+                "context_menu": ["open", "rename", "duplicate", "pin", "export", "delete"],
+                "children": [
+                  {
+                    "type": "nav_item",
+                    "icon": "list",
+                    "label": "목록",
+                    "path": "/:workspaceId/data/:tableId/list",
+                    "active_match": "exact"
+                  },
+                  {
+                    "type": "nav_item",
+                    "icon": "edit_3",
+                    "label": "폼",
+                    "path": "/:workspaceId/data/:tableId/form",
+                    "active_match": "exact"
+                  },
+                  {
+                    "type": "nav_item",
+                    "icon": "bar_chart_2",
+                    "label": "시각화",
+                    "path": "/:workspaceId/data/:tableId/chart",
+                    "active_match": "exact"
+                  },
+                  {
+                    "type": "nav_section",
+                    "label": "저장된 뷰",
+                    "source": "table_saved_views",
+                    "item_template": {
+                      "type": "nav_item",
+                      "icon": "sliders",
+                      "label": "{view.name}",
+                      "path": "/:workspaceId/data/:tableId/list?view={view.id}",
+                      "context_menu": ["rename", "delete"]
+                    },
+                    "actions": [
+                      { "id": "save_view", "type": "text_button", "label": "+ 뷰 저장", "action": { "type": "modal", "modal_id": "save_view_modal" } }
+                    ]
+                  }
+                ]
+              },
+              "empty_state": { "text": "테이블을 만들어 보세요", "action": "add_table" }
+            }
+          ]
+        }
+      ]
+    }
+
+  ],
+
+  "modals": [
+    {
+      "id": "global_search_modal",
+      "type": "search",
+      "description": "전체 통합 검색. 위키·태스크·메시지·데이터 통합 결과",
+      "shortcut": "cmd+k",
+      "features": ["recent_searches", "filter_by_type", "preview_on_hover"]
+    },
+    {
+      "id": "create_workspace_modal",
+      "type": "form",
+      "title": "새 워크스페이스 만들기",
+      "fields": [
+        { "id": "name", "type": "text", "label": "워크스페이스 이름", "required": true },
+        { "id": "slug", "type": "text", "label": "URL 슬러그", "required": true, "hint": "baun.app/{slug}" },
+        { "id": "logo", "type": "image_upload", "label": "로고 (선택)" }
+      ]
+    },
+    {
+      "id": "create_board_modal",
+      "type": "form",
+      "title": "새 프로젝트 보드",
+      "fields": [
+        { "id": "name", "type": "text", "label": "프로젝트 이름", "required": true },
+        { "id": "color", "type": "color_picker", "label": "색상" },
+        { "id": "members", "type": "member_select", "label": "멤버 추가" },
+        { "id": "template", "type": "select", "label": "템플릿", "options": ["빈 보드", "스프린트", "칸반", "버그 트래킹"] }
+      ]
+    },
+    {
+      "id": "create_channel_modal",
+      "type": "form",
+      "title": "새 채널 만들기",
+      "fields": [
+        { "id": "name", "type": "text", "label": "채널 이름", "prefix": "#", "required": true },
+        { "id": "description", "type": "text", "label": "채널 설명" },
+        { "id": "type", "type": "radio", "label": "공개 범위", "options": ["공개", "비공개"] },
+        { "id": "members", "type": "member_select", "label": "멤버 초대" }
+      ]
+    },
+    {
+      "id": "create_table_modal",
+      "type": "form",
+      "title": "새 데이터 테이블",
+      "fields": [
+        { "id": "name", "type": "text", "label": "테이블 이름", "required": true },
+        { "id": "color", "type": "color_picker", "label": "색상" },
+        { "id": "template", "type": "select", "label": "템플릿", "options": ["빈 테이블", "고객 관리", "재고 관리", "일정 관리", "예산 관리"] }
+      ]
+    },
+    {
+      "id": "import_table_modal",
+      "type": "upload",
+      "title": "파일 가져오기",
+      "accept": [".csv", ".xlsx", ".xls"],
+      "steps": ["파일 업로드", "필드 매핑", "미리보기·확인"]
+    },
+    {
+      "id": "new_dm_modal",
+      "type": "member_search",
+      "title": "새 다이렉트 메시지",
+      "description": "대화할 멤버를 검색하세요 (복수 선택 시 그룹 DM)"
+    }
+  ],
+
+  "panels": [
+    {
+      "id": "notification_panel",
+      "title": "알림",
+      "width": "360px",
+      "position": "right",
+      "sections": [
+        {
+          "id": "notif_filter",
+          "type": "tab_filter",
+          "options": ["전체", "멘션", "태스크", "문서", "데이터"]
+        },
+        {
+          "id": "notif_list",
+          "type": "dynamic_list",
+          "source": "notifications",
+          "item_template": {
+            "type": "notification_item",
+            "fields": ["icon", "actor", "action", "target", "time", "read_status"]
+          }
+        }
+      ],
+      "footer": {
+        "actions": [
+          { "id": "mark_all_read", "type": "text_button", "label": "모두 읽음", "action": { "type": "api", "endpoint": "/:workspaceId/notifications/read-all", "method": "PATCH" } },
+          { "id": "notif_settings", "type": "text_button", "label": "알림 설정", "action": { "type": "navigate", "path": "/:workspaceId/settings/notifications" } }
+        ]
+      }
+    },
+    {
+      "id": "task_detail_panel",
+      "title": "태스크 상세",
+      "width": "400px",
+      "position": "right",
+      "trigger": "kanban_task_click",
+      "sections": [
+        { "id": "task_header", "type": "editable_title" },
+        { "id": "task_meta", "type": "field_grid", "fields": ["assignee", "due_date", "priority", "status", "sprint"] },
+        { "id": "task_description", "type": "rich_text_editor" },
+        { "id": "task_subtasks", "type": "checklist" },
+        { "id": "task_links", "type": "linked_items", "targets": ["wiki", "data"] },
+        { "id": "task_timelogs", "type": "timelog_list" },
+        { "id": "task_comments", "type": "comment_thread" },
+        { "id": "task_activity", "type": "activity_log", "collapsible": true, "default_open": false }
+      ]
+    }
+  ],
+
+  "interaction_rules": [
+    {
+      "id": "gnb_section_switch",
+      "trigger": "gnb_nav_tab_click",
+      "behavior": "사이드바 내용을 해당 섹션의 sidebar로 교체. 마지막 방문 위치 기억"
+    },
+    {
+      "id": "sidebar_collapse",
+      "trigger": "sidebar_toggle_button",
+      "behavior": "사이드바를 56px 아이콘 전용 모드로 축소. 호버 시 툴팁으로 레이블 표시"
+    },
+    {
+      "id": "kanban_task_open",
+      "trigger": "kanban_task_card_click",
+      "behavior": "우측 context_panel에 task_detail_panel 슬라이드인. URL에 ?task={taskId} 추가"
+    },
+    {
+      "id": "cross_section_link",
+      "trigger": "linked_item_click",
+      "description": "태스크에서 위키 링크 클릭 시 위키 섹션으로 이동하면서 해당 문서 오픈",
+      "behavior": "GNB 탭 전환 + 사이드바 교체 + 메인 콘텐츠 교체 동시 실행"
+    },
+    {
+      "id": "global_search_shortcut",
+      "trigger": "cmd+k",
+      "behavior": "현재 섹션에 무관하게 global_search_modal 오픈"
+    },
+    {
+      "id": "unread_badge_update",
+      "trigger": "websocket_event",
+      "description": "새 메시지·알림 수신 시 GNB 채널 탭 뱃지 및 사이드바 채널 항목 뱃지 실시간 업데이트"
+    }
+  ]
+}
