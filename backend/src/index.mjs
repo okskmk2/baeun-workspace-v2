@@ -33,6 +33,7 @@ import chatRouter from "./routes/chat.route.mjs";
 import notificationRouter from "./routes/notification.route.mjs";
 import metricsRouter from "./routes/metrics.route.mjs";
 import licenseRouter from "./routes/license.route.mjs";
+import dataRouter from "./routes/data.route.mjs";
 
 const app = express();
 const pgSession = connectPgSimple(session);
@@ -82,6 +83,7 @@ app.use("/api/channels", chatRouter);
 app.use("/api/notifications", notificationRouter);
 app.use("/api/metrics", metricsRouter);
 app.use("/api/licenses", licenseRouter);
+app.use("/api/data", dataRouter);
 
 // Static files serve
 const staticPath = path.join(__dirname, "../../frontend/dist");
