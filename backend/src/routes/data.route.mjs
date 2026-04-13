@@ -289,6 +289,61 @@ router.get("/projects/:projectId/tables/:tableId", isAuth, async (req, res) => {
   }
 });
 
+router.delete("/projects/:projectId/tables/:tableId", isAuth, async (req, res) => {
+  const { projectId, tableId } = req.params;
+  const userId = req.session.userId;
+
+  try {
+    const context = await getTableInProjectContext(projectId, tableId, userId);
+    if (context.error) return res.status(context.status).json(context.error);
+
+    const { table, project } = context;
+    const projectRole = normalizeRole(project.project_role);
+    const workspaceRole = normalizeRole(project.workspace_role);
+
+    if (table.is_asset) {
+      if (!["OWNER", "ADMIN"].includes(workspaceRole)) {
+        return res.status(403).json({ name: "Forbidden", message: "테이블 삭제 권한이 없습니다." });
+      }
+    } else if (!["OWNER", "ADMIN"].includes(projectRole)) {
+      return res.status(403).json({ name: "Forbidden", message: "테이블 삭제 권한이 없습니다." });
+    }
+
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+
+      await client.query(
+        `UPDATE data_table
+            SET status = 'ARCHIVED',
+                updated_at = CURRENT_TIMESTAMP
+          WHERE id = $1`,
+        [table.id]
+      );
+
+      await insertAuditLog({
+        db: client,
+        tableId: table.id,
+        action: "DELETE",
+        beforeData: { id: table.id, name: table.name, status: table.status },
+        afterData: { id: table.id, name: table.name, status: "ARCHIVED" },
+        changedBy: userId,
+      });
+
+      await client.query("COMMIT");
+      res.json({ message: "테이블이 삭제되었습니다." });
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    } finally {
+      client.release();
+    }
+  } catch (error) {
+    logger.error("delete data table error", { err: error?.message, stack: error?.stack });
+    res.status(500).json({ name: "InternalServerError", message: error.message });
+  }
+});
+
 router.get("/projects/:projectId/tables/:tableId/rows", isAuth, async (req, res) => {
   const { projectId, tableId } = req.params;
   const userId = req.session.userId;

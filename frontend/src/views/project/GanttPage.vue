@@ -1,7 +1,9 @@
 <template>
   <hgroup>
-    <h1>{{ t("kanban.gantt.header.title") }}</h1>
-    <p class="subtitle">{{ t("kanban.gantt.header.subtitle") }}</p>
+    <div>
+      <h1>{{ t("kanban.gantt.header.title") }}</h1>
+      <p class="subtitle">{{ t("kanban.gantt.header.subtitle") }}</p>
+    </div>
   </hgroup>
 
   <p v-if="isLoading">{{ t("kanban.gantt.status.loading") }}</p>
@@ -12,7 +14,11 @@
     <div class="gantt-head" :style="rowStyle">
       <div class="task-label-col">{{ t("kanban.gantt.columns.task") }}</div>
       <div class="tasktrack" :style="tasktrackStyle">
-        <div v-for="day in timelineDayParts" :key="day.value" class="tasktrack-cell tasktrack-cell--head">
+        <div
+          v-for="day in timelineDayParts"
+          :key="day.value"
+          class="tasktrack-cell tasktrack-cell--head"
+        >
           <span>{{ day.month }}</span>
           <span>{{ day.date }}</span>
         </div>

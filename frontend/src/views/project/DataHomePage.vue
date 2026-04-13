@@ -1,7 +1,9 @@
 <template>
   <hgroup>
-    <h1>데이터</h1>
-    <p class="status">워크스페이스 표준 자산과 프로젝트 임시 테이블을 탐색하고 편집하세요.</p>
+    <div>
+      <h1>데이터</h1>
+      <p class="subtitle">워크스페이스 표준 자산과 프로젝트 임시 테이블을 탐색하고 편집하세요.</p>
+    </div>
   </hgroup>
 
   <section class="overview-grid">
@@ -24,7 +26,9 @@
     >
       {{ table.name }} 열기
     </router-link>
-    <p v-if="quickLinks.length === 0" class="status">왼쪽 메뉴에서 테이블을 생성하거나 선택하세요.</p>
+    <p v-if="quickLinks.length === 0" class="status">
+      왼쪽 메뉴에서 테이블을 생성하거나 선택하세요.
+    </p>
   </section>
 </template>
 

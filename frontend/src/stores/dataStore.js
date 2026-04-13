@@ -132,6 +132,15 @@ export const useDataStore = defineStore("data", {
       const res = await api.post(`/data/projects/${projectId}/tables/${tableId}/snapshots`, { label });
       return res.data;
     },
+    async deleteTable(projectId, tableId) {
+      await api.delete(`/data/projects/${projectId}/tables/${tableId}`);
+      await this.fetchTables(projectId);
+      const key = buildTableKey(projectId, tableId);
+      delete this.tableDetailByKey[key];
+      delete this.rowsByKey[key];
+      delete this.columnsByKey[key];
+      delete this.auditLogsByKey[key];
+    },
     async fetchAuditLogs(projectId, tableId) {
       const key = buildTableKey(projectId, tableId);
       const res = await api.get(`/data/projects/${projectId}/tables/${tableId}/audit-logs`);

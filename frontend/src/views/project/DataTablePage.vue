@@ -1,35 +1,17 @@
 <template>
   <hgroup>
-    <h1>{{ pageTitle }}</h1>
-    <p class="status">{{ tableName }} · {{ pageTypeLabel }} · 버전 {{ tableVersion }}</p>
-  </hgroup>
-
-  <section class="wire-card toolbar">
-    <div class="toolbar__left">
+    <div>
+      <h1>{{ pageTitle }}</h1>
+      <p class="subtitle">{{ tableName }} · {{ pageTypeLabel }} · 버전 {{ tableVersion }}</p>
+    </div>
+    <div class="actions">
+      <button type="button" class="btn" @click="goToSettings">설정</button>
       <button type="button" class="btn" @click="addRow" :disabled="!capabilities.can_create_row">
         행 추가
       </button>
-      <button
-        type="button"
-        class="btn"
-        @click="requestPromotion"
-        :disabled="!capabilities.can_request_promotion || isAsset"
-      >
-        워크스페이스 자산으로 승격 신청
-      </button>
-      <button
-        type="button"
-        class="btn"
-        @click="createSnapshot"
-        :disabled="!capabilities.can_delete_row"
-      >
-        Snapshot 생성
-      </button>
-    </div>
-    <div class="toolbar__right">
       <button type="button" class="btn" @click="reloadAll">새로고침</button>
     </div>
-  </section>
+  </hgroup>
 
   <section v-if="pageType !== 'list'" class="wire-card placeholder">
     <p>
@@ -172,7 +154,7 @@
 
 <script setup>
 import { computed, onMounted, ref, watch } from "vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
 import api from "../../lib/axios";
 import { addToast } from "../../lib/toast";
@@ -180,6 +162,7 @@ import { useDataStore } from "../../stores/dataStore";
 import BaseModal from "../../components/BaseModal.vue";
 
 const route = useRoute();
+const router = useRouter();
 const dataStore = useDataStore();
 const { rowsByKey, columnsByKey, tableDetailByKey, auditLogsByKey } = storeToRefs(dataStore);
 
@@ -192,7 +175,6 @@ const pageTypeMap = { list: "목록", form: "폼", chart: "시각화" };
 const tableDetail = computed(() => tableDetailByKey.value[tableKey.value] || null);
 const tableName = computed(() => tableDetail.value?.table?.name || "데이터 테이블");
 const tableVersion = computed(() => tableDetail.value?.table?.version || 1);
-const isAsset = computed(() => tableDetail.value?.table?.is_asset === true);
 const columns = computed(() => columnsByKey.value[tableKey.value] || []);
 const editableColumns = computed(() =>
   columns.value.filter(
@@ -249,6 +231,10 @@ const getTypeLabel = (type) => {
   if (normalized === "DATE") return "Date";
   if (normalized === "SELECT") return "Select";
   return normalized || "Unknown";
+};
+
+const goToSettings = () => {
+  router.push(`/project/${projectId.value}/data/${tableId.value}/settings`);
 };
 
 const startRowEdit = (row) => {
@@ -332,33 +318,6 @@ const removeRow = async (rowId) => {
   } catch (error) {
     addToast({
       message: error?.response?.data?.message || "행 삭제에 실패했습니다.",
-      type: "error",
-    });
-  }
-};
-
-const requestPromotion = async () => {
-  try {
-    await dataStore.requestPromotion(projectId.value, tableId.value);
-    addToast({ message: "승격 신청이 접수되었습니다.", type: "success" });
-  } catch (error) {
-    addToast({
-      message: error?.response?.data?.message || "승격 신청에 실패했습니다.",
-      type: "error",
-    });
-  }
-};
-
-const createSnapshot = async () => {
-  const label = window.prompt("Snapshot 라벨을 입력하세요.", "manual");
-  if (label === null) return;
-  try {
-    await dataStore.createSnapshot(projectId.value, tableId.value, label);
-    await dataStore.fetchAuditLogs(projectId.value, tableId.value);
-    addToast({ message: "Snapshot이 생성되었습니다.", type: "success" });
-  } catch (error) {
-    addToast({
-      message: error?.response?.data?.message || "Snapshot 생성에 실패했습니다.",
       type: "error",
     });
   }

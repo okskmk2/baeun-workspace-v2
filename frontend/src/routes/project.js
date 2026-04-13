@@ -6,6 +6,7 @@ import ChannelLayout from "../views/project/ChannelLayout.vue";
 import DataLayout from "../views/project/DataLayout.vue";
 import DataHomePage from "../views/project/DataHomePage.vue";
 import DataTablePage from "../views/project/DataTablePage.vue";
+import DataTableSettingsPage from "../views/project/DataTableSettingsPage.vue";
 import ProjectLayout from "../views/project/ProjectLayout.vue";
 import KanbanPage from "../views/project/KanbanPage.vue";
 import GanttPage from "../views/project/GanttPage.vue";
@@ -115,6 +116,10 @@ export const projectRoutes = [
           {
             path: "",
             component: DataHomePage,
+          },
+          {
+            path: ":tableId/settings",
+            component: DataTableSettingsPage,
           },
           {
             path: ":tableId/:pageType(list|form|chart)",
