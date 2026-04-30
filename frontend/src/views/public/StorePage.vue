@@ -1,434 +1,331 @@
 ﻿<template>
   <main class="store container">
-    <section class="store-hero">
-      <h1>쉽게 계산하고, 바로 선택하세요</h1>
-      <p class="store-hero__subtitle">1. 슬롯 수 입력 2. 플랜 선택 3. 시작하기</p>
-      <div class="store-hero__actions">
-        <a class="btn" href="#calculator">계산 시작</a>
+    <hgroup>
+      <div>
+        <h1>슬롯 스토어</h1>
+        <p class="subtitle">필요한 만큼 슬롯을 추가하여 조직의 규모를 확장하세요.</p>
       </div>
-    </section>
+    </hgroup>
 
-    <section id="calculator" class="section-card calculator">
-      <div class="section-heading">
-        <h2>1단계. 비용 계산</h2>
-        <p>조직 규모를 입력하면 금액이 즉시 계산됩니다.</p>
-      </div>
+    <nav class="billing-switch" aria-label="결제 주기 선택">
+      <button
+        v-for="option in billingOptions"
+        :key="option.key"
+        type="button"
+        class="billing-switch__item"
+        :class="{ 'billing-switch__item--active': selectedBilling === option.key }"
+        @click="selectedBilling = option.key"
+      >
+        <span>{{ option.label }}</span>
+        <small v-if="option.badge">{{ option.badge }}</small>
+      </button>
+    </nav>
 
-      <div class="calculator__body">
-        <div class="calculator__controls">
-          <label>
-            워크스페이스 수
-            <CountChip :count="ws" size="lg" />
-          </label>
-          <input v-model.number="ws" type="range" min="1" max="10" />
+    <section class="slot-grid" aria-label="상품 결제 선택">
+      <article v-for="item in slotItems" :key="item.key" class="slot-card">
+        <figure class="slot-card__media" aria-hidden="true">
+          <img :src="item.image" :alt="item.name" loading="lazy" />
+        </figure>
 
-          <label>
-            프로젝트 수
-            <CountChip :count="proj" size="lg" />
-          </label>
-          <input v-model.number="proj" type="range" min="1" max="20" />
+        <h2>{{ item.name }}</h2>
+        <p class="slot-card__desc">{{ item.description }}</p>
 
-          <label>
-            멤버 수
-            <CountChip :count="mem" size="lg" />
-          </label>
-          <input v-model.number="mem" type="range" min="1" max="100" />
-
-          <p class="calculator__hint">기본 단가: Workspace $10 / Project $3 / Member $2 (slot / month)</p>
-        </div>
-
-        <aside class="calculator__summary">
-          <div class="summary-item">
-            <Tag label="월간" variant="info" />
-            <strong>${{ formatCurrency(monthlyTotal) }}</strong>
-          </div>
-          <div class="summary-item">
-            <Tag label="연간 15% 할인" variant="success" />
-            <strong>${{ formatCurrency(yearlyMonthlyEquivalent) }}/mo</strong>
-            <small>연간 일시불 ${{ formatCurrency(yearlyTotal) }}</small>
-          </div>
-          <div class="summary-item summary-item--lifetime">
-            <Tag label="영구 사용권" variant="warning" />
-            <strong>${{ formatCurrency(lifetimeTotal) }}</strong>
-            <small>월간 대비 36배 (3년치)</small>
-          </div>
-        </aside>
-      </div>
-    </section>
-
-    <section class="section-card license">
-      <div class="section-heading">
-        <h2>2단계. 플랜 선택</h2>
-        <p>팀 운영 방식에 맞는 플랜 하나만 고르세요.</p>
-      </div>
-
-      <div class="license-grid">
-        <article
-          v-for="tier in tiers"
-          :key="tier.key"
-          class="license-card"
-          :class="[tier.tone, { 'license-card--active': selectedTier === tier.key }]"
-          @click="selectedTier = tier.key"
-        >
-          <p class="license-card__kicker">{{ tier.kicker }}</p>
-          <h3>{{ tier.name }}</h3>
-          <p class="license-card__target">{{ tier.target }}</p>
-          <ul>
-            <li v-for="benefit in tier.benefits" :key="benefit">{{ benefit }}</li>
-          </ul>
-          <p class="license-card__price">{{ tier.price }}</p>
-        </article>
-      </div>
-
-      <div class="license-action">
-        <p>
-          선택 플랜: <strong>{{ selectedTierData.name }}</strong>
+        <p class="slot-card__price">
+          <strong>${{ formatAmount(unitPrice(item.price)) }}</strong>
+          <span>/ {{ selectedBillingData.unit }}</span>
         </p>
-        <button class="btn" type="button">3단계. {{ selectedTierData.cta }}</button>
-      </div>
-    </section>
 
-    <section class="section-card faq">
-      <h2>FAQ</h2>
-      <div class="faq-list">
-        <details>
-          <summary>슬롯은 매월 자동 조정 가능한가요?</summary>
-          <p>월간 플랜은 수량을 언제든 조정할 수 있습니다.</p>
-        </details>
-        <details>
-          <summary>연간 할인은 어디에 적용되나요?</summary>
-          <p>워크스페이스, 프로젝트, 멤버 슬롯 라이선스에 15% 할인 적용됩니다.</p>
-        </details>
-      </div>
+        <button type="button" class="btn slot-card__button" @click="goToCart(item)">
+          결제하기
+        </button>
+      </article>
     </section>
   </main>
 </template>
 
 <script setup>
 import { computed, ref } from "vue";
-import CountChip from "../../components/CountChip.vue";
-import Tag from "../../components/Tag.vue";
+import { useRouter } from "vue-router";
 
-const BASE_PRICES = {
-  workspace: 10,
-  project: 3,
-  member: 2,
-};
+const router = useRouter();
 
-const ws = ref(2);
-const proj = ref(14);
-const mem = ref(64);
-
-const monthlyTotal = computed(() => ws.value * BASE_PRICES.workspace + proj.value * BASE_PRICES.project + mem.value * BASE_PRICES.member);
-const yearlyMonthlyEquivalent = computed(() => monthlyTotal.value * 0.85);
-const yearlyTotal = computed(() => yearlyMonthlyEquivalent.value * 12);
-const lifetimeTotal = computed(() => monthlyTotal.value * 36);
-
-const tiers = [
+const slotItems = [
   {
-    key: "monthly",
-    kicker: "Monthly",
-    name: "월간 결제",
-    target: "유연한 운영이 필요한 팀",
-    benefits: ["언제든 해지 가능", "실시간 수량 조정", "단기 대응 최적"],
-    price: "슬롯당 정가",
-    cta: "바로 시작하기",
-    tone: "license-card--monthly",
+    key: "workspace",
+    name: "워크스페이스 슬롯",
+    description: "독립된 조직 공간 생성",
+    price: 10,
+    image: "/assets/card_office.png",
+    codeName: "WORKSPACE",
   },
   {
-    key: "yearly",
-    kicker: "Yearly",
-    name: "연간 결제",
-    target: "안정적 성장을 원하는 조직",
-    benefits: ["15% 할인", "예산 계획 고정", "회계 단순화"],
-    price: "슬롯당 15% DC",
-    cta: "할인받고 시작하기",
-    tone: "license-card--yearly",
+    key: "member",
+    name: "멤버 슬롯",
+    description: "워크스페이스 멤버 초대",
+    price: 1,
+    image: "/assets/card_member.png",
+    codeName: "WORKSPACEMEMBER",
   },
   {
-    key: "lifetime",
-    kicker: "Lifetime",
-    name: "영구 사용권",
-    target: "장기 운영에 유리",
-    benefits: ["단 한 번 결제", "36배(3년치)", "장기 총비용 절감"],
-    price: "월간 대비 36배",
-    cta: "한정 수량 구매하기",
-    tone: "license-card--lifetime",
+    key: "project",
+    name: "프로젝트 슬롯",
+    description: "협업 프로젝트 생성",
+    price: 3,
+    image: "/assets/card_team.png",
+    codeName: "PROJECT",
   },
 ];
 
-const selectedTier = ref("yearly");
-const selectedTierData = computed(() => tiers.find((tier) => tier.key === selectedTier.value) || tiers[0]);
+const billingOptions = [
+  { key: "monthly", label: "월간 구독", badge: "", multiplier: 1, unit: "월" },
+  { key: "yearly", label: "연간 구독", badge: "15% 할인", multiplier: 0.85, unit: "월" },
+  { key: "lifetime", label: "영구 사용권", badge: "3년치 일시불", multiplier: 36, unit: "일시불" },
+];
 
-const formatCurrency = (value) => Number(value).toLocaleString("en-US", { maximumFractionDigits: 0 });
+const selectedBilling = ref("monthly");
+
+const selectedBillingData = computed(
+  () => billingOptions.find((option) => option.key === selectedBilling.value) || billingOptions[0]
+);
+
+const unitPrice = (basePrice) => basePrice * selectedBillingData.value.multiplier;
+
+const buildProductCode = (item) => {
+  const billingCode = selectedBilling.value.toUpperCase();
+  const year = new Date().getFullYear();
+  return `${item.codeName}_${billingCode}_${year}`;
+};
+
+const goToCart = (item) => {
+  router.push({
+    path: "/store/cart",
+    query: {
+      productCode: buildProductCode(item),
+    },
+  });
+};
+
+const formatAmount = (value) =>
+  Number(value).toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 </script>
 
 <style scoped>
 .store {
   display: flex;
   flex-direction: column;
-  gap: 28px;
-  color: var(--color-text);
+  gap: 20px;
 }
 
-.store-hero,
-.section-card {
-  border: 1px solid var(--color-border);
-  border-radius: 16px;
-  background: var(--color-card-bg);
-}
-
-.store-hero {
-  padding: 32px;
-  display: grid;
-  gap: 16px;
-  background: var(--color-card-bg);
-}
-
-.store-hero h1 {
-  margin: 0;
-  font-size: clamp(var(--font-size-title-lg), 5vw, var(--font-size-display));
-  line-height: var(--line-height-tight);
-}
-
-.store-hero__subtitle {
-  margin: 0;
-  font-size: var(--font-size-body);
-  line-height: var(--line-height-relaxed);
-  color: var(--color-text-muted);
-}
-
-.store-hero__actions {
+.store-header {
+  text-align: center;
   display: flex;
-  gap: 12px;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.section-card {
-  padding: 28px;
-}
-
-.section-heading h2 {
-  margin: 0 0 8px;
+.store-header h1 {
+  margin: 0;
   font-size: clamp(var(--font-size-title-md), 3vw, var(--font-size-title-lg));
+  line-height: var(--line-height-tight);
+  letter-spacing: -0.01em;
+  font-weight: 800;
 }
 
-.section-heading p {
+.store-header p {
   margin: 0;
   font-size: var(--font-size-body);
   line-height: var(--line-height-relaxed);
   color: var(--color-text-muted);
 }
 
-.calculator {
-  display: grid;
-  gap: 20px;
-}
-
-.calculator__body {
-  display: grid;
-  grid-template-columns: 1.15fr 1fr;
-  gap: 20px;
-}
-
-.calculator__controls {
-  display: grid;
-  gap: 14px;
-}
-
-.calculator__controls label {
-  display: flex;
-  justify-content: space-between;
-  font-size: var(--font-size-body);
-  line-height: var(--line-height-body);
-  color: var(--color-text-muted);
-}
-
-.calculator__controls input[type="range"] {
-  width: 100%;
-}
-
-.calculator__hint {
-  margin: 10px 0 0;
-  font-size: var(--font-size-label);
-  line-height: var(--line-height-relaxed);
-  color: var(--color-text-muted);
-}
-
-.calculator__summary {
+.billing-switch {
+  width: min(100%, 560px);
+  margin-inline: auto;
   border: 1px solid var(--color-border);
-  border-radius: 16px;
-  padding: 14px;
+  background: var(--color-surface);
+  border-radius: 999px;
+  padding: 4px;
   display: grid;
-  gap: 12px;
-  background: var(--color-card-bg);
-}
-
-.summary-item {
-  border: 1px solid var(--color-border);
-  border-radius: 14px;
-  padding: 14px;
-  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 4px;
 }
 
-.summary-item small {
+.billing-switch__item {
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--color-text);
+  min-height: 40px;
+  font-weight: 600;
   font-size: var(--font-size-label);
-  line-height: var(--line-height-body);
-  color: var(--color-text-muted);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
 }
 
-.summary-item :deep(.tag) {
-  width: fit-content;
-  font-size: var(--font-size-label);
-  line-height: var(--line-height-body);
-}
-
-.summary-item strong {
-  font-size: clamp(var(--font-size-title-lg), 3.5vw, var(--font-size-display));
-  line-height: var(--line-height-tight);
-}
-
-.summary-item--lifetime strong {
+.billing-switch__item small {
+  font-size: var(--font-size-caption);
+  font-weight: 600;
   color: var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 12%, var(--color-page-bg));
+  border-radius: 999px;
+  padding: 2px 9px;
 }
 
-.license-grid {
-  margin-top: 16px;
+/* .billing-switch__item:hover {
+  background: var(--color-surface-alt);
+} */
+
+.billing-switch__item--active {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: var(--color-text-inverse);
+}
+
+.billing-switch__item--active small {
+  color: var(--color-accent);
+  background: color-mix(in srgb, var(--color-page-bg) 92%, white 8%);
+}
+
+.slot-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
 }
 
-.license-card {
-  border: 1px solid var(--color-border);
-  border-radius: 16px;
-  padding: 18px;
+.slot-card {
   background: var(--color-card-bg);
-  cursor: pointer;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 20px 16px;
+  text-align: center;
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--color-text) 8%, transparent);
+  display: grid;
+  gap: 10px;
 }
 
-.license-card--active {
-  border-color: color-mix(in srgb, var(--color-accent) 45%, var(--color-border));
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-accent) 20%, transparent);
-}
-
-.license-card__kicker,
-.license-card__target,
-.license-card__price,
-.license-card h3,
-.license-card ul {
+.slot-card h2,
+.slot-card__desc,
+.slot-card__price {
   margin: 0;
 }
 
-.license-card__kicker {
-  font-size: var(--font-size-label);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  line-height: 1.4;
-  color: var(--color-text-muted);
+.slot-card__media {
+  margin: -8px -4px 2px;
+  border-radius: 10px;
+  overflow: hidden;
+  /* background: color-mix(in srgb, var(--color-surface) 88%, white 12%); */
 }
 
-.license-card h3 {
-  margin-top: 8px;
+.slot-card__media img {
+  display: block;
+  width: 100%;
+  object-fit: cover;
+}
+
+.slot-card h2 {
   font-size: var(--font-size-title-md);
   line-height: var(--line-height-tight);
+  letter-spacing: -0.01em;
 }
 
-.license-card__target {
-  margin-top: 8px;
+.slot-card__desc {
   font-size: var(--font-size-label);
-  line-height: var(--line-height-relaxed);
+  line-height: var(--line-height-body);
   color: var(--color-text-muted);
 }
 
-.license-card ul {
-  margin-top: 14px;
-  padding-left: 20px;
-  font-size: var(--font-size-label);
-  line-height: var(--line-height-relaxed);
-  display: grid;
+.slot-card__price {
+  display: inline-flex;
+  justify-content: center;
+  align-items: flex-end;
   gap: 6px;
 }
 
-.license-card__price {
-  margin-top: 14px;
-  font-size: var(--font-size-body);
-  font-weight: 700;
+.slot-card__price strong {
+  font-size: clamp(var(--font-size-title-md), 2.4vw, var(--font-size-title-lg));
+  line-height: 1;
+  color: var(--color-text);
 }
 
-.license-action {
-  margin-top: 16px;
-  border-top: 1px solid var(--color-border);
-  padding-top: 16px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
-}
-
-.license-action p {
-  margin: 0;
-  font-size: var(--font-size-body);
-  line-height: var(--line-height-body);
-}
-
-.faq h2 {
-  margin: 0 0 14px;
-  font-size: var(--font-size-title-md);
-}
-
-.faq-list {
-  display: grid;
-  gap: 12px;
-}
-
-.faq-list details {
-  border: 1px solid var(--color-border);
-  border-radius: 14px;
-  padding: 16px;
-}
-
-.faq-list summary {
-  font-size: var(--font-size-body);
-  line-height: var(--line-height-body);
-}
-
-.faq-list p {
-  margin: 10px 0 0;
+.slot-card__price span {
   font-size: var(--font-size-label);
-  line-height: var(--line-height-relaxed);
   color: var(--color-text-muted);
 }
 
-@media (max-width: 980px) {
-  .calculator__body,
-  .license-grid {
-    grid-template-columns: 1fr;
-  }
+.slot-card__button {
+  margin-top: 6px;
+  background: var(--color-accent);
+  color: var(--color-text-inverse);
+  width: 100%;
+  min-height: 38px;
+  border-radius: 8px;
+  font-size: var(--font-size-label);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  padding: 8px 14px;
+}
 
-  .license-action {
-    flex-direction: column;
-    align-items: flex-start;
+@media (max-width: 980px) {
+  .slot-grid {
+    grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 720px) {
   .store {
-    gap: 20px;
+    padding-block: 8px 20px;
+    gap: 16px;
   }
 
-  .store-hero,
-  .section-card {
-    padding: 20px;
+  .store-header p {
+    font-size: var(--font-size-label);
   }
 
-  .store-hero h1 {
-    font-size: clamp(var(--font-size-title-md), 8vw, var(--font-size-display));
-  }
-
-  .section-heading h2,
-  .faq h2 {
+  .store-header h1 {
     font-size: var(--font-size-title-md);
+  }
+
+  .billing-switch {
+    grid-template-columns: 1fr;
+    border-radius: 12px;
+    width: 100%;
+  }
+
+  .billing-switch__item {
+    justify-content: space-between;
+    padding: 0 12px;
+    border-radius: 10px;
+  }
+
+  .slot-card {
+    padding: 16px 14px;
+  }
+
+  .slot-card__media img {
+    height: 136px;
+  }
+
+  .slot-card h2 {
+    font-size: var(--font-size-title-sm);
+  }
+
+  .slot-card__price strong {
+    font-size: clamp(var(--font-size-title-sm), 8vw, var(--font-size-title-md));
+  }
+
+  .slot-card__button {
+    min-height: 36px;
+    font-size: var(--font-size-label);
   }
 }
 </style>

@@ -539,25 +539,6 @@ onBeforeUnmount(() => {
   text-decoration: none;
 }
 
-.mainnav-link {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 4px 8px;
-  border-radius: 4px;
-  color: var(--color-gnb-text);
-  text-decoration: none;
-  line-height: 1;
-  font-weight: bold;
-  width: 100%;
-}
-
-.mainnav-link:hover {
-  background-color: color-mix(in srgb, var(--color-gnb-bg) 95%, var(--color-gnb-text) 5%);
-}
-
 .project-search {
   position: relative;
 }

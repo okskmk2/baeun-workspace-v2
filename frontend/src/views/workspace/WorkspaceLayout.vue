@@ -12,9 +12,18 @@
           <span class="brand-text">{{ workspaceName || "워크스페이스" }}</span>
         </router-link>
         <nav class="mainnav">
-          <router-link class="mainnav__link" :to="workspaceProjectsTo">프로젝트</router-link>
-          <router-link class="mainnav__link" :to="workspaceBoardTo">게시판</router-link>
-          <router-link class="mainnav__link" :to="workspaceRankTo">랭킹</router-link>
+          <router-link class="mainnav-link" :to="workspaceProjectsTo">
+            <MaterialSymbol name="workspaces" :size="20" alt="" />
+            <span>프로젝트</span>
+          </router-link>
+          <router-link class="mainnav-link" :to="workspaceBoardTo">
+            <MaterialSymbol name="communication" :size="20" alt="" />
+            <span>게시판</span>
+          </router-link>
+          <router-link class="mainnav-link" :to="workspaceRankTo">
+            <MaterialSymbol name="social_leaderboard" :size="20" alt="" />
+            <span>랭킹</span>
+          </router-link>
         </nav>
         <nav class="utilnav">
           <router-link
@@ -30,6 +39,13 @@
       </div>
     </header>
     <router-view></router-view>
+
+    <FloatingActionButton
+      :actions="fabActions"
+      button-aria-label="워크스페이스 빠른 액션 메뉴"
+      menu-aria-label="워크스페이스 빠른 액션"
+      @action-click="onClickFabAction"
+    />
   </div>
 </template>
 
@@ -40,6 +56,8 @@ import { useRoute } from "vue-router";
 import ContextSwicher from "../../components/ContextSwicher.vue";
 import MaterialSymbol from "../../components/MaterialSymbol.vue";
 import Avatar from "../../components/Avatar.vue";
+import FloatingActionButton from "../../components/FloatingActionButton.vue";
+import { addToast } from "../../lib/toast";
 import { useWorkspaceStore } from "../../stores/workspaceStore";
 import { useAppStore } from "../../stores/appStore";
 import {
@@ -107,7 +125,7 @@ const workspaceProjectsTo = computed(() => ({
   params: workspaceRouteParams.value,
 }));
 const workspaceBoardTo = computed(() => ({
-  name: "workspace-board",
+  name: "workspace-board-root",
   params: workspaceRouteParams.value,
 }));
 const workspaceRankTo = computed(() => ({
@@ -118,6 +136,16 @@ const workspaceSettingsTo = computed(() => ({
   name: "workspace-settings",
   params: workspaceRouteParams.value,
 }));
+
+const fabActions = [
+  { key: "new-post", label: "게시글 작성", icon: "edit" },
+  { key: "new-project", label: "프로젝트 생성", icon: "add_circle" },
+  { key: "workspace-settings", label: "워크스페이스 설정", icon: "settings" },
+];
+
+const onClickFabAction = (action) => {
+  addToast({ message: `${action.label} 기능은 프로토타입입니다.`, type: "info" });
+};
 
 watch(
   workspaceId,

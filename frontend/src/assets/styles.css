@@ -82,7 +82,7 @@ main > hgroup div:has(h1) {
 
 main > hgroup div:has(.subtitle) {
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
   align-items: flex-start;
 }
 

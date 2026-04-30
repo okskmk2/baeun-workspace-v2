@@ -134,6 +134,26 @@
   margin: 1rem;
 }
 
+.mainnav-link {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  color: var(--color-gnb-text);
+  text-decoration: none;
+  line-height: 1;
+  font-weight: bold;
+  /* width: 100%; */
+}
+
+.mainnav-link:hover {
+  text-decoration: none;
+  background-color: color-mix(in srgb, var(--color-gnb-bg) 95%, var(--color-gnb-text) 5%);
+}
+
 .ProjectLayout .LnbLayout > aside {
   height: calc(100dvh - 134px);
   width: 14rem;
@@ -334,7 +354,7 @@
 
 .WorkspaceLayout .inner-gnb {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: 1fr 3fr 1fr;
   padding: 20px 40px;
   color: var(--color-gnb-text);
 }
@@ -353,16 +373,18 @@
   align-items: center;
 }
 
-.WorkspaceLayout .mainnav {
+.WorkspaceLayout .inner-gnb .mainnav {
+  /* display: grid;
+  grid-template-columns: repeat(3, 1fr); */
   font-size: 18px;
-  gap: 60px;
+  gap: 32px;
   font-weight: 600;
   justify-self: center;
 }
 
 .WorkspaceLayout .utilnav {
   font-size: 15px;
-  gap: 20px;
+  gap: 8px;
   justify-self: end;
 }
 

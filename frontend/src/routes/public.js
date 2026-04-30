@@ -1,6 +1,7 @@
 import PublicLayout from "../views/public/PublicLayout.vue";
 import HomePage from "../views/public/HomePage.vue";
 import StorePage from "../views/public/StorePage.vue";
+import CartPage from "../views/public/CartPage.vue";
 import NotFoundPage from "../views/public/NotFoundPage.vue";
 import LoginPage from "../views/public/LoginPage.vue";
 import SigupPage from "../views/public/SigupPage.vue";
@@ -24,6 +25,10 @@ export const publicRoutes = [
       {
         path: "store",
         component: StorePage,
+      },
+      {
+        path: "store/cart",
+        component: CartPage,
       },
       {
         path: "not-found",

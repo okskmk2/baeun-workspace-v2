@@ -12,7 +12,6 @@ import WorkspaceBoardHomePage from "../views/workspace/WorkspaceBoardHomePage.vu
 import WorkspaceBoardNoticePage from "../views/workspace/WorkspaceBoardNoticePage.vue";
 import WorkspaceBoardCelebrationPage from "../views/workspace/WorkspaceBoardCelebrationPage.vue";
 import WorkspaceBoardMarketPage from "../views/workspace/WorkspaceBoardMarketPage.vue";
-import WorkspaceBoardResourcePage from "../views/workspace/WorkspaceBoardResourcePage.vue";
 import WorkspaceBoardQnaPage from "../views/workspace/WorkspaceBoardQnaPage.vue";
 
 export const workspaceRoutes = [
@@ -62,22 +61,9 @@ export const workspaceRoutes = [
             component: WorkspaceBoardMarketPage,
           },
           {
-            path: "resource",
-            name: "workspace-board-resource",
-            component: WorkspaceBoardResourcePage,
-          },
-          {
             path: "qna",
             name: "workspace-board-qna",
             component: WorkspaceBoardQnaPage,
-          },
-          {
-            path: "celebration",
-            redirect: (to) => `/workspace/${to.params.workspaceId}/board/events`,
-          },
-          {
-            path: "people",
-            redirect: (to) => `/workspace/${to.params.workspaceId}/board/resource`,
           },
         ],
       },

@@ -17,6 +17,9 @@
           <router-link v-if="!isAuthenticated" to="/login">{{
             t("layout.default.util.login")
           }}</router-link>
+          <router-link v-if="isAuthenticated" to="/store/cart" aria-label="장바구니" title="장바구니">
+            <MaterialSymbol name="shopping_cart" :size="20" alt="" />
+          </router-link>
           <ContextSwicher />
         </nav>
       </div>
@@ -30,6 +33,7 @@ import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import { useAppStore } from "../../stores/appStore";
 import ContextSwicher from "../../components/ContextSwicher.vue";
+import MaterialSymbol from "../../components/MaterialSymbol.vue";
 
 const { t } = useI18n();
 const appStore = useAppStore();

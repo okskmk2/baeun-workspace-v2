@@ -18,7 +18,6 @@
         <p class="board-snb__section-title">정보</p>
         <nav class="board-snb__nav">
           <router-link :to="marketTo">중고시장</router-link>
-          <router-link :to="resourceTo">인력 수소문</router-link>
           <router-link :to="qnaTo">묻고 답하기</router-link>
         </nav>
       </div>
@@ -54,11 +53,6 @@ const eventsTo = computed(() => ({
 
 const marketTo = computed(() => ({
   name: "workspace-board-market",
-  params: { workspaceId: workspaceId.value },
-}));
-
-const resourceTo = computed(() => ({
-  name: "workspace-board-resource",
   params: { workspaceId: workspaceId.value },
 }));
 
