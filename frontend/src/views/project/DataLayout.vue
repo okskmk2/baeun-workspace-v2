@@ -16,7 +16,7 @@
 
         <nav class="lnb-scroll data-nav">
           <section class="nav-section">
-            <h3>Standard Assets</h3>
+            <h3>Workspace Assets</h3>
             <p v-if="assets.length === 0" class="empty-text">워크스페이스 공용 자산이 없습니다</p>
             <div v-else class="section-list">
               <router-link
@@ -32,7 +32,7 @@
           </section>
 
           <section class="nav-section">
-            <h3>Project Local</h3>
+            <h3>Project Assets</h3>
             <p v-if="localTables.length === 0" class="empty-text">
               프로젝트 임시 테이블이 없습니다
             </p>

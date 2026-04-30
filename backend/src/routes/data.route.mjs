@@ -279,12 +279,81 @@ router.get("/projects/:projectId/tables/:tableId", isAuth, async (req, res) => {
         can_create_row: visibleColumns.some((column) => column.can_edit),
         can_update_row: visibleColumns.some((column) => column.can_edit),
         can_delete_row: ["OWNER", "ADMIN"].includes(normalizeRole(roleName)),
+        can_rename_table: ["OWNER", "ADMIN"].includes(normalizeRole(roleName)),
         can_request_promotion:
           !table.is_asset && ["OWNER", "ADMIN"].includes(normalizeRole(context.project.project_role)),
       },
     });
   } catch (error) {
     logger.error("get data table detail error", { err: error?.message, stack: error?.stack });
+    res.status(500).json({ name: "InternalServerError", message: error.message });
+  }
+});
+
+router.patch("/projects/:projectId/tables/:tableId", isAuth, async (req, res) => {
+  const { projectId, tableId } = req.params;
+  const userId = req.session.userId;
+  const nextName = String(req.body?.name || "").trim();
+
+  if (!nextName) {
+    return res.status(400).json({ name: "BadRequest", message: "테이블 이름이 필요합니다." });
+  }
+
+  try {
+    const context = await getTableInProjectContext(projectId, tableId, userId);
+    if (context.error) return res.status(context.status).json(context.error);
+
+    const roleName = normalizeRole(context.roleName);
+    if (!["OWNER", "ADMIN"].includes(roleName)) {
+      return res.status(403).json({ name: "Forbidden", message: "테이블 이름 수정 권한이 없습니다." });
+    }
+
+    const currentName = String(context.table.name || "").trim();
+    if (currentName === nextName) {
+      return res.json(context.table);
+    }
+
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+
+      const updatedRes = await client.query(
+        `UPDATE data_table
+            SET name = $1,
+                updated_at = CURRENT_TIMESTAMP
+          WHERE id = $2
+        RETURNING *`,
+        [nextName, tableId]
+      );
+
+      const updated = updatedRes.rows[0] || null;
+      if (!updated) {
+        await client.query("ROLLBACK");
+        return res.status(404).json({ name: "NotFound", message: "데이터 테이블을 찾을 수 없습니다." });
+      }
+
+      await insertAuditLog({
+        db: client,
+        tableId: Number(tableId),
+        action: "UPDATE",
+        beforeData: { name: currentName },
+        afterData: { name: nextName },
+        changedBy: userId,
+      });
+
+      await client.query("COMMIT");
+      res.json(updated);
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    } finally {
+      client.release();
+    }
+  } catch (error) {
+    if (error?.code === "23505") {
+      return res.status(409).json({ name: "Conflict", message: "같은 이름의 테이블이 이미 존재합니다." });
+    }
+    logger.error("rename data table error", { err: error?.message, stack: error?.stack });
     res.status(500).json({ name: "InternalServerError", message: error.message });
   }
 });

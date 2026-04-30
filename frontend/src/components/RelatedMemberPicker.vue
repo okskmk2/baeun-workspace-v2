@@ -1,7 +1,10 @@
 <template>
   <div ref="rootRef" class="related-picker">
     <div class="picker-header">
-      <span class="picker-label">{{ label }}</span>
+      <span class="picker-label">
+        <MaterialSymbol v-if="iconName" :name="iconName" :size="16" alt="" />
+        <span>{{ label }}</span>
+      </span>
     </div>
     <div class="picker-tags">
       <div v-if="selected.length" class="tag-list">
@@ -52,6 +55,7 @@ import MaterialSymbol from "./MaterialSymbol.vue";
 const props = defineProps({
   role: { type: String, default: "" },
   label: { type: String, default: "" },
+  iconName: { type: String, default: "" },
   members: { type: Array, default: () => [] },
   selected: { type: Array, default: () => [] },
   isUpdating: { type: Boolean, default: false },
@@ -126,6 +130,9 @@ onBeforeUnmount(() => {
 }
 
 .picker-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   font-size: 13px;
   color: var(--color-text);
   font-weight: 600;

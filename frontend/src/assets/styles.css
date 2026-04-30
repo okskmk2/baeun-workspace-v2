@@ -33,6 +33,10 @@ nav a:hover {
   text-decoration: underline;
 }
 
+time {
+  font-variant-numeric: tabular-nums;
+}
+
 .flex-between {
   display: flex;
   justify-content: space-between;

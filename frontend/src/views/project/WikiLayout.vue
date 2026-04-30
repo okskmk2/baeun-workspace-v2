@@ -22,6 +22,7 @@
     :open="isModalOpen"
     :project-id="projectId"
     :parent-page-id="currentPageId"
+    :pages="pages"
     @close="closeModal"
     @created="onPageCreated"
   />

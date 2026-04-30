@@ -1,5 +1,5 @@
 <template>
-  <span class="tag" :class="variantClass">
+  <span class="tag" :class="[variantClass, { 'tag--icon': icon }]">
     <slot>{{ label }}</slot>
   </span>
 </template>
@@ -10,6 +10,7 @@ import { computed } from "vue";
 const props = defineProps({
   label: { type: String, default: "" },
   variant: { type: String, default: "default" },
+  icon: { type: Boolean, default: false },
 });
 
 const variantClass = computed(() => `tag--${props.variant}`);
@@ -27,6 +28,10 @@ const variantClass = computed(() => `tag--${props.variant}`);
   font-size: 12px;
   line-height: 1.4;
   white-space: nowrap;
+}
+
+.tag--icon {
+  padding: 2px;
 }
 
 .tag--default {

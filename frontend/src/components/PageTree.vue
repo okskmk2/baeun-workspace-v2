@@ -22,7 +22,7 @@
       @drop.stop="onDropItem(node.id, $event)"
     >
       <RouterLink class="page-link" :to="`/project/${projectId}/wiki/${node.id}`">
-        {{ node.title }}
+        {{ formatNodeLabel(node.title) }}
       </RouterLink>
 
       <PageTree
@@ -39,6 +39,7 @@
 
 <script setup>
 import { ref, computed } from "vue";
+import { formatTreeLabel } from "../lib/pageTreeText";
 
 const sharedDragId = ref("");
 const sharedParentId = ref(null);
@@ -140,6 +141,10 @@ const reorderIds = (fromId, toId, position) => {
   return newIds;
 };
 
+const formatNodeLabel = (title) => {
+  return formatTreeLabel(title, props.level);
+};
+
 const emitReorder = (payload) => emit("reorder", payload);
 </script>
 
@@ -154,7 +159,7 @@ const emitReorder = (payload) => emit("reorder", payload);
 }
 
 .page-list--nested {
-  margin-left: 8px;
+  margin-left: 0;
 }
 
 .page-item {
@@ -172,6 +177,7 @@ const emitReorder = (payload) => emit("reorder", payload);
   display: block;
   text-decoration: none;
   color: var(--color-text);
+  font-size: 15px;
 }
 
 .page-link:hover {

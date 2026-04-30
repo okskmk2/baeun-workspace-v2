@@ -132,6 +132,11 @@ export const useDataStore = defineStore("data", {
       const res = await api.post(`/data/projects/${projectId}/tables/${tableId}/snapshots`, { label });
       return res.data;
     },
+    async renameTable(projectId, tableId, name) {
+      const res = await api.patch(`/data/projects/${projectId}/tables/${tableId}`, { name });
+      await Promise.all([this.fetchTables(projectId), this.fetchTableDetail(projectId, tableId)]);
+      return res.data;
+    },
     async deleteTable(projectId, tableId) {
       await api.delete(`/data/projects/${projectId}/tables/${tableId}`);
       await this.fetchTables(projectId);

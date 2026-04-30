@@ -34,7 +34,7 @@ export const projectRoutes = [
         path: "",
         beforeEnter: async (to, from) => {
           const { projectId } = to.params;
-          return `/project/${projectId}/kanban`;
+          return `/project/${projectId}/wiki`;
         },
         component: BlankPage,
       },

@@ -23,6 +23,14 @@
       :placeholder="t('settings.home.form.namePlaceholder')"
     />
 
+    <label for="project-description">{{ t("settings.home.form.descriptionLabel") }}</label>
+    <textarea
+      id="project-description"
+      v-model="form.description"
+      rows="4"
+      :placeholder="t('settings.home.form.descriptionPlaceholder')"
+    ></textarea>
+
     <div class="theme-section">
       <div class="theme-header">
         <h2>{{ t("settings.home.theme.title") }}</h2>
@@ -164,6 +172,7 @@ const formError = ref("");
 const projectWorkspaceId = ref(null);
 const form = ref({
   name: "",
+  description: "",
   themeId: "",
   customBackground: "#1f2937",
   customForeground: "#ffffff",
@@ -228,6 +237,7 @@ const fetchProject = async () => {
     const res = await api.get(`/projects/${projectId.value}`);
     const data = res.data || {};
     form.value.name = data.name || "";
+    form.value.description = data.description ?? data.summary ?? "";
     const gnbTheme = data.theme_json?.gnb || null;
     form.value.themeId = resolveThemeId(gnbTheme);
     const customColors = resolveCustomColors(gnbTheme);
@@ -268,6 +278,7 @@ const saveSettings = async () => {
   try {
     await api.patch(`/projects/${projectId.value}`, {
       name: form.value.name,
+      summary: form.value.description || null,
       theme_json: isInherit
         ? {}
         : {
@@ -288,33 +299,34 @@ const saveSettings = async () => {
     });
     if (projectId.value) {
       const current = workspaceStore.getProject(projectId.value) || {};
+      const nextThemeJson = {
+        ...(current.theme_json || {}),
+      };
+
+      if (isInherit) {
+        delete nextThemeJson.gnb;
+      } else if (isCustom) {
+        nextThemeJson.gnb = {
+          themeId: "custom",
+          background: customBackground,
+          foreground: customForeground,
+          seedH: form.value.seedH,
+          seedS: form.value.seedS,
+          seedL: form.value.seedL,
+          isDark: form.value.isDark,
+        };
+      } else {
+        nextThemeJson.gnb = {
+          themeId: selected,
+        };
+      }
+
       workspaceStore.projectById[projectId.value] = {
         ...current,
         name: form.value.name,
-        theme_json: {
-          ...(current.theme_json || {}),
-          ...(isInherit
-            ? {
-                gnb: {},
-              }
-            : isCustom
-              ? {
-                  gnb: {
-                    themeId: "custom",
-                    background: customBackground,
-                    foreground: customForeground,
-                    seedH: form.value.seedH,
-                    seedS: form.value.seedS,
-                    seedL: form.value.seedL,
-                    isDark: form.value.isDark,
-                  },
-                }
-              : {
-                  gnb: {
-                    themeId: selected,
-                  },
-                }),
-        },
+        summary: form.value.description || null,
+        description: form.value.description || null,
+        theme_json: nextThemeJson,
       };
     }
     addToast({ message: t("settings.home.toast.updated"), type: "success" });
@@ -378,7 +390,7 @@ onMounted(fetchProject);
 
 watch(
   () => form.value.themeId,
-  (value) => {
+  async (value) => {
     if (value === "custom") {
       appStore.setGnbPreviewTheme({
         themeId: "custom",
@@ -394,7 +406,19 @@ watch(
 
     const selected = themeOptions.value.find((item) => item.id === value);
     if (!selected) {
-      appStore.clearGnbPreviewTheme();
+      const workspaceId = String(projectWorkspaceId.value || "");
+      if (workspaceId && !workspaceStore.workspaceById?.[workspaceId]) {
+        try {
+          await workspaceStore.fetchWorkspace(workspaceId);
+        } catch {
+          // Ignore preview fetch errors and fallback to a neutral preview.
+        }
+      }
+
+      const workspaceTheme = workspaceStore.workspaceById?.[workspaceId]?.theme_json?.gnb || null;
+
+      // Keep preview active so "inherit workspace" is reflected immediately before saving.
+      appStore.setGnbPreviewTheme(workspaceTheme || {});
       return;
     }
     appStore.setGnbPreviewTheme({ themeId: selected.id });
@@ -437,6 +461,18 @@ onBeforeUnmount(() => {
   font-size: 14px;
   background-color: var(--color-input-bg);
   color: var(--color-text);
+}
+
+.settings-form textarea {
+  max-width: 560px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--color-input-border);
+  font-size: 14px;
+  line-height: 1.45;
+  background-color: var(--color-input-bg);
+  color: var(--color-text);
+  resize: vertical;
 }
 
 .theme-section {

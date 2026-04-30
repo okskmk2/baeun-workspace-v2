@@ -5,11 +5,13 @@
       <p class="subtitle">{{ tableName }} · {{ pageTypeLabel }} · 버전 {{ tableVersion }}</p>
     </div>
     <div class="actions">
-      <button type="button" class="btn" @click="goToSettings">설정</button>
       <button type="button" class="btn" @click="addRow" :disabled="!capabilities.can_create_row">
         행 추가
       </button>
       <button type="button" class="btn" @click="reloadAll">새로고침</button>
+      <router-link class="btn btn--icon" :to="`/project/${projectId}/data/${tableId}/settings`">
+        <MaterialSymbol name="settings" :size="18" />
+      </router-link>
     </div>
   </hgroup>
 
@@ -160,6 +162,7 @@ import api from "../../lib/axios";
 import { addToast } from "../../lib/toast";
 import { useDataStore } from "../../stores/dataStore";
 import BaseModal from "../../components/BaseModal.vue";
+import MaterialSymbol from "../../components/MaterialSymbol.vue";
 
 const route = useRoute();
 const router = useRouter();
@@ -231,10 +234,6 @@ const getTypeLabel = (type) => {
   if (normalized === "DATE") return "Date";
   if (normalized === "SELECT") return "Select";
   return normalized || "Unknown";
-};
-
-const goToSettings = () => {
-  router.push(`/project/${projectId.value}/data/${tableId.value}/settings`);
 };
 
 const startRowEdit = (row) => {
@@ -421,7 +420,7 @@ watch(
 
 .audit-list li {
   display: grid;
-  grid-template-columns: 100px minmax(0, 1fr) auto;
+  grid-template-columns: 13rem minmax(0, 1fr) auto;
   gap: 0.5rem;
   align-items: center;
 }

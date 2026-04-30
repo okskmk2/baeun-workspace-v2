@@ -84,12 +84,13 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 import api from "../../lib/axios";
 import PagePermissionModal from "../../components/modals/PagePermissionModal.vue";
 import ConfirmCancelEditModal from "../../components/modals/ConfirmCancelEditModal.vue";
+import { addToast } from "../../lib/toast";
 import { useAppStore } from "../../stores/appStore";
 import { useProjectMemberStore } from "../../stores/projectMemberStore";
 import { usePageStore } from "../../stores/pageStore";
@@ -205,16 +206,32 @@ const savePage = async () => {
       content: editForm.value.content,
     });
     page.value = res.data || page.value;
+    pageStore.updatePageTitle(projectId.value, pageId.value, page.value.title || "");
     originalForm.value = {
       title: page.value.title || "",
       content: page.value.content || "",
     };
     isEditing.value = false;
+    addToast({ message: t("wiki.page.toast.updated"), type: "success" });
   } catch (error) {
-    errorMessage.value = t("wiki.page.status.errorSave");
+    const message = error?.response?.data?.message || t("wiki.page.status.errorSave");
+    errorMessage.value = message;
+    addToast({ message, type: "error" });
   } finally {
     isSaving.value = false;
   }
+};
+
+const handleSaveShortcut = (event) => {
+  if (event.repeat) return;
+  if (!(event.ctrlKey || event.metaKey)) return;
+  if (String(event.key || "").toLowerCase() !== "s") return;
+  if (!isEditing.value) return;
+
+  event.preventDefault();
+
+  if (isSaving.value) return;
+  savePage();
 };
 
 const fetchPageMembers = async () => {
@@ -268,6 +285,12 @@ const deletePage = async () => {
 };
 
 onMounted(fetchPage);
+onMounted(() => {
+  window.addEventListener("keydown", handleSaveShortcut);
+});
+onBeforeUnmount(() => {
+  window.removeEventListener("keydown", handleSaveShortcut);
+});
 watch(pageId, fetchPage);
 watch(projectId, fetchPage);
 onMounted(fetchPageMembers);

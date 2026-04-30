@@ -109,7 +109,7 @@
 
 .ProjectLayout .mainnav {
   font-size: var(--font-size-body);
-  gap: 24px;
+  gap: 16px;
   display: flex;
 }
 
@@ -136,11 +136,12 @@
 
 .ProjectLayout .LnbLayout > aside {
   height: calc(100dvh - 134px);
+  width: 14rem;
 }
 
 .LnbLayout {
   display: flex;
-  gap: 1rem;
+  gap: 12px;
   padding: 1rem;
   flex-grow: 1;
   min-height: 0;
@@ -149,7 +150,7 @@
 .LnbLayout > aside {
   background-color: var(--color-page-bg);
   padding: 18px 20px;
-  width: 12rem;
+  width: 10rem;
   flex-shrink: 0;
   border-radius: 8px;
   display: flex;

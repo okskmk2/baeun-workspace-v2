@@ -210,6 +210,7 @@ watch(projectId, fetchRooms);
 
 .ChannelLayout .room-link {
   position: relative;
+  font-size: 15px;
 }
 
 .ChannelLayout .room-link__label {

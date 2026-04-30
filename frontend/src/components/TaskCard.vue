@@ -17,12 +17,16 @@
         :key="`${task.id}-${assignee.id}-${assignee.role_name}`"
         class="assignee-item"
       >
-        <span>{{ assignee.name }}</span>
         <Tag
           v-if="assignee.role_name"
-          :label="getRoleLabel(roleScope, assignee.role_name)"
-          :variant="roleVariant(assignee.role_name)"
-        />
+          icon
+          :variant="getTaskRoleVariant(assignee.role_name)"
+          :title="getRoleLabel(roleScope, assignee.role_name)"
+          :aria-label="getRoleLabel(roleScope, assignee.role_name)"
+        >
+          <MaterialSymbol :name="getTaskRoleIconName(assignee.role_name)" :size="14" alt="" />
+        </Tag>
+        <span>{{ assignee.name }}</span>
       </div>
     </div>
     <p v-else class="empty-assignees">{{ emptyAssigneesText }}</p>
@@ -33,7 +37,7 @@
 import { computed } from "vue";
 import MaterialSymbol from "./MaterialSymbol.vue";
 import Tag from "./Tag.vue";
-import { useRoleLabels } from "../lib/roleLabels";
+import { getTaskRoleIconName, getTaskRoleVariant, useRoleLabels } from "../lib/roleLabels";
 
 const props = defineProps({
   task: { type: Object, required: true },
@@ -66,15 +70,6 @@ const getPriorityColor = (priority) => {
   if (parsed === 0) return "var(--color-info)";
   if (parsed === -1) return "var(--color-text-muted)";
   return "var(--color-text-muted)";
-};
-
-const roleVariant = (role) => {
-  const key = (role || "").toUpperCase();
-  if (key === "REPORTER") return "info";
-  if (key === "ASSIGNEE") return "success";
-  if (key === "REVIEWER") return "warning";
-  if (key === "WATCHER") return "default";
-  return "default";
 };
 
 const handleDragStart = (event) => {
@@ -140,10 +135,10 @@ const handleDragStart = (event) => {
   color: var(--color-text);
 }
 
-.task-card--backlog .task-title-row {
+.task-title-row {
   font-size: 14px;
   font-weight: 500;
-  margin: 0 0 8px;
+  margin: 0;
 }
 
 .task-card--backlog .empty-assignees {
@@ -160,13 +155,7 @@ const handleDragStart = (event) => {
 
 .task-card--backlog .assignee-item {
   gap: 4px;
-  font-size: 10px;
-}
-
-.task-card--kanban .task-title-row {
-  font-size: 14px;
-  font-weight: 400;
-  margin: 0;
+  font-size: 12px;
 }
 
 .task-card--kanban .empty-assignees {

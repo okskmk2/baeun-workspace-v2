@@ -9,9 +9,9 @@
             :image-url="workspaceImageUrl"
             :size="28"
           />
-          <span class="projectName">{{
+          <router-link :to="`/project/${projectId}`" class="projectName">{{
             projectName || t("layout.project.projectNameFallback")
-          }}</span>
+          }}</router-link>
         </div>
         <template v-if="projectId">
           <nav class="mainnav">
@@ -29,7 +29,7 @@
               :to="`/project/${projectId}/channel`"
             >
               <MaterialSymbol name="chat_bubble" :size="20" alt="" />
-              <span class="mainnav-link__label">
+              <span>
                 {{ t("layout.project.nav.messenger") }}
                 <UnreadDot v-if="hasUnreadChannelMessage" />
               </span>
@@ -292,9 +292,7 @@ const showChannelMessageNotification = async (payload) => {
   if (!isWebNotificationSupported()) return;
 
   const permission =
-    Notification.permission === "granted"
-      ? "granted"
-      : await requestWebNotificationPermission();
+    Notification.permission === "granted" ? "granted" : await requestWebNotificationPermission();
   if (permission !== "granted") return;
 
   const channelName = resolveChannelName(payload);
@@ -538,6 +536,7 @@ onBeforeUnmount(() => {
   font-weight: 600;
   font-size: 20px;
   text-transform: capitalize;
+  text-decoration: none;
 }
 
 .mainnav-link {
@@ -546,7 +545,7 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 4px 12px;
+  padding: 4px 8px;
   border-radius: 4px;
   color: var(--color-gnb-text);
   text-decoration: none;
@@ -557,12 +556,6 @@ onBeforeUnmount(() => {
 
 .mainnav-link:hover {
   background-color: color-mix(in srgb, var(--color-gnb-bg) 95%, var(--color-gnb-text) 5%);
-}
-
-.mainnav-link__label {
-  position: relative;
-  display: inline-flex;
-  padding-right: 12px;
 }
 
 .project-search {

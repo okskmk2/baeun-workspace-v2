@@ -34,6 +34,23 @@ const ROLE_KEYS = {
 
 const normalizeRole = (role) => String(role || "").toUpperCase();
 
+const TASK_ROLE_ICON_NAMES = {
+  ASSIGNEE: "build",
+  REPORTER: "brand_awareness",
+  WATCHER: "visibility",
+  REVIEWER: "fact_check",
+};
+
+const TASK_ROLE_VARIANTS = {
+  ASSIGNEE: "success",
+  REPORTER: "info",
+  REVIEWER: "warning",
+  WATCHER: "default",
+};
+
+export const getTaskRoleIconName = (role) => TASK_ROLE_ICON_NAMES[normalizeRole(role)] || "person";
+export const getTaskRoleVariant = (role) => TASK_ROLE_VARIANTS[normalizeRole(role)] || "default";
+
 export const useRoleLabels = () => {
   const { t } = useI18n();
 

@@ -109,6 +109,7 @@
           :key="role"
           :role="role"
           :label="roleLabel(role)"
+          :icon-name="getTaskRoleIconName(role)"
           :members="projectMembers"
           :selected="roleMembers(role)"
           :is-updating="isUpdatingRelated"
@@ -127,8 +128,15 @@
           <li v-for="member in taskMembers" :key="member.task_member_id">
             <span class="history-date">{{ formatDate(member.created_at) }}</span>
             <span class="history-meta">
-              {{ member.name }}
-              <span class="history-role">{{ member.role_name }}</span>
+              <Tag
+                icon
+                :variant="getTaskRoleVariant(member.role_name)"
+                :title="roleLabel(member.role_name)"
+                :aria-label="roleLabel(member.role_name)"
+              >
+                <MaterialSymbol :name="getTaskRoleIconName(member.role_name)" :size="14" alt="" />
+              </Tag>
+              <span>{{ member.name }}</span>
             </span>
           </li>
         </ul>
@@ -138,7 +146,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 import api from "../../lib/axios";
@@ -150,6 +158,7 @@ import MaterialSymbol from "../../components/MaterialSymbol.vue";
 import Tag from "../../components/Tag.vue";
 import RelatedMemberPicker from "../../components/RelatedMemberPicker.vue";
 import BackLinkButton from "../../components/BackLinkButton.vue";
+import { getTaskRoleIconName, getTaskRoleVariant } from "../../lib/roleLabels";
 import { convertSnakeToCamel } from "../../lib/utils";
 
 const { t } = useI18n();
@@ -414,6 +423,18 @@ const saveTask = async () => {
   }
 };
 
+const handleSaveShortcut = (event) => {
+  if (event.repeat) return;
+  if (!(event.ctrlKey || event.metaKey)) return;
+  if (String(event.key || "").toLowerCase() !== "s") return;
+  if (!isEditing.value) return;
+
+  event.preventDefault();
+
+  if (isSaving.value) return;
+  saveTask();
+};
+
 const deleteTask = async () => {
   if (!taskId.value) return;
   if (!canDeleteTask.value) return;
@@ -488,6 +509,12 @@ const fetchTaskMembers = async (options = {}) => {
 };
 
 onMounted(fetchTaskMembers);
+onMounted(() => {
+  window.addEventListener("keydown", handleSaveShortcut);
+});
+onBeforeUnmount(() => {
+  window.removeEventListener("keydown", handleSaveShortcut);
+});
 watch(taskId, fetchTaskMembers);
 
 const removeRelatedMember = async (taskMemberId) => {
@@ -687,13 +714,6 @@ const addRelatedMemberByRole = async (role, memberId) => {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-}
-
-.history-role {
-  padding: 2px 6px;
-  border-radius: 999px;
-  background: var(--color-border);
-  font-size: 11px;
 }
 
 @media (max-width: 900px) {

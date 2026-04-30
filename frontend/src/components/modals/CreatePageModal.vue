@@ -10,6 +10,19 @@
           :placeholder="t('wiki.layout.modal.titlePlaceholder')"
         />
       </div>
+      <div class="form-field">
+        <label for="page-parent">{{ t("wiki.layout.modal.parentLabel") }}</label>
+        <select id="page-parent" v-model="form.parentId">
+          <option :value="''">{{ t("wiki.layout.modal.parentRootOption") }}</option>
+          <option
+            v-for="option in parentPageOptions"
+            :key="`parent-${option.id}`"
+            :value="String(option.id)"
+          >
+            {{ option.label }}
+          </option>
+        </select>
+      </div>
       <p v-if="formError" class="form-error">{{ formError }}</p>
       <div class="modal-actions">
         <button type="button" class="btn btn--secondary" @click="handleClose">
@@ -24,10 +37,11 @@
 </template>
 
 <script setup>
-import { ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import api from "../../lib/axios";
+import { flattenPageTreeToOptions } from "../../lib/pageTreeText";
 import BaseModal from "../BaseModal.vue";
 
 const { t } = useI18n();
@@ -46,13 +60,25 @@ const props = defineProps({
     type: [Number, String],
     default: null,
   },
+  pages: {
+    type: Array,
+    default: () => [],
+  },
 });
 
 const emit = defineEmits(["close", "created"]);
 
-const form = ref({ title: "" });
+const form = ref({ title: "", parentId: "" });
 const isCreating = ref(false);
 const formError = ref("");
+
+const parentPageOptions = computed(() => flattenPageTreeToOptions(props.pages));
+
+const normalizeParentId = (value) => {
+  if (value === "" || value === null || value === undefined) return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : value;
+};
 
 const handleClose = () => {
   emit("close");
@@ -71,7 +97,7 @@ const handleSubmit = async () => {
     const res = await api.post("/pages", {
       project_id: props.projectId,
       title: form.value.title,
-      parent_id: props.parentPageId,
+      parent_id: normalizeParentId(form.value.parentId),
     });
     const newPage = res.data;
     emit("created", newPage);
@@ -93,10 +119,31 @@ watch(
   () => props.open,
   (newVal) => {
     if (newVal) {
-      form.value = { title: "" };
+      form.value = {
+        title: "",
+        parentId:
+          props.parentPageId === null || props.parentPageId === undefined
+            ? ""
+            : String(props.parentPageId),
+      };
       formError.value = "";
     }
   }
 );
 </script>
+
+<style scoped>
+.form-field {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.form-field + .form-field {
+  margin-top: 0.8rem;
+}
+
+select {
+  width: 100%;
+}
+</style>
 

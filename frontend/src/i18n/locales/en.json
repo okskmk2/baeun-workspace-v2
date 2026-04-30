@@ -200,7 +200,9 @@
       },
       "form": {
         "nameLabel": "Project Name",
-        "namePlaceholder": "Project name"
+        "namePlaceholder": "Project name",
+        "descriptionLabel": "Project Description",
+        "descriptionPlaceholder": "Project description"
       },
       "theme": {
         "title": "GNB Theme",
@@ -800,7 +802,9 @@
       "modal": {
         "title": "Create Page",
         "titleLabel": "Page Title",
-        "titlePlaceholder": "Page title"
+        "titlePlaceholder": "Page title",
+        "parentLabel": "Parent Page",
+        "parentRootOption": "Top-level page"
       },
       "validation": {
         "noProject": "No project selected.",
@@ -888,6 +892,9 @@
           "keepEditing": "Continue Editing",
           "discard": "Discard Changes"
         }
+      },
+      "toast": {
+        "updated": "Page saved."
       }
     }
   },
