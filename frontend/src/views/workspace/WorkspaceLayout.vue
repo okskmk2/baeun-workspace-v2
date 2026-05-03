@@ -97,6 +97,11 @@ const themeTokenId = computed(() => {
   return "";
 });
 const customThemeSeed = computed(() => resolveThemeSeed(gnbTheme.value));
+const themeId = computed(() => {
+  if (themeTokenId.value) return themeTokenId.value;
+  if (customThemeSeed.value) return "custom";
+  return "";
+});
 
 const gnbStyle = computed(() => {
   if (themeTokenId.value) {
@@ -147,6 +152,36 @@ const onClickFabAction = (action) => {
   addToast({ message: `${action.label} 기능은 프로토타입입니다.`, type: "info" });
 };
 
+const applySystemTheme = () => {
+  if (typeof window === "undefined" || !window.matchMedia) return;
+  const query = window.matchMedia("(prefers-color-scheme: dark)");
+  const nextTheme = query.matches ? "dark" : "light";
+  document.documentElement.setAttribute("data-theme", nextTheme);
+};
+
+const applyTheme = (value) => {
+  if (typeof document === "undefined") return;
+
+  const root = document.documentElement;
+  if (!value) {
+    clearThemeSeedFromRoot();
+    root.removeAttribute("data-theme-source");
+    applySystemTheme();
+    return;
+  }
+
+  if (value === "custom" && customThemeSeed.value) {
+    applyThemeSeedToRoot(customThemeSeed.value, {
+      isDark: gnbTheme.value?.isDark === true,
+    });
+  } else {
+    clearThemeSeedFromRoot();
+  }
+
+  root.setAttribute("data-theme", value);
+  root.setAttribute("data-theme-source", "workspace");
+};
+
 watch(
   workspaceId,
   async (value) => {
@@ -160,10 +195,8 @@ watch(
 watch(
   customThemeSeed,
   (value) => {
-    if (!value) {
-      clearThemeSeedFromRoot();
-      return;
-    }
+    if (themeId.value !== "custom") return;
+    if (!value) return;
     applyThemeSeedToRoot(value, {
       isDark: gnbTheme.value?.isDark === true,
     });
@@ -171,7 +204,18 @@ watch(
   { immediate: true }
 );
 
+watch(
+  themeId,
+  (value) => {
+    applyTheme(value);
+  },
+  { immediate: true }
+);
+
 onBeforeUnmount(() => {
+  const root = document.documentElement;
   clearThemeSeedFromRoot();
+  root.removeAttribute("data-theme-source");
+  applySystemTheme();
 });
 </script>

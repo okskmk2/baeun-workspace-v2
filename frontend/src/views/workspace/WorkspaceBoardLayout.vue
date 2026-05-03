@@ -72,7 +72,8 @@ const qnaTo = computed(() => ({
 
 .board-snb {
   border-radius: 10px;
-  background-color: white;
+  background-color: var(--color-card-bg);
+  color: var(--color-text);
   padding: 12px;
   height: fit-content;
 }
@@ -107,7 +108,7 @@ const qnaTo = computed(() => ({
 }
 
 .board-snb__nav a.router-link-active {
-  background: #e5e7eb;
+  background: var(--color-surface-alt);
   font-weight: 700;
 }
 

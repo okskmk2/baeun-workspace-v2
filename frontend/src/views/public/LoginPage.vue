@@ -181,10 +181,16 @@ const onSubmit = async () => {
   border-radius: 10px;
   border: 1px solid var(--color-input-border);
   background-color: var(--color-input-bg);
+  color: var(--color-text);
+  caret-color: var(--color-text);
   font-size: 14px;
   transition:
     border-color 0.15s ease,
     box-shadow 0.15s ease;
+}
+
+.login__field input::placeholder {
+  color: var(--color-text-muted);
 }
 
 .login__field input:focus {

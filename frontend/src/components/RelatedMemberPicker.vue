@@ -153,7 +153,7 @@ onBeforeUnmount(() => {
 
 .tag-empty {
   font-size: 12px;
-  color: #9ca3af;
+  color: var(--color-text-muted);
 }
 
 .member-tag {
@@ -162,10 +162,10 @@ onBeforeUnmount(() => {
   gap: 6px;
   padding: 4px 8px;
   border-radius: 999px;
-  border: 1px solid #e5e7eb;
-  background-color: #f9fafb;
+  border: 1px solid var(--color-border);
+  background-color: var(--color-surface-alt);
   font-size: 12px;
-  color: #111827;
+  color: var(--color-text);
 }
 
 .member-name {
@@ -194,9 +194,9 @@ onBeforeUnmount(() => {
   width: 28px;
   height: 28px;
   border-radius: 999px;
-  border: 1px dashed #d1d5db;
-  background-color: #ffffff;
-  color: #6b7280;
+  border: 1px dashed var(--color-input-border);
+  background-color: var(--color-input-bg);
+  color: var(--color-text-muted);
   cursor: pointer;
 }
 
@@ -216,8 +216,8 @@ onBeforeUnmount(() => {
   gap: 4px;
   padding: 8px;
   border-radius: 10px;
-  border: 1px solid #e5e7eb;
-  background-color: #ffffff;
+  border: 1px solid var(--color-border);
+  background-color: var(--color-card-bg);
   box-shadow: 0 12px 30px rgba(15, 23, 42, 0.12);
   max-height: 220px;
   overflow-y: auto;
@@ -233,7 +233,7 @@ onBeforeUnmount(() => {
 }
 
 .picker-option:hover {
-  background-color: #f3f4f6;
+  background-color: var(--color-surface-alt);
 }
 
 .picker-option.disabled {
@@ -248,17 +248,17 @@ onBeforeUnmount(() => {
 .option-name {
   font-size: 13px;
   font-weight: 600;
-  color: #111827;
+  color: var(--color-text);
 }
 
 .option-meta {
   font-size: 12px;
-  color: #6b7280;
+  color: var(--color-text-muted);
 }
 
 .picker-empty {
   padding: 8px 10px;
   font-size: 12px;
-  color: #9ca3af;
+  color: var(--color-text-muted);
 }
 </style>

@@ -55,7 +55,7 @@ const slotItems = [
     name: "워크스페이스 슬롯",
     description: "독립된 조직 공간 생성",
     price: 10,
-    image: "/assets/card_office.png",
+    image: "/assets/card_office2.png",
     codeName: "WORKSPACE",
   },
   {
@@ -63,7 +63,7 @@ const slotItems = [
     name: "멤버 슬롯",
     description: "워크스페이스 멤버 초대",
     price: 1,
-    image: "/assets/card_member.png",
+    image: "/assets/card_member2.png",
     codeName: "WORKSPACEMEMBER",
   },
   {
@@ -71,7 +71,7 @@ const slotItems = [
     name: "프로젝트 슬롯",
     description: "협업 프로젝트 생성",
     price: 3,
-    image: "/assets/card_team.png",
+    image: "/assets/card_team2.png",
     codeName: "PROJECT",
   },
 ];

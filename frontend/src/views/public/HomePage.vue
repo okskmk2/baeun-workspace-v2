@@ -236,7 +236,11 @@ onMounted(() => {
 .stat {
   padding: 12px 14px;
   border-radius: 12px;
-  background: linear-gradient(135deg, color-mix(in srgb, var(--color-accent) 8%, #ffffff), #ffffff);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--color-accent) 10%, var(--color-card-bg)),
+    var(--color-card-bg)
+  );
   border: 1px solid var(--color-border);
 }
 
@@ -258,8 +262,17 @@ onMounted(() => {
   border-radius: 20px;
   padding: 20px;
   background:
-    radial-gradient(circle at 12% 10%, rgba(0, 163, 255, 0.16), transparent 30%),
-    radial-gradient(circle at 84% 90%, rgba(34, 197, 94, 0.16), transparent 34%), #ffffff;
+    radial-gradient(
+      circle at 12% 10%,
+      color-mix(in srgb, var(--color-info) 20%, transparent),
+      transparent 30%
+    ),
+    radial-gradient(
+      circle at 84% 90%,
+      color-mix(in srgb, var(--color-success) 18%, transparent),
+      transparent 34%
+    ),
+    var(--color-card-bg);
   border: 1px solid var(--color-border);
   box-shadow: 0 24px 56px rgba(15, 23, 42, 0.08);
   overflow: hidden;
@@ -270,7 +283,7 @@ onMounted(() => {
   width: min(290px, 78%);
   border-radius: 14px;
   border: 1px solid var(--color-border);
-  background: #ffffff;
+  background: var(--color-surface);
   padding: 14px;
   box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
 }
@@ -319,9 +332,9 @@ onMounted(() => {
   font-size: 11px;
   border-radius: 999px;
   padding: 4px 8px;
-  border: 1px solid color-mix(in srgb, var(--color-accent) 25%, #ffffff);
-  background: color-mix(in srgb, var(--color-accent) 10%, #ffffff);
-  color: color-mix(in srgb, var(--color-accent) 75%, #000000);
+  border: 1px solid color-mix(in srgb, var(--color-accent) 28%, var(--color-border));
+  background: color-mix(in srgb, var(--color-accent) 12%, var(--color-surface));
+  color: var(--color-link);
 }
 
 .flow--wiki {
@@ -368,7 +381,7 @@ onMounted(() => {
   padding: 20px;
   border-radius: 14px;
   border: 1px solid var(--color-border);
-  background: #ffffff;
+  background: var(--color-card-bg);
 }
 
 .trinity-card__kicker {
@@ -422,7 +435,11 @@ onMounted(() => {
   padding: 18px;
   border: 1px solid var(--color-border);
   border-radius: 16px;
-  background: linear-gradient(145deg, color-mix(in srgb, var(--color-accent) 8%, #ffffff), #ffffff);
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--color-accent) 10%, var(--color-card-bg)),
+    var(--color-card-bg)
+  );
 }
 
 .briefing header {

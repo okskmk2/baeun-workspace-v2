@@ -10,7 +10,7 @@ import ToastHost from "./components/ToastHost.vue";
 const applySystemTheme = (query) => {
   if (typeof document === "undefined") return;
   const root = document.documentElement;
-  if (root.getAttribute("data-theme-source") === "project") return;
+  if (root.getAttribute("data-theme-source")) return;
   const nextTheme = query.matches ? "dark" : "light";
   root.setAttribute("data-theme", nextTheme);
 };

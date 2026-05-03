@@ -22,9 +22,9 @@ const variantClass = computed(() => `tag--${props.variant}`);
   align-items: center;
   padding: 2px 8px;
   border-radius: 999px;
-  border: 1px solid #e5e7eb;
-  background-color: #f9fafb;
-  color: #111827;
+  border: 1px solid var(--color-border);
+  background-color: color-mix(in srgb, var(--color-surface) 85%, var(--color-page-bg) 15%);
+  color: var(--color-text);
   font-size: 12px;
   line-height: 1.4;
   white-space: nowrap;
@@ -35,32 +35,32 @@ const variantClass = computed(() => `tag--${props.variant}`);
 }
 
 .tag--default {
-  border-color: #e5e7eb;
-  background-color: #f9fafb;
-  color: #111827;
+  border-color: var(--color-border);
+  background-color: color-mix(in srgb, var(--color-surface) 85%, var(--color-page-bg) 15%);
+  color: var(--color-text);
 }
 
 .tag--info {
-  border-color: #bfdbfe;
-  background-color: #eff6ff;
-  color: #1d4ed8;
+  border-color: color-mix(in srgb, var(--color-info) 40%, var(--color-border) 60%);
+  background-color: color-mix(in srgb, var(--color-info) 16%, var(--color-surface) 84%);
+  color: var(--color-info);
 }
 
 .tag--success {
-  border-color: #bbf7d0;
-  background-color: #f0fdf4;
-  color: #15803d;
+  border-color: color-mix(in srgb, var(--color-success) 40%, var(--color-border) 60%);
+  background-color: color-mix(in srgb, var(--color-success) 16%, var(--color-surface) 84%);
+  color: var(--color-success);
 }
 
 .tag--warning {
-  border-color: #fde68a;
-  background-color: #fffbeb;
-  color: #b45309;
+  border-color: color-mix(in srgb, var(--color-warning) 44%, var(--color-border) 56%);
+  background-color: color-mix(in srgb, var(--color-warning) 18%, var(--color-surface) 82%);
+  color: var(--color-warning);
 }
 
 .tag--danger {
-  border-color: #fecaca;
-  background-color: #fef2f2;
-  color: #b91c1c;
+  border-color: color-mix(in srgb, var(--color-danger) 42%, var(--color-border) 58%);
+  background-color: color-mix(in srgb, var(--color-danger) 16%, var(--color-surface) 84%);
+  color: var(--color-danger);
 }
 </style>

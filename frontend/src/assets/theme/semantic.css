@@ -55,7 +55,10 @@
   --color-surface-muted: hsl(var(--theme-h), var(--theme-body-s), var(--theme-surface-alt-l));
   --color-text: hsl(var(--theme-h), 20%, var(--theme-text-l));
   --color-text-muted: hsl(var(--theme-h), 13%, var(--theme-text-muted-l));
+  --color-text-secondary: var(--color-text-muted);
+  --color-text-tertiary: color-mix(in srgb, var(--color-text-muted) 78%, var(--color-surface) 22%);
   --color-text-inverse: #ffffff;
+  --color-link: var(--color-accent);
   --color-border: hsl(var(--theme-h), 10%, var(--theme-border-l));
   --color-divider: hsl(var(--theme-h), 10%, var(--theme-border-l));
   --color-accent: hsl(var(--theme-h), var(--theme-s), var(--theme-accent-l));
@@ -71,4 +74,5 @@
   --color-card-bg: hsl(var(--theme-h), var(--theme-body-s), var(--theme-card-l));
   --color-input-bg: hsl(var(--theme-h), var(--theme-body-s), var(--theme-input-l));
   --color-input-border: hsl(var(--theme-h), 10%, var(--theme-input-border-l));
+  --color-input-placeholder: var(--color-text-muted);
 }
