@@ -1,7 +1,8 @@
 ﻿<template>
   <hgroup>
     <h1>{{ t("settings.member.header.title") }}</h1>
-    <button type="button" class="btn" @click="openInviteModal">
+    <button type="button" class="btn btn--sm" @click="openInviteModal">
+      <MaterialSymbol name="person_add" :size="16" alt="" />
       {{ t("settings.member.actions.invite") }}
     </button>
   </hgroup>
@@ -49,6 +50,7 @@ import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 import api from "../../lib/axios";
 import AddProjectMemberModal from "../../components/modals/AddProjectMemberModal.vue";
+import MaterialSymbol from "../../components/MaterialSymbol.vue";
 import { useProjectMemberStore } from "../../stores/projectMemberStore";
 import { useWorkspaceStore } from "../../stores/workspaceStore";
 import { useRoleLabels } from "../../lib/roleLabels";

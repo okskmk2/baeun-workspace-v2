@@ -20,9 +20,11 @@
     </div>
     <div class="actions">
       <router-link v-if="linkedIssuePath" class="btn btn--sm btn--secondary" :to="linkedIssuePath">
+        <MaterialSymbol name="link" :size="16" alt="" />
         {{ t("channel.room.actions.linkedIssue") }}
       </router-link>
-      <button type="button" class="btn btn--sm" @click="openInviteModal">
+      <button v-if="!isNoticeChannel" type="button" class="btn btn--sm" @click="openInviteModal">
+        <MaterialSymbol name="person_add" :size="16" alt="" />
         {{ t("channel.room.actions.invite") }}
       </button>
       <button
@@ -31,9 +33,11 @@
         class="btn btn--sm btn--secondary"
         @click="leaveChannel"
       >
+        <MaterialSymbol name="logout" :size="16" alt="" />
         {{ t("channel.room.actions.leave") }}
       </button>
       <router-link
+        v-if="!isNoticeChannel"
         class="btn btn--icon"
         :aria-label="t('channel.room.actions.settings')"
         :title="t('channel.room.actions.settings')"

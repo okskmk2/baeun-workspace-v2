@@ -132,7 +132,9 @@
 import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
+import { storeToRefs } from "pinia";
 import { useAppStore } from "../stores/appStore";
+import { GNB_OVERLAYS, useGnbOverlayStore } from "../stores/gnbOverlayStore";
 import { useWorkspaceStore } from "../stores/workspaceStore";
 import { persistLocale, supportedLocales } from "../i18n";
 import api from "../lib/axios";
@@ -142,12 +144,13 @@ import MaterialSymbol from "./MaterialSymbol.vue";
 const { t, locale } = useI18n();
 const router = useRouter();
 const appStore = useAppStore();
+const gnbOverlayStore = useGnbOverlayStore();
 const workspaceStore = useWorkspaceStore();
+const { isContextSwitcherOpen: isMenuOpen } = storeToRefs(gnbOverlayStore);
 const isAuthenticated = computed(() => Boolean(appStore.currentUser));
 const currentMemberId = computed(() => appStore.currentUser?.id || null);
 
 const menuRef = ref(null);
-const isMenuOpen = ref(false);
 const isMenuLoading = ref(false);
 const menuError = ref("");
 const loadedMemberId = ref(null);
@@ -176,7 +179,7 @@ const getWorkspaceInitials = (workspace) => {
 };
 
 const closeMenu = () => {
-  isMenuOpen.value = false;
+  gnbOverlayStore.close(GNB_OVERLAYS.CONTEXT_SWITCHER);
   document.removeEventListener("click", onDocumentClick);
 };
 
@@ -239,7 +242,7 @@ const toggleMenu = async () => {
     return;
   }
 
-  isMenuOpen.value = true;
+  gnbOverlayStore.open(GNB_OVERLAYS.CONTEXT_SWITCHER);
   await ensureWorkspaceTree();
 
   await nextTick();

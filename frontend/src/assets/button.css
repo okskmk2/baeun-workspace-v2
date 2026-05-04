@@ -87,6 +87,7 @@ button {
 
 .btn--sm {
   padding: 6px 10px;
+  gap: 4px;
   /* font-size: var(--font-size-label); */
   font-size: 13px;
   font-weight: 400;

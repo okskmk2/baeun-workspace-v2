@@ -19,12 +19,20 @@
       <button type="button" class="btn" @click="createSnapshot" :disabled="!capabilities.can_delete_row">
         Snapshot 생성
       </button>
-      <button type="button" class="btn btn--danger" @click="deleteTable" :disabled="isDeleting">
-        {{ isDeleting ? "삭제 중..." : "테이블 삭제" }}
-      </button>
     </div>
     <p v-if="errorMessage" class="status error">{{ errorMessage }}</p>
   </section>
+
+  <DangerZone
+    :title="'주의 구역'"
+    :description="'테이블을 삭제하면 복구할 수 없습니다.'"
+  >
+    <template #actions>
+      <button type="button" class="btn btn--danger" @click="deleteTable" :disabled="isDeleting">
+        {{ isDeleting ? "삭제 중..." : "테이블 삭제" }}
+      </button>
+    </template>
+  </DangerZone>
 
   <section class="wire-card settings-card">
     <h3>테이블 정보</h3>
@@ -122,6 +130,7 @@ import { storeToRefs } from "pinia";
 import { addToast } from "../../lib/toast";
 import { useDataStore } from "../../stores/dataStore";
 import BackLinkButton from "../../components/BackLinkButton.vue";
+import DangerZone from "../../components/DangerZone.vue";
 
 const route = useRoute();
 const router = useRouter();

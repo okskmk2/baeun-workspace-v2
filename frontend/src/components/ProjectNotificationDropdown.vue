@@ -61,18 +61,21 @@
 
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";
+import { storeToRefs } from "pinia";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 import api from "../lib/axios";
+import { GNB_OVERLAYS, useGnbOverlayStore } from "../stores/gnbOverlayStore";
 import { useRealtimeStore } from "../stores/realtimeStore";
 import MaterialSymbol from "./MaterialSymbol.vue";
 
 const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
+const gnbOverlayStore = useGnbOverlayStore();
+const { isProjectNotificationsOpen: isOpen } = storeToRefs(gnbOverlayStore);
 const realtimeStore = useRealtimeStore();
 const menuRef = ref(null);
-const isOpen = ref(false);
 const notifications = ref([]);
 const unreadCount = ref(0);
 const isLoading = ref(false);
@@ -178,7 +181,7 @@ const markAllAsRead = async () => {
 };
 
 const closeMenu = () => {
-  isOpen.value = false;
+  gnbOverlayStore.close(GNB_OVERLAYS.PROJECT_NOTIFICATIONS);
   document.removeEventListener("click", onDocumentClick);
 };
 
@@ -194,7 +197,7 @@ const toggleMenu = () => {
     closeMenu();
     return;
   }
-  isOpen.value = true;
+  gnbOverlayStore.open(GNB_OVERLAYS.PROJECT_NOTIFICATIONS);
   loadNotifications();
   document.removeEventListener("click", onDocumentClick);
   document.addEventListener("click", onDocumentClick);

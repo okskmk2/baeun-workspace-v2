@@ -324,14 +324,75 @@ router.get("/:pageId", isAuth, resolveProjectIdFromPageId, requireProjectMember,
 router.patch("/:pageId", isAuth, resolveProjectIdFromPageId, requireProjectMember, async (req, res) => {
   const { pageId } = req.params;
   const { title, content } = req.body;
+  const hasParentUpdate = Object.prototype.hasOwnProperty.call(req.body, "parent_id");
+  const rawParentId = req.body.parent_id;
+  const projectId = req.projectId;
 
   try {
+    let nextParentId = null;
+    if (hasParentUpdate) {
+      if (rawParentId === null || rawParentId === "" || rawParentId === undefined) {
+        nextParentId = null;
+      } else {
+        const parsedParentId = Number(rawParentId);
+        if (!Number.isInteger(parsedParentId) || parsedParentId <= 0) {
+          return res
+            .status(400)
+            .json({ name: "BadRequest", message: "parent_id must be a positive number or null" });
+        }
+        nextParentId = parsedParentId;
+      }
+
+      if (nextParentId !== null && String(nextParentId) === String(pageId)) {
+        return res
+          .status(400)
+          .json({ name: "BadRequest", message: "페이지를 자기 자신 아래로 이동할 수 없습니다." });
+      }
+
+      if (nextParentId !== null) {
+        const parentRes = await pool.query(
+          "SELECT id, project_id, parent_id FROM page WHERE id = $1",
+          [nextParentId]
+        );
+
+        if (parentRes.rows.length === 0) {
+          return res
+            .status(404)
+            .json({ name: "NotFound", message: "상위 페이지를 찾을 수 없습니다." });
+        }
+
+        if (String(parentRes.rows[0].project_id) !== String(projectId)) {
+          return res
+            .status(400)
+            .json({ name: "BadRequest", message: "같은 프로젝트 내에서만 이동할 수 있습니다." });
+        }
+
+        let cursor = parentRes.rows[0];
+        while (cursor?.parent_id) {
+          if (String(cursor.parent_id) === String(pageId)) {
+            return res
+              .status(400)
+              .json({ name: "BadRequest", message: "하위 페이지 아래로 이동할 수 없습니다." });
+          }
+
+          const nextRes = await pool.query(
+            "SELECT id, parent_id FROM page WHERE id = $1 AND project_id = $2",
+            [cursor.parent_id, projectId]
+          );
+          cursor = nextRes.rows[0] || null;
+        }
+      }
+    }
+
     const updateRes = await pool.query(
       `UPDATE page
-       SET title = COALESCE($1, title), content = COALESCE($2, content), updated_at = CURRENT_TIMESTAMP
-       WHERE id = $3
+       SET title = COALESCE($1, title),
+           content = COALESCE($2, content),
+           parent_id = CASE WHEN $4 THEN $3 ELSE parent_id END,
+           updated_at = CURRENT_TIMESTAMP
+       WHERE id = $5
        RETURNING *`,
-      [title, content, pageId]
+      [title, content, nextParentId, hasParentUpdate, pageId]
     );
 
     if (updateRes.rows.length === 0) {

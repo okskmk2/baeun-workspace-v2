@@ -1,5 +1,5 @@
 <template>
-  <BaseModal :open="open" :title="t('wiki.layout.modal.title')" @close="handleClose">
+  <BaseModal :closeOnBackdrop="false" :open="open" :title="t('wiki.layout.modal.title')" @close="handleClose">
     <form class="modal-form" @submit.prevent="handleSubmit">
       <div class="form-field">
         <label for="page-title">{{ t("wiki.layout.modal.titleLabel") }}</label>

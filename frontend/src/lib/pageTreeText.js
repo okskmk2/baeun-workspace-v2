@@ -1,7 +1,7 @@
 export const formatTreeLabel = (title, depth = 0) => {
   if (depth <= 0) return title;
   const indent = "\u00A0\u00A0\u00A0".repeat(depth - 1);
-  return `${indent}└ ${title}`;
+  return `${indent}└\u00A0\u00A0${title}`;
 };
 
 export const flattenPageTreeToOptions = (nodes) => {

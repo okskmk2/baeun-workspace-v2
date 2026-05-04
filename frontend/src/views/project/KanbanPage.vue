@@ -6,6 +6,7 @@
     </div>
     <div class="actions">
       <button type="button" class="btn btn--sm" @click="openModal">
+        <MaterialSymbol name="add" :size="16" alt="" />
         {{ t("kanban.page.actions.createTask") }}
       </button>
       <router-link
@@ -28,7 +29,10 @@
       @drop="onDrop(status)"
     >
       <header>
-        <h2>{{ statusLabels[status] }}</h2>
+        <h2>
+          <MaterialSymbol :name="statusIcons[status]" :size="16" alt="" />
+          <span>{{ statusLabels[status] }}</span>
+        </h2>
         <CountChip :count="tasksByStatus(status).length" />
       </header>
 
@@ -90,6 +94,13 @@ const statusLabels = computed(() => {
   });
   return labels;
 });
+
+const statusIcons = {
+  PENDING: "schedule",
+  IN_PROGRESS: "autorenew",
+  IN_REVIEW: "fact_check",
+  DONE: "task_alt",
+};
 
 const projectId = computed(() => route.params.projectId);
 const kanbanId = computed(() => route.params.kanbanId);
@@ -217,6 +228,9 @@ onBeforeUnmount(() => {
 }
 
 .kanban-column header h2 {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-size: 14px;
   margin: 0;
   font-weight: 700;

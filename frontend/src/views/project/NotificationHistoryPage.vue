@@ -1,7 +1,4 @@
 <template>
-  <BackLinkButton @click="$router.back()">
-    {{ t("channel.settings.actions.back") }}
-  </BackLinkButton>
   <hgroup>
     <div>
       <h1>{{ t("layout.project.util.notificationsHistory") }}</h1>

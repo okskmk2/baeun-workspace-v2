@@ -80,6 +80,19 @@
         >
           <MaterialSymbol name="settings" :size="18" alt="" />
         </router-link>
+        <button
+          type="button"
+          class="btn btn--icon"
+          aria-label="챗봇 열기"
+          title="챗봇 열기"
+          @click="toggleAssistantModal"
+        >
+          <MaterialSymbol name="smart_toy" :size="18" alt="" />
+        </button>
+        <FloatingActionButton
+          :showTrigger="false"
+          :menuAriaLabel="`${projectName || t('layout.project.projectNameFallback')} AI`"
+        />
         <ProjectNotificationDropdown />
         <ContextSwicher />
       </nav>
@@ -103,6 +116,7 @@ import { useChatStore } from "../../stores/chatStore";
 import { useProjectSearchStore } from "../../stores/projectSearchStore";
 import { useRealtimeStore } from "../../stores/realtimeStore";
 import { convertSnakeToCamel } from "../../lib/utils";
+import { toggleAssistantModal } from "../../lib/assistantModal";
 import {
   applyThemeSeedToRoot,
   clearThemeSeedFromRoot,
@@ -115,6 +129,7 @@ import SearchInput from "../../components/SearchInput.vue";
 import ProjectNotificationDropdown from "../../components/ProjectNotificationDropdown.vue";
 import ContextSwicher from "../../components/ContextSwicher.vue";
 import UnreadDot from "../../components/UnreadDot.vue";
+import FloatingActionButton from "../../components/FloatingActionButton.vue";
 
 const { t } = useI18n();
 const route = useRoute();

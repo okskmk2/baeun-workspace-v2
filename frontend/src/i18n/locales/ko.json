@@ -844,6 +844,7 @@
       "actions": {
         "edit": "편집",
         "permissions": "권한",
+        "move": "이동",
         "delete": "삭제",
         "deleting": "삭제 중...",
         "cancel": "취소",
@@ -854,7 +855,19 @@
         "loading": "불러오는 중...",
         "errorLoad": "페이지를 불러오지 못했습니다.",
         "errorSave": "페이지를 저장하지 못했습니다.",
+        "errorMove": "페이지 위치를 변경하지 못했습니다.",
         "errorDelete": "페이지를 삭제하지 못했습니다."
+      },
+      "move": {
+        "actions": {
+          "submit": "위치 저장",
+          "moving": "이동 중..."
+        },
+        "modal": {
+          "title": "페이지 이동",
+          "parentLabel": "상위 페이지",
+          "parentRootOption": "최상위 페이지"
+        }
       },
       "fields": {
         "titleLabel": "제목",
@@ -894,7 +907,8 @@
         }
       },
       "toast": {
-        "updated": "페이지가 저장되었습니다."
+        "updated": "페이지가 저장되었습니다.",
+        "moved": "페이지 위치가 변경되었습니다."
       }
     }
   },
@@ -1124,6 +1138,7 @@
       "status": {
         "loading": "불러오는 중...",
         "errorLoad": "채널 정보를 불러오지 못했습니다.",
+        "saved": "채널 설정이 저장되었습니다.",
         "errorUpdate": "채널을 수정하지 못했습니다.",
         "errorArchive": "채널 보관 상태를 변경하지 못했습니다.",
         "errorDelete": "채널을 삭제하지 못했습니다."

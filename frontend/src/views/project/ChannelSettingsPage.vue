@@ -98,6 +98,7 @@ import BackLinkButton from "../../components/BackLinkButton.vue";
 import DangerZone from "../../components/DangerZone.vue";
 import { useChatStore } from "../../stores/chatStore";
 import { useRoleLabels } from "../../lib/roleLabels";
+import { addToast } from "../../lib/toast";
 
 const { t } = useI18n();
 const route = useRoute();
@@ -220,6 +221,7 @@ const saveChannelName = async () => {
     if (projectId.value) {
       chatStore.updateRoomName(roomId.value, projectId.value, updated?.name || form.value.name);
     }
+    addToast({ message: t("channel.settings.status.saved"), type: "success" });
   } catch (error) {
     formError.value = error?.response?.data?.message || t("channel.settings.status.errorUpdate");
   } finally {

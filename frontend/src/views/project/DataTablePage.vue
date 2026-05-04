@@ -5,10 +5,10 @@
       <p class="subtitle">{{ tableName }} · {{ pageTypeLabel }} · 버전 {{ tableVersion }}</p>
     </div>
     <div class="actions">
-      <button type="button" class="btn" @click="addRow" :disabled="!capabilities.can_create_row">
+      <button type="button" class="btn btn--secondary btn--sm" @click="addRow" :disabled="!capabilities.can_create_row">
         행 추가
       </button>
-      <button type="button" class="btn" @click="reloadAll">새로고침</button>
+      <button type="button" class="btn  btn--secondary btn--sm" @click="reloadAll">새로고침</button>
       <router-link class="btn btn--icon" :to="`/project/${projectId}/data/${tableId}/settings`">
         <MaterialSymbol name="settings" :size="18" />
       </router-link>
@@ -28,9 +28,11 @@
           <tr>
             <th v-for="column in columns" :key="`head-${column.id}`">
               <div class="column-head">
-                <span>{{ column.name }}</span>
-                <div class="column-head__meta">
+                <div class="column-head__title">
+                  <span>{{ column.name }}</span>
                   <span class="meta-badge is-type">{{ getTypeLabel(column.type) }}</span>
+                </div>
+                <div class="column-head__meta">
                   <span v-if="column.is_required" class="meta-badge is-required">필수</span>
                 </div>
               </div>
@@ -390,6 +392,12 @@ watch(
 .column-head {
   display: grid;
   gap: 0.3rem;
+}
+
+.column-head__title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
 }
 
 .column-head__meta {

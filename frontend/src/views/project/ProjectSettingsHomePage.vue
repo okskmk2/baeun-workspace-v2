@@ -5,7 +5,8 @@
       <p class="subtitle">{{ t("settings.home.header.subtitle") }}</p>
     </div>
     <div class="actions">
-      <button type="button" class="btn" :disabled="isSaving" @click="saveSettings">
+      <button type="button" class="btn btn--sm" :disabled="isSaving" @click="saveSettings">
+        <MaterialSymbol name="save" :size="16" alt="" />
         {{ isSaving ? t("settings.home.actions.saving") : t("settings.home.actions.save") }}
       </button>
     </div>
@@ -93,7 +94,13 @@
     :description="t('settings.home.danger.description')"
   >
     <template #actions>
-      <button type="button" class="btn btn--danger" :disabled="isDeleting" @click="openDeleteModal">
+      <button
+        type="button"
+        class="btn btn--danger btn--with-icon"
+        :disabled="isDeleting"
+        @click="openDeleteModal"
+      >
+        <MaterialSymbol name="delete" :size="16" alt="" />
         {{ isDeleting ? t("settings.home.actions.deleting") : t("settings.home.actions.delete") }}
       </button>
     </template>
@@ -119,10 +126,11 @@
         </button>
         <button
           type="button"
-          class="btn btn--danger"
+          class="btn btn--danger btn--with-icon"
           @click="confirmDeleteProject"
           :disabled="isDeleting"
         >
+          <MaterialSymbol name="delete" :size="16" alt="" />
           {{ isDeleting ? t("settings.home.actions.deleting") : t("settings.home.actions.delete") }}
         </button>
       </div>
@@ -149,6 +157,7 @@ import { useRoute, useRouter } from "vue-router";
 import api from "../../lib/axios";
 import BaseModal from "../../components/BaseModal.vue";
 import DangerZone from "../../components/DangerZone.vue";
+import MaterialSymbol from "../../components/MaterialSymbol.vue";
 import ThemeBuilderModal from "../../components/modals/ThemeBuilderModal.vue";
 import { addToast } from "../../lib/toast";
 import { useAppStore } from "../../stores/appStore";
@@ -451,6 +460,12 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   gap: 16px;
+}
+
+.btn--with-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .settings-form input {

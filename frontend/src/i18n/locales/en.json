@@ -844,6 +844,7 @@
       "actions": {
         "edit": "Edit",
         "permissions": "Permissions",
+        "move": "Move",
         "delete": "Delete",
         "deleting": "Deleting...",
         "cancel": "Cancel",
@@ -854,7 +855,19 @@
         "loading": "Loading...",
         "errorLoad": "Failed to load page.",
         "errorSave": "Failed to save page.",
+        "errorMove": "Failed to move page.",
         "errorDelete": "Failed to delete page."
+      },
+      "move": {
+        "actions": {
+          "submit": "Save Position",
+          "moving": "Moving..."
+        },
+        "modal": {
+          "title": "Move Page",
+          "parentLabel": "Parent Page",
+          "parentRootOption": "Top-level page"
+        }
       },
       "fields": {
         "titleLabel": "Title",
@@ -894,7 +907,8 @@
         }
       },
       "toast": {
-        "updated": "Page saved."
+        "updated": "Page saved.",
+        "moved": "Page moved."
       }
     }
   },
@@ -1124,6 +1138,7 @@
       "status": {
         "loading": "Loading...",
         "errorLoad": "Failed to load channel details.",
+        "saved": "Channel settings saved.",
         "errorUpdate": "Failed to update channel.",
         "errorArchive": "Failed to update channel archive status.",
         "errorDelete": "Failed to delete channel."

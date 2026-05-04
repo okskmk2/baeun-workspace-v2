@@ -1,6 +1,6 @@
 <template>
   <hgroup>
-    <h1>{{ page.title || t("wiki.page.header.fallbackTitle") }}</h1>
+    <h1 class="WikiPageTitle">{{ page.title || t("wiki.page.header.fallbackTitle") }}</h1>
     <div class="actions">
       <template v-if="isEditing">
         <button type="button" class="btn btn--secondary btn--sm" @click="cancelEdit">
@@ -17,10 +17,21 @@
           :disabled="!canEdit"
           @click="startEdit"
         >
+          <MaterialSymbol name="edit" :size="16" alt="" />
           {{ t("wiki.page.actions.edit") }}
         </button>
         <button type="button" class="btn btn--secondary btn--sm" @click="openPermissionModal">
+          <MaterialSymbol name="admin_panel_settings" :size="16" alt="" />
           {{ t("wiki.page.actions.permissions") }}
+        </button>
+        <button
+          type="button"
+          class="btn btn--secondary btn--sm"
+          :disabled="!canEdit"
+          @click="openMoveModal"
+        >
+          <MaterialSymbol name="drive_file_move" :size="16" alt="" />
+          {{ t("wiki.page.actions.move") }}
         </button>
         <button
           v-if="isOwner"
@@ -29,6 +40,7 @@
           :disabled="isDeleting"
           @click="deletePage"
         >
+          <MaterialSymbol name="delete" :size="16" alt="" />
           {{ isDeleting ? t("wiki.page.actions.deleting") : t("wiki.page.actions.delete") }}
         </button>
       </template>
@@ -81,6 +93,16 @@
     @close="closeCancelModal"
     @confirm="confirmCancelEdit"
   />
+
+  <MovePageModal
+    :open="isMoveOpen"
+    :page-id="pageId"
+    :current-parent-id="page.parent_id ?? null"
+    :pages="projectPages"
+    :is-saving="isMoving"
+    @close="closeMoveModal"
+    @save="saveMove"
+  />
 </template>
 
 <script setup>
@@ -90,6 +112,7 @@ import { useRoute, useRouter } from "vue-router";
 import api from "../../lib/axios";
 import PagePermissionModal from "../../components/modals/PagePermissionModal.vue";
 import ConfirmCancelEditModal from "../../components/modals/ConfirmCancelEditModal.vue";
+import MovePageModal from "../../components/modals/MovePageModal.vue";
 import { addToast } from "../../lib/toast";
 import { useAppStore } from "../../stores/appStore";
 import { useProjectMemberStore } from "../../stores/projectMemberStore";
@@ -97,9 +120,10 @@ import { usePageStore } from "../../stores/pageStore";
 import { createMarkdownRenderer } from "../../lib/markdown";
 import "highlight.js/styles/github.css";
 import { useRoleLabels } from "../../lib/roleLabels";
+import MaterialSymbol from "../../components/MaterialSymbol.vue";
 
 const { t } = useI18n();
-const { getRoleLabel } = useRoleLabels();
+useRoleLabels();
 const route = useRoute();
 const projectId = computed(() => route.params.projectId);
 const pageId = computed(() => route.params.pageId);
@@ -116,6 +140,8 @@ const isDeleting = ref(false);
 const isPermissionOpen = ref(false);
 const pageMembers = ref([]);
 const isCancelOpen = ref(false);
+const isMoveOpen = ref(false);
+const isMoving = ref(false);
 const permissionRoleOptions = computed(() => [
   { value: "OWNER", label: t("wiki.page.permissions.roles.owner") },
   { value: "EDITOR", label: t("wiki.page.permissions.roles.editor") },
@@ -128,6 +154,7 @@ const pageStore = usePageStore();
 const currentUserId = computed(() => appStore.currentUser?.id);
 const router = useRouter();
 const projectMembers = computed(() => projectMemberStore.getProjectMembers(projectId.value));
+const projectPages = computed(() => pageStore.getPages(projectId.value));
 
 const markdown = createMarkdownRenderer();
 
@@ -256,6 +283,47 @@ const onPermissionSaved = async () => {
   await fetchPageMembers();
 };
 
+const openMoveModal = async () => {
+  if (!canEdit.value || !projectId.value) return;
+  if (!projectPages.value.length) {
+    await pageStore.fetchPages(projectId.value);
+  }
+  isMoveOpen.value = true;
+};
+
+const closeMoveModal = () => {
+  isMoveOpen.value = false;
+};
+
+const normalizeId = (value) => {
+  if (value === "" || value === null || value === undefined) return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : value;
+};
+
+const saveMove = async ({ parentId }) => {
+  if (!projectId.value || !pageId.value || !canEdit.value) return;
+
+  isMoving.value = true;
+  try {
+    const normalizedParentId = normalizeId(parentId);
+
+    await api.patch(`/pages/${pageId.value}`, {
+      parent_id: normalizedParentId,
+    });
+
+    await Promise.all([fetchPage(), pageStore.fetchPages(projectId.value)]);
+    addToast({ message: t("wiki.page.toast.moved"), type: "success" });
+    closeMoveModal();
+  } catch (error) {
+    const message = error?.response?.data?.message || t("wiki.page.status.errorMove");
+    errorMessage.value = message;
+    addToast({ message, type: "error" });
+  } finally {
+    isMoving.value = false;
+  }
+};
+
 const closeCancelModal = () => {
   isCancelOpen.value = false;
 };
@@ -299,6 +367,15 @@ watch(projectId, fetchPageMembers);
 </script>
 
 <style scoped>
+.WikiPageTitle {
+  font-size: 32px;
+}
+
+.actions .btn {
+  display: inline-flex;
+  align-items: center;
+}
+
 .edit-split {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);

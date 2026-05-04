@@ -55,6 +55,7 @@
         @click="enterTaskChatRoom"
         :disabled="isEnteringChat"
       >
+        <MaterialSymbol name="link" :size="16" alt="" />
         {{
           isEnteringChat
             ? t("task.detail.actions.enteringChat")
@@ -62,6 +63,7 @@
         }}
       </button>
       <button v-if="!isEditing" class="btn btn--sm btn--secondary" @click="startEditing">
+        <MaterialSymbol name="edit" :size="16" alt="" />
         {{ t("task.detail.actions.edit") }}
       </button>
       <button v-else class="btn btn--sm" @click="saveTask" :disabled="isSaving">
@@ -81,6 +83,7 @@
         @click="deleteTask"
         :disabled="isSaving || isDeleting"
       >
+        <MaterialSymbol name="delete" :size="16" alt="" />
         {{ isDeleting ? t("task.detail.actions.deleting") : t("task.detail.actions.delete") }}
       </button>
     </div>
