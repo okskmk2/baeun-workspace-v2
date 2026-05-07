@@ -13,6 +13,8 @@
 .git
 .gitignore
 dist/
-
+docs/
+scripts/
+sql/
 # Node.js dependencies:
 node_modules/

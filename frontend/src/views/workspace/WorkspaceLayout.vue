@@ -120,8 +120,8 @@ const gnbStyle = computed(() => {
 
   const theme = gnbTheme.value;
   return {
-    "--color-gnb-bg": theme?.background || "#ffffff",
-    "--color-gnb-text": theme?.foreground || "#111827",
+    ...(theme?.background ? { "--color-gnb-bg": theme.background } : {}),
+    ...(theme?.foreground ? { "--color-gnb-text": theme.foreground } : {}),
   };
 });
 

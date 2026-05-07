@@ -18,7 +18,7 @@
   --role-input-l: 100%;
   --role-input-border-l: 84%;
   --role-gnb-l: 26%;
-  --role-gnb-text-l: 92%;
+  --role-gnb-text-l: 98%;
   --role-lnb-l: 24%;
   --role-lnb-text-l: 88%;
   --role-accent-l: 36%;
@@ -69,7 +69,7 @@
   --color-danger: #dc2626;
   --color-info: #0ea5e9;
   --color-gnb-bg: hsl(var(--theme-h), var(--theme-s), var(--theme-gnb-l));
-  --color-gnb-text: hsl(var(--theme-h), 70%, var(--theme-gnb-text-l));
+  --color-gnb-text: hsl(var(--theme-h), 0%, var(--theme-gnb-text-l));
   --color-page-bg: hsl(var(--theme-h), var(--theme-body-s), var(--theme-page-l));
   --color-card-bg: hsl(var(--theme-h), var(--theme-body-s), var(--theme-card-l));
   --color-input-bg: hsl(var(--theme-h), var(--theme-body-s), var(--theme-input-l));

@@ -25,9 +25,12 @@
   --color-danger: hsl(0, 80%, 65%);
   --color-info: hsl(200, 80%, 60%);
   --color-gnb-bg: hsl(var(--theme-h), 18%, 12%);
-  --color-gnb-text: hsl(var(--theme-h), 20%, 88%);
+  --color-gnb-text: hsl(var(--theme-h), 20%, 89%);
   --color-page-bg: hsl(220, 16%, 10%);
   --color-card-bg: hsl(220, 18%, 14%);
   --color-input-bg: hsl(220, 18%, 12%);
   --color-input-border: hsl(220, 16%, 24%);
+  --color-link: var(--color-accent);
+  --color-link-hover: var(--color-accent-hover);
+  --color-link-visited: hsl(270, 60%, 70%);
 }

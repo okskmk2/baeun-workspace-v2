@@ -229,11 +229,9 @@ const gnbStyle = computed(() => {
   }
 
   const theme = gnbTheme.value;
-  const background = theme?.background || "#ffffff";
-  const foreground = theme?.foreground || "#111827";
   return {
-    "--color-gnb-bg": background,
-    "--color-gnb-text": foreground,
+    ...(theme?.background ? { "--color-gnb-bg": theme.background } : {}),
+    ...(theme?.foreground ? { "--color-gnb-text": theme.foreground } : {}),
   };
 });
 

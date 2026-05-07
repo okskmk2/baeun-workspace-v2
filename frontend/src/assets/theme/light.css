@@ -11,9 +11,12 @@
   --theme-h: var(--theme-light-h);
   --theme-s: var(--theme-light-s);
   --theme-gnb-l: 100%;
-  --theme-gnb-text-l: 18%;
+  --theme-gnb-text-l: 10%;
   --theme-lnb-l: 100%;
   --theme-lnb-text-l: 24%;
   --theme-page-l: 100%;
   --color-gnb-bg: hsl(var(--theme-h), var(--theme-s), 100%);
+  --color-link: hsl(220, 70%, 45%);
+  --color-link-hover: hsl(220, 70%, 35%);
+  --color-link-visited: hsl(270, 60%, 45%);
 }
