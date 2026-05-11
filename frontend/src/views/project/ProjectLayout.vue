@@ -187,19 +187,6 @@ const currentProjectRole = computed(() => {
 const canAccessProjectSettings = computed(() =>
   ["OWNER", "ADMIN"].includes(currentProjectRole.value)
 );
-const projectThemeMode = computed(() => {
-  const projectTheme = currentProject.value?.theme_json || {};
-  const workspaceTheme = currentWorkspace.value?.theme_json || {};
-  return (
-    projectTheme.mode ||
-    projectTheme.theme?.mode ||
-    projectTheme.colorScheme ||
-    workspaceTheme.mode ||
-    workspaceTheme.theme?.mode ||
-    workspaceTheme.colorScheme ||
-    ""
-  );
-});
 const gnbTheme = computed(() => {
   const preview = gnbPreviewTheme.value;
   if (preview && typeof preview === "object") return preview;
@@ -236,10 +223,8 @@ const gnbStyle = computed(() => {
 });
 
 const themeId = computed(() => {
-  const mode = projectThemeMode.value;
   if (themeTokenId.value) return themeTokenId.value;
   if (customThemeSeed.value) return "custom";
-  if (mode === "dark" || mode === "light") return mode;
   return "";
 });
 const hasSearchQuery = computed(() => String(searchQuery.value || "").trim().length > 0);
@@ -427,27 +412,18 @@ const handleChannelMessageEvent = (payload) => {
   showChannelMessageNotification(payload);
 };
 
-const applySystemTheme = () => {
-  if (typeof window === "undefined" || !window.matchMedia) return;
-  const query = window.matchMedia("(prefers-color-scheme: dark)");
-  const nextTheme = query.matches ? "dark" : "light";
-  document.documentElement.setAttribute("data-theme", nextTheme);
-};
-
 const applyTheme = (value) => {
   if (typeof document === "undefined") return;
   const root = document.documentElement;
   if (!value) {
     clearThemeSeedFromRoot();
+    root.removeAttribute("data-theme");
     root.removeAttribute("data-theme-source");
-    applySystemTheme();
     return;
   }
 
   if (value === "custom" && customThemeSeed.value) {
-    applyThemeSeedToRoot(customThemeSeed.value, {
-      isDark: gnbTheme.value?.isDark === true || projectThemeMode.value === "dark",
-    });
+    applyThemeSeedToRoot(customThemeSeed.value);
   } else {
     clearThemeSeedFromRoot();
   }
@@ -469,9 +445,7 @@ watch(
   (value) => {
     if (themeId.value !== "custom") return;
     if (!value) return;
-    applyThemeSeedToRoot(value, {
-      isDark: gnbTheme.value?.isDark === true || projectThemeMode.value === "dark",
-    });
+    applyThemeSeedToRoot(value);
   },
   { immediate: true }
 );
@@ -554,6 +528,20 @@ onBeforeUnmount(() => {
 
 .project-search {
   position: relative;
+  --color-input-bg: color-mix(in srgb, var(--color-gnb-bg) 90%, white 10%);
+  --color-input-border: transparent;
+}
+
+.project-search :deep(input) {
+  color: var(--color-gnb-text);
+}
+
+.project-search :deep(input::placeholder) {
+  color: color-mix(in srgb, var(--color-gnb-text) 55%, transparent 45%);
+}
+
+.project-search :deep(.search-input__icon) {
+  color: color-mix(in srgb, var(--color-gnb-text) 55%, transparent 45%);
 }
 
 .search-results {

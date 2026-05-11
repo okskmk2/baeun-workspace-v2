@@ -42,26 +42,8 @@
         </div>
       </div>
 
-      <!-- Mood -->
-      <div class="mood-section">
-        <span class="mood-label">{{ t("settings.home.themeBuilder.mood") }}</span>
-        <div class="mood-grid">
-          <button
-            v-for="m in moods"
-            :key="m.id"
-            type="button"
-            class="mood-card"
-            :class="{ active: currentMood === m.id }"
-            @click="currentMood = m.id"
-          >
-            <span class="mood-icon">{{ m.icon }}</span>
-            <span class="mood-name">{{ t(`settings.home.themeBuilder.moods.${m.id}`) }}</span>
-          </button>
-        </div>
-      </div>
-
       <!-- Preview -->
-      <div class="preview-box" :style="previewBoxStyle">
+      <div class="preview-box">
         <div class="preview-gnb" :style="{ backgroundColor: resultBackground, color: resultForeground }">
           <span class="preview-gnb-text">GNB Preview</span>
         </div>
@@ -104,23 +86,11 @@ const props = defineProps({
   initialSeedH: { type: Number, default: null },
   initialSeedS: { type: Number, default: null },
   initialSeedL: { type: Number, default: null },
-  initialIsDark: { type: Boolean, default: false },
 });
 
 const emit = defineEmits(["close", "apply"]);
 
 const seed = ref({ h: 210, s: 80, l: 50 });
-const currentMood = ref("light");
-
-const moods = [
-  { id: "light", icon: "☀️" },
-  { id: "dark", icon: "🌙" },
-];
-
-const moodConfigs = {
-  light: { bgL: 98, bgS: 0.05, sSR: 0.08, aH: 120, aSR: 0.9 },
-  dark: { bgL: 8, bgS: 0.2, sSR: 0.12, aH: 120, aSR: 0.9 },
-};
 
 const TARGET_CONTRAST = 4.7;
 
@@ -199,45 +169,37 @@ function hexToHsl(hex) {
   return { h, s: Math.round(sVal * 100), l: Math.round(lVal * 100) };
 }
 
-// -- Palette computation --
+// -- Palette computation (light-mode preview) --
 const palette = computed(() => {
-  const config = moodConfigs[currentMood.value];
   const p = seed.value;
 
-  // Background
   const bgH = p.h;
-  const bgS = Math.min(100, p.s * config.bgS);
-  const bgL = config.bgL;
+  const bgS = Math.min(100, p.s * 0.05);
+  const bgL = 98;
   const bgLum = getLuminance(bgH, bgS, bgL);
 
-  // Secondary
   const sH = (p.h + 360) % 360;
-  const sS = Math.min(100, Math.max(4, p.s * config.sSR));
-  const sBaseL = bgLum > 0.5 ? Math.max(0, p.l - 25) : Math.min(100, p.l + 25);
+  const sS = Math.min(100, Math.max(4, p.s * 0.08));
+  const sBaseL = Math.max(0, p.l - 25);
   const sL = solveLightness(sH, sS, sBaseL, bgLum);
 
-  // Accent
-  const aH = (p.h + config.aH + 360) % 360;
-  const aS = Math.min(100, p.s * config.aSR);
-  const aBaseL = bgLum > 0.5 ? Math.max(0, p.l - 10) : Math.min(100, p.l + 30);
+  const aH = (p.h + 120 + 360) % 360;
+  const aS = Math.min(100, p.s * 0.9);
+  const aBaseL = Math.max(0, p.l - 10);
   const aL = solveLightness(aH, aS, aBaseL, bgLum);
 
-  // Primary contrast vs bg
   const pLum = getLuminance(p.h, p.s, p.l);
   const contrast = getContrast(pLum, bgLum);
 
   return {
-    bg: { h: bgH, s: bgS, l: bgL },
-    p: { h: p.h, s: p.s, l: p.l },
     s: { h: sH, s: sS, l: sL },
     a: { h: aH, s: aS, l: aL },
-    bgLum,
     pLum,
     contrast,
   };
 });
 
-const primaryHex = computed(() => hslToHex(palette.value.p.h, palette.value.p.s, palette.value.p.l));
+const primaryHex = computed(() => hslToHex(seed.value.h, seed.value.s, seed.value.l));
 const secondaryHex = computed(() => hslToHex(palette.value.s.h, palette.value.s.s, palette.value.s.l));
 const accentHex = computed(() => hslToHex(palette.value.a.h, palette.value.a.s, palette.value.a.l));
 
@@ -248,29 +210,14 @@ const btnTextColor = computed(() =>
   palette.value.pLum > 0.4 ? "#000000" : "#ffffff",
 );
 
-// GNB colors: use primary hue to derive a dark background and light foreground
 const resultBackground = computed(() => {
-  const p = palette.value.p;
-  if (currentMood.value === "dark") {
-    return hslToHex(p.h, Math.min(50, p.s), 12);
-  }
+  const p = seed.value;
   return hslToHex(p.h, Math.min(80, p.s), 26);
 });
 
 const resultForeground = computed(() => {
-  const p = palette.value.p;
-  if (currentMood.value === "dark") {
-    return hslToHex(p.h, Math.min(30, p.s * 0.4), 88);
-  }
+  const p = seed.value;
   return hslToHex(p.h, Math.min(35, p.s * 0.5), 96);
-});
-
-const previewBoxStyle = computed(() => {
-  const bg = palette.value.bg;
-  return {
-    backgroundColor: hslToHex(bg.h, bg.s, bg.l),
-    color: palette.value.bgLum > 0.5 ? "#1e293b" : "#f8fafc",
-  };
 });
 
 // Init from props
@@ -280,15 +227,12 @@ watch(
     if (!val) return;
     if (props.initialSeedH !== null && props.initialSeedS !== null && props.initialSeedL !== null) {
       seed.value = { h: props.initialSeedH, s: props.initialSeedS, l: props.initialSeedL };
-      currentMood.value = props.initialIsDark ? "dark" : "light";
     } else {
       const parsed = hexToHsl(props.initialBackground);
       if (parsed) {
         seed.value = { h: parsed.h, s: Math.min(100, Math.max(40, parsed.s * 2)), l: 50 };
-        currentMood.value = parsed.l < 20 ? "dark" : "light";
       } else {
         seed.value = { h: 210, s: 80, l: 50 };
-        currentMood.value = "light";
       }
     }
   },
@@ -305,7 +249,6 @@ function handleApply() {
     seedH: seed.value.h,
     seedS: seed.value.s,
     seedL: seed.value.l,
-    isDark: currentMood.value === "dark",
   });
   emit("close");
 }
@@ -421,59 +364,10 @@ function handleApply() {
   letter-spacing: 0.05em;
 }
 
-.mood-section {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.mood-label {
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--color-text-muted);
-}
-
-.mood-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-}
-
-.mood-card {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 10px;
-  border-radius: 10px;
-  border: 1.5px solid var(--color-border);
-  background: var(--color-surface);
-  cursor: pointer;
-  transition: border-color 0.15s, background-color 0.15s;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--color-text);
-}
-
-.mood-card.active {
-  border-color: var(--color-accent);
-  background: var(--color-accent-soft);
-}
-
-.mood-icon {
-  font-size: 16px;
-}
-
-.mood-name {
-  font-size: 12px;
-}
-
 .preview-box {
   border-radius: 12px;
   overflow: hidden;
   border: 1px solid var(--color-border);
-  transition: background-color 0.3s;
 }
 
 .preview-gnb {
@@ -492,6 +386,7 @@ function handleApply() {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  background-color: var(--color-surface);
 }
 
 .preview-btn {

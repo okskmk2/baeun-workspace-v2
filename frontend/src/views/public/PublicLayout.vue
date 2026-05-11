@@ -40,21 +40,12 @@ const { t } = useI18n();
 const appStore = useAppStore();
 const isAuthenticated = computed(() => Boolean(appStore.currentUser));
 
-const applySystemTheme = () => {
-  if (typeof window === "undefined" || !window.matchMedia || typeof document === "undefined") {
-    return;
-  }
-
-  const nextTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-  document.documentElement.setAttribute("data-theme", nextTheme);
-};
-
 onMounted(() => {
   if (typeof document === "undefined") return;
 
   const root = document.documentElement;
   clearThemeSeedFromRoot();
+  root.removeAttribute("data-theme");
   root.removeAttribute("data-theme-source");
-  applySystemTheme();
 });
 </script>

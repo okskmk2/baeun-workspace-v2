@@ -1402,6 +1402,16 @@
       "email": "이메일",
       "joined": "가입일"
     },
+    "name": {
+      "edit": "수정",
+      "save": "저장",
+      "cancel": "취소",
+      "saving": "저장 중...",
+      "placeholder": "이름을 입력하세요",
+      "required": "이름을 입력하세요.",
+      "success": "이름이 업데이트되었습니다.",
+      "error": "이름 저장에 실패했습니다."
+    },
     "locale": {
       "title": "로케일",
       "subtitle": "이 워크스페이스의 언어와 지역을 선택하세요.",

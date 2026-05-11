@@ -1,6 +1,4 @@
 const PRESET_THEME_IDS = new Set([
-  "light",
-  "dark",
   "indigo",
   "rose",
   "emerald",
@@ -129,92 +127,11 @@ const resolveSeedFromObject = (theme) => {
 
 const toPercent = (value) => `${Math.round(value)}%`;
 
-const getNeutralSaturation = (hue, saturation) => {
-  const warmYellow = hue >= 40 && hue <= 75;
-  const coolCyan = hue >= 170 && hue <= 210;
-  let reduced = saturation * 0.28;
-  if (warmYellow) reduced *= 0.7;
-  if (coolCyan) reduced *= 0.85;
-  return clamp(Math.round(reduced), 6, 28);
-};
-
-const hslChannelToLinear = (c) =>
-  c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
-
-const getRelativeLuminance = (h, s, l) => {
-  const sn = s / 100;
-  const ln = l / 100;
-  const a = sn * Math.min(ln, 1 - ln);
-  const f = (n) => {
-    const k = (n + h / 30) % 12;
-    return ln - a * Math.max(-1, Math.min(k - 3, Math.min(9 - k, 1)));
-  };
-  return (
-    0.2126 * hslChannelToLinear(f(0)) +
-    0.7152 * hslChannelToLinear(f(8)) +
-    0.0722 * hslChannelToLinear(f(4))
-  );
-};
-
-const buildRoleTokens = (seed, isDark) => {
-  const hue = seed.h;
-  const accentS = clamp(seed.s, isDark ? 50 : 42, isDark ? 82 : 78);
-  const neutralS = getNeutralSaturation(hue, accentS);
-
-  if (isDark) {
-    const accentL = 62;
-    const lum = getRelativeLuminance(hue, accentS, accentL);
-    return {
-      "--role-body-s": toPercent(clamp(neutralS + 6, 12, 30)),
-      "--role-body-l": "8%",
-      "--role-surface-l": "12%",
-      "--role-surface-alt-l": "16%",
-      "--role-text-l": "90%",
-      "--role-text-muted-l": "68%",
-      "--role-border-l": "24%",
-      "--role-page-l": "10%",
-      "--role-card-l": "14%",
-      "--role-input-l": "12%",
-      "--role-input-border-l": "26%",
-      "--role-gnb-l": "12%",
-      "--role-gnb-text-l": "98%",
-      "--role-accent-l": `${accentL}%`,
-      "--role-accent-hover-l": "56%",
-      "--role-accent-soft-s": toPercent(clamp(accentS * 0.6, 22, 48)),
-      "--role-accent-soft-l": "28%",
-      "--color-text-inverse": lum > 0.4 ? "hsl(0,0%,6%)" : "#ffffff",
-    };
-  }
-
-  const accentL = 40;
-  const lum = getRelativeLuminance(hue, accentS, accentL);
-  return {
-    "--role-body-s": toPercent(neutralS),
-    "--role-body-l": "94%",
-    "--role-surface-l": "98%",
-    "--role-surface-alt-l": "94%",
-    "--role-text-l": "12%",
-    "--role-text-muted-l": "39%",
-    "--role-border-l": "86%",
-    "--role-page-l": "99%",
-    "--role-card-l": "100%",
-    "--role-input-l": "100%",
-    "--role-input-border-l": "84%",
-    "--role-gnb-l": "30%",
-    "--role-gnb-text-l": "93%",
-    "--role-accent-l": `${accentL}%`,
-    "--role-accent-hover-l": "35%",
-    "--role-accent-soft-s": toPercent(clamp(accentS * 0.45, 20, 40)),
-    "--role-accent-soft-l": "90%",
-    "--color-text-inverse": lum > 0.4 ? "hsl(0,0%,6%)" : "#ffffff",
-  };
-};
-
 export const isPresetThemeId = (themeId) => PRESET_THEME_IDS.has(String(themeId || ""));
 
 export const resolveThemeSeed = (theme) => resolveSeedFromObject(theme);
 
-export const applyThemeSeedToRoot = (seed, { isDark = false } = {}) => {
+export const applyThemeSeedToRoot = (seed) => {
   if (typeof document === "undefined") return;
   if (!seed) return;
 
@@ -230,39 +147,12 @@ export const applyThemeSeedToRoot = (seed, { isDark = false } = {}) => {
   root.style.setProperty("--theme-custom-h", String(normalized.h));
   root.style.setProperty("--theme-custom-s", toPercent(normalized.s));
   root.style.setProperty("--theme-custom-l", toPercent(normalized.l));
-
-  const roleTokens = buildRoleTokens(normalized, isDark);
-  Object.entries(roleTokens).forEach(([name, value]) => {
-    root.style.setProperty(name, value);
-  });
 };
 
 export const clearThemeSeedFromRoot = () => {
   if (typeof document === "undefined") return;
   const root = document.documentElement;
-  const keys = [
-    "--theme-custom-h",
-    "--theme-custom-s",
-    "--theme-custom-l",
-    "--role-body-s",
-    "--role-body-l",
-    "--role-surface-l",
-    "--role-surface-alt-l",
-    "--role-text-l",
-    "--role-text-muted-l",
-    "--role-border-l",
-    "--role-page-l",
-    "--role-card-l",
-    "--role-input-l",
-    "--role-input-border-l",
-    "--role-gnb-l",
-    "--role-gnb-text-l",
-    "--role-accent-l",
-    "--role-accent-hover-l",
-    "--role-accent-soft-s",
-    "--role-accent-soft-l",
-    "--color-text-inverse",
-  ];
-
-  keys.forEach((name) => root.style.removeProperty(name));
+  root.style.removeProperty("--theme-custom-h");
+  root.style.removeProperty("--theme-custom-s");
+  root.style.removeProperty("--theme-custom-l");
 };

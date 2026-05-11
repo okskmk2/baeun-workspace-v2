@@ -144,7 +144,6 @@
     :initial-seed-h="form.seedH"
     :initial-seed-s="form.seedS"
     :initial-seed-l="form.seedL"
-    :initial-is-dark="form.isDark"
     @close="isThemeBuilderOpen = false"
     @apply="onThemeBuilderApply"
   />
@@ -188,12 +187,9 @@ const form = ref({
   seedH: null,
   seedS: null,
   seedL: null,
-  isDark: false,
 });
 
 const themeOptionsBase = [
-  "light",
-  "dark",
   "indigo",
   "rose",
   "emerald",
@@ -255,7 +251,6 @@ const fetchProject = async () => {
     form.value.seedH = gnbTheme?.seedH ?? null;
     form.value.seedS = gnbTheme?.seedS ?? null;
     form.value.seedL = gnbTheme?.seedL ?? null;
-    form.value.isDark = gnbTheme?.isDark === true;
     projectWorkspaceId.value = data.workspace_id || null;
   } catch (error) {
     errorMessage.value = t("settings.home.status.errorLoad");
@@ -299,7 +294,6 @@ const saveSettings = async () => {
                   seedH: form.value.seedH,
                   seedS: form.value.seedS,
                   seedL: form.value.seedL,
-                  isDark: form.value.isDark,
                 }
               : {
                   themeId: selected,
@@ -322,7 +316,6 @@ const saveSettings = async () => {
           seedH: form.value.seedH,
           seedS: form.value.seedS,
           seedL: form.value.seedL,
-          isDark: form.value.isDark,
         };
       } else {
         nextThemeJson.gnb = {
@@ -348,13 +341,12 @@ const saveSettings = async () => {
   }
 };
 
-const onThemeBuilderApply = ({ background, foreground, seedH, seedS, seedL, isDark }) => {
+const onThemeBuilderApply = ({ background, foreground, seedH, seedS, seedL }) => {
   form.value.customBackground = background;
   form.value.customForeground = foreground;
   form.value.seedH = seedH;
   form.value.seedS = seedS;
   form.value.seedL = seedL;
-  form.value.isDark = isDark;
   form.value.themeId = "custom";
 };
 
@@ -408,7 +400,6 @@ watch(
         seedH: form.value.seedH,
         seedS: form.value.seedS,
         seedL: form.value.seedL,
-        isDark: form.value.isDark,
       });
       return;
     }
@@ -445,7 +436,6 @@ watch(
       seedH: form.value.seedH,
       seedS: form.value.seedS,
       seedL: form.value.seedL,
-      isDark: form.value.isDark,
     });
   }
 );

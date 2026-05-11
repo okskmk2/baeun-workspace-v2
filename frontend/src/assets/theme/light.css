@@ -1,22 +1,11 @@
-:root {
-  --theme-light-h: 220;
-  --theme-light-s: 70%;
-  --theme-swatch-light-bg-l: 100%;
-  --theme-swatch-light-fg-l: 18%;
-  --theme-light-bg: hsl(var(--theme-light-h), 12%, var(--theme-swatch-light-bg-l));
-  --theme-light-fg: hsl(var(--theme-light-h), 20%, var(--theme-swatch-light-fg-l));
-}
-
-:root[data-theme="light"] {
-  --theme-h: var(--theme-light-h);
-  --theme-s: var(--theme-light-s);
+:root[data-color-scheme="light"] {
   --theme-gnb-l: 100%;
   --theme-gnb-text-l: 10%;
   --theme-lnb-l: 100%;
   --theme-lnb-text-l: 24%;
   --theme-page-l: 100%;
   --color-gnb-bg: hsl(var(--theme-h), var(--theme-s), 100%);
-  --color-link: hsl(220, 70%, 45%);
-  --color-link-hover: hsl(220, 70%, 35%);
+  --color-link: hsl(var(--theme-h), 70%, 45%);
+  --color-link-hover: hsl(var(--theme-h), 70%, 35%);
   --color-link-visited: hsl(270, 60%, 45%);
 }

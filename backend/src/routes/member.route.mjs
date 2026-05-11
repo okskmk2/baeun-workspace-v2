@@ -790,6 +790,84 @@ router.delete("/profile/image", isAuth, async (req, res) => {
 
 /**
  * @swagger
+ * /api/members/me:
+ *   patch:
+ *     summary: Update current user profile
+ *     description: Partially update the logged-in user's profile (currently supports name)
+ *     tags:
+ *       - Member
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Profile updated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 id:
+ *                   type: integer
+ *                 name:
+ *                   type: string
+ *                 email:
+ *                   type: string
+ *                 img_url:
+ *                   type: string
+ *                   nullable: true
+ *       400:
+ *         $ref: "#/components/responses/ErrorResponse"
+ *       404:
+ *         $ref: "#/components/responses/ErrorResponse"
+ *       500:
+ *         $ref: "#/components/responses/ErrorResponse"
+ */
+router.patch("/me", isAuth, async (req, res) => {
+  const { name } = req.body;
+
+  if (name !== undefined && (typeof name !== "string" || !name.trim())) {
+    return res.status(400).json({ name: "BadRequest", message: "name must be a non-empty string." });
+  }
+
+  try {
+    const result = await pool.query(
+      `UPDATE member
+       SET name = COALESCE($1, name)
+       WHERE id = $2
+       RETURNING id, name, email, img_url`,
+      [name?.trim() ?? null, req.session.userId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ name: "NotFound", message: "Member not found." });
+    }
+
+    const row = result.rows[0];
+    if (name !== undefined) {
+      req.session.userName = row.name;
+    }
+
+    res.json({
+      message: "Profile updated.",
+      ...row,
+      img_url: normalizeMemberImageUrl(row.id, row.img_url),
+    });
+  } catch (error) {
+    res.status(500).json({ name: "InternalServerError", message: error.message });
+  }
+});
+
+/**
+ * @swagger
  * /api/members/me/owned-resources:
  *   get:
  *     summary: Owned resources for withdrawal

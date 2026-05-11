@@ -152,28 +152,19 @@ const onClickFabAction = (action) => {
   addToast({ message: `${action.label} 기능은 프로토타입입니다.`, type: "info" });
 };
 
-const applySystemTheme = () => {
-  if (typeof window === "undefined" || !window.matchMedia) return;
-  const query = window.matchMedia("(prefers-color-scheme: dark)");
-  const nextTheme = query.matches ? "dark" : "light";
-  document.documentElement.setAttribute("data-theme", nextTheme);
-};
-
 const applyTheme = (value) => {
   if (typeof document === "undefined") return;
 
   const root = document.documentElement;
   if (!value) {
     clearThemeSeedFromRoot();
+    root.removeAttribute("data-theme");
     root.removeAttribute("data-theme-source");
-    applySystemTheme();
     return;
   }
 
   if (value === "custom" && customThemeSeed.value) {
-    applyThemeSeedToRoot(customThemeSeed.value, {
-      isDark: gnbTheme.value?.isDark === true,
-    });
+    applyThemeSeedToRoot(customThemeSeed.value);
   } else {
     clearThemeSeedFromRoot();
   }
@@ -197,9 +188,7 @@ watch(
   (value) => {
     if (themeId.value !== "custom") return;
     if (!value) return;
-    applyThemeSeedToRoot(value, {
-      isDark: gnbTheme.value?.isDark === true,
-    });
+    applyThemeSeedToRoot(value);
   },
   { immediate: true }
 );
@@ -215,7 +204,7 @@ watch(
 onBeforeUnmount(() => {
   const root = document.documentElement;
   clearThemeSeedFromRoot();
+  root.removeAttribute("data-theme");
   root.removeAttribute("data-theme-source");
-  applySystemTheme();
 });
 </script>

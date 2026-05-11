@@ -50,7 +50,36 @@
       <div class="details">
         <div class="detail">
           <span class="label">{{ t("profile.fields.name") }}</span>
-          <span class="value">{{ profile.name || "-" }}</span>
+          <div v-if="isEditingName" class="name-edit-row">
+            <input
+              ref="nameInputRef"
+              v-model="editingName"
+              class="name-input"
+              type="text"
+              :placeholder="t('profile.name.placeholder')"
+              :disabled="isSavingName"
+              @keydown.enter="saveName"
+              @keydown.escape="cancelEditName"
+            />
+            <button class="btn btn--sm" :disabled="isSavingName" type="button" @click="saveName">
+              {{ isSavingName ? t("profile.name.saving") : t("profile.name.save") }}
+            </button>
+            <button
+              class="btn btn--secondary btn--sm"
+              :disabled="isSavingName"
+              type="button"
+              @click="cancelEditName"
+            >
+              {{ t("profile.name.cancel") }}
+            </button>
+            <p v-if="nameError" class="status error name-error">{{ nameError }}</p>
+          </div>
+          <div v-else class="name-view-row">
+            <span class="value">{{ profile.name || "-" }}</span>
+            <button class="btn btn--ghost btn--sm" type="button" @click="startEditName">
+              {{ t("profile.name.edit") }}
+            </button>
+          </div>
         </div>
         <div class="detail">
           <span class="label">{{ t("profile.fields.email") }}</span>
@@ -115,7 +144,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, nextTick, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import api from "../../lib/axios";
 import { persistLocale, supportedLocales } from "../../i18n";
@@ -139,6 +168,12 @@ const isUploadingImage = ref(false);
 const isRemovingImage = ref(false);
 const uploadImageError = ref("");
 const uploadImageMessage = ref("");
+
+const nameInputRef = ref(null);
+const isEditingName = ref(false);
+const editingName = ref("");
+const isSavingName = ref(false);
+const nameError = ref("");
 
 const fetchProfile = async () => {
   isLoading.value = true;
@@ -261,6 +296,42 @@ const removeProfileImage = async () => {
       error?.response?.data?.message || t("profile.image.status.removeError");
   } finally {
     isRemovingImage.value = false;
+  }
+};
+
+const startEditName = () => {
+  editingName.value = profile.value?.name || "";
+  nameError.value = "";
+  isEditingName.value = true;
+  nextTick(() => nameInputRef.value?.focus());
+};
+
+const cancelEditName = () => {
+  isEditingName.value = false;
+  nameError.value = "";
+};
+
+const saveName = async () => {
+  const trimmed = editingName.value.trim();
+  if (!trimmed) {
+    nameError.value = t("profile.name.required");
+    return;
+  }
+  nameError.value = "";
+  isSavingName.value = true;
+  try {
+    const response = await api.patch("/members/me", { name: trimmed });
+    const payload = response?.data || {};
+    const { message, ...memberData } = payload;
+    profile.value = { ...profile.value, ...memberData };
+    if (appStore.currentUser) {
+      appStore.setCurrentUser({ ...appStore.currentUser, ...memberData });
+    }
+    isEditingName.value = false;
+  } catch (error) {
+    nameError.value = error?.response?.data?.message || t("profile.name.error");
+  } finally {
+    isSavingName.value = false;
   }
 };
 
@@ -387,6 +458,35 @@ onMounted(fetchProfile);
   font-size: 14px;
   color: var(--color-text);
   background-color: var(--color-input-bg);
+}
+
+.name-view-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.name-edit-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.name-input {
+  flex: 1;
+  min-width: 0;
+  padding: 5px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--color-input-border);
+  font-size: 14px;
+  color: var(--color-text);
+  background-color: var(--color-input-bg);
+}
+
+.name-error {
+  flex-basis: 100%;
+  margin: 0;
 }
 
 .details {

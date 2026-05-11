@@ -1426,6 +1426,16 @@
       "email": "Email",
       "joined": "Joined"
     },
+    "name": {
+      "edit": "Edit",
+      "save": "Save",
+      "cancel": "Cancel",
+      "saving": "Saving...",
+      "placeholder": "Enter your name",
+      "required": "Name is required.",
+      "success": "Name updated.",
+      "error": "Failed to save name."
+    },
     "locale": {
       "title": "Locale",
       "subtitle": "Choose the language and region for this workspace.",

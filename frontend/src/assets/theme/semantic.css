@@ -2,8 +2,8 @@
   --theme-swatch-bg-l: 28%;
   --theme-swatch-fg-l: 99%;
 
-  --theme-h: var(--theme-light-h);
-  --theme-s: var(--theme-light-s);
+  --theme-h: 220;
+  --theme-s: 60%;
 
   /* Role tokens (light defaults) */
   --role-body-s: 25%;

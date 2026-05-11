@@ -7,26 +7,24 @@
 import { onBeforeUnmount, onMounted } from "vue";
 import ToastHost from "./components/ToastHost.vue";
 
-const applySystemTheme = (query) => {
+const applySystemColorScheme = (query) => {
   if (typeof document === "undefined") return;
-  const root = document.documentElement;
-  if (root.getAttribute("data-theme-source")) return;
-  const nextTheme = query.matches ? "dark" : "light";
-  root.setAttribute("data-theme", nextTheme);
+  const nextScheme = query.matches ? "dark" : "light";
+  document.documentElement.setAttribute("data-color-scheme", nextScheme);
 };
 
 let mediaQuery;
-const handleThemeChange = (event) => applySystemTheme(event);
+const handleColorSchemeChange = (event) => applySystemColorScheme(event);
 
 onMounted(() => {
   if (typeof window === "undefined" || !window.matchMedia) return;
   mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-  applySystemTheme(mediaQuery);
-  mediaQuery.addEventListener("change", handleThemeChange);
+  applySystemColorScheme(mediaQuery);
+  mediaQuery.addEventListener("change", handleColorSchemeChange);
 });
 
 onBeforeUnmount(() => {
   if (!mediaQuery) return;
-  mediaQuery.removeEventListener("change", handleThemeChange);
+  mediaQuery.removeEventListener("change", handleColorSchemeChange);
 });
 </script>

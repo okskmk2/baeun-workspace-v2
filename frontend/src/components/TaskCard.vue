@@ -1,40 +1,54 @@
 <template>
-  <article :class="cardClass" :draggable="draggable" @dragstart="handleDragStart">
-    <h3 class="task-title-row">
-      <MaterialSymbol
+  <article
+    :class="cardClass"
+    :style="priorityBorderStyle"
+    :draggable="draggable"
+    @dragstart="handleDragStart"
+  >
+    <div class="card-top">
+      <h3 class="task-title-row">
+        <router-link :to="detailPath">{{ task.title }}</router-link>
+      </h3>
+      <!-- TODO: 우선순위 태그 임시 숨김
+      <Tag
         v-if="getPriorityIconName(task.priority)"
-        :name="getPriorityIconName(task.priority)"
-        :size="18"
-        class="task-priority-icon"
-        :style="{ color: getPriorityColor(task.priority) }"
-      />
-      <router-link :to="detailPath">{{ task.title }}</router-link>
-    </h3>
-
-    <div v-if="task.assignee_members?.length" class="assignee-list">
-      <div
-        v-for="assignee in task.assignee_members"
-        :key="`${task.id}-${assignee.id}-${assignee.role_name}`"
-        class="assignee-item"
+        variant="default"
+        :style="priorityTagStyle"
       >
-        <Tag
-          v-if="assignee.role_name"
-          icon
-          :variant="getTaskRoleVariant(assignee.role_name)"
-          :title="getRoleLabel(roleScope, assignee.role_name)"
-          :aria-label="getRoleLabel(roleScope, assignee.role_name)"
-        >
-          <MaterialSymbol :name="getTaskRoleIconName(assignee.role_name)" :size="14" alt="" />
-        </Tag>
-        <span>{{ assignee.name }}</span>
-      </div>
+        <MaterialSymbol :name="getPriorityIconName(task.priority)" :size="14" alt="" />
+        {{ getPriorityLabel(task.priority) }}
+      </Tag>
+      -->
     </div>
-    <p v-else class="empty-assignees">{{ emptyAssigneesText }}</p>
+
+    <hr class="card-divider" />
+
+    <div class="meta-list">
+      <template v-if="task.assignee_members?.length">
+        <Tag
+          v-for="assignee in task.assignee_members"
+          :key="`${task.id}-${assignee.id}-${assignee.role_name}`"
+          :variant="assignee.role_name ? getTaskRoleVariant(assignee.role_name) : 'default'"
+          :title="assignee.role_name ? getRoleLabel(roleScope, assignee.role_name) : ''"
+          :aria-label="assignee.role_name ? getRoleLabel(roleScope, assignee.role_name) : ''"
+        >
+          <MaterialSymbol
+            v-if="assignee.role_name"
+            :name="getTaskRoleIconName(assignee.role_name)"
+            :size="14"
+            alt=""
+          />
+          {{ assignee.name }}
+        </Tag>
+      </template>
+      <p v-else class="empty-assignees">{{ emptyAssigneesText }}</p>
+    </div>
   </article>
 </template>
 
 <script setup>
 import { computed } from "vue";
+import { useI18n } from "vue-i18n";
 import MaterialSymbol from "./MaterialSymbol.vue";
 import Tag from "./Tag.vue";
 import { getTaskRoleIconName, getTaskRoleVariant, useRoleLabels } from "../lib/roleLabels";
@@ -49,6 +63,7 @@ const props = defineProps({
 });
 
 const emit = defineEmits(["dragstart"]);
+const { t } = useI18n();
 const { getRoleLabel } = useRoleLabels();
 
 const cardClass = computed(() => ["task-card", `task-card--${props.variant}`]);
@@ -69,8 +84,33 @@ const getPriorityColor = (priority) => {
   if (parsed === 1) return "var(--color-warning)";
   if (parsed === 0) return "var(--color-info)";
   if (parsed === -1) return "var(--color-text-muted)";
-  return "var(--color-text-muted)";
+  return null;
 };
+
+const getPriorityLabel = (priority) => {
+  const parsed = Number(priority);
+  if (parsed === 2) return t("task.priority.urgent");
+  if (parsed === 1) return t("task.priority.high");
+  if (parsed === 0) return t("task.priority.normal");
+  if (parsed === -1) return t("task.priority.relaxed");
+  return "";
+};
+
+const priorityBorderStyle = computed(() => {
+  const color = getPriorityColor(props.task.priority);
+  return color ? { borderLeftColor: color } : {};
+});
+
+const priorityTagStyle = computed(() => {
+  const color = getPriorityColor(props.task.priority);
+  return color
+    ? {
+        borderColor: `color-mix(in srgb, ${color} 40%, var(--color-border) 60%)`,
+        backgroundColor: `color-mix(in srgb, ${color} 20%, white 80%)`,
+        color: `color-mix(in srgb, ${color} 65%, var(--color-text) 35%)`,
+      }
+    : {};
+});
 
 const handleDragStart = (event) => {
   emit("dragstart", event, props.task);
@@ -81,6 +121,7 @@ const handleDragStart = (event) => {
 .task-card {
   background-color: var(--color-surface);
   border: 1px solid var(--color-border);
+  border-left-width: 3px;
   border-radius: 8px;
 }
 
@@ -102,76 +143,51 @@ const handleDragStart = (event) => {
 
 .task-title-row {
   display: flex;
-  align-items: center;
-  gap: 2px;
-  min-width: 0;
-}
-
-.task-priority-icon {
-  flex-shrink: 0;
+  align-items: flex-start;
+  font-size: 14px;
+  font-weight: 500;
+  margin: 0;
 }
 
 .task-title-row > a {
-  display: block;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
   color: var(--color-text);
   text-decoration: none;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .task-title-row > a:hover {
   text-decoration: underline;
 }
 
-.assignee-list {
+.card-top {
   display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
 }
 
-.assignee-item {
-  display: inline-flex;
-  align-items: center;
-  color: var(--color-text);
+.card-divider {
+  border: none;
+  border-top: 1px solid var(--color-border);
+  margin: 8px 0;
 }
 
-.task-title-row {
-  font-size: 14px;
-  font-weight: 500;
-  margin: 0;
-}
-
-.task-card--backlog .empty-assignees {
-  margin: 0;
-  font-size: 12px;
-  color: #94a3b8;
-}
-
-.task-card--backlog .assignee-list {
+.meta-list {
+  display: flex;
   flex-wrap: wrap;
   gap: 4px;
-  margin-top: 6px;
+  align-items: center;
 }
 
-.task-card--backlog .assignee-item {
-  gap: 4px;
-  font-size: 12px;
-}
-
-.task-card--kanban .empty-assignees {
-  margin: 1rem 0 0;
-  font-size: 14px;
-  color: #94a3b8;
-}
-
-.task-card--kanban .assignee-list {
+.task-card--kanban .meta-list {
   flex-direction: column;
-  gap: 4px;
-  margin-top: 8px;
+  align-items: flex-start;
 }
 
-.task-card--kanban .assignee-item {
-  gap: 6px;
+.empty-assignees {
+  margin: 0;
   font-size: 12px;
+  color: #94a3b8;
 }
 </style>

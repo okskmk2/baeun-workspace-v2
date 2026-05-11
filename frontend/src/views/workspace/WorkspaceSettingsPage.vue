@@ -140,7 +140,6 @@
     :initial-seed-h="form.seedH"
     :initial-seed-s="form.seedS"
     :initial-seed-l="form.seedL"
-    :initial-is-dark="form.isDark"
     @close="isThemeBuilderOpen = false"
     @apply="onThemeBuilderApply"
   />
@@ -187,18 +186,15 @@ const workspaceImageError = ref("");
 const workspaceImageSuccess = ref("");
 const isThemeBuilderOpen = ref(false);
 const form = ref({
-  themeId: "light",
+  themeId: "indigo",
   customBackground: "#1f2937",
   customForeground: "#ffffff",
   seedH: null,
   seedS: null,
   seedL: null,
-  isDark: false,
 });
 
 const themeOptionsBase = [
-  "light",
-  "dark",
   "indigo",
   "rose",
   "emerald",
@@ -259,7 +255,6 @@ const fetchWorkspaceDetail = async () => {
     form.value.seedH = currentTheme?.seedH ?? null;
     form.value.seedS = currentTheme?.seedS ?? null;
     form.value.seedL = currentTheme?.seedL ?? null;
-    form.value.isDark = currentTheme?.isDark === true;
   } catch (error) {
     errorMessage.value =
       error?.response?.data?.message || "워크스페이스 정보를 불러오지 못했습니다.";
@@ -301,8 +296,7 @@ const saveSettings = async () => {
     normalizeHexColor(currentTheme.foreground, "") === customForeground &&
     currentTheme.seedH === form.value.seedH &&
     currentTheme.seedS === form.value.seedS &&
-    currentTheme.seedL === form.value.seedL &&
-    (currentTheme.isDark === true) === form.value.isDark;
+    currentTheme.seedL === form.value.seedL;
   if (
     nextName === workspaceName.value &&
     ((isCustom && currentThemeId === "custom" && sameCustomTheme) ||
@@ -327,7 +321,6 @@ const saveSettings = async () => {
                 seedH: form.value.seedH,
                 seedS: form.value.seedS,
                 seedL: form.value.seedL,
-                isDark: form.value.isDark,
               }
             : {
                 themeId: selected,
@@ -346,13 +339,12 @@ const saveSettings = async () => {
   }
 };
 
-const onThemeBuilderApply = ({ background, foreground, seedH, seedS, seedL, isDark }) => {
+const onThemeBuilderApply = ({ background, foreground, seedH, seedS, seedL }) => {
   form.value.customBackground = background;
   form.value.customForeground = foreground;
   form.value.seedH = seedH;
   form.value.seedS = seedS;
   form.value.seedL = seedL;
-  form.value.isDark = isDark;
   form.value.themeId = "custom";
 };
 
@@ -438,7 +430,6 @@ watch(
         seedH: form.value.seedH,
         seedS: form.value.seedS,
         seedL: form.value.seedL,
-        isDark: form.value.isDark,
       });
       return;
     }
@@ -463,7 +454,6 @@ watch(
       seedH: form.value.seedH,
       seedS: form.value.seedS,
       seedL: form.value.seedL,
-      isDark: form.value.isDark,
     });
   }
 );
