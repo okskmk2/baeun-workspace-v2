@@ -1,38 +1,12 @@
 import express from "express";
 import pool from "../db.mjs";
 import { isAuth } from "../middlewares/auth.middleware.mjs";
+import { normalizeThemeJson } from "../utils/parsers.mjs";
 import { withPagination } from "../middlewares/pagination.middleware.mjs";
 import logger from "../logger.mjs";
 
 const router = express.Router();
 
-const normalizeThemeJsonInput = (themeJson) => {
-  if (!themeJson || typeof themeJson !== "object") return themeJson;
-  const gnb = themeJson.gnb || {};
-  const themeId = gnb.themeId;
-  if (!themeId) return themeJson;
-  return {
-    ...themeJson,
-    gnb: {
-      ...gnb,
-      themeId,
-    },
-  };
-};
-
-const normalizeThemeJsonOutput = (themeJson) => {
-  if (!themeJson || typeof themeJson !== "object") return themeJson;
-  const gnb = themeJson.gnb || {};
-  const themeId = gnb.themeId;
-  if (!themeId) return themeJson;
-  return {
-    ...themeJson,
-    gnb: {
-      ...gnb,
-      themeId,
-    },
-  };
-};
 
 /**
  * @swagger
@@ -111,7 +85,7 @@ router.get("/", isAuth, withPagination({ defaultPageSize: 10, maxPageSize: 100 }
 
       const items = projectsRes.rows.map((project) => ({
         ...project,
-        theme_json: normalizeThemeJsonOutput(project.theme_json),
+        theme_json: normalizeThemeJson(project.theme_json),
       }));
 
       return res.json({
@@ -132,7 +106,7 @@ router.get("/", isAuth, withPagination({ defaultPageSize: 10, maxPageSize: 100 }
 
     const data = projectsRes.rows.map((project) => ({
       ...project,
-      theme_json: normalizeThemeJsonOutput(project.theme_json),
+      theme_json: normalizeThemeJson(project.theme_json),
     }));
 
     res.json(data);
@@ -192,8 +166,8 @@ router.post("/", isAuth, async (req, res) => {
       [workspace_id, userId]
     );
 
-    if (authCheck.rows.length === 0) {
-      return res.status(403).json({ name: "Forbidden", message: "Not a workspace member." });
+    if (!authCheck.rows[0] || !["OWNER", "ADMIN"].includes(authCheck.rows[0].role_name)) {
+      return res.status(403).json({ name: "Forbidden", message: "No permission to create project." });
     }
 
     await client.query("BEGIN");
@@ -274,23 +248,49 @@ router.post("/", isAuth, async (req, res) => {
  */
 router.delete("/:projectId/members/:memberId", isAuth, async (req, res) => {
   const { projectId, memberId } = req.params;
-  const userId = req.session.userId;
+  const actorId = req.session.userId;
+  const targetMemberId = Number(memberId);
+
+  if (!Number.isInteger(targetMemberId) || targetMemberId <= 0) {
+    return res.status(400).json({ name: "BadRequest", message: "Invalid member id." });
+  }
 
   try {
-    const authCheck = await pool.query(
+    const actorCheck = await pool.query(
       "SELECT role_name FROM project_member WHERE project_id = $1 AND member_id = $2",
-      [projectId, userId]
+      [projectId, actorId]
     );
 
-    if (!authCheck.rows[0] || authCheck.rows[0].role_name !== "OWNER") {
-      return res
-        .status(403)
-        .json({ name: "Forbidden", message: "No permission to remove member." });
+    if (!actorCheck.rows[0] || actorCheck.rows[0].role_name !== "OWNER") {
+      return res.status(403).json({ name: "Forbidden", message: "No permission to remove member." });
+    }
+
+    if (String(actorId) === String(targetMemberId)) {
+      return res.status(400).json({ name: "BadRequest", message: "You cannot remove yourself." });
+    }
+
+    const targetCheck = await pool.query(
+      "SELECT role_name FROM project_member WHERE project_id = $1 AND member_id = $2",
+      [projectId, targetMemberId]
+    );
+
+    if (!targetCheck.rows[0]) {
+      return res.status(404).json({ name: "NotFound", message: "Member not found in project." });
+    }
+
+    if (targetCheck.rows[0].role_name === "OWNER") {
+      const ownerCountRes = await pool.query(
+        "SELECT COUNT(*)::int AS count FROM project_member WHERE project_id = $1 AND role_name = 'OWNER'",
+        [projectId]
+      );
+      if ((ownerCountRes.rows[0]?.count || 0) <= 1) {
+        return res.status(403).json({ name: "Forbidden", message: "Cannot remove the last OWNER." });
+      }
     }
 
     await pool.query("DELETE FROM project_member WHERE project_id = $1 AND member_id = $2", [
       projectId,
-      memberId,
+      targetMemberId,
     ]);
 
     res.json({ message: "Member removed." });
@@ -332,7 +332,18 @@ router.delete("/:projectId/members/:memberId", isAuth, async (req, res) => {
  */
 router.get("/:projectId", isAuth, async (req, res) => {
   const { projectId } = req.params;
+  const userId = req.session.userId;
+
   try {
+    const memberCheck = await pool.query(
+      "SELECT id FROM project_member WHERE project_id = $1 AND member_id = $2",
+      [projectId, userId]
+    );
+
+    if (memberCheck.rows.length === 0) {
+      return res.status(403).json({ name: "Forbidden", message: "Access denied." });
+    }
+
     const result = await pool.query("SELECT * FROM project WHERE id = $1", [projectId]);
 
     if (result.rows.length === 0) {
@@ -344,7 +355,7 @@ router.get("/:projectId", isAuth, async (req, res) => {
       ...project,
       summary: project.summary ?? null,
       description: project.summary ?? null,
-      theme_json: normalizeThemeJsonOutput(project.theme_json),
+      theme_json: normalizeThemeJson(project.theme_json),
     });
   } catch (error) {
     res.status(500).json({ name: "InternalServerError", message: error.message });
@@ -399,7 +410,7 @@ router.get("/:projectId", isAuth, async (req, res) => {
 router.patch("/:projectId", isAuth, async (req, res) => {
   const { projectId } = req.params;
   const { name, img_url, theme_json, summary } = req.body;
-  const normalizedThemeJson = normalizeThemeJsonInput(theme_json);
+  const normalizedThemeJson = normalizeThemeJson(theme_json);
   const userId = req.session.userId;
 
   try {
@@ -430,7 +441,7 @@ router.patch("/:projectId", isAuth, async (req, res) => {
       ...project,
       summary: project.summary ?? null,
       description: project.summary ?? null,
-      theme_json: normalizeThemeJsonOutput(project.theme_json),
+      theme_json: normalizeThemeJson(project.theme_json),
     });
   } catch (error) {
     res.status(500).json({ name: "InternalServerError", message: error.message });
@@ -551,7 +562,18 @@ router.delete("/:projectId", isAuth, async (req, res) => {
  */
 router.get("/:projectId/members", isAuth, async (req, res) => {
   const { projectId } = req.params;
+  const userId = req.session.userId;
+
   try {
+    const memberCheck = await pool.query(
+      "SELECT id FROM project_member WHERE project_id = $1 AND member_id = $2",
+      [projectId, userId]
+    );
+
+    if (memberCheck.rows.length === 0) {
+      return res.status(403).json({ name: "Forbidden", message: "Access denied." });
+    }
+
     const query = `
       SELECT m.id, m.name, m.email, pm.role_name
       FROM project_member pm
@@ -618,6 +640,11 @@ router.post("/:projectId/members", isAuth, async (req, res) => {
   const { member_id, role_name = "MEMBER" } = req.body;
   const userId = req.session.userId;
 
+  const ALLOWED_ROLES = ["OWNER", "ADMIN", "MEMBER"];
+  if (!ALLOWED_ROLES.includes(String(role_name || "").toUpperCase())) {
+    return res.status(400).json({ name: "BadRequest", message: "Invalid role_name." });
+  }
+
   try {
     const authCheck = await pool.query(
       "SELECT role_name FROM project_member WHERE project_id = $1 AND member_id = $2",
@@ -649,6 +676,38 @@ router.post("/:projectId/members", isAuth, async (req, res) => {
       message: "Member added.",
       id: insertRes.rows[0].id,
     });
+  } catch (error) {
+    res.status(500).json({ name: "InternalServerError", message: error.message });
+  }
+});
+
+/** GET /projects/:projectId/permission-requests — 프로젝트 전체 페이지 권한 신청 목록 (OWNER/ADMIN) */
+router.get("/:projectId/permission-requests", isAuth, async (req, res) => {
+  const { projectId } = req.params;
+  const userId = req.session.userId;
+
+  try {
+    const roleRes = await pool.query(
+      "SELECT role_name FROM project_member WHERE project_id = $1 AND member_id = $2",
+      [projectId, userId]
+    );
+    if (!roleRes.rows[0] || !["OWNER", "ADMIN"].includes(roleRes.rows[0].role_name)) {
+      return res.status(403).json({ name: "Forbidden", message: "권한이 없습니다." });
+    }
+
+    const result = await pool.query(
+      `SELECT r.id, r.status, r.reason, r.created_at,
+              p.id AS page_id, p.title AS page_title,
+              m.id AS requester_id, m.name AS requester_name, m.email AS requester_email
+       FROM page_permission_request r
+       JOIN page p ON p.id = r.page_id
+       JOIN member m ON m.id = r.requester_id
+       WHERE p.project_id = $1 AND r.status = 'PENDING'
+       ORDER BY r.created_at DESC`,
+      [projectId]
+    );
+
+    res.json(result.rows);
   } catch (error) {
     res.status(500).json({ name: "InternalServerError", message: error.message });
   }

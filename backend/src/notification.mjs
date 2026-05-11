@@ -9,6 +9,8 @@ export const NOTIFICATION_TYPES = {
   TASK_ASSIGNEE_REVIEW_TO_DONE: "task.assignee_review_to_done",
   CHANNEL_NOTICE_PROJECT_NEW_MESSAGE: "channel.notice_project_new_message",
   CHANNEL_NOTICE_WORKSPACE_NEW_MESSAGE: "channel.notice_workspace_new_message",
+  PAGE_PERMISSION_REQUESTED: "page_permission_request",
+  PAGE_PERMISSION_RESOLVED: "page_permission_resolved",
 };
 
 const toUniqueRecipientIds = (recipientIds, actorId) => {

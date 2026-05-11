@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <hgroup>
     <h1>{{ t("settings.member.header.title") }}</h1>
     <button type="button" class="btn btn--sm" @click="openInviteModal">
@@ -150,12 +150,6 @@ const removeMember = async (memberId) => {
 </script>
 
 <style scoped>
-.settings-member {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
 .member-list {
   list-style: none;
   padding: 0;
@@ -198,4 +192,3 @@ const removeMember = async (memberId) => {
   color: #6b7280;
 }
 </style>
-

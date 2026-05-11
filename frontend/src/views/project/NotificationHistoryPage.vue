@@ -71,6 +71,7 @@ import { computed, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 import api from "../../lib/axios";
+import { resolveNotificationPath, getNotificationIcon } from "../../lib/notificationNav";
 import BackLinkButton from "../../components/BackLinkButton.vue";
 import MaterialSymbol from "../../components/MaterialSymbol.vue";
 
@@ -102,46 +103,6 @@ const formatDateTime = (value) => {
   return date.toLocaleString();
 };
 
-const resolveNotificationPath = (notification) => {
-  const projectId = notification.project_id || currentProjectId.value;
-  const payload = notification.payload || {};
-  const channelId = payload.channel_id || notification.resource_id;
-  const taskId = payload.task_id || payload.issue_id || notification.resource_id;
-  const kanbanId = payload.kanban_id || payload.board_id;
-
-  if (
-    String(notification.type || "") === "issue.assigned_to_me" &&
-    projectId &&
-    kanbanId &&
-    taskId
-  ) {
-    return `/project/${projectId}/kanban/${kanbanId}/task/${taskId}`;
-  }
-
-  if (notification.resource_type === "channel" && projectId && channelId) {
-    return `/project/${projectId}/channel/${channelId}`;
-  }
-
-  if (notification.resource_type === "issue" && projectId) {
-    return `/project/${projectId}/kanban`;
-  }
-
-  if (projectId) {
-    return `/project/${projectId}/kanban`;
-  }
-
-  return "";
-};
-
-const getNotificationIcon = (notification) => {
-  const type = String(notification?.type || "");
-  if (type.includes("assigned")) return "assignment_ind";
-  if (type.includes("status")) return "task_alt";
-  if (type.includes("content")) return "edit_note";
-  if (type.includes("invited")) return "group_add";
-  if (type.includes("notice")) return "campaign";
-  return "notifications";
-};
 
 const fetchNotifications = async ({ append = false } = {}) => {
   if (append) {
@@ -201,7 +162,7 @@ const onClickNotification = async (item) => {
     await markAsRead(item.id);
   }
 
-  const nextPath = resolveNotificationPath(item);
+  const nextPath = resolveNotificationPath(item, currentProjectId.value);
   if (nextPath) {
     router.push(nextPath);
   }

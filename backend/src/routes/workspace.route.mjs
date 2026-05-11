@@ -3,6 +3,7 @@ import multer from "multer";
 import { Storage } from "@google-cloud/storage";
 import pool from "../db.mjs";
 import { isAuth } from "../middlewares/auth.middleware.mjs";
+import { normalizeThemeJson } from "../utils/parsers.mjs";
 import logger from "../logger.mjs";
 
 const router = express.Router();
@@ -29,33 +30,6 @@ const MIME_TO_EXTENSION = {
   "image/gif": "gif",
 };
 
-const normalizeThemeJsonInput = (themeJson) => {
-  if (!themeJson || typeof themeJson !== "object") return themeJson;
-  const gnb = themeJson.gnb || {};
-  const themeId = gnb.themeId;
-  if (!themeId) return themeJson;
-  return {
-    ...themeJson,
-    gnb: {
-      ...gnb,
-      themeId,
-    },
-  };
-};
-
-const normalizeThemeJsonOutput = (themeJson) => {
-  if (!themeJson || typeof themeJson !== "object") return themeJson;
-  const gnb = themeJson.gnb || {};
-  const themeId = gnb.themeId;
-  if (!themeId) return themeJson;
-  return {
-    ...themeJson,
-    gnb: {
-      ...gnb,
-      themeId,
-    },
-  };
-};
 
 const getWorkspaceMemberRole = async (workspaceId, memberId) => {
   const result = await pool.query(
@@ -213,7 +187,7 @@ router.get("/my", isAuth, async (req, res) => {
 
     const data = result.rows.map((workspace) => ({
       ...workspace,
-      theme_json: normalizeThemeJsonOutput(workspace.theme_json),
+      theme_json: normalizeThemeJson(workspace.theme_json),
     }));
 
     res.json(data);
@@ -306,7 +280,7 @@ router.get("/:workspaceId", isAuth, async (req, res) => {
 
     res.json({
       ...workspace,
-      theme_json: normalizeThemeJsonOutput(workspace.theme_json),
+      theme_json: normalizeThemeJson(workspace.theme_json),
     });
   } catch (error) {
     res.status(500).json({ name: "InternalServerError", message: error.message });
@@ -316,7 +290,7 @@ router.get("/:workspaceId", isAuth, async (req, res) => {
 router.put("/:workspaceId", isAuth, async (req, res) => {
   const { workspaceId } = req.params;
   const { name, theme_json } = req.body;
-  const normalizedThemeJson = normalizeThemeJsonInput(theme_json);
+  const normalizedThemeJson = normalizeThemeJson(theme_json);
   const userId = req.session.userId;
 
   const hasName = Object.prototype.hasOwnProperty.call(req.body || {}, "name");
@@ -369,7 +343,7 @@ router.put("/:workspaceId", isAuth, async (req, res) => {
     res.json({
       message: "Workspace updated.",
       ...updateRes.rows[0],
-      theme_json: normalizeThemeJsonOutput(updateRes.rows[0]?.theme_json),
+      theme_json: normalizeThemeJson(updateRes.rows[0]?.theme_json),
     });
   } catch (error) {
     res.status(500).json({ name: "InternalServerError", message: error.message });
@@ -565,7 +539,7 @@ router.delete("/:workspaceId/image", isAuth, async (req, res) => {
   }
 });
 
-router.get("/:workspaceId/image", async (req, res) => {
+router.get("/:workspaceId/image", isAuth, async (req, res) => {
   const { workspaceId } = req.params;
 
   try {
@@ -657,6 +631,11 @@ router.post("/:workspaceId/members", isAuth, async (req, res) => {
   const { workspaceId } = req.params;
   const { email, role_name = "MEMBER" } = req.body;
   const inviterId = req.session.userId;
+
+  const ALLOWED_ROLES = ["OWNER", "ADMIN", "MEMBER"];
+  if (!ALLOWED_ROLES.includes(String(role_name || "").toUpperCase())) {
+    return res.status(400).json({ name: "BadRequest", message: "Invalid role_name." });
+  }
 
   try {
     // 1. Check invite permission (OWNER or ADMIN).

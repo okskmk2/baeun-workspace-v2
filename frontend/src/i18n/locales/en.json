@@ -107,7 +107,8 @@
       "nav": {
         "general": "General",
         "members": "Members",
-        "notifications": "Notification History"
+        "notifications": "Notification History",
+        "permissionRequests": "Permission Requests"
       }
     }
   },
@@ -286,6 +287,25 @@
       },
       "confirm": {
         "remove": "Remove this member?"
+      },
+      "permissionRequests": {
+        "title": "Page Edit Permission Requests",
+        "empty": "No pending requests.",
+        "page": "Page",
+        "requester": "Requester",
+        "reason": "Reason",
+        "noReason": "No reason provided",
+        "approve": "Approve",
+        "reject": "Reject",
+        "status": {
+          "errorLoad": "Failed to load permission requests.",
+          "errorLoad2": "Failed to load member list."
+        },
+        "toast": {
+          "approved": "Approved.",
+          "rejected": "Rejected.",
+          "error": "Failed to process request."
+        }
       }
     }
   },
@@ -849,7 +869,38 @@
         "deleting": "Deleting...",
         "cancel": "Cancel",
         "save": "Save",
-        "saving": "Saving..."
+        "saving": "Saving...",
+        "requestEdit": "Request Edit Permission",
+        "requestPending": "Approval Pending",
+        "permissionRequestsCount": "{count} permission request(s)"
+      },
+      "permissionRequest": {
+        "modal": {
+          "title": "Request Edit Permission"
+        },
+        "reasonLabel": "Reason (optional)",
+        "reasonPlaceholder": "Describe why you need edit access.",
+        "submit": "Submit Request",
+        "submitting": "Submitting...",
+        "toast": {
+          "success": "Edit permission requested.",
+          "error": "Failed to submit request.",
+          "alreadyPending": "A pending request already exists."
+        }
+      },
+      "permissionRequestsModal": {
+        "title": "Edit Permission Requests",
+        "empty": "No pending requests.",
+        "requester": "Requester",
+        "reason": "Reason",
+        "noReason": "No reason provided",
+        "approve": "Approve",
+        "reject": "Reject",
+        "toast": {
+          "approved": "Approved.",
+          "rejected": "Rejected.",
+          "error": "Failed to process request."
+        }
       },
       "status": {
         "loading": "Loading...",
@@ -1516,6 +1567,16 @@
     "project": {
       "title": "Project does not exist.",
       "description": "The requested project could not be found or has already been deleted.",
+      "actions": {
+        "workspaces": "Go to workspaces",
+        "home": "Go home"
+      }
+    }
+  },
+  "forbidden": {
+    "project": {
+      "title": "You are not a project member.",
+      "description": "You do not have access to this project. Ask the project owner to add you as a member.",
       "actions": {
         "workspaces": "Go to workspaces",
         "home": "Go home"

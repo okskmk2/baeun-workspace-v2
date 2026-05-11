@@ -12,13 +12,36 @@
       </template>
       <template v-else>
         <button
+          v-if="canEdit"
           type="button"
           class="btn btn--secondary btn--sm"
-          :disabled="!canEdit"
           @click="startEdit"
         >
           <MaterialSymbol name="edit" :size="16" alt="" />
           {{ t("wiki.page.actions.edit") }}
+        </button>
+        <button
+          v-else-if="!isOwner"
+          type="button"
+          class="btn btn--secondary btn--sm"
+          :disabled="hasRequestPending"
+          @click="openRequestModal"
+        >
+          <MaterialSymbol name="lock_open" :size="16" alt="" />
+          {{
+            hasRequestPending
+              ? t("wiki.page.actions.requestPending")
+              : t("wiki.page.actions.requestEdit")
+          }}
+        </button>
+        <button
+          v-if="isOwner && pendingRequestCount > 0"
+          type="button"
+          class="btn btn--secondary btn--sm"
+          @click="openRequestsReviewModal"
+        >
+          <MaterialSymbol name="notifications" :size="16" alt="" />
+          {{ t("wiki.page.actions.permissionRequestsCount", { count: pendingRequestCount }) }}
         </button>
         <button type="button" class="btn btn--secondary btn--sm" @click="openPermissionModal">
           <MaterialSymbol name="admin_panel_settings" :size="16" alt="" />
@@ -88,6 +111,20 @@
     @saved="onPermissionSaved"
   />
 
+  <RequestEditPermissionModal
+    :open="isRequestOpen"
+    :page-id="pageId"
+    @close="closeRequestModal"
+    @submitted="onRequestSubmitted"
+  />
+
+  <PagePermissionRequestsModal
+    :open="isRequestsReviewOpen"
+    :page-id="pageId"
+    @close="closeRequestsReviewModal"
+    @updated="onRequestsUpdated"
+  />
+
   <ConfirmCancelEditModal
     :open="isCancelOpen"
     @close="closeCancelModal"
@@ -111,6 +148,8 @@ import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 import api from "../../lib/axios";
 import PagePermissionModal from "../../components/modals/PagePermissionModal.vue";
+import RequestEditPermissionModal from "../../components/modals/RequestEditPermissionModal.vue";
+import PagePermissionRequestsModal from "../../components/modals/PagePermissionRequestsModal.vue";
 import ConfirmCancelEditModal from "../../components/modals/ConfirmCancelEditModal.vue";
 import MovePageModal from "../../components/modals/MovePageModal.vue";
 import { addToast } from "../../lib/toast";
@@ -140,6 +179,10 @@ const isDeleting = ref(false);
 const isPermissionOpen = ref(false);
 const pageMembers = ref([]);
 const isCancelOpen = ref(false);
+const isRequestOpen = ref(false);
+const isRequestsReviewOpen = ref(false);
+const hasRequestPending = ref(false);
+const pendingRequestCount = ref(0);
 const isMoveOpen = ref(false);
 const isMoving = ref(false);
 const permissionRoleOptions = computed(() => [
@@ -262,12 +305,19 @@ const handleSaveShortcut = (event) => {
 };
 
 const fetchPageMembers = async () => {
+  // 페이지 이동 시 이전 상태를 즉시 초기화
+  pendingRequestCount.value = 0;
+  hasRequestPending.value = false;
+
   if (!projectId.value || !pageId.value) {
     pageMembers.value = [];
     return;
   }
   const res = await api.get(`/pages/${pageId.value}/members`);
   pageMembers.value = res.data || [];
+
+  // pageMembers 갱신 후 실행해야 isOwner/canEdit 판단이 정확함
+  await fetchPermissionRequestStatus();
 };
 
 const openPermissionModal = async () => {
@@ -281,6 +331,52 @@ const closePermissionModal = () => {
 
 const onPermissionSaved = async () => {
   await fetchPageMembers();
+};
+
+const pendingRequestKey = computed(
+  () => `perm-req-pending:${pageId.value}:${currentUserId.value}`
+);
+
+const fetchPermissionRequestStatus = async () => {
+  if (!pageId.value) return;
+  if (isOwner.value) {
+    try {
+      const res = await api.get(`/pages/${pageId.value}/permission-requests`);
+      pendingRequestCount.value = (res.data || []).length;
+    } catch {
+      pendingRequestCount.value = 0;
+    }
+  } else if (!canEdit.value && currentUserId.value) {
+    hasRequestPending.value = !!localStorage.getItem(pendingRequestKey.value);
+  }
+};
+
+const openRequestModal = () => {
+  isRequestOpen.value = true;
+};
+
+const closeRequestModal = () => {
+  isRequestOpen.value = false;
+};
+
+const onRequestSubmitted = () => {
+  hasRequestPending.value = true;
+  if (pendingRequestKey.value) {
+    localStorage.setItem(pendingRequestKey.value, "1");
+  }
+};
+
+const openRequestsReviewModal = () => {
+  isRequestsReviewOpen.value = true;
+};
+
+const closeRequestsReviewModal = () => {
+  isRequestsReviewOpen.value = false;
+};
+
+const onRequestsUpdated = async () => {
+  const res = await api.get(`/pages/${pageId.value}/permission-requests`);
+  pendingRequestCount.value = (res.data || []).length;
 };
 
 const openMoveModal = async () => {

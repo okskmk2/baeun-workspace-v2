@@ -67,6 +67,7 @@ import { useRoute, useRouter } from "vue-router";
 import api from "../lib/axios";
 import { GNB_OVERLAYS, useGnbOverlayStore } from "../stores/gnbOverlayStore";
 import { useRealtimeStore } from "../stores/realtimeStore";
+import { resolveNotificationPath } from "../lib/notificationNav";
 import MaterialSymbol from "./MaterialSymbol.vue";
 
 const { t } = useI18n();
@@ -91,37 +92,6 @@ const formatDateTime = (value) => {
   return date.toLocaleString();
 };
 
-const resolveNotificationPath = (notification) => {
-  const currentProjectId = route.params.projectId;
-  const projectId = notification.project_id || currentProjectId;
-  const payload = notification.payload || {};
-  const channelId = payload.channel_id || notification.resource_id;
-  const taskId = payload.task_id || payload.issue_id || notification.resource_id;
-  const kanbanId = payload.kanban_id || payload.board_id;
-
-  if (
-    String(notification.type || "") === "issue.assigned_to_me" &&
-    projectId &&
-    kanbanId &&
-    taskId
-  ) {
-    return `/project/${projectId}/kanban/${kanbanId}/task/${taskId}`;
-  }
-
-  if (notification.resource_type === "channel" && projectId && channelId) {
-    return `/project/${projectId}/channel/${channelId}`;
-  }
-
-  if (notification.resource_type === "issue" && projectId) {
-    return `/project/${projectId}/kanban`;
-  }
-
-  if (projectId) {
-    return `/project/${projectId}/kanban`;
-  }
-
-  return "";
-};
 
 const loadNotifications = async () => {
   try {
@@ -157,7 +127,7 @@ const onClickNotification = async (item) => {
   if (!item?.is_read) {
     await markAsRead(item.id);
   }
-  const nextPath = resolveNotificationPath(item);
+  const nextPath = resolveNotificationPath(item, route.params.projectId);
   closeMenu();
   if (nextPath) {
     router.push(nextPath);

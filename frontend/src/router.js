@@ -3,8 +3,6 @@ import { routes } from "./routes";
 import { useAppStore } from "./stores/appStore";
 import { useProjectMemberStore } from "./stores/projectMemberStore";
 
-let isAuthenticated = false;
-
 export const router = createRouter({
   routes,
   history: createWebHistory(),
@@ -19,9 +17,30 @@ router.beforeEach(async (to, from, next) => {
     window.sessionStorage.removeItem("auth:force-logout");
   }
 
-  isAuthenticated = Boolean(appStore.currentUser);
+  const isAuthenticated = Boolean(appStore.currentUser);
+  const requiresAuth = to.matched.some((record) => record.meta?.requiresAuth);
+  const requiresProjectMember = to.matched.some((record) => record.meta?.requiresProjectMember);
   const requiresProjectAdmin = to.matched.some((record) => record.meta?.requiresProjectAdmin);
-  if (requiresProjectAdmin && isAuthenticated) {
+
+  if ((requiresAuth || requiresProjectMember || requiresProjectAdmin) && !isAuthenticated) {
+    return next({ path: "/login" });
+  }
+
+  if (requiresProjectMember) {
+    const { projectId } = to.params;
+    try {
+      const members = await projectMemberStore.fetchProjectMembers(projectId);
+      const currentUserId = appStore.currentUser?.id;
+      const isMember = members.some((m) => String(m.id) === String(currentUserId));
+      if (!isMember) {
+        return next({ path: `/project/${projectId}/forbidden` });
+      }
+    } catch {
+      return next({ path: `/project/${projectId}/forbidden` });
+    }
+  }
+
+  if (requiresProjectAdmin) {
     const { projectId } = to.params;
     if (!projectId) {
       return next({ path: "/settings" });

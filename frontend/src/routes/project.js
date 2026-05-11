@@ -1,4 +1,5 @@
 import TaskDetailPage from "../views/project/TaskDetailPage.vue";
+import ProjectForbiddenPage from "../views/project/ProjectForbiddenPage.vue";
 import KanbanHomePage from "../views/project/KanbanHomePage.vue";
 import KanbanLayout from "../views/project/KanbanLayout.vue";
 import WikiLayout from "../views/project/WikiLayout.vue";
@@ -21,14 +22,20 @@ import KanbanArchivePage from "../views/project/KanbanArchivePage.vue";
 import ProjectSettingsLayout from "../views/project/ProjectSettingsLayout.vue";
 import ProjectSettingsHomePage from "../views/project/ProjectSettingsHomePage.vue";
 import ProjectSettingsMemberPage from "../views/project/ProjectSettingsMemberPage.vue";
+import ProjectSettingsPermissionsPage from "../views/project/ProjectSettingsPermissionsPage.vue";
 import NotificationHistoryPage from "../views/project/NotificationHistoryPage.vue";
 import BlankPage from "../views/project/BlankPage.vue";
 import BacklogPage from "../views/project/BacklogPage.vue";
 
 export const projectRoutes = [
   {
+    path: "/project/:projectId/forbidden",
+    component: ProjectForbiddenPage,
+  },
+  {
     path: "/project/:projectId",
     component: ProjectLayout,
+    meta: { requiresProjectMember: true },
     children: [
       {
         path: "",
@@ -139,6 +146,10 @@ export const projectRoutes = [
           {
             path: "member",
             component: ProjectSettingsMemberPage,
+          },
+          {
+            path: "permissions",
+            component: ProjectSettingsPermissionsPage,
           },
           {
             path: "notifications",

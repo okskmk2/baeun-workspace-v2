@@ -13,3 +13,11 @@ export const parseBooleanQuery = (value) => {
 };
 
 export const normalizeUpper = (value) => String(value || "").trim().toUpperCase();
+
+export const normalizeThemeJson = (themeJson) => {
+  if (!themeJson || typeof themeJson !== "object") return themeJson;
+  const gnb = themeJson.gnb || {};
+  const themeId = gnb.themeId;
+  if (!themeId) return themeJson;
+  return { ...themeJson, gnb: { ...gnb, themeId } };
+};

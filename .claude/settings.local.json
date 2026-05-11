@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(ls -R \"c:\\\\Users\\\\okskm\\\\private-projects\\\\baeun-workspace-v2\\\\backend\" -Depth 2 | Where-Object { $_.PSIsContainer } | Select-Object -ExpandProperty Name)"
+    ]
+  }
+}

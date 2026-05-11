@@ -7,6 +7,7 @@ import {
   resolveProjectIdFromPageId,
   resolveProjectIdFromRequest,
 } from "../middlewares/projectMember.middleware.mjs";
+import { createNotifications, NOTIFICATION_TYPES } from "../notification.mjs";
 import logger from "../logger.mjs";
 
 const router = express.Router();
@@ -898,5 +899,209 @@ router.post(
     client.release();
   }
 });
+
+// ─── Page Permission Requests ────────────────────────────────────────────────
+
+/** POST /pages/:pageId/permission-requests — 편집 권한 신청 */
+router.post(
+  "/:pageId/permission-requests",
+  isAuth,
+  resolveProjectIdFromPageId,
+  requireProjectMember,
+  async (req, res) => {
+    const { pageId } = req.params;
+    const userId = req.session.userId;
+    const { reason } = req.body;
+
+    try {
+      // 이미 OWNER/EDITOR이면 신청 불필요
+      const roleRes = await pool.query(
+        "SELECT role_name FROM page_member WHERE page_id = $1 AND member_id = $2",
+        [pageId, userId]
+      );
+      const currentRole = (roleRes.rows[0]?.role_name || "").toUpperCase();
+      if (["OWNER", "EDITOR"].includes(currentRole)) {
+        return res.status(400).json({ name: "BadRequest", message: "이미 편집 권한이 있습니다." });
+      }
+
+      // 기존 PENDING 신청 확인
+      const existingRes = await pool.query(
+        "SELECT id, status FROM page_permission_request WHERE page_id = $1 AND requester_id = $2",
+        [pageId, userId]
+      );
+      if (existingRes.rows.length > 0) {
+        const existing = existingRes.rows[0];
+        if (existing.status === "PENDING") {
+          return res.status(400).json({ name: "BadRequest", message: "이미 신청 중입니다." });
+        }
+        // 거절된 경우 재신청 허용: 기존 레코드 업데이트
+        await pool.query(
+          "UPDATE page_permission_request SET reason = $1, status = 'PENDING', created_at = current_timestamp WHERE id = $2",
+          [reason || null, existing.id]
+        );
+      } else {
+        await pool.query(
+          "INSERT INTO page_permission_request (page_id, requester_id, reason) VALUES ($1, $2, $3)",
+          [pageId, userId, reason || null]
+        );
+      }
+
+      // 페이지 정보 + 신청자 이름 조회
+      const pageRes = await pool.query("SELECT title FROM page WHERE id = $1", [pageId]);
+      const requesterRes = await pool.query("SELECT name FROM member WHERE id = $1", [userId]);
+      const pageTitle = pageRes.rows[0]?.title || "";
+      const requesterName = requesterRes.rows[0]?.name || "";
+
+      // 페이지 OWNER들에게 알림 발송 + WebSocket push
+      const ownersRes = await pool.query(
+        "SELECT member_id FROM page_member WHERE page_id = $1 AND role_name = 'OWNER'",
+        [pageId]
+      );
+      const projectId = req.projectId;
+
+      if (ownersRes.rows.length > 0) {
+        const ownerIds = ownersRes.rows.map((row) => row.member_id);
+        await createNotifications({
+          recipientIds: ownerIds,
+          actorId: userId,
+          type: NOTIFICATION_TYPES.PAGE_PERMISSION_REQUESTED,
+          resourceType: "page",
+          resourceId: Number(pageId),
+          projectId: Number(projectId),
+          title: `${requesterName}님이 "${pageTitle}" 페이지 편집 권한을 신청했습니다.`,
+          payload: { page_id: Number(pageId), page_title: pageTitle, project_id: Number(projectId) },
+        });
+      }
+
+      res.status(201).json({ message: "편집 권한 신청이 완료되었습니다." });
+    } catch (error) {
+      logger.error("page permission request error", { err: error?.message, stack: error?.stack });
+      res.status(500).json({ name: "InternalServerError", message: error.message });
+    }
+  }
+);
+
+/** GET /pages/:pageId/permission-requests — 신청 목록 조회 (페이지 OWNER) */
+router.get(
+  "/:pageId/permission-requests",
+  isAuth,
+  resolveProjectIdFromPageId,
+  requireProjectMember,
+  async (req, res) => {
+    const { pageId } = req.params;
+    const userId = req.session.userId;
+
+    try {
+      const ownerCheck = await pool.query(
+        "SELECT role_name FROM page_member WHERE page_id = $1 AND member_id = $2",
+        [pageId, userId]
+      );
+      if (!ownerCheck.rows[0] || ownerCheck.rows[0].role_name !== "OWNER") {
+        return res.status(403).json({ name: "Forbidden", message: "권한이 없습니다." });
+      }
+
+      const result = await pool.query(
+        `SELECT r.id, r.status, r.reason, r.created_at,
+                m.id AS requester_id, m.name AS requester_name, m.email AS requester_email
+         FROM page_permission_request r
+         JOIN member m ON m.id = r.requester_id
+         WHERE r.page_id = $1 AND r.status = 'PENDING'
+         ORDER BY r.created_at DESC`,
+        [pageId]
+      );
+
+      res.json(result.rows);
+    } catch (error) {
+      logger.error("page permission request list error", { err: error?.message, stack: error?.stack });
+      res.status(500).json({ name: "InternalServerError", message: error.message });
+    }
+  }
+);
+
+/** PATCH /pages/:pageId/permission-requests/:requestId — 승인/거절 (페이지 OWNER) */
+router.patch(
+  "/:pageId/permission-requests/:requestId",
+  isAuth,
+  resolveProjectIdFromPageId,
+  requireProjectMember,
+  async (req, res) => {
+    const { pageId, requestId } = req.params;
+    const userId = req.session.userId;
+    const { status } = req.body;
+
+    if (!["APPROVED", "REJECTED"].includes(String(status || "").toUpperCase())) {
+      return res.status(400).json({ name: "BadRequest", message: "status must be APPROVED or REJECTED" });
+    }
+
+    try {
+      const ownerCheck = await pool.query(
+        "SELECT role_name FROM page_member WHERE page_id = $1 AND member_id = $2",
+        [pageId, userId]
+      );
+      if (!ownerCheck.rows[0] || ownerCheck.rows[0].role_name !== "OWNER") {
+        return res.status(403).json({ name: "Forbidden", message: "권한이 없습니다." });
+      }
+
+      const requestRes = await pool.query(
+        "SELECT * FROM page_permission_request WHERE id = $1 AND page_id = $2",
+        [requestId, pageId]
+      );
+      if (requestRes.rows.length === 0) {
+        return res.status(404).json({ name: "NotFound", message: "신청을 찾을 수 없습니다." });
+      }
+
+      const request = requestRes.rows[0];
+      if (request.status !== "PENDING") {
+        return res.status(400).json({ name: "BadRequest", message: "이미 처리된 신청입니다." });
+      }
+
+      const normalizedStatus = status.toUpperCase();
+
+      await pool.query(
+        "UPDATE page_permission_request SET status = $1 WHERE id = $2",
+        [normalizedStatus, requestId]
+      );
+
+      if (normalizedStatus === "APPROVED") {
+        // EDITOR 권한 부여 (이미 있으면 업데이트)
+        await pool.query(
+          `INSERT INTO page_member (page_id, member_id, role_name)
+           VALUES ($1, $2, 'EDITOR')
+           ON CONFLICT (page_id, member_id) DO UPDATE SET role_name = 'EDITOR'`,
+          [pageId, request.requester_id]
+        );
+      }
+
+      // 신청자에게 결과 알림 + WebSocket push
+      const pageRes = await pool.query("SELECT title FROM page WHERE id = $1", [pageId]);
+      const pageTitle = pageRes.rows[0]?.title || "";
+      const projectId = req.projectId;
+
+      await createNotifications({
+        recipientIds: [request.requester_id],
+        actorId: userId,
+        type: NOTIFICATION_TYPES.PAGE_PERMISSION_RESOLVED,
+        resourceType: "page",
+        resourceId: Number(pageId),
+        projectId: Number(projectId),
+        title:
+          normalizedStatus === "APPROVED"
+            ? `"${pageTitle}" 페이지 편집 권한이 승인되었습니다.`
+            : `"${pageTitle}" 페이지 편집 권한 신청이 거절되었습니다.`,
+        payload: {
+          page_id: Number(pageId),
+          page_title: pageTitle,
+          project_id: Number(projectId),
+          resolved_status: normalizedStatus,
+        },
+      });
+
+      res.json({ message: normalizedStatus === "APPROVED" ? "승인되었습니다." : "거절되었습니다." });
+    } catch (error) {
+      logger.error("page permission request review error", { err: error?.message, stack: error?.stack });
+      res.status(500).json({ name: "InternalServerError", message: error.message });
+    }
+  }
+);
 
 export default router;
