@@ -67,6 +67,11 @@ const getColumnsByTableId = async (tableId) => {
   return result.rows;
 };
 
+const assertSchemaManagePermission = (roleName) => {
+  const role = normalizeRole(roleName);
+  return ["OWNER", "ADMIN"].includes(role);
+};
+
 const getTableInProjectContext = async (projectId, tableId, memberId) => {
   const project = await getProjectContext(projectId, memberId);
   if (!project) {
@@ -280,6 +285,7 @@ router.get("/projects/:projectId/tables/:tableId", isAuth, async (req, res) => {
         can_update_row: visibleColumns.some((column) => column.can_edit),
         can_delete_row: ["OWNER", "ADMIN"].includes(normalizeRole(roleName)),
         can_rename_table: ["OWNER", "ADMIN"].includes(normalizeRole(roleName)),
+        can_manage_schema: ["OWNER", "ADMIN"].includes(normalizeRole(roleName)),
         can_request_promotion:
           !table.is_asset && ["OWNER", "ADMIN"].includes(normalizeRole(context.project.project_role)),
       },
@@ -355,6 +361,261 @@ router.patch("/projects/:projectId/tables/:tableId", isAuth, async (req, res) =>
     }
     logger.error("rename data table error", { err: error?.message, stack: error?.stack });
     res.status(500).json({ name: "InternalServerError", message: error.message });
+  }
+});
+
+router.post("/projects/:projectId/tables/:tableId/columns", isAuth, async (req, res) => {
+  const { projectId, tableId } = req.params;
+  const userId = req.session.userId;
+  const columnName = String(req.body?.name || "").trim();
+  const type = normalizeRole(req.body?.type || "TEXT");
+  const isRequired = req.body?.is_required === true;
+  const isVisible = req.body?.is_visible !== false;
+  const options = Array.isArray(req.body?.options) ? req.body.options : [];
+
+  if (!columnName) {
+    return res.status(400).json({ name: "BadRequest", message: "컬럼 이름이 필요합니다." });
+  }
+  if (!COLUMN_TYPES.has(type)) {
+    return res.status(400).json({ name: "BadRequest", message: `지원하지 않는 컬럼 타입입니다: ${type}` });
+  }
+
+  try {
+    const context = await getTableInProjectContext(projectId, tableId, userId);
+    if (context.error) return res.status(context.status).json(context.error);
+    if (!assertSchemaManagePermission(context.roleName)) {
+      return res.status(403).json({ name: "Forbidden", message: "테이블 스키마 수정 권한이 없습니다." });
+    }
+
+    const nextSortRes = await pool.query(
+      "SELECT COALESCE(MAX(sort_order), -1) + 1 AS next_order FROM data_column WHERE table_id = $1",
+      [tableId]
+    );
+    const nextSortOrder = Number(nextSortRes.rows?.[0]?.next_order ?? 0);
+
+    const insertRes = await pool.query(
+      `INSERT INTO data_column
+         (table_id, name, type, options_json, is_visible, is_required, sort_order, permissions)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       RETURNING *`,
+      [
+        tableId,
+        columnName,
+        type,
+        type === "SELECT" ? JSON.stringify(options) : null,
+        isVisible,
+        isRequired,
+        nextSortOrder,
+        JSON.stringify(normalizePermissions(null, ["OWNER", "ADMIN", "MEMBER"])),
+      ]
+    );
+
+    await insertAuditLog({
+      tableId: Number(tableId),
+      action: "UPDATE",
+      beforeData: null,
+      afterData: { schema: { op: "add_column", column: insertRes.rows[0] } },
+      changedBy: userId,
+    });
+
+    res.status(201).json(insertRes.rows[0]);
+  } catch (error) {
+    if (error?.code === "23505") {
+      return res.status(409).json({ name: "Conflict", message: "같은 이름의 컬럼이 이미 존재합니다." });
+    }
+    logger.error("add data column error", { err: error?.message, stack: error?.stack });
+    res.status(500).json({ name: "InternalServerError", message: error.message });
+  }
+});
+
+router.patch("/projects/:projectId/tables/:tableId/columns/:columnId", isAuth, async (req, res) => {
+  const { projectId, tableId, columnId } = req.params;
+  const userId = req.session.userId;
+  const nextName = String(req.body?.name || "").trim();
+
+  if (!nextName) {
+    return res.status(400).json({ name: "BadRequest", message: "컬럼 이름이 필요합니다." });
+  }
+
+  const client = await pool.connect();
+  try {
+    const context = await getTableInProjectContext(projectId, tableId, userId);
+    if (context.error) return res.status(context.status).json(context.error);
+    if (!assertSchemaManagePermission(context.roleName)) {
+      return res.status(403).json({ name: "Forbidden", message: "테이블 스키마 수정 권한이 없습니다." });
+    }
+
+    await client.query("BEGIN");
+
+    const currentRes = await client.query(
+      "SELECT * FROM data_column WHERE id = $1 AND table_id = $2 FOR UPDATE",
+      [columnId, tableId]
+    );
+    const current = currentRes.rows[0] || null;
+    if (!current) {
+      await client.query("ROLLBACK");
+      return res.status(404).json({ name: "NotFound", message: "컬럼을 찾을 수 없습니다." });
+    }
+
+    const currentName = String(current.name || "");
+    if (currentName !== nextName) {
+      await client.query(
+        `UPDATE data_column
+            SET name = $1
+          WHERE id = $2`,
+        [nextName, columnId]
+      );
+
+      await client.query(
+        `UPDATE data_row
+            SET json_data = (json_data - $1::text) || jsonb_build_object($2::text, json_data->($1::text)),
+                updated_by = $3,
+                updated_at = CURRENT_TIMESTAMP
+          WHERE table_id = $4
+            AND json_data ? ($1::text)`,
+        [currentName, nextName, userId, tableId]
+      );
+    }
+
+    const updatedRes = await client.query("SELECT * FROM data_column WHERE id = $1", [columnId]);
+    const updated = updatedRes.rows[0] || null;
+
+    await insertAuditLog({
+      db: client,
+      tableId: Number(tableId),
+      action: "UPDATE",
+      beforeData: { schema: { op: "rename_column", column_id: Number(columnId), name: currentName } },
+      afterData: { schema: { op: "rename_column", column_id: Number(columnId), name: nextName } },
+      changedBy: userId,
+    });
+
+    await client.query("COMMIT");
+    res.json(updated);
+  } catch (error) {
+    await client.query("ROLLBACK");
+    if (error?.code === "23505") {
+      return res.status(409).json({ name: "Conflict", message: "같은 이름의 컬럼이 이미 존재합니다." });
+    }
+    logger.error("rename data column error", { err: error?.message, stack: error?.stack });
+    res.status(500).json({ name: "InternalServerError", message: error.message });
+  } finally {
+    client.release();
+  }
+});
+
+router.delete("/projects/:projectId/tables/:tableId/columns/:columnId", isAuth, async (req, res) => {
+  const { projectId, tableId, columnId } = req.params;
+  const userId = req.session.userId;
+
+  const client = await pool.connect();
+  try {
+    const context = await getTableInProjectContext(projectId, tableId, userId);
+    if (context.error) return res.status(context.status).json(context.error);
+    if (!assertSchemaManagePermission(context.roleName)) {
+      return res.status(403).json({ name: "Forbidden", message: "테이블 스키마 수정 권한이 없습니다." });
+    }
+
+    await client.query("BEGIN");
+
+    const currentRes = await client.query(
+      "SELECT * FROM data_column WHERE id = $1 AND table_id = $2 FOR UPDATE",
+      [columnId, tableId]
+    );
+    const current = currentRes.rows[0] || null;
+    if (!current) {
+      await client.query("ROLLBACK");
+      return res.status(404).json({ name: "NotFound", message: "컬럼을 찾을 수 없습니다." });
+    }
+
+    await client.query("DELETE FROM data_column WHERE id = $1", [columnId]);
+
+    await client.query(
+      `UPDATE data_row
+          SET json_data = json_data - $1,
+              updated_by = $2,
+              updated_at = CURRENT_TIMESTAMP
+        WHERE table_id = $3
+          AND json_data ? $1`,
+      [current.name, userId, tableId]
+    );
+
+    await insertAuditLog({
+      db: client,
+      tableId: Number(tableId),
+      action: "UPDATE",
+      beforeData: { schema: { op: "delete_column", column: current } },
+      afterData: { schema: { op: "delete_column", column_id: Number(columnId) } },
+      changedBy: userId,
+    });
+
+    await client.query("COMMIT");
+    res.json({ message: "컬럼이 삭제되었습니다." });
+  } catch (error) {
+    await client.query("ROLLBACK");
+    logger.error("delete data column error", { err: error?.message, stack: error?.stack });
+    res.status(500).json({ name: "InternalServerError", message: error.message });
+  } finally {
+    client.release();
+  }
+});
+
+router.post("/projects/:projectId/tables/:tableId/columns/reorder", isAuth, async (req, res) => {
+  const { projectId, tableId } = req.params;
+  const userId = req.session.userId;
+  const orderedColumnIds = Array.isArray(req.body?.orderedColumnIds) ? req.body.orderedColumnIds : [];
+
+  if (orderedColumnIds.length === 0) {
+    return res.status(400).json({ name: "BadRequest", message: "orderedColumnIds가 필요합니다." });
+  }
+
+  const client = await pool.connect();
+  try {
+    const context = await getTableInProjectContext(projectId, tableId, userId);
+    if (context.error) return res.status(context.status).json(context.error);
+    if (!assertSchemaManagePermission(context.roleName)) {
+      return res.status(403).json({ name: "Forbidden", message: "테이블 스키마 수정 권한이 없습니다." });
+    }
+
+    const columns = await getColumnsByTableId(tableId);
+    const currentIds = columns.map((column) => Number(column.id));
+    const normalizedNext = orderedColumnIds.map((value) => Number(value)).filter(Number.isFinite);
+    if (normalizedNext.length !== currentIds.length) {
+      return res.status(400).json({ name: "BadRequest", message: "컬럼 순서 정보가 올바르지 않습니다." });
+    }
+    const sortedCurrent = [...currentIds].sort((a, b) => a - b);
+    const sortedNext = [...normalizedNext].sort((a, b) => a - b);
+    for (let i = 0; i < sortedCurrent.length; i += 1) {
+      if (sortedCurrent[i] !== sortedNext[i]) {
+        return res.status(400).json({ name: "BadRequest", message: "컬럼 순서 정보가 올바르지 않습니다." });
+      }
+    }
+
+    await client.query("BEGIN");
+    for (let i = 0; i < normalizedNext.length; i += 1) {
+      await client.query(
+        "UPDATE data_column SET sort_order = $1 WHERE id = $2 AND table_id = $3",
+        [i, normalizedNext[i], tableId]
+      );
+    }
+
+    await insertAuditLog({
+      db: client,
+      tableId: Number(tableId),
+      action: "UPDATE",
+      beforeData: { schema: { op: "reorder_columns", ordered_ids: currentIds } },
+      afterData: { schema: { op: "reorder_columns", ordered_ids: normalizedNext } },
+      changedBy: userId,
+    });
+
+    await client.query("COMMIT");
+    const nextColumns = await getColumnsByTableId(tableId);
+    res.json({ columns: nextColumns });
+  } catch (error) {
+    await client.query("ROLLBACK");
+    logger.error("reorder data column error", { err: error?.message, stack: error?.stack });
+    res.status(500).json({ name: "InternalServerError", message: error.message });
+  } finally {
+    client.release();
   }
 });
 

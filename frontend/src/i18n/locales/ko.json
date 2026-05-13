@@ -1572,6 +1572,43 @@
       "empty": {
         "description": "데이터가 없습니다."
       }
+    },
+    "tablePage": {
+      "actions": {
+        "addRow": "행 추가",
+        "refresh": "새로고침",
+        "downloadTsv": "TSV 다운로드",
+        "editRow": "수정",
+        "deleteRow": "삭제",
+        "cancel": "취소",
+        "save": "저장",
+        "create": "생성",
+        "saving": "저장 중...",
+        "creating": "생성 중..."
+      },
+      "table": {
+        "management": "관리",
+        "empty": "데이터가 없습니다."
+      },
+      "modal": {
+        "titleEdit": "행 수정",
+        "titleCreate": "행 추가",
+        "emptyEditableColumns": "입력 가능한 컬럼이 없습니다. 컬럼 권한을 확인하세요."
+      },
+      "confirm": {
+        "deleteRow": "이 행을 삭제하시겠습니까?"
+      },
+      "toast": {
+        "rowUpdated": "행이 수정되었습니다.",
+        "rowCreated": "행이 추가되었습니다.",
+        "rowDeleted": "행이 삭제되었습니다."
+      },
+      "error": {
+        "updateRow": "행 수정에 실패했습니다.",
+        "createRow": "행 추가에 실패했습니다.",
+        "deleteRow": "행 삭제에 실패했습니다.",
+        "downloadNoColumns": "다운로드할 컬럼이 없습니다."
+      }
     }
   }
 }

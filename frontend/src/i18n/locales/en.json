@@ -1599,6 +1599,43 @@
       "empty": {
         "description": "No data available."
       }
+    },
+    "tablePage": {
+      "actions": {
+        "addRow": "Add Row",
+        "refresh": "Refresh",
+        "downloadTsv": "Download TSV",
+        "editRow": "Edit",
+        "deleteRow": "Delete",
+        "cancel": "Cancel",
+        "save": "Save",
+        "create": "Create",
+        "saving": "Saving...",
+        "creating": "Creating..."
+      },
+      "table": {
+        "management": "Actions",
+        "empty": "No data available."
+      },
+      "modal": {
+        "titleEdit": "Edit Row",
+        "titleCreate": "Add Row",
+        "emptyEditableColumns": "No editable columns are available. Check column permissions."
+      },
+      "confirm": {
+        "deleteRow": "Are you sure you want to delete this row?"
+      },
+      "toast": {
+        "rowUpdated": "Row has been updated.",
+        "rowCreated": "Row has been added.",
+        "rowDeleted": "Row has been deleted."
+      },
+      "error": {
+        "updateRow": "Failed to update row.",
+        "createRow": "Failed to add row.",
+        "deleteRow": "Failed to delete row.",
+        "downloadNoColumns": "There are no columns to download."
+      }
     }
   }
 }

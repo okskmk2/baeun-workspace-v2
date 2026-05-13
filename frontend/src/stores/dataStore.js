@@ -5,6 +5,14 @@ const DEFAULT_DEBOUNCE_MS = 500;
 
 const buildTableKey = (projectId, tableId) => `${projectId}:${tableId}`;
 
+const syncColumnsToDetail = (store, key, columns) => {
+  if (!store.tableDetailByKey[key]) return;
+  store.tableDetailByKey[key] = {
+    ...store.tableDetailByKey[key],
+    columns,
+  };
+};
+
 export const useDataStore = defineStore("data", {
   state: () => ({
     tablesByProject: {},
@@ -135,6 +143,53 @@ export const useDataStore = defineStore("data", {
     async renameTable(projectId, tableId, name) {
       const res = await api.patch(`/data/projects/${projectId}/tables/${tableId}`, { name });
       await Promise.all([this.fetchTables(projectId), this.fetchTableDetail(projectId, tableId)]);
+      return res.data;
+    },
+    async addTableColumn(projectId, tableId, payload = {}) {
+      const res = await api.post(`/data/projects/${projectId}/tables/${tableId}/columns`, payload);
+      const key = buildTableKey(projectId, tableId);
+      const nextColumns = [...(this.columnsByKey[key] || []), res.data];
+      this.columnsByKey[key] = nextColumns;
+      syncColumnsToDetail(this, key, nextColumns);
+      return res.data;
+    },
+    async renameTableColumn(projectId, tableId, columnId, name) {
+      const res = await api.patch(`/data/projects/${projectId}/tables/${tableId}/columns/${columnId}`, {
+        name,
+      });
+      const key = buildTableKey(projectId, tableId);
+      const nextColumns = (this.columnsByKey[key] || []).map((column) =>
+        String(column.id) === String(columnId)
+          ? { ...column, ...res.data, can_edit: column.can_edit }
+          : column
+      );
+      this.columnsByKey[key] = nextColumns;
+      syncColumnsToDetail(this, key, nextColumns);
+      return res.data;
+    },
+    async deleteTableColumn(projectId, tableId, columnId) {
+      const res = await api.delete(`/data/projects/${projectId}/tables/${tableId}/columns/${columnId}`);
+      const key = buildTableKey(projectId, tableId);
+      const nextColumns = (this.columnsByKey[key] || []).filter(
+        (column) => String(column.id) !== String(columnId)
+      );
+      this.columnsByKey[key] = nextColumns;
+      syncColumnsToDetail(this, key, nextColumns);
+      return res.data;
+    },
+    async reorderTableColumns(projectId, tableId, orderedColumnIds = []) {
+      const res = await api.post(`/data/projects/${projectId}/tables/${tableId}/columns/reorder`, {
+        orderedColumnIds,
+      });
+      const key = buildTableKey(projectId, tableId);
+      const columns = Array.isArray(res.data?.columns) ? res.data.columns : [];
+      const existingById = new Map((this.columnsByKey[key] || []).map((column) => [String(column.id), column]));
+      const nextColumns = columns.map((column) => {
+        const existing = existingById.get(String(column.id));
+        return existing ? { ...column, can_edit: existing.can_edit } : column;
+      });
+      this.columnsByKey[key] = nextColumns;
+      syncColumnsToDetail(this, key, nextColumns);
       return res.data;
     },
     async deleteTable(projectId, tableId) {

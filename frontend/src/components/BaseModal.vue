@@ -67,6 +67,9 @@ const onBackdropClick = () => {
   padding: 16px 24px 18px;
   width: 100%;
   border-radius: 8px;
+  max-height: 80%;
+  display: flex;
+  flex-direction: column;
 }
 
 .modal-header {
@@ -86,6 +89,7 @@ const onBackdropClick = () => {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  overflow-y: auto;
 }
 
 .icon-button {

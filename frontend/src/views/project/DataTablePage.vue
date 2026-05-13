@@ -6,9 +6,12 @@
     </div>
     <div class="actions">
       <button type="button" class="btn btn--secondary btn--sm" @click="addRow" :disabled="!capabilities.can_create_row">
-        행 추가
+        {{ t("data.tablePage.actions.addRow") }}
       </button>
-      <button type="button" class="btn  btn--secondary btn--sm" @click="reloadAll">새로고침</button>
+      <button type="button" class="btn  btn--secondary btn--sm" @click="reloadAll">{{ t("data.tablePage.actions.refresh") }}</button>
+      <button type="button" class="btn btn--secondary btn--sm" @click="downloadAsTsv">
+        {{ t("data.tablePage.actions.downloadTsv") }}
+      </button>
       <router-link class="btn btn--icon" :to="`/project/${projectId}/data/${tableId}/settings`">
         <MaterialSymbol name="settings" :size="18" />
       </router-link>
@@ -37,12 +40,12 @@
                 </div>
               </div>
             </th>
-            <th>관리</th>
+            <th>{{ t("data.tablePage.table.management") }}</th>
           </tr>
         </thead>
         <tbody>
           <tr v-if="rows.length === 0">
-            <td :colspan="columns.length + 1" class="empty-cell">데이터가 없습니다.</td>
+            <td :colspan="columns.length + 1" class="empty-cell">{{ t("data.tablePage.table.empty") }}</td>
           </tr>
           <tr v-for="row in rows" v-else :key="row.id">
             <td v-for="column in columns" :key="`cell-${row.id}-${column.id}`">
@@ -56,7 +59,7 @@
                   :disabled="!capabilities.can_update_row"
                   @click="startRowEdit(row)"
                 >
-                  수정
+                  {{ t("data.tablePage.actions.editRow") }}
                 </button>
                 <button
                   type="button"
@@ -64,7 +67,7 @@
                   :disabled="!capabilities.can_delete_row"
                   @click="removeRow(row.id)"
                 >
-                  삭제
+                  {{ t("data.tablePage.actions.deleteRow") }}
                 </button>
               </div>
             </td>
@@ -83,7 +86,7 @@
   >
     <form class="row-form" @submit.prevent="submitRowForm">
       <p v-if="editableColumns.length === 0" class="empty-cell">
-        입력 가능한 컬럼이 없습니다. 컬럼 권한을 확인하세요.
+        {{ t("data.tablePage.modal.emptyEditableColumns") }}
       </p>
 
       <div v-for="column in editableColumns" :key="`create-${column.id}`" class="row-form__item">
@@ -131,7 +134,7 @@
       <p v-if="createRowError" class="error-text">{{ createRowError }}</p>
 
       <div class="row-form__actions">
-        <button type="button" class="btn" @click="closeRowModal">취소</button>
+        <button type="button" class="btn" @click="closeRowModal">{{ t("data.tablePage.actions.cancel") }}</button>
         <button
           type="submit"
           class="btn"
@@ -158,6 +161,7 @@
 
 <script setup>
 import { computed, onMounted, ref, watch } from "vue";
+import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
 import api from "../../lib/axios";
@@ -166,6 +170,7 @@ import { useDataStore } from "../../stores/dataStore";
 import BaseModal from "../../components/BaseModal.vue";
 import MaterialSymbol from "../../components/MaterialSymbol.vue";
 
+const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const dataStore = useDataStore();
@@ -206,10 +211,20 @@ const activeRowId = ref(null);
 const rowForm = ref({});
 const isSubmittingRow = ref(false);
 const createRowError = ref("");
-const rowModalTitle = computed(() => (rowModalMode.value === "edit" ? "행 수정" : "행 추가"));
-const rowModalSubmitText = computed(() => (rowModalMode.value === "edit" ? "저장" : "생성"));
+const rowModalTitle = computed(() =>
+  rowModalMode.value === "edit"
+    ? t("data.tablePage.modal.titleEdit")
+    : t("data.tablePage.modal.titleCreate")
+);
+const rowModalSubmitText = computed(() =>
+  rowModalMode.value === "edit"
+    ? t("data.tablePage.actions.save")
+    : t("data.tablePage.actions.create")
+);
 const rowModalSubmittingText = computed(() =>
-  rowModalMode.value === "edit" ? "저장 중..." : "생성 중..."
+  rowModalMode.value === "edit"
+    ? t("data.tablePage.actions.saving")
+    : t("data.tablePage.actions.creating")
 );
 
 const displayValue = (row, column) => {
@@ -271,7 +286,7 @@ const closeRowModal = () => {
 
 const submitRowForm = async () => {
   if (editableColumns.value.length === 0) {
-    createRowError.value = "입력 가능한 컬럼이 없습니다.";
+    createRowError.value = t("data.tablePage.modal.emptyEditableColumns");
     return;
   }
 
@@ -290,10 +305,10 @@ const submitRowForm = async () => {
 
     if (rowModalMode.value === "edit" && activeRowId.value) {
       await dataStore.patchRow(projectId.value, tableId.value, activeRowId.value, payload);
-      addToast({ message: "행이 수정되었습니다.", type: "success" });
+      addToast({ message: t("data.tablePage.toast.rowUpdated"), type: "success" });
     } else {
       await dataStore.createRow(projectId.value, tableId.value, payload);
-      addToast({ message: "행이 추가되었습니다.", type: "success" });
+      addToast({ message: t("data.tablePage.toast.rowCreated"), type: "success" });
     }
 
     await dataStore.fetchRows(projectId.value, tableId.value);
@@ -302,23 +317,25 @@ const submitRowForm = async () => {
   } catch (error) {
     createRowError.value =
       error?.response?.data?.message ||
-      (rowModalMode.value === "edit" ? "행 수정에 실패했습니다." : "행 추가에 실패했습니다.");
+      (rowModalMode.value === "edit"
+        ? t("data.tablePage.error.updateRow")
+        : t("data.tablePage.error.createRow"));
   } finally {
     isSubmittingRow.value = false;
   }
 };
 
 const removeRow = async (rowId) => {
-  const confirmed = window.confirm("이 행을 삭제하시겠습니까?");
+  const confirmed = window.confirm(t("data.tablePage.confirm.deleteRow"));
   if (!confirmed) return;
   try {
     await api.delete(`/data/projects/${projectId.value}/tables/${tableId.value}/rows/${rowId}`);
     await dataStore.fetchRows(projectId.value, tableId.value);
     await dataStore.fetchAuditLogs(projectId.value, tableId.value);
-    addToast({ message: "행이 삭제되었습니다.", type: "success" });
+    addToast({ message: t("data.tablePage.toast.rowDeleted"), type: "success" });
   } catch (error) {
     addToast({
-      message: error?.response?.data?.message || "행 삭제에 실패했습니다.",
+      message: error?.response?.data?.message || t("data.tablePage.error.deleteRow"),
       type: "error",
     });
   }
@@ -328,6 +345,53 @@ const formatDateTime = (value) => {
   if (!value) return "-";
   const date = new Date(value);
   return date.toLocaleString();
+};
+
+const sanitizeFileName = (value = "") =>
+  String(value)
+    .trim()
+    .replace(/[\\/:*?"<>|]/g, "_")
+    .replace(/\s+/g, "_")
+    .replace(/_+/g, "_") || "data_table";
+
+const escapeTsvCell = (value) => {
+  if (value === null || value === undefined) return "";
+  const text = String(value);
+  if (!/[\t\n\r"]/g.test(text)) return text;
+  return `"${text.replaceAll('"', '""')}"`;
+};
+
+const downloadAsTsv = () => {
+  if (!columns.value.length) {
+    addToast({ message: t("data.tablePage.error.downloadNoColumns"), type: "error" });
+    return;
+  }
+
+  const headers = columns.value.map((column) => escapeTsvCell(column.name));
+  const bodyLines = rows.value.map((row) =>
+    columns.value
+      .map((column) => {
+        const cellValue = row?.json_data?.[column.name];
+        return escapeTsvCell(cellValue);
+      })
+      .join("\t")
+  );
+
+  const tsvText = [headers.join("\t"), ...bodyLines].join("\n");
+  const today = new Date().toISOString().slice(0, 10);
+  const fileName = `${sanitizeFileName(tableName.value)}_${today}.tsv`;
+
+  const blob = new Blob(["\uFEFF", tsvText], {
+    type: "text/tab-separated-values;charset=utf-8",
+  });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = fileName;
+  document.body.appendChild(anchor);
+  anchor.click();
+  document.body.removeChild(anchor);
+  URL.revokeObjectURL(url);
 };
 
 const reloadAll = async () => {
@@ -378,8 +442,9 @@ watch(
 }
 
 .grid-table {
-  width: 100%;
+  min-width: 100%;
   border-collapse: collapse;
+  white-space: nowrap;
 }
 
 .grid-table th,
@@ -387,6 +452,13 @@ watch(
   border-bottom: 1px solid var(--color-border, #e4e4e7);
   padding: 0.5rem;
   vertical-align: top;
+  min-width: 160px;
+}
+
+.grid-table td:last-child,
+.grid-table th:last-child {
+  min-width: unset;
+  white-space: nowrap;
 }
 
 .column-head {

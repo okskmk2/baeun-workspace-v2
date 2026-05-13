@@ -1,13 +1,11 @@
 <template>
   <BackLinkButton @click="goBackToTable">테이블로 돌아가기</BackLinkButton>
   <hgroup>
-    <h1>테이블 설정</h1>
-    <p class="subtitle">{{ tableName }} · 버전 {{ tableVersion }}</p>
-  </hgroup>
-
-  <section class="wire-card settings-card">
-    <h3>액션</h3>
-    <div class="settings-actions">
+    <div>
+      <h1>테이블 설정</h1>
+      <p class="subtitle">{{ tableName }} · 버전 {{ tableVersion }}</p>
+    </div>
+    <div class="actions">
       <button
         type="button"
         class="btn"
@@ -20,8 +18,9 @@
         Snapshot 생성
       </button>
     </div>
-    <p v-if="errorMessage" class="status error">{{ errorMessage }}</p>
-  </section>
+  </hgroup>
+
+  <p v-if="errorMessage" class="status error">{{ errorMessage }}</p>
 
   <DangerZone
     :title="'주의 구역'"
@@ -69,6 +68,86 @@
         </button>
       </div>
     </div>
+  </section>
+
+  <section class="wire-card settings-card">
+    <h3>테이블 스키마</h3>
+    <p class="webhook-help">컬럼 추가/이름 변경/삭제/순서 변경을 수행할 수 있습니다.</p>
+
+    <div class="schema-create">
+      <input
+        v-model="newColumnName"
+        type="text"
+        placeholder="새 컬럼 이름"
+        :disabled="!capabilities.can_manage_schema || isSchemaSaving"
+      />
+      <select v-model="newColumnType" :disabled="!capabilities.can_manage_schema || isSchemaSaving">
+        <option value="TEXT">TEXT</option>
+        <option value="NUMBER">NUMBER</option>
+        <option value="DATE">DATE</option>
+        <option value="SELECT">SELECT</option>
+      </select>
+      <button
+        type="button"
+        class="btn"
+        @click="addColumn"
+        :disabled="!capabilities.can_manage_schema || isSchemaSaving"
+      >
+        {{ isSchemaSaving ? "처리 중..." : "컬럼 추가" }}
+      </button>
+    </div>
+
+    <p v-if="schemaErrorMessage" class="status error">{{ schemaErrorMessage }}</p>
+
+    <ul class="schema-list">
+      <li v-for="(column, index) in schemaColumns" :key="column.id" class="schema-item">
+        <div class="schema-item__main">
+          <input
+            v-model="column.editName"
+            type="text"
+            :disabled="!capabilities.can_manage_schema || isSchemaSaving"
+          />
+          <span class="meta-badge is-type">{{ String(column.type || "").toUpperCase() }}</span>
+        </div>
+
+        <div class="schema-item__actions">
+          <button
+            type="button"
+            class="btn"
+            @click="moveColumn(index, -1)"
+            :aria-label="'위로 이동'"
+            :disabled="!capabilities.can_manage_schema || isSchemaSaving || index === 0"
+          >
+            <MaterialSymbol name="arrow_upward" :size="16" alt="" />
+          </button>
+          <button
+            type="button"
+            class="btn"
+            @click="moveColumn(index, 1)"
+            :aria-label="'아래로 이동'"
+            :disabled="!capabilities.can_manage_schema || isSchemaSaving || index === schemaColumns.length - 1"
+          >
+            <MaterialSymbol name="arrow_downward" :size="16" alt="" />
+          </button>
+          <button
+            type="button"
+            class="btn"
+            @click="renameColumn(column)"
+            :disabled="!capabilities.can_manage_schema || isSchemaSaving"
+          >
+            이름 변경
+          </button>
+          <button
+            type="button"
+            class="btn btn--danger"
+            @click="deleteColumn(column)"
+            :disabled="!capabilities.can_manage_schema || isSchemaSaving"
+          >
+            삭제
+          </button>
+        </div>
+      </li>
+    </ul>
   </section>
 
   <section class="wire-card settings-card">
@@ -131,6 +210,7 @@ import { addToast } from "../../lib/toast";
 import { useDataStore } from "../../stores/dataStore";
 import BackLinkButton from "../../components/BackLinkButton.vue";
 import DangerZone from "../../components/DangerZone.vue";
+import MaterialSymbol from "../../components/MaterialSymbol.vue";
 
 const route = useRoute();
 const router = useRouter();
@@ -151,6 +231,7 @@ const capabilities = computed(
       can_delete_row: false,
       can_request_promotion: false,
       can_rename_table: false,
+      can_manage_schema: false,
     }
 );
 
@@ -158,6 +239,11 @@ const isDeleting = ref(false);
 const isRenaming = ref(false);
 const errorMessage = ref("");
 const tableNameInput = ref("");
+const schemaColumns = ref([]);
+const newColumnName = ref("");
+const newColumnType = ref("TEXT");
+const isSchemaSaving = ref(false);
+const schemaErrorMessage = ref("");
 const webhookUrl = ref("");
 const webhookSecret = ref("");
 const webhookEvents = ref({
@@ -188,6 +274,18 @@ watch(
   { immediate: true }
 );
 
+watch(
+  () => tableDetail.value?.columns,
+  (nextColumns) => {
+    const source = Array.isArray(nextColumns) ? nextColumns : [];
+    schemaColumns.value = source.map((column) => ({
+      ...column,
+      editName: String(column?.name || ""),
+    }));
+  },
+  { immediate: true }
+);
+
 const goBackToTable = () => {
   if (projectId.value && tableId.value) {
     router.push(`/project/${projectId.value}/data/${tableId.value}/list`);
@@ -199,6 +297,92 @@ const goBackToTable = () => {
 const load = async () => {
   if (!projectId.value || !tableId.value) return;
   await dataStore.fetchTableDetail(projectId.value, tableId.value);
+};
+
+const addColumn = async () => {
+  schemaErrorMessage.value = "";
+  const name = String(newColumnName.value || "").trim();
+  if (!name) {
+    schemaErrorMessage.value = "컬럼 이름을 입력하세요.";
+    return;
+  }
+
+  isSchemaSaving.value = true;
+  try {
+    await dataStore.addTableColumn(projectId.value, tableId.value, {
+      name,
+      type: newColumnType.value,
+    });
+    newColumnName.value = "";
+    newColumnType.value = "TEXT";
+    addToast({ message: "컬럼이 추가되었습니다.", type: "success" });
+  } catch (error) {
+    schemaErrorMessage.value = error?.response?.data?.message || "컬럼 추가에 실패했습니다.";
+  } finally {
+    isSchemaSaving.value = false;
+  }
+};
+
+const renameColumn = async (column) => {
+  schemaErrorMessage.value = "";
+  const nextName = String(column?.editName || "").trim();
+  if (!nextName) {
+    schemaErrorMessage.value = "컬럼 이름을 입력하세요.";
+    return;
+  }
+  if (nextName === String(column?.name || "")) return;
+
+  isSchemaSaving.value = true;
+  try {
+    await dataStore.renameTableColumn(projectId.value, tableId.value, column.id, nextName);
+    addToast({ message: "컬럼 이름이 변경되었습니다.", type: "success" });
+  } catch (error) {
+    schemaErrorMessage.value = error?.response?.data?.message || "컬럼 이름 변경에 실패했습니다.";
+  } finally {
+    isSchemaSaving.value = false;
+  }
+};
+
+const deleteColumn = async (column) => {
+  schemaErrorMessage.value = "";
+  const confirmed = window.confirm(`컬럼 '${column?.name || ""}' 을(를) 삭제하시겠습니까?`);
+  if (!confirmed) return;
+
+  isSchemaSaving.value = true;
+  try {
+    await dataStore.deleteTableColumn(projectId.value, tableId.value, column.id);
+    addToast({ message: "컬럼이 삭제되었습니다.", type: "success" });
+  } catch (error) {
+    schemaErrorMessage.value = error?.response?.data?.message || "컬럼 삭제에 실패했습니다.";
+  } finally {
+    isSchemaSaving.value = false;
+  }
+};
+
+const moveColumn = async (index, direction) => {
+  const nextIndex = index + direction;
+  if (nextIndex < 0 || nextIndex >= schemaColumns.value.length) return;
+
+  schemaErrorMessage.value = "";
+  const nextColumns = [...schemaColumns.value];
+  const [picked] = nextColumns.splice(index, 1);
+  nextColumns.splice(nextIndex, 0, picked);
+  schemaColumns.value = nextColumns;
+
+  isSchemaSaving.value = true;
+  try {
+    await dataStore.reorderTableColumns(
+      projectId.value,
+      tableId.value,
+      nextColumns.map((column) => column.id)
+    );
+    addToast({ message: "컬럼 순서가 변경되었습니다.", type: "success" });
+  } catch (error) {
+    schemaErrorMessage.value = error?.response?.data?.message || "컬럼 순서 변경에 실패했습니다.";
+    await load();
+  } finally {
+    isSchemaSaving.value = false;
+  }
 };
 
 const renameTable = async () => {
@@ -414,5 +598,73 @@ dd {
 
 .webhook-actions {
   margin-top: 0.85rem;
+}
+
+.schema-create {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.schema-create input,
+.schema-create select {
+  border: 1px solid var(--color-border, #e4e4e7);
+  border-radius: 8px;
+  padding: 0.55rem 0.65rem;
+}
+
+.schema-list {
+  margin: 0.9rem 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.schema-item {
+  border: 1px solid var(--color-border, #e4e4e7);
+  border-radius: 10px;
+  padding: 0.65rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.schema-item__main {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.schema-item__main input {
+  min-width: 220px;
+  border: 1px solid var(--color-border, #e4e4e7);
+  border-radius: 8px;
+  padding: 0.45rem 0.55rem;
+}
+
+.schema-item__actions {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.meta-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.1rem 0.45rem;
+  font-size: 11px;
+  font-weight: 700;
+  border: 1px solid transparent;
+  line-height: 1.3;
+}
+
+.meta-badge.is-type {
+  background: #eaf3ff;
+  border-color: #c9ddff;
+  color: #1d4f91;
 }
 </style>
