@@ -266,7 +266,8 @@
       "status": {
         "loading": "Loading...",
         "errorInvite": "Invite failed.",
-        "errorRemove": "Failed to remove member."
+        "errorRemove": "Failed to remove member.",
+        "errorChangeRole": "Failed to change member role."
       },
       "actions": {
         "invite": "Invite Project Member",
@@ -723,15 +724,16 @@
       "fields": {
         "titlePlaceholder": "Enter a title",
         "descriptionPlaceholder": "Enter a description",
-        "priorityLabel": "Priority"
+        "priorityLabel": "Priority",
+        "dueDateLabel": "Due date"
       },
       "empty": {
         "description": "No description.",
-        "memberHistory": "No member history yet."
+        "memberHistory": "No participation history yet."
       },
       "sections": {
         "assignees": "Assignees",
-        "memberHistory": "Member history"
+        "memberHistory": "Participation history"
       },
       "roles": {
         "assignee": "Assignee",
@@ -789,7 +791,8 @@
         "titlePlaceholder": "Issue title",
         "descriptionLabel": "Description",
         "descriptionPlaceholder": "Enter issue details",
-        "priorityLabel": "Priority"
+        "priorityLabel": "Priority",
+        "dueDateLabel": "Due date"
       },
       "validation": {
         "noBoard": "Backlog board not found.",

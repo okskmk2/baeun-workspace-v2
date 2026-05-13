@@ -51,7 +51,9 @@ a {
   color: var(--color-link);
   text-decoration: underline;
   text-decoration-color: transparent;
-  transition: color 0.15s, text-decoration-color 0.15s;
+  transition:
+    color 0.15s,
+    text-decoration-color 0.15s;
 }
 
 /* a:hover {
@@ -105,6 +107,7 @@ main > hgroup {
   align-items: flex-start;
   justify-content: space-between;
   margin-bottom: 24px;
+  gap: 24px;
 }
 
 main > hgroup h1 {
@@ -134,5 +137,5 @@ main > hgroup .subtitle {
 main > hgroup .actions {
   display: flex;
   gap: 6px;
+  flex-shrink: 0;
 }
-

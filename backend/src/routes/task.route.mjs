@@ -302,7 +302,7 @@ router.get("/", isAuth, async (req, res) => {
  *         $ref: "#/components/responses/ErrorResponse"
  */
 router.post("/", isAuth, async (req, res) => {
-  const { title, content, kanban_id, status = "BACKLOG", priority = 0 } = req.body;
+  const { title, content, kanban_id, status = "BACKLOG", priority = 0, due_date } = req.body;
   const userId = req.session.userId;
   const normalizedPriority = Number(priority);
 
@@ -331,8 +331,8 @@ router.post("/", isAuth, async (req, res) => {
 
     // 작업 삽입
     const taskRes = await client.query(
-      `INSERT INTO task (title, content, kanban_id, status, priority) VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-      [title, content, kanban_id, status, normalizedPriority]
+      `INSERT INTO task (title, content, kanban_id, status, priority, due_date) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+      [title, content, kanban_id, status, normalizedPriority, due_date ?? null]
     );
     const newTask = taskRes.rows[0];
 
@@ -608,7 +608,7 @@ router.get("/:taskId/members", isAuth, async (req, res) => {
  */
 router.patch("/:taskId", isAuth, async (req, res) => {
   const { taskId } = req.params;
-  let { title, content, status, kanban_id, priority } = req.body; // Use 'let' for kanban_id as it might be reassigned
+  let { title, content, status, kanban_id, priority, due_date } = req.body;
   const actorId = req.session.userId;
   const client = await pool.connect();
 
@@ -669,9 +669,9 @@ router.patch("/:taskId", isAuth, async (req, res) => {
 
     const result = await client.query(
       `UPDATE task
-       SET title = COALESCE($1, title), content = COALESCE($2, content), status = COALESCE($3, status), kanban_id = COALESCE($4, kanban_id), priority = COALESCE($5, priority), updated_at = CURRENT_TIMESTAMP
-       WHERE id = $6 RETURNING *`,
-      [title, content, status, kanban_id, priority, taskId]
+       SET title = COALESCE($1, title), content = COALESCE($2, content), status = COALESCE($3, status), kanban_id = COALESCE($4, kanban_id), priority = COALESCE($5, priority), due_date = CASE WHEN $6::boolean THEN $7::timestamptz ELSE due_date END, updated_at = CURRENT_TIMESTAMP
+       WHERE id = $8 RETURNING *`,
+      [title, content, status, kanban_id, priority, 'due_date' in req.body, due_date ?? null, taskId]
     );
 
     const updatedTask = result.rows[0];

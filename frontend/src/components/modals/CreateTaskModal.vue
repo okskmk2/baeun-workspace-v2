@@ -54,6 +54,15 @@
         </div>
       </div>
 
+      <div class="form-field">
+        <label for="task-due-date">{{ t("backlog.page.modal.dueDateLabel") }}</label>
+        <input
+          id="task-due-date"
+          v-model="form.due_date"
+          type="date"
+        />
+      </div>
+
       <p v-if="formError" class="form-error">{{ formError }}</p>
       <div class="modal-actions">
         <button type="button" class="btn btn--secondary" @click="handleClose">
@@ -107,6 +116,7 @@ const form = ref({
   content: "",
   status: "BACKLOG",
   priority: 0,
+  due_date: "",
 });
 const isCreating = ref(false);
 const formError = ref("");
@@ -160,6 +170,7 @@ const handleSubmit = async () => {
       kanban_id: props.kanbanId,
       status: form.value.status,
       priority: form.value.priority,
+      due_date: form.value.due_date || null,
     });
     emit("created");
     handleClose();
@@ -180,6 +191,7 @@ watch(
         content: "",
         status: props.defaultStatus || "BACKLOG",
         priority: 0,
+        due_date: "",
       };
       formError.value = "";
     }

@@ -29,6 +29,15 @@ export const useProjectMemberStore = defineStore("projectMember", {
     getProjectMembers(projectId) {
       return this.membersByProject[projectId] || [];
     },
+    async updateMemberRole(projectId, memberId, roleName) {
+      if (!projectId || !memberId) return;
+      await api.patch(`/projects/${projectId}/members/${memberId}`, { role_name: roleName });
+      const members = this.membersByProject[projectId];
+      if (members) {
+        const target = members.find((m) => String(m.id) === String(memberId));
+        if (target) target.role_name = roleName;
+      }
+    },
     clearProjectMembers(projectId) {
       if (!projectId) return;
       delete this.membersByProject[projectId];

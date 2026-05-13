@@ -17,7 +17,18 @@
         <span>{{ member.email }}</span>
       </div>
       <div class="member-actions">
-        <span class="role">{{ getRoleLabel("project_member", member.role_name) }}</span>
+        <select
+          v-if="isOwner"
+          class="role-select"
+          :value="member.role_name"
+          :disabled="isRoleChangeDisabled(member)"
+          @change="onRoleChange(member, $event.target.value)"
+        >
+          <option value="OWNER">{{ getRoleLabel("project_member", "OWNER") }}</option>
+          <option value="ADMIN">{{ getRoleLabel("project_member", "ADMIN") }}</option>
+          <option value="MEMBER">{{ getRoleLabel("project_member", "MEMBER") }}</option>
+        </select>
+        <span v-else class="role">{{ getRoleLabel("project_member", member.role_name) }}</span>
         <button
           type="button"
           class="btn btn--danger btn--sm"
@@ -53,6 +64,7 @@ import AddProjectMemberModal from "../../components/modals/AddProjectMemberModal
 import MaterialSymbol from "../../components/MaterialSymbol.vue";
 import { useProjectMemberStore } from "../../stores/projectMemberStore";
 import { useWorkspaceStore } from "../../stores/workspaceStore";
+import { useAppStore } from "../../stores/appStore";
 import { useRoleLabels } from "../../lib/roleLabels";
 
 const { t } = useI18n();
@@ -62,6 +74,7 @@ const route = useRoute();
 const projectId = computed(() => route.params.projectId);
 const projectMemberStore = useProjectMemberStore();
 const workspaceStore = useWorkspaceStore();
+const appStore = useAppStore();
 
 const workspaceId = computed(() => workspaceStore.getProject(projectId.value)?.workspace_id);
 
@@ -71,6 +84,14 @@ const isLoading = ref(false);
 const isInviteOpen = ref(false);
 const errorMessage = ref("");
 const removingMemberId = ref(null);
+
+const currentUserId = computed(() => appStore.currentUser?.id);
+
+const isOwner = computed(() => {
+  if (!currentUserId.value) return false;
+  const me = projectMembers.value.find((m) => String(m.id) === String(currentUserId.value));
+  return me?.role_name === "OWNER";
+});
 
 const fetchProjectMembers = async () => {
   if (!projectId.value) return;
@@ -103,6 +124,22 @@ const fetchWorkspaceMembers = async () => {
 const isRemoveDisabled = (member) => {
   if (removingMemberId.value === member.id) return true;
   return String(member.role_name || "").toUpperCase() === "OWNER";
+};
+
+const isRoleChangeDisabled = (member) => {
+  return String(member.id) === String(currentUserId.value);
+};
+
+const onRoleChange = async (member, newRole) => {
+  if (!newRole || newRole === member.role_name) return;
+  const prevRole = member.role_name;
+  errorMessage.value = "";
+  try {
+    await projectMemberStore.updateMemberRole(projectId.value, member.id, newRole);
+  } catch (error) {
+    errorMessage.value = error?.response?.data?.message || t("settings.member.status.errorChangeRole");
+    member.role_name = prevRole;
+  }
 };
 
 const openInviteModal = async () => {
@@ -190,5 +227,21 @@ const removeMember = async (memberId) => {
 .role {
   font-size: 12px;
   color: #6b7280;
+}
+
+.role-select {
+  font-size: 12px;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 3px 6px;
+  background-color: #ffffff;
+  cursor: pointer;
+}
+
+.role-select:disabled {
+  color: #9ca3af;
+  cursor: not-allowed;
+  background-color: #f9fafb;
 }
 </style>

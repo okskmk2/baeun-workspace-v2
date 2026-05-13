@@ -1,6 +1,13 @@
 <template>
   <hgroup>
-    <h1 class="WikiPageTitle">{{ page.title || t("wiki.page.header.fallbackTitle") }}</h1>
+    <input
+      v-if="isEditing"
+      id="page-title"
+      v-model.trim="editForm.title"
+      type="text"
+      class="WikiPageTitle edit-title-input"
+    />
+    <h1 v-else class="WikiPageTitle">{{ page.title || t("wiki.page.header.fallbackTitle") }}</h1>
     <div class="actions">
       <template v-if="isEditing">
         <button type="button" class="btn btn--secondary btn--sm" @click="cancelEdit">
@@ -73,8 +80,6 @@
   <p v-else-if="errorMessage">{{ errorMessage }}</p>
   <article v-else>
     <template v-if="isEditing">
-      <label class="edit-label" for="page-title">{{ t("wiki.page.fields.titleLabel") }}</label>
-      <input id="page-title" v-model.trim="editForm.title" type="text" class="edit-input" />
       <div class="edit-split">
         <section class="edit-pane">
           <label class="edit-label" for="page-content">
@@ -465,6 +470,17 @@ watch(projectId, fetchPageMembers);
 <style scoped>
 .WikiPageTitle {
   font-size: 32px;
+}
+
+.edit-title-input {
+  width: 100%;
+  border: 1px solid var(--color-input-border);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-weight: bold;
+  background-color: var(--color-input-bg);
+  color: var(--color-text);
+  line-height: 1.2;
 }
 
 .actions .btn {

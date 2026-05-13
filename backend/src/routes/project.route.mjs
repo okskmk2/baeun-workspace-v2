@@ -222,6 +222,105 @@ router.post("/", isAuth, async (req, res) => {
 /**
  * @swagger
  * /api/projects/{projectId}/members/{memberId}:
+ *   patch:
+ *     summary: Update project member role
+ *     description: Change a project member's role (OWNER only)
+ *     tags:
+ *       - Project
+ *     parameters:
+ *       - in: path
+ *         name: projectId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *       - in: path
+ *         name: memberId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               role_name:
+ *                 type: string
+ *             required:
+ *               - role_name
+ *     responses:
+ *       200:
+ *         $ref: "#/components/responses/Success200Message"
+ *       400:
+ *         $ref: "#/components/responses/ErrorResponse"
+ *       403:
+ *         $ref: "#/components/responses/ErrorResponse"
+ *       500:
+ *         $ref: "#/components/responses/ErrorResponse"
+ */
+router.patch("/:projectId/members/:memberId", isAuth, async (req, res) => {
+  const { projectId, memberId } = req.params;
+  const { role_name } = req.body;
+  const actorId = req.session.userId;
+  const targetMemberId = Number(memberId);
+
+  const ALLOWED_ROLES = ["OWNER", "ADMIN", "MEMBER"];
+  if (!role_name || !ALLOWED_ROLES.includes(String(role_name).toUpperCase())) {
+    return res.status(400).json({ name: "BadRequest", message: "Invalid role_name." });
+  }
+
+  if (!Number.isInteger(targetMemberId) || targetMemberId <= 0) {
+    return res.status(400).json({ name: "BadRequest", message: "Invalid member id." });
+  }
+
+  try {
+    const actorCheck = await pool.query(
+      "SELECT role_name FROM project_member WHERE project_id = $1 AND member_id = $2",
+      [projectId, actorId]
+    );
+
+    if (!actorCheck.rows[0] || actorCheck.rows[0].role_name !== "OWNER") {
+      return res.status(403).json({ name: "Forbidden", message: "No permission to change member role." });
+    }
+
+    if (String(actorId) === String(targetMemberId)) {
+      return res.status(400).json({ name: "BadRequest", message: "You cannot change your own role." });
+    }
+
+    const targetCheck = await pool.query(
+      "SELECT role_name FROM project_member WHERE project_id = $1 AND member_id = $2",
+      [projectId, targetMemberId]
+    );
+
+    if (!targetCheck.rows[0]) {
+      return res.status(404).json({ name: "NotFound", message: "Member not found in project." });
+    }
+
+    if (targetCheck.rows[0].role_name === "OWNER" && String(role_name).toUpperCase() !== "OWNER") {
+      const ownerCountRes = await pool.query(
+        "SELECT COUNT(*)::int AS count FROM project_member WHERE project_id = $1 AND role_name = 'OWNER'",
+        [projectId]
+      );
+      if ((ownerCountRes.rows[0]?.count || 0) <= 1) {
+        return res.status(403).json({ name: "Forbidden", message: "Cannot demote the last OWNER." });
+      }
+    }
+
+    await pool.query(
+      "UPDATE project_member SET role_name = $1 WHERE project_id = $2 AND member_id = $3",
+      [String(role_name).toUpperCase(), projectId, targetMemberId]
+    );
+
+    res.json({ message: "Member role updated." });
+  } catch (error) {
+    res.status(500).json({ name: "InternalServerError", message: error.message });
+  }
+});
+
+/**
+ * @swagger
+ * /api/projects/{projectId}/members/{memberId}:
  *   delete:
  *     summary: Remove project member
  *     description: Remove a project member (OWNER only)

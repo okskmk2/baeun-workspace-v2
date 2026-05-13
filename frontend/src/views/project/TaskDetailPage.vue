@@ -46,6 +46,15 @@
             </option>
           </select>
         </div>
+        <label for="task-due-date" class="task-priority-label">{{
+          t("task.detail.fields.dueDateLabel")
+        }}</label>
+        <input
+          id="task-due-date"
+          v-model="editForm.due_date"
+          type="date"
+          class="task-due-date-input"
+        />
       </template>
     </div>
     <div class="actions">
@@ -94,6 +103,12 @@
 
   <section v-else class="task-grid">
     <div class="task-main">
+      <div v-if="!isEditing" class="task-due-date-display">
+        <template v-if="task.due_date">
+          <MaterialSymbol name="schedule" :size="14" alt="" />
+          <span :class="dueDateClass">{{ formatDueDateDisplay(task.due_date) }}</span>
+        </template>
+      </div>
       <p v-if="!isEditing && task.content">{{ task.content }}</p>
       <p v-else-if="!isEditing">{{ t("task.detail.empty.description") }}</p>
       <textarea
@@ -184,8 +199,9 @@ const isEnteringChat = ref(false);
 const editForm = ref({
   title: "",
   content: "",
-  status: "BACKLOG", // Added status field
+  status: "BACKLOG",
   priority: 0,
+  due_date: "",
 });
 
 const allStatuses = ["BACKLOG", "PENDING", "IN_PROGRESS", "IN_REVIEW", "DONE"]; // Define all possible statuses
@@ -283,6 +299,30 @@ const formatDate = (value) => {
   return date.toLocaleString();
 };
 
+const toDateInputValue = (value) => {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toISOString().slice(0, 10);
+};
+
+const formatDueDateDisplay = (value) => {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+};
+
+const dueDateClass = computed(() => {
+  if (!task.value?.due_date) return "";
+  const due = new Date(task.value.due_date);
+  if (Number.isNaN(due.getTime())) return "";
+  const diffDays = (due - new Date()) / (1000 * 60 * 60 * 24);
+  if (diffDays < 0) return "task-due-date--overdue";
+  if (diffDays < 2) return "task-due-date--soon";
+  return "";
+});
+
 const hasMemberInRole = (role, memberId) => {
   const key = (role || "").toUpperCase();
   return taskMembers.value.some((member) => {
@@ -319,6 +359,7 @@ const fetchTask = async (options = {}) => {
         content: task.value.content || "",
         status: task.value.status || "BACKLOG",
         priority: Number.isFinite(Number(task.value.priority)) ? Number(task.value.priority) : 0,
+        due_date: toDateInputValue(task.value.due_date),
       };
     }
   } catch (error) {
@@ -376,8 +417,9 @@ const startEditing = () => {
   editForm.value = {
     title: task.value.title || "",
     content: task.value.content || "",
-    status: task.value.status || "BACKLOG", // Initialize status
+    status: task.value.status || "BACKLOG",
     priority: Number.isFinite(Number(task.value.priority)) ? Number(task.value.priority) : 0,
+    due_date: toDateInputValue(task.value.due_date),
   };
 };
 
@@ -386,8 +428,9 @@ const cancelEditing = () => {
   editForm.value = {
     title: task.value.title || "",
     content: task.value.content || "",
-    status: task.value.status || "BACKLOG", // Reset status
+    status: task.value.status || "BACKLOG",
     priority: Number.isFinite(Number(task.value.priority)) ? Number(task.value.priority) : 0,
+    due_date: toDateInputValue(task.value.due_date),
   };
 };
 
@@ -407,6 +450,7 @@ const saveTask = async () => {
       content: editForm.value.content,
       status: editForm.value.status,
       priority: editForm.value.priority,
+      due_date: editForm.value.due_date || null,
     });
     task.value = {
       ...task.value,
@@ -414,6 +458,7 @@ const saveTask = async () => {
       content: editForm.value.content,
       status: editForm.value.status,
       priority: editForm.value.priority,
+      due_date: editForm.value.due_date || null,
     };
     isEditing.value = false;
     addToast({ message: t("task.detail.toast.updated"), type: "success" });
@@ -658,6 +703,32 @@ const addRelatedMemberByRole = async (role, memberId) => {
   border: 1px solid #e5e7eb;
   font-size: 14px;
   min-width: 80px;
+}
+
+.task-due-date-input {
+  padding: 6px 10px;
+  border-radius: 4px;
+  border: 1px solid #e5e7eb;
+  font-size: 14px;
+}
+
+.task-due-date-display {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--color-text-muted);
+  margin-bottom: 8px;
+}
+
+.task-due-date--soon {
+  color: var(--color-warning);
+  font-weight: 500;
+}
+
+.task-due-date--overdue {
+  color: var(--color-danger);
+  font-weight: 500;
 }
 
 .task-content-input {

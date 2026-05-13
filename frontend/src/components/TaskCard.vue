@@ -21,27 +21,27 @@
       -->
     </div>
 
-    <hr class="card-divider" />
+    <!-- <hr class="card-divider" /> -->
 
     <div class="meta-list">
-      <template v-if="task.assignee_members?.length">
-        <Tag
-          v-for="assignee in task.assignee_members"
-          :key="`${task.id}-${assignee.id}-${assignee.role_name}`"
-          :variant="assignee.role_name ? getTaskRoleVariant(assignee.role_name) : 'default'"
-          :title="assignee.role_name ? getRoleLabel(roleScope, assignee.role_name) : ''"
-          :aria-label="assignee.role_name ? getRoleLabel(roleScope, assignee.role_name) : ''"
-        >
-          <MaterialSymbol
-            v-if="assignee.role_name"
-            :name="getTaskRoleIconName(assignee.role_name)"
-            :size="14"
-            alt=""
-          />
-          {{ assignee.name }}
-        </Tag>
-      </template>
+      <div v-if="sortedMembers.length" class="avatar-group">
+        <Avatar
+          v-for="(member, index) in sortedMembers"
+          :key="`${task.id}-${member.id}-${member.role_name}`"
+          :text="getAvatarText(member.name)"
+          :size="22"
+          :image-url="getMemberImageUrl(member.id)"
+          :label="`${member.name} · ${getRoleLabel(roleScope, member.role_name)}`"
+          :title="`${member.name} · ${getRoleLabel(roleScope, member.role_name)}`"
+          :style="{ zIndex: sortedMembers.length - index }"
+          class="avatar-item"
+        />
+      </div>
       <p v-else class="empty-assignees">{{ emptyAssigneesText }}</p>
+      <span v-if="task.due_date" :class="dueDateClass" class="due-date">
+        <MaterialSymbol name="schedule" :size="12" alt="" />
+        {{ formatDueDate(task.due_date) }}
+      </span>
     </div>
   </article>
 </template>
@@ -49,9 +49,9 @@
 <script setup>
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
+import Avatar from "./Avatar.vue";
 import MaterialSymbol from "./MaterialSymbol.vue";
-import Tag from "./Tag.vue";
-import { getTaskRoleIconName, getTaskRoleVariant, useRoleLabels } from "../lib/roleLabels";
+import { useRoleLabels } from "../lib/roleLabels";
 
 const props = defineProps({
   task: { type: Object, required: true },
@@ -65,6 +65,45 @@ const props = defineProps({
 const emit = defineEmits(["dragstart"]);
 const { t } = useI18n();
 const { getRoleLabel } = useRoleLabels();
+
+const ROLE_PRIORITY = { ASSIGNEE: 0, REPORTER: 1, REVIEWER: 2, WATCHER: 3 };
+
+const sortedMembers = computed(() => {
+  const members = props.task.assignee_members || [];
+  return [...members].sort((a, b) => {
+    const pa = ROLE_PRIORITY[(a.role_name || "").toUpperCase()] ?? 99;
+    const pb = ROLE_PRIORITY[(b.role_name || "").toUpperCase()] ?? 99;
+    return pa - pb;
+  });
+});
+
+const getMemberImageUrl = (memberId) => (memberId ? `/api/members/${memberId}/profile/image` : "");
+
+const formatDueDate = (value) => {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+};
+
+const dueDateClass = computed(() => {
+  if (!props.task.due_date) return "";
+  const now = new Date();
+  const due = new Date(props.task.due_date);
+  if (Number.isNaN(due.getTime())) return "";
+  const diffMs = due - now;
+  const diffDays = diffMs / (1000 * 60 * 60 * 24);
+  if (diffDays < 0) return "due-date--overdue";
+  if (diffDays < 2) return "due-date--soon";
+  return "";
+});
+
+const getAvatarText = (name) => {
+  if (!name) return "?";
+  const parts = String(name).trim().split(/\s+/);
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+  return String(name).slice(0, 2).toUpperCase();
+};
 
 const cardClass = computed(() => ["task-card", `task-card--${props.variant}`]);
 
@@ -167,27 +206,52 @@ const handleDragStart = (event) => {
   gap: 6px;
 }
 
-.card-divider {
-  border: none;
-  border-top: 1px solid var(--color-border);
-  margin: 8px 0;
+.meta-list {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 22px;
+  gap: 6px;
 }
 
-.meta-list {
+.avatar-group {
   display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
+  flex-direction: row;
   align-items: center;
 }
 
-.task-card--kanban .meta-list {
-  flex-direction: column;
-  align-items: flex-start;
+.avatar-item {
+  margin-left: -6px;
+  border: 2px solid var(--color-surface);
+  box-sizing: content-box;
+}
+
+.avatar-item:first-child {
+  margin-left: 0;
 }
 
 .empty-assignees {
   margin: 0;
   font-size: 12px;
   color: #94a3b8;
+}
+
+.due-date {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 11px;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.due-date--soon {
+  color: var(--color-warning);
+}
+
+.due-date--overdue {
+  color: var(--color-danger);
 }
 </style>

@@ -266,7 +266,8 @@
       "status": {
         "loading": "불러오는 중...",
         "errorInvite": "초대에 실패했습니다.",
-        "errorRemove": "구성원을 제거하지 못했습니다."
+        "errorRemove": "구성원을 제거하지 못했습니다.",
+        "errorChangeRole": "역할을 변경하지 못했습니다."
       },
       "actions": {
         "invite": "프로젝트 구성원 초대",
@@ -723,15 +724,16 @@
       "fields": {
         "titlePlaceholder": "제목을 입력하세요",
         "descriptionPlaceholder": "설명을 입력하세요",
-        "priorityLabel": "우선순위"
+        "priorityLabel": "우선순위",
+        "dueDateLabel": "마감일"
       },
       "empty": {
         "description": "설명 없음.",
-        "memberHistory": "멤버 이력이 없습니다."
+        "memberHistory": "참여 이력이 없습니다."
       },
       "sections": {
         "assignees": "담당자",
-        "memberHistory": "멤버 이력"
+        "memberHistory": "참여 이력"
       },
       "roles": {
         "assignee": "담당자",
@@ -789,7 +791,8 @@
         "titlePlaceholder": "이슈 제목",
         "descriptionLabel": "설명",
         "descriptionPlaceholder": "이슈 내용을 입력하세요",
-        "priorityLabel": "우선순위"
+        "priorityLabel": "우선순위",
+        "dueDateLabel": "마감일"
       },
       "validation": {
         "noBoard": "백로그 보드를 찾을 수 없습니다.",
