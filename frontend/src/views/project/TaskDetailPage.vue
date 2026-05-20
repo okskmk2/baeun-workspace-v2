@@ -109,15 +109,18 @@
           <span :class="dueDateClass">{{ formatDueDateDisplay(task.due_date) }}</span>
         </template>
       </div>
-      <p v-if="!isEditing && task.content">{{ task.content }}</p>
+      <div
+        v-if="!isEditing && hasTaskContent"
+        class="task-content-view rte-rendered"
+        v-html="renderedTaskContent"
+      ></div>
       <p v-else-if="!isEditing">{{ t("task.detail.empty.description") }}</p>
-      <textarea
+      <RichTextEditor
         v-else
-        v-model.trim="editForm.content"
+        v-model="editForm.content"
         class="task-content-input"
-        rows="8"
         :placeholder="t('task.detail.fields.descriptionPlaceholder')"
-      ></textarea>
+      />
     </div>
     <aside class="task-meta">
       <h2>{{ t("task.detail.sections.assignees") }}</h2>
@@ -176,6 +179,7 @@ import MaterialSymbol from "../../components/MaterialSymbol.vue";
 import Tag from "../../components/Tag.vue";
 import RelatedMemberPicker from "../../components/RelatedMemberPicker.vue";
 import BackLinkButton from "../../components/BackLinkButton.vue";
+import RichTextEditor from "../../components/RichTextEditor.vue";
 import { getTaskRoleIconName, getTaskRoleVariant } from "../../lib/roleLabels";
 import { convertSnakeToCamel } from "../../lib/utils";
 
@@ -318,6 +322,52 @@ const dueDateClass = computed(() => {
   if (diffDays < 0) return "task-due-date--overdue";
   if (diffDays < 2) return "task-due-date--soon";
   return "";
+});
+
+const escapeHtml = (value = "") =>
+  String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+
+const sanitizeRichHtml = (html = "") => {
+  const div = document.createElement("div");
+  div.innerHTML = String(html || "");
+
+  div.querySelectorAll("script").forEach((node) => node.remove());
+  div.querySelectorAll("*").forEach((node) => {
+    [...node.attributes].forEach((attr) => {
+      const name = String(attr.name || "").toLowerCase();
+      const value = String(attr.value || "").trim().toLowerCase();
+      if (name.startsWith("on")) {
+        node.removeAttribute(attr.name);
+        return;
+      }
+      if ((name === "href" || name === "src") && value.startsWith("javascript:")) {
+        node.removeAttribute(attr.name);
+      }
+    });
+  });
+
+  return div.innerHTML;
+};
+
+const contentLooksLikeHtml = (value = "") => /<\/?[a-z][\s\S]*>/i.test(String(value));
+
+const renderedTaskContent = computed(() => {
+  const raw = String(task.value?.content || "");
+  if (!raw.trim()) return "";
+  if (contentLooksLikeHtml(raw)) {
+    return sanitizeRichHtml(raw);
+  }
+  return `<p>${escapeHtml(raw).replaceAll("\n", "<br>")}</p>`;
+});
+
+const hasTaskContent = computed(() => {
+  const plain = renderedTaskContent.value.replace(/<[^>]*>/g, "").trim();
+  return plain.length > 0;
 });
 
 const hasMemberInRole = (role, memberId) => {
@@ -638,9 +688,13 @@ const addRelatedMemberByRole = async (role, memberId) => {
   grid-column: span 9;
 }
 
-.task-main p {
+.task-main > p {
   white-space: pre-wrap;
   line-height: 1.5;
+}
+
+.task-content-view {
+  margin-top: 4px;
 }
 
 .task-meta {
@@ -731,11 +785,6 @@ const addRelatedMemberByRole = async (role, memberId) => {
 .task-content-input {
   width: 100%;
   min-height: 35rem;
-  padding: 10px;
-  border-radius: 4px;
-  border: 1px solid #e5e7eb;
-  font-size: 14px;
-  resize: vertical;
 }
 
 .task-meta h2 {

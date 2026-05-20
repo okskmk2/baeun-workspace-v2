@@ -131,7 +131,7 @@ import ContextSwicher from "../../components/ContextSwicher.vue";
 import UnreadDot from "../../components/UnreadDot.vue";
 import FloatingActionButton from "../../components/FloatingActionButton.vue";
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const projectMemberStore = useProjectMemberStore();
@@ -235,6 +235,45 @@ const searchResults = computed(() => {
 const unreadChannelIds = computed(() => chatStore.getUnreadChannelIds(projectId.value));
 const showSearchPanel = computed(() => isSearchOpen.value && hasSearchQuery.value);
 const hasUnreadChannelMessage = computed(() => unreadChannelIds.value.length > 0);
+
+const resolveProjectSectionTitle = (path) => {
+  const normalizedPath = normalizePath(path);
+
+  if (normalizedPath.includes("/wiki")) {
+    return t("layout.project.nav.wiki");
+  }
+  if (normalizedPath.includes("/kanban")) {
+    return t("layout.project.nav.kanban");
+  }
+  if (normalizedPath.includes("/channel")) {
+    return t("layout.project.nav.messenger");
+  }
+  if (normalizedPath.includes("/data")) {
+    return t("layout.project.nav.data");
+  }
+  if (normalizedPath.includes("/settings")) {
+    return t("layout.project.util.settings");
+  }
+
+  return "";
+};
+
+const pageTitle = computed(() => {
+  // Make title reactive to locale changes as well.
+  void locale.value;
+
+  const appTitle = t("layout.default.brand") || "Baeun Workspace";
+  const sectionTitle = resolveProjectSectionTitle(route.path);
+  const resolvedProjectName = String(projectName.value || t("layout.project.projectNameFallback")).trim();
+
+  if (sectionTitle && resolvedProjectName) {
+    return `${sectionTitle} | ${resolvedProjectName} | ${appTitle}`;
+  }
+  if (resolvedProjectName) {
+    return `${resolvedProjectName} | ${appTitle}`;
+  }
+  return appTitle;
+});
 
 const normalizePath = (value) => String(value || "").replace(/\/+$/, "");
 const channelRoomPathPrefix = computed(() => {
@@ -494,6 +533,15 @@ watch(
   { immediate: true }
 );
 
+watch(
+  pageTitle,
+  (value) => {
+    if (typeof document === "undefined") return;
+    document.title = value;
+  },
+  { immediate: true }
+);
+
 onMounted(() => {
   unsubscribeTaskCreated = realtimeStore.subscribe("task", handleTaskEvent);
   unsubscribeChannelMessage = realtimeStore.subscribe("channelMessage", handleChannelMessageEvent);
@@ -509,6 +557,9 @@ onBeforeUnmount(() => {
     unsubscribeChannelMessage = null;
   }
   applyTheme("");
+  if (typeof document !== "undefined") {
+    document.title = t("layout.default.brand") || "Baeun Workspace";
+  }
 });
 </script>
 
