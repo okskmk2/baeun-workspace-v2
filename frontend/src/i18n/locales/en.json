@@ -688,7 +688,6 @@
     "priority": {
       "relaxed": "Relaxed",
       "normal": "Normal",
-      "high": "High",
       "urgent": "Urgent"
     },
     "status": {
@@ -1496,6 +1495,11 @@
       "language": "Language",
       "region": "Region",
       "save": "Save locale",
+      "saving": "Saving...",
+      "status": {
+        "saved": "Locale settings saved.",
+        "error": "Failed to save locale settings."
+      },
       "languageOptions": {
         "ko": "Korean",
         "en": "English"

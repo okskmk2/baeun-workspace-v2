@@ -110,7 +110,6 @@ const cardClass = computed(() => ["task-card", `task-card--${props.variant}`]);
 const getPriorityIconName = (priority) => {
   const parsed = Number(priority);
   if (Number.isNaN(parsed)) return "";
-  if (parsed === 2) return "stat_2";
   if (parsed === 1) return "stat_1";
   if (parsed === 0) return "stat_0";
   if (parsed === -1) return "stat_minus_1";
@@ -119,8 +118,7 @@ const getPriorityIconName = (priority) => {
 
 const getPriorityColor = (priority) => {
   const parsed = Number(priority);
-  if (parsed === 2) return "var(--color-danger)";
-  if (parsed === 1) return "var(--color-warning)";
+  if (parsed === 1) return "var(--color-danger)";
   if (parsed === 0) return "var(--color-info)";
   if (parsed === -1) return "var(--color-text-muted)";
   return null;
@@ -128,8 +126,7 @@ const getPriorityColor = (priority) => {
 
 const getPriorityLabel = (priority) => {
   const parsed = Number(priority);
-  if (parsed === 2) return t("task.priority.urgent");
-  if (parsed === 1) return t("task.priority.high");
+  if (parsed === 1) return t("task.priority.urgent");
   if (parsed === 0) return t("task.priority.normal");
   if (parsed === -1) return t("task.priority.relaxed");
   return "";

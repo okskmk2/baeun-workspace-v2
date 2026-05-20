@@ -95,6 +95,8 @@ create table member (
     password varchar(255) not null,
     email varchar(255) not null constraint member_email_unique unique,
     img_url varchar(512),
+    locale varchar(8) default 'ko' not null check (locale in ('ko', 'en')),
+    region varchar(8) default 'kr' not null check (region in ('kr', 'us')),
     created_at timestamptz default CURRENT_TIMESTAMP,
     role_name varchar(20) default 'MEMBER'
 );
@@ -165,7 +167,7 @@ create table task (
     ),
     created_at timestamptz default CURRENT_TIMESTAMP,
     updated_at timestamptz default CURRENT_TIMESTAMP,
-    priority smallint default 0,
+    priority smallint default 0 check (priority in (-1, 0, 1)),
     due_date timestamptz default null
 );
 create table channel (

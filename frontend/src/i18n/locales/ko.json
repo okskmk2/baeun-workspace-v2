@@ -688,7 +688,6 @@
     "priority": {
       "relaxed": "여유",
       "normal": "보통",
-      "high": "우선",
       "urgent": "긴급"
     },
     "status": {
@@ -1469,6 +1468,11 @@
       "language": "언어",
       "region": "지역",
       "save": "로케일 저장",
+      "saving": "저장 중...",
+      "status": {
+        "saved": "로케일이 저장되었습니다.",
+        "error": "로케일 저장에 실패했습니다."
+      },
       "languageOptions": {
         "ko": "한국어",
         "en": "영어"

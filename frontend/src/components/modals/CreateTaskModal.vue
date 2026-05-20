@@ -121,15 +121,13 @@ const form = ref({
 const isCreating = ref(false);
 const formError = ref("");
 const priorityOptions = [
-  { value: 2, labelKey: "task.priority.urgent" },
-  { value: 1, labelKey: "task.priority.high" },
+  { value: 1, labelKey: "task.priority.urgent" },
   { value: 0, labelKey: "task.priority.normal" },
   { value: -1, labelKey: "task.priority.relaxed" },
 ];
 
 const getPriorityIconName = (priority) => {
   const parsed = Number(priority);
-  if (parsed === 2) return "stat_2";
   if (parsed === 1) return "stat_1";
   if (parsed === 0) return "stat_0";
   if (parsed === -1) return "stat_minus_1";
@@ -138,8 +136,7 @@ const getPriorityIconName = (priority) => {
 
 const getPriorityColor = (priority) => {
   const parsed = Number(priority);
-  if (parsed === 2) return "var(--color-danger)";
-  if (parsed === 1) return "var(--color-warning)";
+  if (parsed === 1) return "var(--color-danger)";
   if (parsed === 0) return "var(--color-info)";
   if (parsed === -1) return "var(--color-text-muted)";
   return "var(--color-text-muted)";

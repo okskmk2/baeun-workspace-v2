@@ -114,7 +114,9 @@
             <option value="us">{{ t("profile.locale.regionOptions.us") }}</option>
           </select>
         </label>
-        <button class="btn" type="button">{{ t("profile.locale.save") }}</button>
+        <button class="btn" type="button" :disabled="isSavingLocale" @click="saveLocale">
+          {{ isSavingLocale ? t("profile.locale.saving") : t("profile.locale.save") }}
+        </button>
       </div>
     </div>
 
@@ -147,6 +149,7 @@
 import { computed, nextTick, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import api from "../../lib/axios";
+import { addToast } from "../../lib/toast";
 import { persistLocale, supportedLocales } from "../../i18n";
 import Avatar from "../../components/Avatar.vue";
 import DangerZone from "../../components/DangerZone.vue";
@@ -168,6 +171,7 @@ const isUploadingImage = ref(false);
 const isRemovingImage = ref(false);
 const uploadImageError = ref("");
 const uploadImageMessage = ref("");
+const isSavingLocale = ref(false);
 
 const nameInputRef = ref(null);
 const isEditingName = ref(false);
@@ -182,6 +186,15 @@ const fetchProfile = async () => {
   try {
     const res = await api.get("/members/me");
     profile.value = res.data || {};
+    const localeValue = String(res.data?.locale || "").toLowerCase();
+    if (supportedLocales.includes(localeValue) && locale.value !== localeValue) {
+      locale.value = localeValue;
+    }
+
+    const regionValue = String(res.data?.region || "").toLowerCase();
+    if (regionValue === "kr" || regionValue === "us") {
+      region.value = regionValue;
+    }
   } catch (error) {
     profile.value = {};
     errorMessage.value = t("profile.status.error");
@@ -332,6 +345,40 @@ const saveName = async () => {
     nameError.value = error?.response?.data?.message || t("profile.name.error");
   } finally {
     isSavingName.value = false;
+  }
+};
+
+const saveLocale = async () => {
+  if (isSavingLocale.value) return;
+
+  const localeValue = String(locale.value || "").toLowerCase();
+  const regionValue = String(region.value || "").toLowerCase();
+
+  if (!supportedLocales.includes(localeValue) || !(regionValue === "kr" || regionValue === "us")) {
+    addToast({ message: t("profile.locale.status.error"), type: "error" });
+    return;
+  }
+
+  isSavingLocale.value = true;
+  try {
+    const res = await api.patch("/members/me", {
+      locale: localeValue,
+      region: regionValue,
+    });
+
+    const payload = res?.data || {};
+    const { message, ...memberData } = payload;
+    profile.value = { ...profile.value, ...memberData };
+    if (appStore.currentUser) {
+      appStore.setCurrentUser({ ...appStore.currentUser, ...memberData });
+    }
+
+    addToast({ message: message || t("profile.locale.status.saved"), type: "success" });
+  } catch (error) {
+    const message = error?.response?.data?.message || t("profile.locale.status.error");
+    addToast({ message, type: "error" });
+  } finally {
+    isSavingLocale.value = false;
   }
 };
 

@@ -306,10 +306,10 @@ router.post("/", isAuth, async (req, res) => {
   const userId = req.session.userId;
   const normalizedPriority = Number(priority);
 
-  if (![2, 1, 0, -1].includes(normalizedPriority)) {
+  if (![1, 0, -1].includes(normalizedPriority)) {
     return res.status(400).json({
       name: "BadRequest",
-      message: "priority는 2, 1, 0, -1 중 하나여야 합니다.",
+      message: "priority는 1, 0, -1 중 하나여야 합니다.",
     });
   }
 
@@ -614,10 +614,10 @@ router.patch("/:taskId", isAuth, async (req, res) => {
 
   if (priority !== undefined) {
     const parsedPriority = Number(priority);
-    if (![2, 1, 0, -1].includes(parsedPriority)) {
+    if (![1, 0, -1].includes(parsedPriority)) {
       return res.status(400).json({
         name: "BadRequest",
-        message: "priority는 2, 1, 0, -1 중 하나여야 합니다.",
+        message: "priority는 1, 0, -1 중 하나여야 합니다.",
       });
     }
     priority = parsedPriority;

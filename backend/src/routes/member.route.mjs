@@ -24,6 +24,8 @@ const upload = multer({
 });
 
 const ALLOWED_IMAGE_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
+const ALLOWED_MEMBER_LOCALES = new Set(["ko", "en"]);
+const ALLOWED_MEMBER_REGIONS = new Set(["kr", "us"]);
 
 const MIME_TO_EXTENSION = {
   "image/jpeg": "jpg",
@@ -449,7 +451,7 @@ router.post("/logout", isAuth, (req, res) => {
  */
 router.get("/me", isAuth, async (req, res) => {
   try {
-    const query = "SELECT id, name, email, img_url, role_name, created_at FROM member WHERE id = $1";
+    const query = "SELECT id, name, email, img_url, locale, region, role_name, created_at FROM member WHERE id = $1";
     const result = await pool.query(query, [req.session.userId]);
     const row = result.rows[0];
     if (!row) {
@@ -832,19 +834,37 @@ router.delete("/profile/image", isAuth, async (req, res) => {
  *         $ref: "#/components/responses/ErrorResponse"
  */
 router.patch("/me", isAuth, async (req, res) => {
-  const { name } = req.body;
+  const { name, locale, region } = req.body || {};
+
+  if (name === undefined && locale === undefined && region === undefined) {
+    return res.status(400).json({ name: "BadRequest", message: "at least one field is required." });
+  }
 
   if (name !== undefined && (typeof name !== "string" || !name.trim())) {
     return res.status(400).json({ name: "BadRequest", message: "name must be a non-empty string." });
   }
 
+  if (locale !== undefined) {
+    if (typeof locale !== "string" || !ALLOWED_MEMBER_LOCALES.has(locale)) {
+      return res.status(400).json({ name: "BadRequest", message: "locale must be one of: ko, en." });
+    }
+  }
+
+  if (region !== undefined) {
+    if (typeof region !== "string" || !ALLOWED_MEMBER_REGIONS.has(region)) {
+      return res.status(400).json({ name: "BadRequest", message: "region must be one of: kr, us." });
+    }
+  }
+
   try {
     const result = await pool.query(
       `UPDATE member
-       SET name = COALESCE($1, name)
-       WHERE id = $2
-       RETURNING id, name, email, img_url`,
-      [name?.trim() ?? null, req.session.userId]
+       SET name = COALESCE($1, name),
+           locale = COALESCE($2, locale),
+           region = COALESCE($3, region)
+       WHERE id = $4
+       RETURNING id, name, email, img_url, locale, region`,
+      [name?.trim() ?? null, locale ?? null, region ?? null, req.session.userId]
     );
 
     if (result.rows.length === 0) {
