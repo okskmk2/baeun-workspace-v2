@@ -5,11 +5,16 @@
     }
   },
   "assistantChat": {
+    "progress": {
+      "preparing": "Preparing your request..."
+    },
     "errors": {
       "default": "Failed to generate a response. Please try again later.",
       "quotaExceeded": "AI usage quota has been reached. Please try again shortly.",
       "quotaExceededWithRetry": "AI usage quota has been reached. Please try again in about {seconds} seconds.",
-      "generationFailed": "Failed to generate an AI response. Please try again later."
+      "generationFailed": "Failed to generate an AI response. Please try again later.",
+      "upstreamTemporary": "The AI provider is temporarily unavailable. Please try again shortly.",
+      "upstreamTemporaryWithRetry": "The AI provider is temporarily unavailable. Please try again in about {seconds} seconds."
     }
   },
   "roles": {

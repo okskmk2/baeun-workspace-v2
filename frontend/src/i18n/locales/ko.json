@@ -5,11 +5,16 @@
     }
   },
   "assistantChat": {
+    "progress": {
+      "preparing": "요청을 준비하는 중..."
+    },
     "errors": {
       "default": "응답을 생성하지 못했습니다. 잠시 후 다시 시도해주세요.",
       "quotaExceeded": "현재 AI 사용 한도에 도달했습니다. 잠시 후 다시 시도해주세요.",
       "quotaExceededWithRetry": "현재 AI 사용 한도에 도달했습니다. 약 {seconds}초 후 다시 시도해주세요.",
-      "generationFailed": "AI 응답 생성에 실패했습니다. 잠시 후 다시 시도해주세요."
+      "generationFailed": "AI 응답 생성에 실패했습니다. 잠시 후 다시 시도해주세요.",
+      "upstreamTemporary": "AI 제공자 서버가 일시적으로 불안정합니다. 잠시 후 다시 시도해주세요.",
+      "upstreamTemporaryWithRetry": "AI 제공자 서버가 일시적으로 불안정합니다. 약 {seconds}초 후 다시 시도해주세요."
     }
   },
   "roles": {

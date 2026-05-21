@@ -61,13 +61,43 @@
             v-html="renderAssistantMarkdown(message.text)"
             @click="handleMarkdownClick"
           ></div>
-          <div v-else>{{ message.text }}</div>
+          <div
+            v-if="message.role === 'assistant' && message.metadata?.action_name === 'wiki_to_data'"
+            class="assistant-action"
+          >
+            <div v-if="message.metadata?.action_status === 'preview'" class="assistant-action__preview">
+              <strong>실행 미리보기</strong>
+              <p>
+                테이블:
+                {{ message.metadata?.preview?.inferred_schema?.table_name || "(자동 생성)" }}
+              </p>
+              <p>
+                컬럼:
+                {{ message.metadata?.preview?.inferred_schema?.columns?.length || 0 }}개,
+                행: {{ message.metadata?.preview?.row_count || 0 }}개
+              </p>
+              <button type="button" class="btn btn--sm" :disabled="isReplying" @click="confirmWikiToDataAction">
+                실행해
+              </button>
+            </div>
+            <div v-else-if="message.metadata?.action_status === 'completed'" class="assistant-action__done">
+              <strong>실행 완료</strong>
+              <p>
+                적재 행 수: {{ message.metadata?.imported?.rows || 0 }}개 / 컬럼:
+                {{ message.metadata?.imported?.columns || 0 }}개
+              </p>
+            </div>
+          </div>
+          <div v-else-if="message.role === 'user'">{{ message.text }}</div>
         </div>
 
         <div v-if="isReplying" class="chat-bubble is-assistant chat-bubble--loading" aria-live="polite">
-          <span class="typing-dot"></span>
-          <span class="typing-dot"></span>
-          <span class="typing-dot"></span>
+          <div class="typing-dots">
+            <span class="typing-dot"></span>
+            <span class="typing-dot"></span>
+            <span class="typing-dot"></span>
+          </div>
+          <small v-if="progressText" class="chat-progress-text">{{ progressText }}</small>
         </div>
       </div>
 
@@ -97,7 +127,7 @@
 </template>
 
 <script setup>
-import { computed, nextTick, ref } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
 import { storeToRefs } from "pinia";
 import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
@@ -105,6 +135,7 @@ import MaterialSymbol from "./MaterialSymbol.vue";
 import { createMarkdownRenderer } from "../lib/markdown";
 import api from "../lib/axios";
 import { useAssistantModalStore } from "../stores/assistantModalStore";
+import { useRealtimeStore } from "../stores/realtimeStore";
 
 const props = defineProps({
   actions: {
@@ -154,12 +185,15 @@ const route = useRoute();
 const router = useRouter();
 const { t } = useI18n();
 const assistantModalStore = useAssistantModalStore();
+const realtimeStore = useRealtimeStore();
 const { isOpen } = storeToRefs(assistantModalStore);
 const draft = ref("");
 const isReplying = ref(false);
 const isExpanded = ref(false);
 const chatBody = ref(null);
 const composerInput = ref(null);
+const progressText = ref("");
+let unsubscribeAssistantProgress = null;
 const markdown = createMarkdownRenderer({ openLinksInNewTab: false });
 const resolvedProjectId = computed(() => {
   const explicitId = Number(props.projectId);
@@ -184,6 +218,23 @@ const createBootMessage = () => ({
 });
 
 const renderAssistantMarkdown = (text) => markdown.render(String(text || ""));
+
+const appendUserMessage = (text) => {
+  messages.value.push({
+    id: `u-${Date.now()}`,
+    role: "user",
+    text,
+  });
+};
+
+const appendAssistantMessage = (text, metadata = null) => {
+  messages.value.push({
+    id: `a-${Date.now()}`,
+    role: "assistant",
+    text,
+    metadata,
+  });
+};
 
 const handleMarkdownClick = async (event) => {
   const anchor = event.target?.closest?.("a");
@@ -223,6 +274,73 @@ const handleMarkdownClick = async (event) => {
   }
 };
 
+const submitUserPrompt = async (inputText, options = {}) => {
+  const text = String(inputText || "").trim();
+  if (!text || isReplying.value) return;
+
+  appendUserMessage(text);
+  draft.value = "";
+  isReplying.value = true;
+  progressText.value = t("assistantChat.progress.preparing");
+  await scrollToBottom();
+
+  try {
+    const history = messages.value
+      .filter(
+        (item) =>
+          (item.role === "user" || item.role === "assistant") && String(item.id || "") !== "boot"
+      )
+      .slice(-MAX_HISTORY_ITEMS)
+      .map((item) => ({
+        role: item.role,
+        text: String(item.text || ""),
+      }));
+
+    const payload = {
+      message: text,
+      history,
+      ...(resolvedProjectId.value ? { project_id: resolvedProjectId.value } : {}),
+      ...(options?.action ? { action: options.action } : {}),
+    };
+
+    const response = await api.post("/assistant/chat", payload);
+    const reply = String(response?.data?.text || "").trim();
+    const metadata = response?.data?.metadata || null;
+
+    appendAssistantMessage(reply || "응답 본문이 비어 있습니다.", metadata);
+  } catch (error) {
+    appendAssistantMessage(extractErrorMessage(error), null);
+  } finally {
+    isReplying.value = false;
+    progressText.value = "";
+    await scrollToBottom();
+    await focusComposerInput();
+  }
+};
+
+const confirmWikiToDataAction = async () => {
+  const lastPreviewMessage = [...messages.value]
+    .reverse()
+    .find(
+      (item) =>
+        item?.role === "assistant" &&
+        item?.metadata?.action_name === "wiki_to_data" &&
+        item?.metadata?.action_status === "preview"
+    );
+
+  const preview = lastPreviewMessage?.metadata?.preview || null;
+  const previewKey = String(lastPreviewMessage?.metadata?.preview_key || "").trim();
+  await submitUserPrompt("실행해", {
+    action: {
+      name: "wiki_to_data",
+      confirm: true,
+      page_id: Number(preview?.source?.page_id) || null,
+      table_name: String(preview?.inferred_schema?.table_name || "").trim() || "",
+      preview_key: previewKey || null,
+    },
+  });
+};
+
 const extractErrorMessage = (error) => {
   const errorCode = String(error?.response?.data?.error_code || "").trim();
   if (errorCode === "ASSISTANT_QUOTA_EXCEEDED") {
@@ -235,6 +353,14 @@ const extractErrorMessage = (error) => {
 
   if (errorCode === "ASSISTANT_GENERATION_FAILED") {
     return t("assistantChat.errors.generationFailed");
+  }
+
+  if (errorCode === "ASSISTANT_UPSTREAM_TEMPORARY") {
+    const retryAfter = Number(error?.response?.data?.retry_after_seconds);
+    if (Number.isFinite(retryAfter) && retryAfter > 0) {
+      return t("assistantChat.errors.upstreamTemporaryWithRetry", { seconds: retryAfter });
+    }
+    return t("assistantChat.errors.upstreamTemporary");
   }
 
   const serverMessage = error?.response?.data?.message;
@@ -283,9 +409,35 @@ const resetConversation = async () => {
   messages.value = [createBootMessage()];
   draft.value = "";
   isReplying.value = false;
+  progressText.value = "";
   await scrollToBottom();
   await focusComposerInput();
 };
+
+const handleAssistantProgressEvent = (payload) => {
+  const action = String(payload?.action || "");
+  if (action !== "wiki_to_data") return;
+
+  const payloadProjectId = Number(payload?.project_id);
+  if (resolvedProjectId.value && Number.isFinite(payloadProjectId) && payloadProjectId !== resolvedProjectId.value) {
+    return;
+  }
+
+  const nextMessage = String(payload?.message || "").trim();
+  if (!nextMessage) return;
+  progressText.value = nextMessage;
+};
+
+onMounted(() => {
+  unsubscribeAssistantProgress = realtimeStore.subscribe("assistantProgress", handleAssistantProgressEvent);
+});
+
+onBeforeUnmount(() => {
+  if (unsubscribeAssistantProgress) {
+    unsubscribeAssistantProgress();
+    unsubscribeAssistantProgress = null;
+  }
+});
 
 defineExpose({
   open,
@@ -294,55 +446,7 @@ defineExpose({
 });
 
 const sendMessage = async () => {
-  const text = String(draft.value || "").trim();
-  if (!text || isReplying.value) return;
-
-  messages.value.push({
-    id: `u-${Date.now()}`,
-    role: "user",
-    text,
-  });
-  draft.value = "";
-  isReplying.value = true;
-  await scrollToBottom();
-
-  try {
-    const history = messages.value
-      .filter(
-        (item) =>
-          (item.role === "user" || item.role === "assistant") && String(item.id || "") !== "boot"
-      )
-      .slice(-MAX_HISTORY_ITEMS)
-      .map((item) => ({
-        role: item.role,
-        text: String(item.text || ""),
-      }));
-
-    const payload = {
-      message: text,
-      history,
-      ...(resolvedProjectId.value ? { project_id: resolvedProjectId.value } : {}),
-    };
-
-    const response = await api.post("/assistant/chat", payload);
-    const reply = String(response?.data?.text || "").trim();
-
-    messages.value.push({
-      id: `a-${Date.now()}`,
-      role: "assistant",
-      text: reply || "응답 본문이 비어 있습니다.",
-    });
-  } catch (error) {
-    messages.value.push({
-      id: `a-${Date.now()}`,
-      role: "assistant",
-      text: extractErrorMessage(error),
-    });
-  } finally {
-    isReplying.value = false;
-    await scrollToBottom();
-    await focusComposerInput();
-  }
+  await submitUserPrompt(draft.value);
 };
 </script>
 
@@ -545,12 +649,45 @@ const sendMessage = async () => {
   color: var(--color-accent-hover);
 }
 
+.assistant-action {
+  margin-top: 8px;
+}
+
+.assistant-action__preview,
+.assistant-action__done {
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  border-radius: 8px;
+  padding: 8px;
+  display: grid;
+  gap: 6px;
+}
+
+.assistant-action__preview p,
+.assistant-action__done p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
 .chat-bubble--loading {
-  display: inline-flex;
+  display: grid;
   align-items: center;
   gap: 4px;
   min-height: 30px;
   padding: 8px 12px;
+}
+
+.typing-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.chat-progress-text {
+  color: var(--color-text-muted);
+  font-size: 11px;
+  line-height: 1.3;
 }
 
 .typing-dot {

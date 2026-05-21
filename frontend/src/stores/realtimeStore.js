@@ -30,6 +30,7 @@ export const useRealtimeStore = defineStore("realtime", {
       feedback: new Set(),
       notification: new Set(),
       task: new Set(),
+      assistantProgress: new Set(),
       open: new Set(),
       close: new Set(),
     },
@@ -118,6 +119,10 @@ export const useRealtimeStore = defineStore("realtime", {
           }
           if (type === "task") {
             this._emit("task", payload.data);
+            return;
+          }
+          if (type === "assistant_progress") {
+            this._emit("assistantProgress", payload.data);
           }
         } catch (error) {
           logRealtime("invalid ws payload", error);

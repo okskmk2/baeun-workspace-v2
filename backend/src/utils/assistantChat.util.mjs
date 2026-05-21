@@ -240,6 +240,7 @@ export const resolveAutoDetailTargets = ({
   intent,
   detailRequest,
   historyRef,
+  history,
   pageSummaries,
   taskSummaries,
 }) => {
@@ -255,14 +256,34 @@ export const resolveAutoDetailTargets = ({
     ? findBestSummaryId(message, taskSummaries || [], "title")
     : null;
 
+  const historyTitleHint = Array.isArray(history)
+    ? history
+        .slice(-4)
+        .map((item) => String(item?.text || "").trim())
+        .filter(Boolean)
+        .join(" ")
+    : "";
+
+  const pageByHistoryTitle =
+    !pageByTitle && shouldAutoPageDetail && historyTitleHint
+      ? findBestSummaryId(historyTitleHint, pageSummaries || [], "title")
+      : null;
+
+  const taskByHistoryTitle =
+    !taskByTitle && shouldAutoTaskDetail && historyTitleHint
+      ? findBestSummaryId(historyTitleHint, taskSummaries || [], "title")
+      : null;
+
   const pageId =
     detailRequest.pageId ||
     pageByTitle ||
-    (detailRequest.followUpDetail ? historyRef?.pageId : null);
+    pageByHistoryTitle ||
+    (detailRequest.followUpDetail || detailRequest.wantsDetail ? historyRef?.pageId : null);
   const taskId =
     detailRequest.taskId ||
     taskByTitle ||
-    (detailRequest.followUpDetail ? historyRef?.taskId : null);
+    taskByHistoryTitle ||
+    (detailRequest.followUpDetail || detailRequest.wantsDetail ? historyRef?.taskId : null);
 
   return {
     pageId: Number.isInteger(pageId) && pageId > 0 ? pageId : null,
@@ -272,14 +293,18 @@ export const resolveAutoDetailTargets = ({
         ? "explicit"
         : pageByTitle
           ? "title"
-          : detailRequest.followUpDetail && historyRef?.pageId
+          : pageByHistoryTitle
+            ? "history_title"
+            : (detailRequest.followUpDetail || detailRequest.wantsDetail) && historyRef?.pageId
             ? "history"
             : null,
       task: detailRequest.taskId
         ? "explicit"
         : taskByTitle
           ? "title"
-          : detailRequest.followUpDetail && historyRef?.taskId
+          : taskByHistoryTitle
+            ? "history_title"
+            : (detailRequest.followUpDetail || detailRequest.wantsDetail) && historyRef?.taskId
             ? "history"
             : null,
     },
