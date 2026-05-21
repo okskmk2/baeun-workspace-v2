@@ -403,3 +403,19 @@ create table data_promotion_request (
         reviewed_at timestamptz
 );
 create index idx_data_promotion_request_pending on data_promotion_request (status, created_at desc);
+
+
+CREATE TABLE IF NOT EXISTS assistant_project_context_cache (
+  project_id INTEGER NOT NULL REFERENCES project ON DELETE CASCADE,
+  intent VARCHAR(30) NOT NULL,
+  context_json JSONB NOT NULL,
+  used_tools JSONB NOT NULL DEFAULT '[]'::jsonb,
+  evidence_count INTEGER NOT NULL DEFAULT 0,
+  expires_at TIMESTAMPTZ NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (project_id, intent)
+);
+
+CREATE INDEX IF NOT EXISTS idx_assistant_context_cache_expires_at
+  ON assistant_project_context_cache (expires_at);

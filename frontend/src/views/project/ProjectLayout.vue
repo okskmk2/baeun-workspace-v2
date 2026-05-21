@@ -89,8 +89,9 @@
         >
           <MaterialSymbol name="smart_toy" :size="18" alt="" />
         </button>
-        <FloatingActionButton
+        <AgentChatWidget
           :showTrigger="false"
+          :projectId="projectId"
           :menuAriaLabel="`${projectName || t('layout.project.projectNameFallback')} AI`"
         />
         <ProjectNotificationDropdown />
@@ -129,7 +130,7 @@ import SearchInput from "../../components/SearchInput.vue";
 import ProjectNotificationDropdown from "../../components/ProjectNotificationDropdown.vue";
 import ContextSwicher from "../../components/ContextSwicher.vue";
 import UnreadDot from "../../components/UnreadDot.vue";
-import FloatingActionButton from "../../components/FloatingActionButton.vue";
+import AgentChatWidget from "../../components/AgentChatWidget.vue";
 
 const { t, locale } = useI18n();
 const route = useRoute();

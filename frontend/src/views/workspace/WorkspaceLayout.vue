@@ -40,7 +40,7 @@
     </header>
     <router-view></router-view>
 
-    <FloatingActionButton
+    <AgentChatWidget
       :actions="fabActions"
       button-aria-label="워크스페이스 빠른 액션 메뉴"
       menu-aria-label="워크스페이스 빠른 액션"
@@ -56,7 +56,7 @@ import { useRoute } from "vue-router";
 import ContextSwicher from "../../components/ContextSwicher.vue";
 import MaterialSymbol from "../../components/MaterialSymbol.vue";
 import Avatar from "../../components/Avatar.vue";
-import FloatingActionButton from "../../components/FloatingActionButton.vue";
+import AgentChatWidget from "../../components/AgentChatWidget.vue";
 import { addToast } from "../../lib/toast";
 import { useWorkspaceStore } from "../../stores/workspaceStore";
 import { useAppStore } from "../../stores/appStore";

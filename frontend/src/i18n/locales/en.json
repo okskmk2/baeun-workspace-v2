@@ -4,6 +4,14 @@
       "close": "Close"
     }
   },
+  "assistantChat": {
+    "errors": {
+      "default": "Failed to generate a response. Please try again later.",
+      "quotaExceeded": "AI usage quota has been reached. Please try again shortly.",
+      "quotaExceededWithRetry": "AI usage quota has been reached. Please try again in about {seconds} seconds.",
+      "generationFailed": "Failed to generate an AI response. Please try again later."
+    }
+  },
   "roles": {
     "workspace_member": {
       "owner": "Owner",

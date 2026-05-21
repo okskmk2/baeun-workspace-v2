@@ -11,6 +11,7 @@ const applyReplacements = (content = "", replacements = []) =>
 
 export const createMarkdownRenderer = ({
   replacements = DEFAULT_MARKDOWN_REPLACEMENTS,
+  openLinksInNewTab = true,
 } = {}) => {
   const markdown = new MarkdownIt({
     html: false,
@@ -34,9 +35,21 @@ export const createMarkdownRenderer = ({
     markdown.renderer.rules.link_open ||
     ((tokens, idx, options, _env, self) => self.renderToken(tokens, idx, options));
 
+  const removeAttr = (token, name) => {
+    const attrIndex = token.attrIndex(name);
+    if (attrIndex >= 0) {
+      token.attrs.splice(attrIndex, 1);
+    }
+  };
+
   markdown.renderer.rules.link_open = (tokens, idx, options, env, self) => {
-    tokens[idx].attrSet("target", "_blank");
-    tokens[idx].attrSet("rel", "noopener noreferrer");
+    if (openLinksInNewTab) {
+      tokens[idx].attrSet("target", "_blank");
+      tokens[idx].attrSet("rel", "noopener noreferrer");
+    } else {
+      removeAttr(tokens[idx], "target");
+      removeAttr(tokens[idx], "rel");
+    }
     return defaultLinkOpen(tokens, idx, options, env, self);
   };
 
