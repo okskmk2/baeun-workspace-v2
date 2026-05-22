@@ -32,6 +32,9 @@ importers:
       yosie:
         specifier: ^2.0.1
         version: 2.0.1
+      zod:
+        specifier: ^4.4.3
+        version: 4.4.3
     devDependencies:
       '@vitejs/plugin-vue':
         specifier: ^4.2.0
@@ -630,6 +633,9 @@ packages:
   yosie@2.0.1:
     resolution: {integrity: sha512-4j2teye9Rh1NW8hnduLHME2bxcA/RMybRMLQWyPCxKOxe5YAPrpn8itUVpMDculLNfC2LmYi6rguKb8JcYq3wA==}
 
+  zod@4.4.3:
+    resolution: {integrity: sha512-ytENFjIJFl2UwYglde2jchW2Hwm4GJFLDiSXWdTrJQBIN9Fcyp7n4DhxJEiWNAJMV1/BqWfW/kkg71UDcHJyTQ==}
+
 snapshots:
 
   '@babel/helper-string-parser@7.27.1': {}
@@ -1108,3 +1114,5 @@ snapshots:
       '@vue/shared': 3.5.28
 
   yosie@2.0.1: {}
+
+  zod@4.4.3: {}
