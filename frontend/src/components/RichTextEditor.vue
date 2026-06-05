@@ -239,6 +239,8 @@ const DEFAULT_TEXTS = Object.freeze({
   strikeThrough: "취소선",
   unorderedList: "순서 없는 목록",
   orderedList: "순서 있는 목록",
+  indent: "들여쓰기",
+  outdent: "내어쓰기",
   heading: "헤딩",
   paragraph: "본문",
   heading1: "제목 1",
@@ -295,6 +297,8 @@ const activeCommands = ref({
   strikeThrough: false,
   insertUnorderedList: false,
   insertOrderedList: false,
+  indent: false,
+  outdent: false,
 });
 
 let savedRange = null;
@@ -313,6 +317,8 @@ const commandButtons = computed(() => [
     label: texts.value.orderedList,
     icon: "format_list_numbered",
   },
+  { cmd: "outdent", label: texts.value.outdent, icon: "format_indent_decrease" },
+  { cmd: "indent", label: texts.value.indent, icon: "format_indent_increase" },
 ]);
 
 const textColors = [
@@ -340,6 +346,19 @@ const activeModal = computed(() => {
 
 const focusEditor = () => {
   editorRef.value?.focus();
+};
+
+const getSelectionContainer = () => {
+  const selection = window.getSelection();
+  if (!selection || selection.rangeCount === 0) return null;
+  const node = selection.getRangeAt(0).commonAncestorContainer;
+  return node?.nodeType === Node.TEXT_NODE ? node.parentNode : node;
+};
+
+const isInsideListItem = () => {
+  const container = getSelectionContainer();
+  if (!container) return false;
+  return Boolean(container.closest?.("li"));
 };
 
 const runCommand = (cmd) => {
@@ -512,6 +531,16 @@ const onEditorInput = () => {
 };
 
 const onEditorKeydown = (event) => {
+  if (event.key === "Tab") {
+    if (!isInsideListItem()) return;
+    event.preventDefault();
+    focusEditor();
+    document.execCommand(event.shiftKey ? "outdent" : "indent", false, null);
+    updateToolbarState();
+    updateModel();
+    return;
+  }
+
   if (!(event.ctrlKey || event.metaKey)) return;
   const key = String(event.key || "").toLowerCase();
   if (key !== "b" && key !== "i") return;
@@ -593,6 +622,11 @@ const updateToolbarState = () => {
       nextState[cmd] = false;
     }
   });
+
+  const inListItem = isInsideListItem();
+  nextState.indent = inListItem;
+  nextState.outdent = inListItem;
+
   activeCommands.value = nextState;
 
   try {
