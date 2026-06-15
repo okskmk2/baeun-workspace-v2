@@ -146,6 +146,7 @@
       @keydown="onEditorKeydown"
       @keyup="onEditorKeyup"
       @mouseup="updateToolbarState"
+      @click="onEditorClick"
       @focus="updateToolbarState"
       @paste="onEditorPaste"
     ></div>
@@ -158,9 +159,9 @@
       </div>
     </div>
 
-    <div class="modal-overlay" :class="{ open: linkModalOpen }" @click.self="closeModals">
+    <div class="modal-overlay" :class="{ open: linkModalOpen }">
       <div ref="linkModalBoxRef" class="modal-box" role="dialog" aria-modal="true" aria-labelledby="rte-link-modal-title">
-        <p id="rte-link-modal-title" class="modal-title">{{ texts.insertLink }}</p>
+        <p id="rte-link-modal-title" class="modal-title">{{ editingLinkEl ? texts.editLink : texts.insertLink }}</p>
         <input v-model="linkText" class="modal-input" :placeholder="texts.linkTextPlaceholder" />
         <input v-model="linkUrl" class="modal-input" :placeholder="texts.linkUrlPlaceholder" />
         <div class="modal-actions">
@@ -189,6 +190,20 @@
         </div>
       </div>
     </div>
+
+    <Teleport to="body">
+      <div
+        v-if="linkTooltip.visible"
+        ref="linkTooltipRef"
+        class="link-tooltip"
+        :style="{ top: linkTooltip.y + 'px', left: linkTooltip.x + 'px' }"
+      >
+        <a :href="linkTooltip.url" target="_blank" rel="noopener noreferrer" class="link-tooltip-url" :title="linkTooltip.url">{{ linkTooltip.displayUrl }}</a>
+        <span class="link-tooltip-divider"></span>
+        <button type="button" class="link-tooltip-btn" @mousedown.prevent="editLinkFromTooltip">수정</button>
+        <button type="button" class="link-tooltip-btn link-tooltip-btn-danger" @mousedown.prevent="unlinkFromTooltip">해제</button>
+      </div>
+    </Teleport>
 
     <div class="output-panel" :class="{ open: outputPanelOpen }" @click.self="outputPanelOpen = false">
       <div ref="outputBoxRef" class="output-box" role="dialog" aria-modal="true" aria-labelledby="rte-output-title">
@@ -232,6 +247,8 @@ const bgWrapRef = ref(null);
 const linkModalBoxRef = ref(null);
 const tableModalBoxRef = ref(null);
 const outputBoxRef = ref(null);
+const linkTooltipRef = ref(null);
+const editingLinkEl = ref(null);
 
 const DEFAULT_TEXTS = Object.freeze({
   bold: "굵게",
@@ -253,6 +270,7 @@ const DEFAULT_TEXTS = Object.freeze({
   highlightColor: "배경 색상",
   customColor: "직접 선택",
   insertLink: "링크 만들기",
+  editLink: "링크 수정",
   insertTable: "테이블 삽입",
   quote: "인용",
   clear: "지우기",
@@ -275,6 +293,7 @@ const DEFAULT_TEXTS = Object.freeze({
 const texts = computed(() => ({ ...DEFAULT_TEXTS, ...(props.labels || {}) }));
 
 const openPopup = ref("");
+const linkTooltip = ref({ visible: false, url: "", displayUrl: "", x: 0, y: 0 });
 const linkModalOpen = ref(false);
 const tableModalOpen = ref(false);
 const outputPanelOpen = ref(false);
@@ -449,10 +468,79 @@ const openLinkModal = () => {
   linkModalOpen.value = true;
 };
 
+const showLinkTooltip = (anchor) => {
+  const rect = anchor.getBoundingClientRect();
+  const url = anchor.getAttribute("href") || anchor.href || "";
+  const displayUrl = url.length > 48 ? url.slice(0, 45) + "..." : url;
+  linkTooltip.value = { visible: true, url, displayUrl, x: rect.left, y: rect.bottom + 6 };
+  nextTick(() => {
+    if (!linkTooltipRef.value) return;
+    const tr = linkTooltipRef.value.getBoundingClientRect();
+    if (tr.right > window.innerWidth - 8) {
+      linkTooltip.value = { ...linkTooltip.value, x: Math.max(8, window.innerWidth - tr.width - 8) };
+    }
+  });
+};
+
+const hideLinkTooltip = () => {
+  linkTooltip.value = { ...linkTooltip.value, visible: false };
+  editingLinkEl.value = null;
+};
+
+const onEditorClick = (event) => {
+  const anchor = event.target.closest("a");
+  if (anchor && editorRef.value?.contains(anchor)) {
+    showLinkTooltip(anchor);
+    editingLinkEl.value = anchor;
+  } else {
+    hideLinkTooltip();
+  }
+};
+
+const editLinkFromTooltip = () => {
+  const anchor = editingLinkEl.value;
+  if (!anchor) return;
+  const range = document.createRange();
+  range.selectNodeContents(anchor);
+  const sel = window.getSelection();
+  if (sel) { sel.removeAllRanges(); sel.addRange(range); }
+  savedRange = range.cloneRange();
+  linkText.value = anchor.innerText || "";
+  linkUrl.value = anchor.getAttribute("href") || anchor.href || "https://";
+  hideLinkTooltip();
+  linkModalOpen.value = true;
+};
+
+const unlinkFromTooltip = () => {
+  const anchor = editingLinkEl.value;
+  if (!anchor) return;
+  const range = document.createRange();
+  range.selectNode(anchor);
+  const sel = window.getSelection();
+  if (sel) { sel.removeAllRanges(); sel.addRange(range); }
+  focusEditor();
+  document.execCommand("unlink", false, null);
+  hideLinkTooltip();
+  updateModel();
+};
+
 const insertLink = () => {
   const url = linkUrl.value.trim();
   const text = linkText.value.trim();
   if (!url || url === "https://") return;
+
+  if (editingLinkEl.value) {
+    const anchor = editingLinkEl.value;
+    anchor.href = url;
+    anchor.target = "_blank";
+    anchor.rel = "noopener noreferrer";
+    if (text && text !== anchor.innerText.trim()) {
+      anchor.textContent = text;
+    }
+    closeModals();
+    updateModel();
+    return;
+  }
 
   restoreSelection();
   focusEditor();
@@ -460,9 +548,20 @@ const insertLink = () => {
   const selection = window.getSelection();
   if (selection && selection.rangeCount > 0 && selection.toString()) {
     document.execCommand("createLink", false, url);
+    const sel = window.getSelection();
+    if (sel && sel.rangeCount > 0) {
+      const container = sel.getRangeAt(0).commonAncestorContainer;
+      const anchor = container.nodeType === Node.TEXT_NODE ? container.parentElement : container;
+      if (anchor && anchor.tagName === "A") {
+        anchor.target = "_blank";
+        anchor.rel = "noopener noreferrer";
+      }
+    }
   } else {
     const anchor = document.createElement("a");
     anchor.href = url;
+    anchor.target = "_blank";
+    anchor.rel = "noopener noreferrer";
     anchor.textContent = text || url;
 
     if (selection && selection.rangeCount > 0) {
@@ -523,6 +622,7 @@ const formatAsQuote = () => {
 const closeModals = () => {
   linkModalOpen.value = false;
   tableModalOpen.value = false;
+  editingLinkEl.value = null;
 };
 
 const onEditorInput = () => {
@@ -715,6 +815,13 @@ const handleDocumentClick = (event) => {
   }
   if (openPopup.value === "bg" && !bgWrapRef.value?.contains(target)) {
     openPopup.value = "";
+  }
+  if (linkTooltip.value.visible) {
+    const inEditor = editorRef.value?.contains(target);
+    const inTooltip = linkTooltipRef.value?.contains(target);
+    if (!inEditor && !inTooltip) {
+      hideLinkTooltip();
+    }
   }
 };
 
