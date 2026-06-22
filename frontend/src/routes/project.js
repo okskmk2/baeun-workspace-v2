@@ -12,6 +12,7 @@ import ProjectLayout from "../views/project/ProjectLayout.vue";
 import KanbanPage from "../views/project/KanbanPage.vue";
 import GanttPage from "../views/project/GanttPage.vue";
 import WikiHomePage from "../views/project/WikiHomePage.vue";
+import WikiFilesPage from "../views/project/WikiFilesPage.vue";
 import WikiPage from "../views/project/WikiPage.vue";
 import ChannelHomePage from "../views/project/ChannelHomePage.vue";
 import ChannelArchivePage from "../views/project/ChannelArchivePage.vue";
@@ -87,6 +88,10 @@ export const projectRoutes = [
           {
             path: "",
             component: WikiHomePage,
+          },
+          {
+            path: "files",
+            component: WikiFilesPage,
           },
           {
             path: ":pageId",

@@ -1,5 +1,6 @@
 import AdminLayout from "../views/admin/AdminLayout.vue";
 import AdminDashboardPage from "../views/admin/AdminDashboardPage.vue";
+import AdminMemberApprovalPage from "../views/admin/AdminMemberApprovalPage.vue";
 import AdminUserWorkspacePage from "../views/admin/AdminUserWorkspacePage.vue";
 import AdminBillingPage from "../views/admin/AdminBillingPage.vue";
 import AdminNotificationPage from "../views/admin/AdminNotificationPage.vue";
@@ -13,13 +14,18 @@ export const adminRoutes = [
     path: "/admin",
     name: "AdminRoot",
     component: AdminLayout,
-    meta: { requiresAuth: true },
+    meta: { requiresAuth: true, requiresAdmin: true },
     redirect: { name: "AdminDashboard" },
     children: [
       {
         path: "dashboard",
         name: "AdminDashboard",
         component: AdminDashboardPage,
+      },
+      {
+        path: "members",
+        name: "AdminMemberApprovalManager",
+        component: AdminMemberApprovalPage,
       },
       {
         path: "users",

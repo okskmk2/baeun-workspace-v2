@@ -148,7 +148,8 @@
         "emailInvalid": "유효한 이메일 주소를 입력하세요.",
         "passwordRequired": "비밀번호를 입력하세요.",
         "passwordLength": "비밀번호는 최소 6자 이상이어야 합니다.",
-        "formDefault": "로그인에 실패했습니다."
+        "formDefault": "로그인에 실패했습니다.",
+        "approvalPending": "회원가입 승인 대기 중입니다. 어드민 승인을 받은 뒤 다시 로그인하세요."
       },
       "signupPrompt": "계정이 없으신가요?",
       "signupLink": "회원가입"
@@ -177,6 +178,12 @@
         "signUp": "회원가입",
         "signingUp": "가입 중..."
       },
+      "emailCheck": {
+        "checking": "이메일 중복을 확인하는 중입니다.",
+        "available": "사용 가능한 이메일입니다.",
+        "taken": "이미 사용 중인 이메일입니다.",
+        "error": "이메일 중복 확인에 실패했습니다."
+      },
       "errors": {
         "nameRequired": "이름을 입력하세요.",
         "emailRequired": "이메일을 입력하세요.",
@@ -196,8 +203,19 @@
         "strong": "강함"
       },
       "success": "회원가입이 완료되었습니다. 이동 중...",
+      "pendingApproval": "회원가입 신청이 접수되었습니다. 어드민 승인 후 로그인할 수 있습니다.",
       "signinPrompt": "이미 계정이 있으신가요?",
       "signinLink": "로그인"
+    },
+    "signupComplete": {
+      "eyebrow": "신청 완료",
+      "title": "회원가입 신청이 접수되었습니다.",
+      "lead": "어드민 승인을 받으면 로그인할 수 있습니다.",
+      "detail": "승인되기 전까지는 계정이 활성화되지 않습니다. 승인 후 로그인 페이지에서 다시 로그인해 주세요.",
+      "actions": {
+        "login": "로그인 페이지로 이동",
+        "home": "홈으로 돌아가기"
+      }
     }
   },
   "settings": {

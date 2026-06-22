@@ -10,6 +10,7 @@
         <p class="admin-lnb__title">Management</p>
         <nav class="admin-lnb__nav">
           <router-link :to="{ name: 'AdminDashboard' }">Dashboard</router-link>
+          <router-link :to="{ name: 'AdminMemberApprovalManager' }">Members</router-link>
           <router-link :to="{ name: 'AdminUserWorkspaceManager' }">Users & Workspaces</router-link>
           <router-link :to="{ name: 'AdminBillingManager' }">Billing</router-link>
           <router-link :to="{ name: 'AdminLicenseManager' }">Licenses</router-link>

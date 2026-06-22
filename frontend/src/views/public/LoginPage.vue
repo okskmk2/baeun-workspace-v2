@@ -118,6 +118,11 @@ const onSubmit = async () => {
       router.push("/");
     }
   } catch (error) {
+    if (error?.response?.status === 403) {
+      errors.form = t("auth.login.errors.approvalPending");
+      return;
+    }
+
     errors.form = error?.response?.data?.message || t("auth.login.errors.formDefault");
   } finally {
     loading.value = false;

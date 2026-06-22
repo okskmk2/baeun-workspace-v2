@@ -26,6 +26,7 @@ const upload = multer({
 const ALLOWED_IMAGE_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
 const ALLOWED_MEMBER_LOCALES = new Set(["ko", "en"]);
 const ALLOWED_MEMBER_REGIONS = new Set(["kr", "us"]);
+const ALLOWED_MEMBER_APPROVAL_STATUSES = new Set(["PENDING", "APPROVED", "REJECTED"]);
 
 const MIME_TO_EXTENSION = {
   "image/jpeg": "jpg",
@@ -148,6 +149,80 @@ const normalizeMemberImageUrl = (memberId, rawImageUrl) => {
   return getProfileImageApiUrl(memberId);
 };
 
+const getMemberApprovalStatusMessage = (approvalStatus) => {
+  const normalized = String(approvalStatus || "").toUpperCase();
+  if (normalized === "PENDING") return "Signup request is pending approval.";
+  if (normalized === "REJECTED") return "Signup request was rejected.";
+  return "Signup approval is required.";
+};
+
+const createApprovedMemberResources = async (client, userId, userName) => {
+  const workspaceRes = await client.query(
+    `INSERT INTO workspace (name, member_id, is_default)
+     VALUES ($1, $2, true)
+     RETURNING id`,
+    [`${userName}'s personal workspace`, userId]
+  );
+  const workspaceId = workspaceRes.rows[0].id;
+
+  await client.query(
+    `INSERT INTO workspace_member (workspace_id, member_id, role_name)
+     VALUES ($1, $2, 'OWNER')`,
+    [workspaceId, userId]
+  );
+
+  await client.query(
+    `INSERT INTO channel (name, workspace_id, type, scope, status)
+     VALUES ($1, $2, 'NOTICE', 'WORKSPACE', 'ACTIVE')`,
+    ["워크스페이스 공지채널", workspaceId]
+  );
+
+  const projectRes = await client.query(
+    `INSERT INTO project (name, workspace_id, is_default)
+     VALUES ($1, $2, true)
+     RETURNING id`,
+    ["First Project", workspaceId]
+  );
+  const projectId = projectRes.rows[0].id;
+
+  await client.query(
+    `INSERT INTO channel (name, project_id, type, scope, status)
+     VALUES ($1, $2, 'NOTICE', 'PROJECT', 'ACTIVE')`,
+    ["프로젝트 공지채널", projectId]
+  );
+
+  await client.query(
+    `INSERT INTO project_member (project_id, member_id, role_name)
+     VALUES ($1, $2, 'OWNER')`,
+    [projectId, userId]
+  );
+
+  const pageRes = await client.query(
+    `INSERT INTO page (title, content, project_id, parent_id)
+     VALUES ($1, $2, $3, NULL)
+     RETURNING id`,
+    [DEFAULT_PROJECT_WIKI_TITLE, DEFAULT_PROJECT_WIKI_CONTENT, projectId]
+  );
+
+  await client.query(
+    `INSERT INTO page_member (page_id, member_id, role_name)
+     VALUES ($1, $2, 'OWNER')`,
+    [pageRes.rows[0].id, userId]
+  );
+
+  return { workspaceId, projectId, pageId: pageRes.rows[0].id };
+};
+
+const requireSystemAdmin = async (req, res) => {
+  const memberResult = await pool.query("SELECT id, role_name FROM member WHERE id = $1", [req.session.userId]);
+  const member = memberResult.rows[0];
+  if (!member || String(member.role_name || "").toUpperCase() !== "SYSTEM_ADMIN") {
+    res.status(403).json({ name: "Forbidden", message: "Admin access required." });
+    return null;
+  }
+  return member;
+};
+
 const listMemberProfileFiles = async (memberId) => {
   const prefix = `members/${memberId}/profile.`;
   const [files] = await bucket.getFiles({ prefix });
@@ -180,10 +255,39 @@ const enforceSessionLimit = async (userId, currentSid) => {
 
 /**
  * @swagger
+ * /api/members/signup/email-check:
+ *   get:
+ *     summary: Check signup email availability
+ *     description: Check whether an email is already used by a member account
+ *     tags:
+ *       - Member
+ */
+router.get("/signup/email-check", async (req, res) => {
+  const email = String(req.query.email || "").trim();
+
+  if (!email) {
+    return res.status(400).json({ name: "BadRequest", message: "email is required." });
+  }
+
+  try {
+    const result = await pool.query("SELECT id FROM member WHERE email = $1 LIMIT 1", [email]);
+    const isAvailable = result.rows.length === 0;
+
+    return res.json({
+      available: isAvailable,
+      message: isAvailable ? "Email is available." : "Email already exists.",
+    });
+  } catch (error) {
+    return res.status(500).json({ name: "InternalServerError", message: error.message });
+  }
+});
+
+/**
+ * @swagger
  * /api/members/signup:
  *   post:
  *     summary: Signup
- *     description: Create a user and a default workspace
+ *     description: Create a signup request that requires admin approval
  *     tags:
  *       - Member
  *     requestBody:
@@ -215,8 +319,10 @@ const enforceSessionLimit = async (userId, currentSid) => {
  *                   type: boolean
  *                 message:
  *                   type: string
- *                 data:
- *                   $ref: "#/components/schemas/SignupCreatedIds"
+ *                 user_id:
+ *                   type: integer
+ *                 approval_status:
+ *                   type: string
  *       400:
  *         $ref: "#/components/responses/ErrorResponse"
  *       500:
@@ -232,74 +338,19 @@ router.post("/signup", isGuest, async (req, res) => {
     // 1. Create user.
     const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
     const userRes = await client.query(
-      `INSERT INTO member (name, email, password) VALUES ($1, $2, $3) RETURNING id, name`,
+      `INSERT INTO member (name, email, password, approval_status)
+       VALUES ($1, $2, $3, 'PENDING')
+       RETURNING id, name, approval_status`,
       [name, email, hashedPassword]
     );
     const userId = userRes.rows[0].id;
 
-    // 2. Create default workspace (personal space).
-    const wsRes = await client.query(
-      `INSERT INTO workspace (name, member_id, is_default) 
-             VALUES ($1, $2, true) RETURNING id`,
-      [`${name}'s personal workspace`, userId]
-    );
-    const workspaceId = wsRes.rows[0].id;
-
-    // 3. Add workspace member (OWNER).
-    await client.query(
-      `INSERT INTO workspace_member (workspace_id, member_id, role_name) 
-             VALUES ($1, $2, 'OWNER')`,
-      [workspaceId, userId]
-    );
-
-    const workspaceNoticeQuery = `
-      INSERT INTO channel (name, workspace_id, type, scope, status)
-      VALUES ($1, $2, 'NOTICE', 'WORKSPACE', 'ACTIVE');
-    `;
-    await client.query(workspaceNoticeQuery, ["워크스페이스 공지채널", workspaceId]);
-
-    // 4. Create default project.
-    const projectRes = await client.query(
-      `INSERT INTO project (name, workspace_id, is_default) 
-     VALUES ($1, $2, true) RETURNING id`,
-      ["First Project", workspaceId]
-    );
-    const projectId = projectRes.rows[0].id;
-
-    const projectNoticeQuery = `
-      INSERT INTO channel (name, project_id, type, scope, status)
-      VALUES ($1, $2, 'NOTICE', 'PROJECT', 'ACTIVE');
-    `;
-    await client.query(projectNoticeQuery, ["프로젝트 공지채널", projectId]);
-
-    // 5. Add project member (OWNER).
-    await client.query(
-      `INSERT INTO project_member (project_id, member_id, role_name) 
-     VALUES ($1, $2, 'OWNER')`,
-      [projectId, userId]
-    );
-
-    // 6. Create default wiki page for signup default project only.
-    const pageRes = await client.query(
-      `INSERT INTO page (title, content, project_id, parent_id)
-       VALUES ($1, $2, $3, NULL)
-       RETURNING id`,
-      [DEFAULT_PROJECT_WIKI_TITLE, DEFAULT_PROJECT_WIKI_CONTENT, projectId]
-    );
-
-    await client.query(
-      `INSERT INTO page_member (page_id, member_id, role_name)
-       VALUES ($1, $2, 'OWNER')`,
-      [pageRes.rows[0].id, userId]
-    );
-
     await client.query("COMMIT");
 
     res.status(201).json({
-      message: "Signup complete. Default workspace created.",
+      message: "Signup request submitted. Awaiting admin approval.",
       user_id: userId,
-      workspace_id: workspaceId,
-      project_id: projectId,
+      approval_status: userRes.rows[0].approval_status,
     });
   } catch (error) {
     await client.query("ROLLBACK");
@@ -353,6 +404,8 @@ router.post("/signup", isGuest, async (req, res) => {
  *                       type: string
  *                     email:
  *                       type: string
+ *                     approval_status:
+ *                       type: string
  *       401:
  *         $ref: "#/components/responses/ErrorResponse"
  *       500:
@@ -379,9 +432,18 @@ router.post("/login", async (req, res) => {
       return res.status(401).json({ name: "Unauthorized", message: "Invalid email or password." });
     }
 
+    const approvalStatus = String(user.approval_status || "").toUpperCase();
+    if (approvalStatus !== "APPROVED") {
+      return res.status(403).json({
+        name: "Forbidden",
+        message: getMemberApprovalStatusMessage(approvalStatus),
+      });
+    }
+
     // 3. Set session.
     req.session.userId = user.id;
     req.session.userName = user.name;
+    req.session.userRole = user.role_name;
     if (normalizeRememberValue(remember)) {
       req.session.cookie.maxAge = REMEMBER_SESSION_TTL_MS;
     } else {
@@ -396,9 +458,146 @@ router.post("/login", async (req, res) => {
 
     await enforceSessionLimit(user.id, req.sessionID);
 
-    res.json({ id: user.id, name: user.name, email: user.email });
+    res.json({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role_name: user.role_name,
+      approval_status: approvalStatus,
+    });
   } catch (error) {
     res.status(500).json({ name: "InternalServerError", message: error.message });
+  }
+});
+
+/**
+ * @swagger
+ * /api/members/admin/signups:
+ *   get:
+ *     summary: Pending signup requests
+ *     description: List pending signup requests for system admins
+ *     tags:
+ *       - Member
+ */
+router.get("/admin/signups", isAuth, async (req, res) => {
+  const adminCheck = await requireSystemAdmin(req, res);
+  if (!adminCheck) return;
+
+  const page = Math.max(Number.parseInt(String(req.query.page || "1"), 10) || 1, 1);
+  const pageSize = Math.min(Math.max(Number.parseInt(String(req.query.pageSize || "10"), 10) || 10, 1), 100);
+  const offset = (page - 1) * pageSize;
+  const keyword = String(req.query.q || "").trim();
+
+  const conditions = ["approval_status = 'PENDING'"];
+  const params = [];
+  if (keyword) {
+    params.push(`%${keyword}%`);
+    conditions.push(`(name ILIKE $${params.length} OR email ILIKE $${params.length})`);
+  }
+
+  const whereClause = `WHERE ${conditions.join(" AND ")}`;
+  const totalResult = await pool.query(`SELECT COUNT(*)::int AS total FROM member ${whereClause}`, params);
+
+  const listParams = [...params, pageSize, offset];
+  const listResult = await pool.query(
+    `SELECT id, name, email, approval_status, created_at
+     FROM member
+     ${whereClause}
+     ORDER BY created_at DESC, id DESC
+     LIMIT $${listParams.length - 1} OFFSET $${listParams.length}`,
+    listParams
+  );
+
+  res.json({
+    items: listResult.rows,
+    pagination: {
+      page,
+      pageSize,
+      total: totalResult.rows[0]?.total || 0,
+    },
+  });
+});
+
+/**
+ * @swagger
+ * /api/members/admin/signups/{memberId}:
+ *   patch:
+ *     summary: Approve or reject signup request
+ *     description: Update pending signup approval status for system admins
+ *     tags:
+ *       - Member
+ */
+router.patch("/admin/signups/:memberId", isAuth, async (req, res) => {
+  const adminCheck = await requireSystemAdmin(req, res);
+  if (!adminCheck) return;
+
+  const memberId = Number.parseInt(req.params.memberId, 10);
+  const action = String(req.body?.action || "").toUpperCase();
+  const targetStatus = action === "APPROVE" ? "APPROVED" : action === "REJECT" ? "REJECTED" : null;
+
+  if (!Number.isInteger(memberId) || memberId <= 0) {
+    return res.status(400).json({ name: "BadRequest", message: "memberId must be a positive integer." });
+  }
+
+  if (!targetStatus || !ALLOWED_MEMBER_APPROVAL_STATUSES.has(targetStatus)) {
+    return res.status(400).json({ name: "BadRequest", message: "action must be APPROVE or REJECT." });
+  }
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    const memberResult = await client.query(
+      `SELECT id, name, email, approval_status
+       FROM member
+       WHERE id = $1
+       FOR UPDATE`,
+      [memberId]
+    );
+
+    if (memberResult.rows.length === 0) {
+      await client.query("ROLLBACK");
+      return res.status(404).json({ name: "NotFound", message: "Member not found." });
+    }
+
+    const currentStatus = String(memberResult.rows[0].approval_status || "").toUpperCase();
+    if (currentStatus !== "PENDING") {
+      await client.query("ROLLBACK");
+      return res.status(400).json({
+        name: "BadRequest",
+        message: `Signup request is already ${currentStatus.toLowerCase() || "resolved"}.`,
+      });
+    }
+
+    const updatedMember = await client.query(
+      `UPDATE member
+       SET approval_status = $1
+       WHERE id = $2
+       RETURNING id, name, email, approval_status, created_at`,
+      [targetStatus, memberId]
+    );
+
+    let resources = null;
+    if (targetStatus === "APPROVED") {
+      resources = await createApprovedMemberResources(
+        client,
+        memberId,
+        memberResult.rows[0].name || `Member ${memberId}`
+      );
+    }
+
+    await client.query("COMMIT");
+
+    res.json({
+      message: targetStatus === "APPROVED" ? "Signup request approved." : "Signup request rejected.",
+      member: updatedMember.rows[0],
+      resources,
+    });
+  } catch (error) {
+    await client.query("ROLLBACK");
+    res.status(500).json({ name: "InternalServerError", message: error.message });
+  } finally {
+    client.release();
   }
 });
 
@@ -451,7 +650,8 @@ router.post("/logout", isAuth, (req, res) => {
  */
 router.get("/me", isAuth, async (req, res) => {
   try {
-    const query = "SELECT id, name, email, img_url, locale, region, role_name, created_at FROM member WHERE id = $1";
+    const query =
+      "SELECT id, name, email, img_url, locale, region, role_name, approval_status, created_at FROM member WHERE id = $1";
     const result = await pool.query(query, [req.session.userId]);
     const row = result.rows[0];
     if (!row) {

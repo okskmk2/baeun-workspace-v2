@@ -5,6 +5,7 @@ import CartPage from "../views/public/CartPage.vue";
 import NotFoundPage from "../views/public/NotFoundPage.vue";
 import LoginPage from "../views/public/LoginPage.vue";
 import SigupPage from "../views/public/SigupPage.vue";
+import SignupCompletePage from "../views/public/SignupCompletePage.vue";
 import SettingsLayout from "../views/public/SettingsLayout.vue";
 import ProfilePage from "../views/public/ProfilePage.vue";
 import SecurityPage from "../views/public/SecurityPage.vue";
@@ -41,6 +42,10 @@ export const publicRoutes = [
       {
         path: "signup",
         component: SigupPage,
+      },
+      {
+        path: "signup/complete",
+        component: SignupCompletePage,
       },
       {
         path: "settings",

@@ -27,6 +27,12 @@
           autocomplete="email"
           placeholder="name@company.com"
         />
+        <p v-if="emailCheckState === 'checking'" class="signup__hint signup__hint--checking">
+          {{ t("auth.signup.emailCheck.checking") }}
+        </p>
+        <p v-else-if="emailCheckMessage" class="signup__hint" :class="emailCheckToneClass">
+          {{ emailCheckMessage }}
+        </p>
         <p v-if="errors.email" class="signup__error">{{ errors.email }}</p>
       </div>
 
@@ -84,15 +90,13 @@
 </template>
 
 <script setup>
-import { computed, reactive, ref } from "vue";
+import { computed, onBeforeUnmount, reactive, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import api from "../../lib/axios";
-import { useAppStore } from "../../stores/appStore";
 
-const router = useRouter();
 const { t } = useI18n();
-const appStore = useAppStore();
+const router = useRouter();
 
 const name = ref("");
 const email = ref("");
@@ -100,6 +104,11 @@ const password = ref("");
 const confirmPassword = ref("");
 const loading = ref(false);
 const successMessage = ref("");
+const emailCheckState = ref("idle");
+const emailCheckMessage = ref("");
+const emailCheckTone = ref("neutral");
+const emailCheckTimer = ref(null);
+const emailCheckRequestId = ref(0);
 const errors = reactive({
   name: "",
   email: "",
@@ -109,6 +118,79 @@ const errors = reactive({
 });
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const emailCheckToneClass = computed(() => {
+  if (emailCheckTone.value === "success") return "success";
+  if (emailCheckTone.value === "error") return "error";
+  return "";
+});
+
+const clearEmailCheckTimer = () => {
+  if (emailCheckTimer.value) {
+    clearTimeout(emailCheckTimer.value);
+    emailCheckTimer.value = null;
+  }
+};
+
+const resetEmailCheck = () => {
+  emailCheckState.value = "idle";
+  emailCheckMessage.value = "";
+  emailCheckTone.value = "neutral";
+};
+
+const checkEmailAvailability = async (value) => {
+  const requestId = emailCheckRequestId.value + 1;
+  emailCheckRequestId.value = requestId;
+  emailCheckState.value = "checking";
+  emailCheckMessage.value = "";
+
+  try {
+    const response = await api.get("/members/signup/email-check", {
+      params: { email: value },
+    });
+
+    if (requestId !== emailCheckRequestId.value) return;
+
+    const available = Boolean(response.data?.available);
+    emailCheckState.value = available ? "available" : "taken";
+    emailCheckTone.value = available ? "success" : "error";
+    emailCheckMessage.value = available
+      ? t("auth.signup.emailCheck.available")
+      : t("auth.signup.emailCheck.taken");
+  } catch (error) {
+    if (requestId !== emailCheckRequestId.value) return;
+
+    emailCheckState.value = "error";
+    emailCheckTone.value = "error";
+    emailCheckMessage.value = error?.response?.data?.message || t("auth.signup.emailCheck.error");
+  }
+};
+
+watch(email, (value) => {
+  errors.email = "";
+  clearEmailCheckTimer();
+
+  const normalized = String(value || "").trim();
+  if (!normalized) {
+    resetEmailCheck();
+    return;
+  }
+
+  if (!emailPattern.test(normalized)) {
+    resetEmailCheck();
+    return;
+  }
+
+  emailCheckState.value = "checking";
+  emailCheckMessage.value = "";
+  emailCheckTimer.value = window.setTimeout(() => {
+    checkEmailAvailability(normalized);
+  }, 350);
+});
+
+onBeforeUnmount(() => {
+  clearEmailCheckTimer();
+});
 
 const strength = computed(() => {
   const value = password.value;
@@ -144,6 +226,8 @@ const validate = () => {
     errors.email = t("auth.signup.errors.emailRequired");
   } else if (!emailPattern.test(email.value)) {
     errors.email = t("auth.signup.errors.emailInvalid");
+  } else if (emailCheckState.value === "taken") {
+    errors.email = t("auth.signup.emailCheck.taken");
   }
 
   if (!password.value) {
@@ -175,14 +259,10 @@ const onSubmit = async () => {
       password: password.value,
     });
 
-    const loginResponse = await api.post("/members/login", {
-      email: email.value,
-      password: password.value,
+    await router.push({
+      path: "/signup/complete",
+      query: { email: email.value },
     });
-
-    appStore.setCurrentUser(loginResponse.data);
-    successMessage.value = t("auth.signup.success");
-    router.push("/");
   } catch (error) {
     errors.form = error?.response?.data?.message || t("auth.signup.errors.formDefault");
   } finally {
@@ -264,6 +344,24 @@ const onSubmit = async () => {
   border-color: var(--color-accent);
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
   background-color: var(--color-page-bg);
+}
+
+.signup__hint {
+  margin: 6px 0 0;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.signup__hint--checking {
+  color: var(--color-text-muted);
+}
+
+.signup__hint.success {
+  color: #15803d;
+}
+
+.signup__hint.error {
+  color: #b45309;
 }
 
 .signup__error {

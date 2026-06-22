@@ -35,6 +35,7 @@ import metricsRouter from "./routes/metrics.route.mjs";
 import licenseRouter from "./routes/license.route.mjs";
 import dataRouter from "./routes/data.route.mjs";
 import assistantRouter from "./routes/assistant.route.mjs";
+import fileRouter from "./routes/file.route.mjs";
 
 const app = express();
 const pgSession = connectPgSimple(session);
@@ -86,6 +87,7 @@ app.use("/api/metrics", metricsRouter);
 app.use("/api/licenses", licenseRouter);
 app.use("/api/data", dataRouter);
 app.use("/api/assistant", assistantRouter);
+app.use("/api/files", fileRouter);
 
 // Static files serve
 const staticPath = path.join(__dirname, "../../frontend/dist");

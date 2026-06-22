@@ -97,9 +97,11 @@ create table member (
     img_url varchar(512),
     locale varchar(8) default 'ko' not null check (locale in ('ko', 'en')),
     region varchar(8) default 'kr' not null check (region in ('kr', 'us')),
+    approval_status varchar(20) default 'PENDING' not null check (approval_status in ('PENDING', 'APPROVED', 'REJECTED')),
     created_at timestamptz default CURRENT_TIMESTAMP,
     role_name varchar(20) default 'MEMBER'
 );
+create index idx_member_approval_status_created_at on member (approval_status, created_at desc);
 create table session (
     sid varchar not null primary key,
     sess json not null,

@@ -22,6 +22,7 @@ const swaggerDefinition = {
           email: { type: "string" },
           name: { type: "string" },
           img_url: { type: "string", nullable: true },
+          approval_status: { type: "string" },
           created_at: { type: "string", format: "date-time" },
         },
       },
@@ -211,8 +212,7 @@ const swaggerDefinition = {
         type: "object",
         properties: {
           user_id: { type: "integer" },
-          workspace_id: { type: "integer" },
-          project_id: { type: "integer" },
+          approval_status: { type: "string" },
         },
       },
       ChatInviteCreatedIds: {

@@ -19,11 +19,19 @@ router.beforeEach(async (to, from, next) => {
 
   const isAuthenticated = Boolean(appStore.currentUser);
   const requiresAuth = to.matched.some((record) => record.meta?.requiresAuth);
+  const requiresAdmin = to.matched.some((record) => record.meta?.requiresAdmin);
   const requiresProjectMember = to.matched.some((record) => record.meta?.requiresProjectMember);
   const requiresProjectAdmin = to.matched.some((record) => record.meta?.requiresProjectAdmin);
 
-  if ((requiresAuth || requiresProjectMember || requiresProjectAdmin) && !isAuthenticated) {
+  if ((requiresAuth || requiresAdmin || requiresProjectMember || requiresProjectAdmin) && !isAuthenticated) {
     return next({ path: "/login" });
+  }
+
+  if (requiresAdmin) {
+    const roleName = String(appStore.currentUser?.role_name || "").toUpperCase();
+    if (roleName !== "SYSTEM_ADMIN") {
+      return next({ path: "/" });
+    }
   }
 
   if (requiresProjectMember) {

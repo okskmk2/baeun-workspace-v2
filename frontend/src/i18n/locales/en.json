@@ -148,7 +148,8 @@
         "emailInvalid": "Please enter a valid email address.",
         "passwordRequired": "Please enter your password.",
         "passwordLength": "Password must be at least 6 characters.",
-        "formDefault": "Login failed."
+        "formDefault": "Login failed.",
+        "approvalPending": "Your signup request is waiting for admin approval. Please try again after approval."
       },
       "signupPrompt": "Don't have an account?",
       "signupLink": "Sign up"
@@ -177,6 +178,12 @@
         "signUp": "Sign up",
         "signingUp": "Signing up..."
       },
+      "emailCheck": {
+        "checking": "Checking whether this email is already in use.",
+        "available": "This email is available.",
+        "taken": "This email is already in use.",
+        "error": "Failed to check email availability."
+      },
       "errors": {
         "nameRequired": "Please enter your name.",
         "emailRequired": "Please enter your email.",
@@ -196,8 +203,19 @@
         "strong": "Strong"
       },
       "success": "Sign up completed. Redirecting...",
+      "pendingApproval": "Your signup request has been submitted. You can log in after admin approval.",
       "signinPrompt": "Already have an account?",
       "signinLink": "Sign in"
+    },
+    "signupComplete": {
+      "eyebrow": "Request submitted",
+      "title": "Your signup request is in.",
+      "lead": "You can sign in after an admin approves your account.",
+      "detail": "The account is inactive until approval. Return to the login page after approval and sign in again.",
+      "actions": {
+        "login": "Go to login",
+        "home": "Back to home"
+      }
     }
   },
   "settings": {
