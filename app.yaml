@@ -1,5 +1,5 @@
 runtime: nodejs24
-instance_class: F2
+instance_class: F1  # F2에서 F1으로 낮춰 기본 비용 50% 절감
 
 handlers:
   - url: /.*
@@ -9,12 +9,7 @@ handlers:
 
 automatic_scaling:
   max_instances: 3
-  min_instances: 1
-  target_cpu_utilization: 0.6
+  min_instances: 0  # 트래픽 없으면 인스턴스를 꺼서 0원 달성
+  target_cpu_utilization: 0.8  # CPU를 더 꽉 채워 쓰도록 유도
   min_pending_latency: 30ms
   max_pending_latency: 10s
-
-resources:
-  cpu: 1
-  memory_gb: 0.5
-  disk_size_gb: 10
