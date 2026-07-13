@@ -5,6 +5,8 @@ const SOCKET_STATES = {
   OPEN: 1,
 };
 
+const SHARED_WORKER_NAME = "realtime-shared-worker";
+
 const isRealtimeDebugEnabled = () => {
   if (typeof import.meta === "undefined") return false;
   const debugFlag = String(import.meta.env?.VITE_REALTIME_DEBUG || "").toLowerCase();
@@ -20,6 +22,11 @@ const logRealtime = (...args) => {
 export const useRealtimeStore = defineStore("realtime", {
   state: () => ({
     socket: null,
+    worker: null,
+    workerPort: null,
+    workerMessageHandler: null,
+    beforeUnloadHandler: null,
+    useSharedWorker: false,
     isConnected: false,
     joinedRoomIds: {},
     reconnectTimerId: null,
@@ -36,6 +43,16 @@ export const useRealtimeStore = defineStore("realtime", {
     },
   }),
   actions: {
+    _supportsSharedWorker() {
+      return typeof window !== "undefined" && typeof SharedWorker !== "undefined";
+    },
+
+    _createSocketUrl() {
+      const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+      const port = window.location.hostname.includes("localhost") ? ":8080" : "";
+      return `${protocol}://${window.location.hostname}${port}/ws`;
+    },
+
     _emit(eventName, payload) {
       const set = this.listeners[eventName];
       if (!set) return;
@@ -63,16 +80,131 @@ export const useRealtimeStore = defineStore("realtime", {
       };
     },
 
-    _createSocketUrl() {
-      const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-      const port = window.location.hostname.includes("localhost") ? ":8080" : "";
-      return `${protocol}://${window.location.hostname}${port}/ws`;
+    _routeRealtimePayload(payload) {
+      const type = String(payload?.type || "");
+      if (type === "message") {
+        this._emit("message", payload.data);
+        return;
+      }
+      if (type === "channel_message") {
+        this._emit("channelMessage", payload.data);
+        return;
+      }
+      if (type === "feedback") {
+        this._emit("feedback", payload.data);
+        return;
+      }
+      if (type === "notification") {
+        this._emit("notification", payload.data);
+        return;
+      }
+      if (type === "task") {
+        this._emit("task", payload.data);
+        return;
+      }
+      if (type === "assistant_progress") {
+        this._emit("assistantProgress", payload.data);
+      }
     },
 
-    connect() {
-      if (typeof window === "undefined") return;
+    _postToWorker(message) {
+      if (!this.workerPort) return false;
+      this.workerPort.postMessage(message);
+      return true;
+    },
 
+    _handleWorkerMessage(event) {
+      const message = event?.data || {};
+      const kind = String(message?.kind || "");
+
+      if (kind === "state") {
+        this.isConnected = Boolean(message.connected);
+        return;
+      }
+
+      if (kind === "open") {
+        this.isConnected = true;
+        this._emit("open");
+        return;
+      }
+
+      if (kind === "close") {
+        this.isConnected = false;
+        this._emit("close");
+        return;
+      }
+
+      if (kind === "ws_message") {
+        this._routeRealtimePayload(message.payload || {});
+        return;
+      }
+
+      if (kind === "error") {
+        logRealtime("shared worker error", message.error || "unknown");
+      }
+    },
+
+    _ensureSharedWorker() {
+      if (!this._supportsSharedWorker()) return false;
+      if (this.workerPort) return true;
+
+      try {
+        const worker = new SharedWorker(
+          new URL("../workers/realtime.sharedworker.js", import.meta.url),
+          {
+            type: "module",
+            name: SHARED_WORKER_NAME,
+          }
+        );
+        const port = worker.port;
+        const onMessage = (event) => this._handleWorkerMessage(event);
+
+        port.addEventListener("message", onMessage);
+        port.start();
+
+        this.worker = worker;
+        this.workerPort = port;
+        this.workerMessageHandler = onMessage;
+        this.useSharedWorker = true;
+
+        if (!this.beforeUnloadHandler) {
+          this.beforeUnloadHandler = () => {
+            this._postToWorker({ command: "disconnect" });
+            this._teardownSharedWorker();
+          };
+          window.addEventListener("beforeunload", this.beforeUnloadHandler);
+        }
+
+        logRealtime("shared worker connected");
+        return true;
+      } catch (error) {
+        logRealtime("shared worker unavailable, fallback to socket", error);
+        this.useSharedWorker = false;
+        return false;
+      }
+    },
+
+    _teardownSharedWorker() {
+      if (!this.workerPort) return;
+
+      if (this.workerMessageHandler) {
+        this.workerPort.removeEventListener("message", this.workerMessageHandler);
+      }
+
+      this.workerPort.close();
+      this.worker = null;
+      this.workerPort = null;
+      this.workerMessageHandler = null;
+
+      if (this.beforeUnloadHandler && typeof window !== "undefined") {
+        window.removeEventListener("beforeunload", this.beforeUnloadHandler);
+        this.beforeUnloadHandler = null;
+      }
+    },
+
+    _connectFallbackSocket() {
       this.shouldReconnect = true;
+
       if (this.socket && this.socket.readyState === SOCKET_STATES.OPEN) {
         logRealtime("connect skipped: already open");
         return;
@@ -99,31 +231,8 @@ export const useRealtimeStore = defineStore("realtime", {
 
       socket.addEventListener("message", (event) => {
         try {
-          const payload = JSON.parse(event.data);
-          const type = String(payload?.type || "");
-          if (type === "message") {
-            this._emit("message", payload.data);
-            return;
-          }
-          if (type === "channel_message") {
-            this._emit("channelMessage", payload.data);
-            return;
-          }
-          if (type === "feedback") {
-            this._emit("feedback", payload.data);
-            return;
-          }
-          if (type === "notification") {
-            this._emit("notification", payload.data);
-            return;
-          }
-          if (type === "task") {
-            this._emit("task", payload.data);
-            return;
-          }
-          if (type === "assistant_progress") {
-            this._emit("assistantProgress", payload.data);
-          }
+          const payload = JSON.parse(event.data || "{}");
+          this._routeRealtimePayload(payload);
         } catch (error) {
           logRealtime("invalid ws payload", error);
         }
@@ -149,9 +258,26 @@ export const useRealtimeStore = defineStore("realtime", {
       });
     },
 
+    connect() {
+      if (typeof window === "undefined") return;
+
+      if (this._ensureSharedWorker()) {
+        this.shouldReconnect = true;
+        this._postToWorker({ command: "connect" });
+        return;
+      }
+
+      this._connectFallbackSocket();
+    },
+
     disconnect() {
       logRealtime("disconnect requested");
       this.shouldReconnect = false;
+
+      if (this.useSharedWorker && this.workerPort) {
+        this._postToWorker({ command: "disconnect" });
+      }
+
       if (this.reconnectTimerId) {
         window.clearTimeout(this.reconnectTimerId);
         this.reconnectTimerId = null;
@@ -164,9 +290,22 @@ export const useRealtimeStore = defineStore("realtime", {
 
       this.isConnected = false;
       this.joinedRoomIds = {};
+
+      if (this.useSharedWorker) {
+        this._teardownSharedWorker();
+      }
     },
 
     send(payload) {
+      if (this.useSharedWorker && this.workerPort) {
+        if (!this.isConnected) {
+          logRealtime("send skipped: shared worker socket not open", payload?.type || "unknown");
+          return false;
+        }
+        this._postToWorker({ command: "send", payload });
+        return true;
+      }
+
       if (!this.socket || this.socket.readyState !== SOCKET_STATES.OPEN) {
         logRealtime("send skipped: socket not open", payload?.type || "unknown");
         return false;
@@ -182,6 +321,12 @@ export const useRealtimeStore = defineStore("realtime", {
       this.joinedRoomIds[key] = true;
       logRealtime("join room", key);
       this.connect();
+
+      if (this.useSharedWorker && this.workerPort) {
+        this._postToWorker({ command: "join", roomId: key });
+        return;
+      }
+
       this.send({ type: "join", channelId: key });
     },
 
@@ -190,6 +335,10 @@ export const useRealtimeStore = defineStore("realtime", {
       const key = String(roomId);
       delete this.joinedRoomIds[key];
       logRealtime("leave room", key);
+
+      if (this.useSharedWorker && this.workerPort) {
+        this._postToWorker({ command: "leave", roomId: key });
+      }
     },
   },
 });

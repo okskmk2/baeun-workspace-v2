@@ -118,6 +118,7 @@ create table workspace (
         sort_order integer default 0 check (sort_order >= 0),
         img_url varchar(512),
         theme_json jsonb,
+        created_at timestamptz default CURRENT_TIMESTAMP,
         is_default boolean default false,
         summary varchar(100)
 );
