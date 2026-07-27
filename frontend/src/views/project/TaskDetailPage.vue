@@ -86,15 +86,6 @@
       >
         {{ t("task.detail.actions.cancel") }}
       </button>
-      <button
-        v-if="canDeleteTask"
-        class="btn btn--sm btn--danger"
-        @click="deleteTask"
-        :disabled="isSaving || isDeleting"
-      >
-        <MaterialSymbol name="delete" :size="16" alt="" />
-        {{ isDeleting ? t("task.detail.actions.deleting") : t("task.detail.actions.delete") }}
-      </button>
     </div>
   </hgroup>
 
@@ -162,6 +153,18 @@
           </li>
         </ul>
       </div>
+      <DangerZone
+        v-if="canDeleteTask"
+        :title="t('task.detail.danger.title')"
+        :description="t('task.detail.danger.description')"
+      >
+        <template #actions>
+          <button class="btn btn--sm btn--danger" @click="deleteTask" :disabled="isSaving || isDeleting">
+            <MaterialSymbol name="delete" :size="16" alt="" />
+            {{ isDeleting ? t("task.detail.actions.deleting") : t("task.detail.actions.delete") }}
+          </button>
+        </template>
+      </DangerZone>
     </aside>
   </section>
 </template>
@@ -179,6 +182,7 @@ import MaterialSymbol from "../../components/MaterialSymbol.vue";
 import Tag from "../../components/Tag.vue";
 import RelatedMemberPicker from "../../components/RelatedMemberPicker.vue";
 import BackLinkButton from "../../components/BackLinkButton.vue";
+import DangerZone from "../../components/DangerZone.vue";
 import RichTextEditor from "../../components/RichTextEditor.vue";
 import { getTaskRoleIconName, getTaskRoleVariant } from "../../lib/roleLabels";
 import { convertSnakeToCamel } from "../../lib/utils";
@@ -679,13 +683,14 @@ const addRelatedMemberByRole = async (role, memberId) => {
 }
 
 .task-grid {
-  display: grid;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
+  display: flex;
+  align-items: flex-start;
   gap: 24px;
 }
 
 .task-main {
-  grid-column: span 9;
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .task-main > p {
@@ -698,7 +703,8 @@ const addRelatedMemberByRole = async (role, memberId) => {
 }
 
 .task-meta {
-  grid-column: span 3;
+  flex: 0 0 320px;
+  min-width: 280px;
 }
 
 .actions {
@@ -837,9 +843,15 @@ const addRelatedMemberByRole = async (role, memberId) => {
 }
 
 @media (max-width: 900px) {
+  .task-grid {
+    flex-direction: column;
+  }
+
   .task-main,
   .task-meta {
-    grid-column: span 12;
+    width: 100%;
+    min-width: 0;
+    flex: 1 1 auto;
   }
 }
 </style>

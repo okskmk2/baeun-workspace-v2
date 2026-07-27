@@ -765,6 +765,10 @@
         "assignees": "담당자",
         "memberHistory": "참여 이력"
       },
+      "danger": {
+        "title": "주의 구역",
+        "description": "이 이슈를 삭제하면 복구할 수 없습니다."
+      },
       "roles": {
         "assignee": "담당자",
         "reporter": "보고자",

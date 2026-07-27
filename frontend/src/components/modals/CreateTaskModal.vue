@@ -18,12 +18,16 @@
 
       <div class="form-field">
         <label for="task-content">{{ t("backlog.page.modal.descriptionLabel") }}</label>
-        <textarea
+        <RichTextEditor
           id="task-content"
-          v-model.trim="form.content"
-          rows="10"
+          v-model="form.content"
+          :show-toolbar="false"
+          :show-footer="false"
+          :wrap-min-height="0"
+          :editor-padding="12"
           :placeholder="t('backlog.page.modal.descriptionPlaceholder')"
-        ></textarea>
+          class="task-content-editor"
+        />
       </div>
 
       <template v-if="showStatusSelect">
@@ -82,6 +86,7 @@ import { useI18n } from "vue-i18n";
 import api from "../../lib/axios";
 import BaseModal from "../BaseModal.vue";
 import MaterialSymbol from "../MaterialSymbol.vue";
+import RichTextEditor from "../RichTextEditor.vue";
 import { convertSnakeToCamel } from "../../lib/utils";
 
 const { t } = useI18n();
@@ -205,5 +210,20 @@ watch(
 
 .priority-icon {
   flex-shrink: 0;
+}
+
+.task-content-editor {
+  max-height: 20rem;
+}
+
+.task-content-editor :deep(.rte-wrap) {
+  max-height: 20rem;
+  overflow: hidden;
+}
+
+.task-content-editor :deep(.rte-editor) {
+  min-height: 10rem;
+  max-height: 12rem;
+  overflow-y: auto;
 }
 </style>

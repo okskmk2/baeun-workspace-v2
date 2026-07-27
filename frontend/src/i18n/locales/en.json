@@ -765,6 +765,10 @@
         "assignees": "Assignees",
         "memberHistory": "Participation history"
       },
+      "danger": {
+        "title": "Danger zone",
+        "description": "Deleting this issue is permanent."
+      },
       "roles": {
         "assignee": "Assignee",
         "reporter": "Reporter",

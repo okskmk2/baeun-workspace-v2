@@ -1,6 +1,6 @@
 <template>
-  <div class="rte-wrap">
-    <div class="rte-toolbar">
+  <div class="rte-wrap" :style="rteWrapStyle">
+    <div v-if="showToolbar" class="rte-toolbar">
       <button
         v-for="button in commandButtons"
         :key="button.cmd"
@@ -151,7 +151,7 @@
       @paste="onEditorPaste"
     ></div>
 
-    <div class="rte-footer">
+    <div v-if="showFooter" class="rte-footer">
       <span class="rte-footer-info">{{ charCount }}{{ texts.charSuffix }}</span>
       <div class="rte-btn-group">
         <button type="button" class="rte-action-btn" @click="clearEditor">{{ texts.clear }}</button>
@@ -229,6 +229,22 @@ const props = defineProps({
     type: String,
     default: "",
   },
+  showToolbar: {
+    type: Boolean,
+    default: true,
+  },
+  showFooter: {
+    type: Boolean,
+    default: true,
+  },
+  wrapMinHeight: {
+    type: [String, Number],
+    default: "520px",
+  },
+  editorPadding: {
+    type: [String, Number],
+    default: "24px 28px",
+  },
   placeholder: {
     type: String,
     default: "여기에 내용을 입력하세요...",
@@ -291,6 +307,32 @@ const DEFAULT_TEXTS = Object.freeze({
 });
 
 const texts = computed(() => ({ ...DEFAULT_TEXTS, ...(props.labels || {}) }));
+const rteWrapStyle = computed(() => {
+  const rawMinHeight = props.wrapMinHeight;
+  const minHeight =
+    rawMinHeight === null || rawMinHeight === undefined || rawMinHeight === ""
+      ? "0px"
+      : typeof rawMinHeight === "number"
+        ? `${rawMinHeight}px`
+        : String(rawMinHeight);
+
+  const rawEditorPadding = props.editorPadding;
+  const editorPadding =
+    rawEditorPadding === null || rawEditorPadding === undefined || rawEditorPadding === ""
+      ? "24px 28px"
+      : typeof rawEditorPadding === "number"
+        ? rawEditorPadding <= 0
+          ? "24px 28px"
+          : `${rawEditorPadding}px`
+        : ["0", "0px"].includes(String(rawEditorPadding).trim())
+          ? "24px 28px"
+          : String(rawEditorPadding);
+
+  return {
+    "--rte-wrap-min-height": minHeight,
+    "--rte-editor-padding": editorPadding,
+  };
+});
 
 const openPopup = ref("");
 const linkTooltip = ref({ visible: false, url: "", displayUrl: "", x: 0, y: 0 });
@@ -359,7 +401,6 @@ const bgIndicatorColor = computed(() => (bgColor.value === "transparent" ? "#c9c
 const activeModal = computed(() => {
   if (linkModalOpen.value) return "link";
   if (tableModalOpen.value) return "table";
-  if (outputPanelOpen.value) return "output";
   return "";
 });
 
@@ -829,7 +870,6 @@ const handleDocumentKeydown = (event) => {
   if (event.key === "Escape") {
     closeModals();
     closePopups();
-    outputPanelOpen.value = false;
     return;
   }
 
@@ -839,9 +879,7 @@ const handleDocumentKeydown = (event) => {
   const modalContainer =
     activeModal.value === "link"
       ? linkModalBoxRef.value
-      : activeModal.value === "table"
-        ? tableModalBoxRef.value
-        : outputBoxRef.value;
+      : tableModalBoxRef.value;
 
   if (!modalContainer) return;
 

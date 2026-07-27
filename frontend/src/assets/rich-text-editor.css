@@ -6,7 +6,7 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  min-height: 520px;
+  min-height: var(--rte-wrap-min-height, 520px);
 }
 
 .rte-toolbar {
@@ -145,7 +145,7 @@
 
 .rte-editor {
   flex: 1;
-  padding: 24px 28px;
+  padding: var(--rte-editor-padding, 24px 28px);
   outline: none;
   font-size: 15px;
   line-height: 1.75;
