@@ -48,6 +48,12 @@
       @change="onPickUpload"
     />
 
+    <CreateFolderModal
+      :open="isFolderModalOpen"
+      @close="closeFolderModal"
+      @confirm="confirmCreateFolder"
+    />
+
     <!-- 파일 목록 테이블 -->
     <div class="files-list-wrap">
       <div v-if="isLoadingItems" class="files-status">파일 목록을 불러오는 중입니다.</div>
@@ -111,6 +117,7 @@
 <script setup>
 import { computed, onMounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import CreateFolderModal from "../../components/modals/CreateFolderModal.vue";
 import MaterialSymbol from "../../components/MaterialSymbol.vue";
 import api from "../../lib/axios";
 import { addToast } from "../../lib/toast";
@@ -121,6 +128,7 @@ const projectId = computed(() => route.params.projectId);
 const uploadInputRef = ref(null);
 const isUploading = ref(false);
 const isCreatingFolder = ref(false);
+const isFolderModalOpen = ref(false);
 const isLoadingItems = ref(false);
 const itemsErrorMessage = ref("");
 const rawItems = ref([]);
@@ -271,28 +279,24 @@ const openUploadPicker = () => {
   uploadInputRef.value.click();
 };
 
-const createFolder = async () => {
+const createFolder = () => {
   if (!projectId.value || isCreatingFolder.value) return;
+  isFolderModalOpen.value = true;
+};
 
-  const folderName = window.prompt("새 폴더 이름을 입력하세요.", "");
-  if (folderName == null) return;
+const closeFolderModal = () => {
+  isFolderModalOpen.value = false;
+};
 
-  const trimmedName = folderName.trim();
-  if (!trimmedName) {
-    addToast({
-      message: "폴더 이름을 입력하세요.",
-      type: "error",
-    });
-    return;
-  }
-
+const confirmCreateFolder = async (folderName) => {
+  isFolderModalOpen.value = false;
   isCreatingFolder.value = true;
 
   try {
     await api.post("/files/folders", {
       project_id: projectId.value,
       path: currentStoragePath.value,
-      folder_name: trimmedName,
+      folder_name: folderName,
     });
 
     addToast({

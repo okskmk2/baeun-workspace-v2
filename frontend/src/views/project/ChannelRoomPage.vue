@@ -7,14 +7,10 @@
         :class="{ offline: !isConnected }"
         role="status"
         :aria-label="
-          isConnected
-            ? t('channel.room.status.connected')
-            : t('channel.room.status.disconnected')
+          isConnected ? t('channel.room.status.connected') : t('channel.room.status.disconnected')
         "
         :title="
-          isConnected
-            ? t('channel.room.status.connected')
-            : t('channel.room.status.disconnected')
+          isConnected ? t('channel.room.status.connected') : t('channel.room.status.disconnected')
         "
       ></span>
     </div>
@@ -48,151 +44,167 @@
     </div>
   </hgroup>
 
-  <div ref="messagesContainer" class="messages" @scroll.passive="onMessagesScroll">
-    <p v-if="isLoadingMoreMessages" class="messages-loading-more" role="status" aria-live="polite">
-      {{ t("channel.room.actions.loadingMore") }}
-    </p>
-    <div v-if="isIssueChannel" class="message system issue-notice">
-      <div class="message-content">{{ t("channel.room.system.issueArchiveNotice") }}</div>
-    </div>
-    <div v-if="!messages.length" class="empty-state" role="status" aria-live="polite">
-      <p class="empty-title">{{ t("channel.room.empty.messages") }}</p>
-      <p class="empty-description">{{ t("channel.room.empty.description") }}</p>
-    </div>
-    <div
-      v-for="message in messages"
-      :key="message.id"
-      class="message"
-      :class="{ system: isSystemMessage(message), agent: isAgentMessage(message) }"
-    >
-      <template v-if="isSystemMessage(message)">
-        <div class="message-content">{{ message.content }}</div>
-      </template>
-      <template v-else>
-        <Avatar
-          class="message-avatar"
-          :text="getInitials(getMessageAuthor(message))"
-          :label="getMessageAuthor(message)"
-          :size="36"
-        />
-        <div class="message-body">
-          <div class="message-header">
-            <span class="message-author">
-              {{ getMessageAuthor(message) }}
-            </span>
-            <span v-if="isAgentMessage(message)" class="message-type-badge">
-              {{ t("channel.room.messageType.agent") }}
-            </span>
-            <span class="message-time">{{ formatTime(message.created_at) }}</span>
-          </div>
-          <div v-if="message.content" class="message-content">{{ message.content }}</div>
-          <div v-if="message.attachments && message.attachments.length" class="message-attachments">
-            <a
-              v-for="attachment in message.attachments"
-              :key="attachment.id"
-              :href="attachment.url"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="message-attachment"
-            >
-              <img
-                v-if="isImageAttachment(attachment)"
-                :src="attachment.url"
-                :alt="attachment.original_file_name"
-                class="attachment-image"
-              />
-              <template v-else>
-                <MaterialSymbol name="attach_file" :size="16" />
-                <span class="attachment-file-name">{{ attachment.original_file_name }}</span>
-                <span class="attachment-file-size">{{ formatFileSize(attachment.file_size_bytes) }}</span>
-              </template>
-            </a>
-          </div>
-          <div class="message-feedback">
-            <div class="feedback-items">
-              <div
-                v-for="option in feedbackOptions"
-                :key="option.key"
-                v-show="getFeedbackCount(message, option.key) > 0"
-                class="feedback-chip"
-                :class="{ active: isFeedbackMine(message, option.key) }"
-                :aria-label="t(option.labelKey)"
-              >
-                <span class="feedback-emoji" aria-hidden="true">{{ option.emoji }}</span>
-                <span class="feedback-count">{{ getFeedbackCount(message, option.key) }}</span>
-              </div>
+  <div class="chat-panel">
+    <div ref="messagesContainer" class="messages" @scroll.passive="onMessagesScroll">
+      <p
+        v-if="isLoadingMoreMessages"
+        class="messages-loading-more"
+        role="status"
+        aria-live="polite"
+      >
+        {{ t("channel.room.actions.loadingMore") }}
+      </p>
+      <div v-if="isIssueChannel" class="message system issue-notice">
+        <div class="message-content">{{ t("channel.room.system.issueArchiveNotice") }}</div>
+      </div>
+      <div v-if="!messages.length" class="empty-state" role="status" aria-live="polite">
+        <p class="empty-title">{{ t("channel.room.empty.messages") }}</p>
+        <p class="empty-description">{{ t("channel.room.empty.description") }}</p>
+      </div>
+      <div
+        v-for="message in messages"
+        :key="message.id"
+        class="message"
+        :class="{ system: isSystemMessage(message), agent: isAgentMessage(message) }"
+      >
+        <template v-if="isSystemMessage(message)">
+          <div class="message-content">{{ message.content }}</div>
+        </template>
+        <template v-else>
+          <Avatar
+            class="message-avatar"
+            :text="getInitials(getMessageAuthor(message))"
+            :label="getMessageAuthor(message)"
+            :size="36"
+          />
+          <div class="message-body">
+            <div class="message-header">
+              <span class="message-author">
+                {{ getMessageAuthor(message) }}
+              </span>
+              <span v-if="isAgentMessage(message)" class="message-type-badge">
+                {{ t("channel.room.messageType.agent") }}
+              </span>
+              <span class="message-time">{{ formatTime(message.created_at) }}</span>
             </div>
-            <button
-              type="button"
-              class="feedback-button"
-              :aria-label="t('channel.room.feedback.add')"
-              @click="openFeedbackModal(message)"
+            <div v-if="message.content" class="message-content">{{ message.content }}</div>
+            <div
+              v-if="message.attachments && message.attachments.length"
+              class="message-attachments"
             >
-              <MaterialSymbol name="add_reaction" :size="16" />
-            </button>
+              <a
+                v-for="attachment in message.attachments"
+                :key="attachment.id"
+                :href="attachment.url"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="message-attachment"
+              >
+                <img
+                  v-if="isImageAttachment(attachment)"
+                  :src="attachment.url"
+                  :alt="attachment.original_file_name"
+                  class="attachment-image"
+                />
+                <template v-else>
+                  <MaterialSymbol name="attach_file" :size="16" />
+                  <span class="attachment-file-name">{{ attachment.original_file_name }}</span>
+                  <span class="attachment-file-size">{{
+                    formatFileSize(attachment.file_size_bytes)
+                  }}</span>
+                </template>
+              </a>
+            </div>
+            <div class="message-feedback">
+              <div class="feedback-items">
+                <div
+                  v-for="option in feedbackOptions"
+                  :key="option.key"
+                  v-show="getFeedbackCount(message, option.key) > 0"
+                  class="feedback-chip"
+                  :class="{ active: isFeedbackMine(message, option.key) }"
+                  :aria-label="t(option.labelKey)"
+                >
+                  <span class="feedback-emoji" aria-hidden="true">{{ option.emoji }}</span>
+                  <span class="feedback-count">{{ getFeedbackCount(message, option.key) }}</span>
+                </div>
+              </div>
+              <button
+                type="button"
+                class="feedback-button"
+                :aria-label="t('channel.room.feedback.add')"
+                @click="openFeedbackModal(message)"
+              >
+                <MaterialSymbol name="add_reaction" :size="16" />
+              </button>
+            </div>
           </div>
-        </div>
-      </template>
-    </div>
-  </div>
-
-  <div class="composer-wrap">
-    <div v-if="pendingFiles.length" class="pending-files">
-      <div v-for="(file, index) in pendingFiles" :key="index" class="pending-file">
-        <img
-          v-if="isImageFile(file)"
-          :src="pendingFileUrls[index]"
-          :alt="file.name"
-          class="pending-file-thumb"
-        />
-        <MaterialSymbol v-else name="attach_file" :size="16" />
-        <span class="pending-file-name">{{ file.name }}</span>
-        <button
-          type="button"
-          class="pending-file-remove"
-          :aria-label="t('channel.room.composer.removeFile')"
-          @click="removePendingFile(index)"
-        >
-          <MaterialSymbol name="close" :size="14" />
-        </button>
+        </template>
       </div>
     </div>
-    <form class="composer" @submit.prevent="sendMessage">
-      <button
-        type="button"
-        class="btn btn--icon"
-        :disabled="isSending || !canPostMessage"
-        :aria-label="t('channel.room.composer.attach')"
-        :title="t('channel.room.composer.attach')"
-        @click="triggerFileInput"
-      >
-        <MaterialSymbol name="attach_file" :size="18" />
-      </button>
-      <input
-        ref="fileInput"
-        type="file"
-        class="composer-file-input"
-        multiple
-        @change="onFilesSelected"
-      />
-      <input
-        v-model.trim="draft"
-        type="text"
-        :placeholder="t('channel.room.composer.placeholder')"
-        :disabled="isSending || !canPostMessage"
-      />
-      <button
-        type="submit"
-        class="btn"
-        :disabled="isSending || (!draft && !pendingFiles.length) || !canPostMessage"
-      >
-        {{ t("channel.room.composer.send") }}
-      </button>
-    </form>
+
+    <div class="composer-wrap">
+      <div v-if="pendingFiles.length" class="pending-files">
+        <div v-for="(file, index) in pendingFiles" :key="index" class="pending-file">
+          <img
+            v-if="isImageFile(file)"
+            :src="pendingFileUrls[index]"
+            :alt="file.name"
+            class="pending-file-thumb"
+          />
+          <MaterialSymbol v-else name="attach_file" :size="16" />
+          <span class="pending-file-name">{{ file.name }}</span>
+          <button
+            type="button"
+            class="pending-file-remove"
+            :aria-label="t('channel.room.composer.removeFile')"
+            @click="removePendingFile(index)"
+          >
+            <MaterialSymbol name="close" :size="14" />
+          </button>
+        </div>
+      </div>
+      <form class="composer" @submit.prevent="sendMessage">
+        <button
+          type="button"
+          class="btn btn--icon"
+          :disabled="isSending || !canPostMessage"
+          :aria-label="t('channel.room.composer.attach')"
+          :title="t('channel.room.composer.attach')"
+          @click="triggerFileInput"
+        >
+          <MaterialSymbol name="attach_file" :size="18" />
+        </button>
+        <input
+          ref="fileInput"
+          type="file"
+          class="composer-file-input"
+          multiple
+          @change="onFilesSelected"
+        />
+        <textarea
+          ref="composerTextarea"
+          v-model.trim="draft"
+          class="composer-textarea"
+          rows="1"
+          :placeholder="t('channel.room.composer.placeholder')"
+          :disabled="isSending || !canPostMessage"
+          @keydown="onComposerKeydown"
+          @input="resizeComposerTextarea"
+        ></textarea>
+        <button
+          type="submit"
+          class="btn"
+          :disabled="isSending || (!draft && !pendingFiles.length) || !canPostMessage"
+        >
+          {{ t("channel.room.composer.send") }}
+        </button>
+      </form>
+      <p v-if="!canPostMessage" class="composer-notice">
+        {{ t("channel.room.status.readOnlyNotice") }}
+      </p>
+    </div>
   </div>
-  <p v-if="!canPostMessage" class="composer-notice">
-    {{ t("channel.room.status.readOnlyNotice") }}
-  </p>
 
   <AddChannelMemberModal
     :open="isInviteOpen"
@@ -238,6 +250,7 @@ const projectId = computed(() => route.params.projectId);
 const messages = ref([]);
 const messagesContainer = ref(null);
 const draft = ref("");
+const composerTextarea = ref(null);
 const isSending = ref(false);
 const fileInput = ref(null);
 const pendingFiles = ref([]);
@@ -466,7 +479,9 @@ const onFilesSelected = (event) => {
     addToast({ message: t("channel.room.composer.fileTooBig"), type: "error" });
     return;
   }
-  const urls = toAdd.map((file) => (file.type.startsWith("image/") ? URL.createObjectURL(file) : ""));
+  const urls = toAdd.map((file) =>
+    file.type.startsWith("image/") ? URL.createObjectURL(file) : ""
+  );
   pendingFiles.value = [...pendingFiles.value, ...toAdd];
   pendingFileUrls.value = [...pendingFileUrls.value, ...urls];
 };
@@ -479,19 +494,33 @@ const removePendingFile = (index) => {
 };
 
 const clearPendingFiles = () => {
-  pendingFileUrls.value.forEach((url) => { if (url) URL.revokeObjectURL(url); });
+  pendingFileUrls.value.forEach((url) => {
+    if (url) URL.revokeObjectURL(url);
+  });
   pendingFiles.value = [];
   pendingFileUrls.value = [];
 };
 
-const isImageAttachment = (attachment) =>
-  String(attachment?.mime_type || "").startsWith("image/");
+const isImageAttachment = (attachment) => String(attachment?.mime_type || "").startsWith("image/");
 
 const formatFileSize = (bytes) => {
   if (!bytes || bytes < 0) return "0 B";
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+};
+
+const resizeComposerTextarea = () => {
+  const el = composerTextarea.value;
+  if (!el) return;
+  el.style.height = "auto";
+  el.style.height = `${el.scrollHeight}px`;
+};
+
+const onComposerKeydown = (event) => {
+  if (event.key !== "Enter" || event.shiftKey || event.isComposing) return;
+  event.preventDefault();
+  sendMessage();
 };
 
 const sendMessage = async () => {
@@ -518,6 +547,8 @@ const sendMessage = async () => {
     if (!ok) return;
     draft.value = "";
     clearPendingFiles();
+    await nextTick();
+    resizeComposerTextarea();
   } catch (error) {
     const message = error?.response?.data?.message || t("channel.room.status.errorSend");
     addToast({ message, type: "error" });
@@ -709,16 +740,22 @@ onBeforeUnmount(() => {
   background-color: var(--color-danger);
 }
 
+.chat-panel {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
 .messages {
   border: 1px solid var(--color-border);
   border-radius: 8px;
-  /* padding: 16px 24px; */
   display: flex;
   flex-direction: column;
-  /* gap: 16px; */
   background-color: var(--color-card-bg);
-  height: calc(100vh - 268px);
-  overflow-y: scroll;
+  flex-grow: 1;
+  flex-basis: 0;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .messages-loading-more {
@@ -793,7 +830,7 @@ onBeforeUnmount(() => {
 }
 
 .message-content {
-  font-size: 14px;
+  line-height: 1.5;
   color: var(--color-text);
 }
 
@@ -920,11 +957,22 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   gap: 6px;
+  flex-shrink: 0;
 }
 
 .composer {
   display: flex;
-  gap: 8px;
+  align-items: flex-end;
+  gap: 4px;
+  padding: 6px;
+  border: 1px solid var(--color-input-border);
+  border-radius: 10px;
+  background-color: var(--color-input-bg);
+  transition: border-color 0.15s;
+}
+
+.composer:focus-within {
+  border-color: var(--color-accent);
 }
 
 .composer .btn--icon {
@@ -937,14 +985,22 @@ onBeforeUnmount(() => {
   background-color: var(--color-surface-alt);
 }
 
-.composer input {
+.composer-textarea {
   flex: 1;
-  padding: 8px 10px;
-  border: 1px solid var(--color-input-border);
-  border-radius: 6px;
+  padding: 8px 6px;
+  border: none;
   font-size: 14px;
-  background-color: var(--color-input-bg);
+  font-family: inherit;
+  line-height: 1.4;
+  background-color: transparent;
   color: var(--color-text);
+  resize: none;
+  overflow-y: auto;
+  max-height: 200px;
+}
+
+.composer-textarea:focus {
+  outline: none;
 }
 
 .composer-notice {

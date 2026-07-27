@@ -24,7 +24,7 @@
           :show-toolbar="false"
           :show-footer="false"
           :wrap-min-height="0"
-          :editor-padding="12"
+          :editor-padding="'8px 10px'"
           :placeholder="t('backlog.page.modal.descriptionPlaceholder')"
           class="task-content-editor"
         />

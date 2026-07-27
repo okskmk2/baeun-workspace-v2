@@ -193,6 +193,8 @@ watch(projectId, fetchRooms);
 <style>
 .ChannelLayout main {
   padding-bottom: 2rem;
+  display: flex;
+  flex-direction: column;
 }
 
 .layout-actions {
