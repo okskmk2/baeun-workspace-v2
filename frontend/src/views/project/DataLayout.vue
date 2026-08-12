@@ -117,7 +117,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
 import MaterialSymbol from "../../components/MaterialSymbol.vue";
@@ -137,7 +137,7 @@ const localTables = computed(() => tablesByProject.value[projectId.value]?.local
 const isCreateModalOpen = ref(false);
 const isCreating = ref(false);
 const createError = ref("");
-const createForm = reactive({
+const createForm = ref({
   name: "",
   description: "",
   columns: [{ name: "name", type: "TEXT", optionsText: "", is_required: false }],
@@ -164,23 +164,23 @@ const closeCreateModal = () => {
 };
 
 const appendColumn = () => {
-  createForm.columns.push({ name: "", type: "TEXT", optionsText: "", is_required: false });
+  createForm.value.columns.push({ name: "", type: "TEXT", optionsText: "", is_required: false });
 };
 
 const removeColumn = (index) => {
-  createForm.columns.splice(index, 1);
-  if (createForm.columns.length === 0) {
-    createForm.columns.push({ name: "", type: "TEXT", optionsText: "", is_required: false });
+  createForm.value.columns.splice(index, 1);
+  if (createForm.value.columns.length === 0) {
+    createForm.value.columns.push({ name: "", type: "TEXT", optionsText: "", is_required: false });
   }
 };
 
 const submitCreateTable = async () => {
   if (!projectId.value) return;
-  if (!createForm.name) {
+  if (!createForm.value.name) {
     createError.value = "테이블 이름을 입력하세요.";
     return;
   }
-  if (createForm.columns.some((column) => !String(column.name || "").trim())) {
+  if (createForm.value.columns.some((column) => !String(column.name || "").trim())) {
     createError.value = "모든 컬럼에 이름이 필요합니다.";
     return;
   }
@@ -189,9 +189,9 @@ const submitCreateTable = async () => {
   createError.value = "";
   try {
     const payload = {
-      name: createForm.name,
-      description: createForm.description || null,
-      columns: createForm.columns.map((column, index) => ({
+      name: createForm.value.name,
+      description: createForm.value.description || null,
+      columns: createForm.value.columns.map((column, index) => ({
         name: column.name,
         type: column.type,
         is_required: column.is_required === true,

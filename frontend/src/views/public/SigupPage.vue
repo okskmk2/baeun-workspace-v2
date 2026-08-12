@@ -90,7 +90,7 @@
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, reactive, ref, watch } from "vue";
+import { computed, onBeforeUnmount, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import api from "../../lib/axios";
@@ -109,7 +109,7 @@ const emailCheckMessage = ref("");
 const emailCheckTone = ref("neutral");
 const emailCheckTimer = ref(null);
 const emailCheckRequestId = ref(0);
-const errors = reactive({
+const errors = ref({
   name: "",
   email: "",
   password: "",
@@ -167,7 +167,7 @@ const checkEmailAvailability = async (value) => {
 };
 
 watch(email, (value) => {
-  errors.email = "";
+  errors.value.email = "";
   clearEmailCheckTimer();
 
   const normalized = String(value || "").trim();
@@ -212,37 +212,37 @@ const strength = computed(() => {
 });
 
 const validate = () => {
-  errors.name = "";
-  errors.email = "";
-  errors.password = "";
-  errors.confirmPassword = "";
-  errors.form = "";
+  errors.value.name = "";
+  errors.value.email = "";
+  errors.value.password = "";
+  errors.value.confirmPassword = "";
+  errors.value.form = "";
 
   if (!name.value) {
-    errors.name = t("auth.signup.errors.nameRequired");
+    errors.value.name = t("auth.signup.errors.nameRequired");
   }
 
   if (!email.value) {
-    errors.email = t("auth.signup.errors.emailRequired");
+    errors.value.email = t("auth.signup.errors.emailRequired");
   } else if (!emailPattern.test(email.value)) {
-    errors.email = t("auth.signup.errors.emailInvalid");
+    errors.value.email = t("auth.signup.errors.emailInvalid");
   } else if (emailCheckState.value === "taken") {
-    errors.email = t("auth.signup.emailCheck.taken");
+    errors.value.email = t("auth.signup.emailCheck.taken");
   }
 
   if (!password.value) {
-    errors.password = t("auth.signup.errors.passwordRequired");
+    errors.value.password = t("auth.signup.errors.passwordRequired");
   } else if (password.value.length < 6) {
-    errors.password = t("auth.signup.errors.passwordLength");
+    errors.value.password = t("auth.signup.errors.passwordLength");
   }
 
   if (!confirmPassword.value) {
-    errors.confirmPassword = t("auth.signup.errors.confirmRequired");
+    errors.value.confirmPassword = t("auth.signup.errors.confirmRequired");
   } else if (confirmPassword.value !== password.value) {
-    errors.confirmPassword = t("auth.signup.errors.confirmMismatch");
+    errors.value.confirmPassword = t("auth.signup.errors.confirmMismatch");
   }
 
-  return !errors.name && !errors.email && !errors.password && !errors.confirmPassword;
+  return !errors.value.name && !errors.value.email && !errors.value.password && !errors.value.confirmPassword;
 };
 
 const onSubmit = async () => {
@@ -264,7 +264,7 @@ const onSubmit = async () => {
       query: { email: email.value },
     });
   } catch (error) {
-    errors.form = error?.response?.data?.message || t("auth.signup.errors.formDefault");
+    errors.value.form = error?.response?.data?.message || t("auth.signup.errors.formDefault");
   } finally {
     loading.value = false;
   }

@@ -7,6 +7,7 @@
     "build": "vite build",
     "build:prod": "vite build --mode prod",
     "preview": "vite preview",
+    "lint": "eslint src",
     "check:encoding": "node scripts/check-encoding.mjs"
   },
   "dependencies": {
@@ -22,6 +23,8 @@
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^6.0.7",
+    "eslint": "^9.39.0",
+    "vue-eslint-parser": "^10.2.0",
     "vite": "^8.1.1"
   }
 }

@@ -50,7 +50,7 @@
 </template>
 
 <script setup>
-import { reactive, ref } from "vue";
+import { ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import api from "../../lib/axios";
@@ -66,7 +66,7 @@ const email = ref("");
 const password = ref("");
 const remember = ref(false);
 const loading = ref(false);
-const errors = reactive({
+const errors = ref({
   email: "",
   password: "",
   form: "",
@@ -75,23 +75,23 @@ const errors = reactive({
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const validate = () => {
-  errors.email = "";
-  errors.password = "";
-  errors.form = "";
+  errors.value.email = "";
+  errors.value.password = "";
+  errors.value.form = "";
 
   if (!email.value) {
-    errors.email = t("auth.login.errors.emailRequired");
+    errors.value.email = t("auth.login.errors.emailRequired");
   } else if (!emailPattern.test(email.value)) {
-    errors.email = t("auth.login.errors.emailInvalid");
+    errors.value.email = t("auth.login.errors.emailInvalid");
   }
 
   if (!password.value) {
-    errors.password = t("auth.login.errors.passwordRequired");
+    errors.value.password = t("auth.login.errors.passwordRequired");
   } else if (password.value.length < 6) {
-    errors.password = t("auth.login.errors.passwordLength");
+    errors.value.password = t("auth.login.errors.passwordLength");
   }
 
-  return !errors.email && !errors.password;
+  return !errors.value.email && !errors.value.password;
 };
 
 const onSubmit = async () => {
@@ -119,11 +119,11 @@ const onSubmit = async () => {
     }
   } catch (error) {
     if (error?.response?.status === 403) {
-      errors.form = t("auth.login.errors.approvalPending");
+      errors.value.form = t("auth.login.errors.approvalPending");
       return;
     }
 
-    errors.form = error?.response?.data?.message || t("auth.login.errors.formDefault");
+    errors.value.form = error?.response?.data?.message || t("auth.login.errors.formDefault");
   } finally {
     loading.value = false;
   }

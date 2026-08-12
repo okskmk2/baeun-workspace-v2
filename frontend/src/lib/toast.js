@@ -1,15 +1,15 @@
-import { reactive } from "vue";
+import { ref } from "vue";
 
 let toastId = 0;
 
-export const toastState = reactive({
+export const toastState = ref({
   items: [],
 });
 
 export const addToast = ({ message, type = "info", duration = 3000 }) => {
   const id = toastId++;
   const toast = { id, message, type };
-  toastState.items.push(toast);
+  toastState.value.items.push(toast);
 
   if (duration > 0) {
     setTimeout(() => {
@@ -21,12 +21,12 @@ export const addToast = ({ message, type = "info", duration = 3000 }) => {
 };
 
 export const removeToast = (id) => {
-  const index = toastState.items.findIndex((item) => item.id === id);
+  const index = toastState.value.items.findIndex((item) => item.id === id);
   if (index >= 0) {
-    toastState.items.splice(index, 1);
+    toastState.value.items.splice(index, 1);
   }
 };
 
 export const clearToasts = () => {
-  toastState.items.splice(0, toastState.items.length);
+  toastState.value.items.splice(0, toastState.value.items.length);
 };
