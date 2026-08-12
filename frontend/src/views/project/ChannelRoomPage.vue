@@ -832,6 +832,7 @@ onBeforeUnmount(() => {
 .message-content {
   line-height: 1.5;
   color: var(--color-text);
+  white-space: pre-wrap;
 }
 
 .message-feedback {
