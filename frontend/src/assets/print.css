@@ -1,0 +1,17 @@
+@media print {
+  .ProjectLayout > header {
+    display: none !important;
+  }
+
+  .ProjectLayout .LnbLayout > aside {
+    display: none !important;
+  }
+
+  main > hgroup .actions {
+    display: none !important;
+  }
+
+  .ProjectLayout .LnbLayout > main {
+    overflow: visible;
+  }
+}

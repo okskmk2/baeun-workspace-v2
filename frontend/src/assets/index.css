@@ -6,6 +6,7 @@
 @import url(./layout.css);
 @import url(./modal.css);
 @import url(./rich-text-editor.css);
+@import url(./print.css);
 
 body {
   background-color: var(--color-bg);

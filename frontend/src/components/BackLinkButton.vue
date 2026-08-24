@@ -32,5 +32,6 @@ const handleClick = (event) => {
   gap: 2px;
   font-size: 12px;
   color: var(--color-text-muted);
+  align-self: flex-start;
 }
 </style>

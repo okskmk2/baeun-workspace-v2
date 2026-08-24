@@ -5,8 +5,6 @@ const SOCKET_STATES = {
   OPEN: 1,
 };
 
-const SHARED_WORKER_NAME = "realtime-shared-worker";
-
 const isRealtimeDebugEnabled = () => {
   if (typeof import.meta === "undefined") return false;
   const debugFlag = String(import.meta.env?.VITE_REALTIME_DEBUG || "").toLowerCase();
@@ -153,7 +151,7 @@ export const useRealtimeStore = defineStore("realtime", {
           new URL("../workers/realtime.sharedworker.js", import.meta.url),
           {
             type: "module",
-            name: SHARED_WORKER_NAME,
+            name: "realtime-shared-worker",
           }
         );
         const port = worker.port;
