@@ -98,7 +98,9 @@ app.use(
     immutable: true,
     setHeaders: (res, filePath) => {
       if (filePath.endsWith("index.html")) {
-        res.setHeader("Cache-Control", "no-cache");
+        res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+        res.setHeader("Pragma", "no-cache");
+        res.setHeader("Expires", "0");
       }
     },
   })
@@ -108,7 +110,9 @@ app.use(
 app.get("{/*path}", (req, res) => {
   res.sendFile(path.join(staticPath, "index.html"), {
     headers: {
-      "Cache-Control": "no-cache",
+      "Cache-Control": "no-store, no-cache, must-revalidate",
+      Pragma: "no-cache",
+      Expires: "0",
     },
   });
 });
