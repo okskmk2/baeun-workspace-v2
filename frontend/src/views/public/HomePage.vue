@@ -144,7 +144,7 @@ onBeforeUnmount(() => {
   flex-direction: column;
   align-items: center;
   gap: 36px;
-  max-width: 640px;
+  max-width: 760px;
 }
 
 .hero__headline {

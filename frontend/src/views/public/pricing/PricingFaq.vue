@@ -33,7 +33,7 @@ const toggle = (index) => {
   flex-direction: column;
   gap: var(--space-6);
   padding: var(--space-10) var(--space-4);
-  max-width: 720px;
+  min-width: 880px;
   margin: 0 auto;
 }
 

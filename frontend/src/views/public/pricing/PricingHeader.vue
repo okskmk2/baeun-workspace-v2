@@ -35,7 +35,7 @@ const billingCycle = defineModel("billingCycle", { type: String, required: true 
 
 .pricing-header__headline {
   margin: 0;
-  max-width: 720px;
+  max-width: 880px;
   font-family: var(--font-serif);
   font-weight: 600;
   font-size: var(--text-hero);
