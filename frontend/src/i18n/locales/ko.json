@@ -70,6 +70,12 @@
         "errorLoad": "워크스페이스 목록을 불러오지 못했습니다.",
         "emptyWorkspaces": "워크스페이스가 없습니다.",
         "emptyProjects": "프로젝트가 없습니다."
+      },
+      "footer": {
+        "pricing": "요금제",
+        "features": "기능",
+        "contact": "문의",
+        "copyright": "© {year} Baeun Workspace. All rights reserved."
       }
     },
     "account": {

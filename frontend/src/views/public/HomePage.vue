@@ -1,550 +1,416 @@
 <template>
-  <main class="home container">
+  <main ref="rootEl" class="home">
     <section class="hero">
-      <div class="hero__copy">
-        <p class="hero__eyebrow">몰입을 위한 단 하나의 흐름</p>
-        <h1 class="hero__title">탭 전환 없는 완벽한 몰입</h1>
-        <p class="hero__subtitle">
-          기획과 아이디어는 지식 베이스에, 실행은 작업 관리 보드에, 소통은 메시징 채널에.
-          AI가 세 흐름을 유기적으로 연결합니다.
+      <div class="hero__frame">
+        <h1 class="hero__headline">이것은 시간에 관한 문제다.</h1>
+        <p class="hero__sub">
+          문제를 푸는 시간보다,<br />
+          툴을 오가는 시간이 더 길었다면.
         </p>
+        <div class="hero__closing">
+          <p class="hero__closing-line">이제, 일이 있는 곳에 모든 것이 있습니다.</p>
+          <p class="hero__brand">바은 워크스페이스</p>
+        </div>
         <div class="hero__actions">
-          <router-link class="btn" to="/signup">지금 워크플로우 시작</router-link>
-          <router-link class="btn btn--secondary" to="/store">도입 사례 보기</router-link>
-        </div>
-        <p class="hero__presence">현재 접속자: {{ onlineCountLabel }}</p>
-        <div class="hero__stats">
-          <div v-for="stat in stats" :key="stat.label" class="stat">
-            <p class="stat__value">{{ stat.value }}</p>
-            <p class="stat__label">{{ stat.label }}</p>
-          </div>
+          <router-link class="btn btn--lg" to="/signup">지금 시작하기</router-link>
+          <a class="btn btn--secondary btn--lg" href="#features" @click="scrollToFeatures"
+            >기능 둘러보기</a
+          >
         </div>
       </div>
-
-      <div
-        class="hero__visual"
-        aria-label="지식 베이스에서 작업 관리 보드로, 작업 관리 보드에서 메시징 채널로 이어지는 흐름 시뮬레이션"
+      <button
+        class="hero__scroll-cue"
+        type="button"
+        aria-label="다음 섹션으로 스크롤"
+        @click="scrollToNarrative"
       >
-        <div class="flow flow--wiki">
-          <header>
-            <span>Wiki</span>
-            <strong>분기 전략 문서</strong>
-          </header>
-          <p>AI 요약 완료 · 핵심 액션 3건 추출</p>
-          <div class="flow__tags">
-            <span>#launch</span>
-            <span>#marketing</span>
-            <span>#priority-high</span>
-          </div>
-        </div>
-
-        <div class="flow flow--kanban">
-          <header>
-            <span>Kanban</span>
-            <strong>Q2 런칭 준비</strong>
-          </header>
-          <ul>
-            <li>기획 검토 완료</li>
-            <li>디자인 QA 진행중</li>
-            <li>릴리즈 블로커 1건</li>
-          </ul>
-        </div>
-
-        <div class="flow flow--channel">
-          <header>
-            <span>Channel</span>
-            <strong>#launch-task-thread</strong>
-          </header>
-          <p>
-            "이 카드 기준으로 QA 이슈 정리했어요"<br />
-            "다음 스프린트로 넘기기 전에 PM 확인 부탁"
-          </p>
-        </div>
-      </div>
+        ↓
+      </button>
     </section>
 
-    <section class="trinity">
-      <div class="section-heading">
-        <h2>The Trinity Loop</h2>
-        <p>지식 베이스, 작업 관리 보드, 메시징 채널이 하나의 흐름으로 이어집니다.</p>
-      </div>
-
-      <div class="trinity-grid">
-        <article v-for="feature in trinityFeatures" :key="feature.title" class="trinity-card">
-          <p class="trinity-card__kicker">{{ feature.kicker }}</p>
-          <h3>{{ feature.title }}</h3>
-          <p class="trinity-card__description">{{ feature.description }}</p>
-          <ul>
-            <li v-for="item in feature.bullets" :key="item">{{ item }}</li>
-          </ul>
-        </article>
-      </div>
-    </section>
-
-    <section class="insight">
-      <div class="insight__copy">
-        <p class="hero__eyebrow">AI Insight Layer</p>
-        <h2>AI가 지금 확인해야 할 우선순위를 먼저 보여줍니다.</h2>
-        <p>
-          AI가 수천 개의 메시지와 문서 사이에서 지금 당신이 확인해야 할 우선순위를 제안합니다.
-          관리자 화면에서 병목 구간과 지연 리스크를 즉시 파악할 수 있습니다.
+    <section class="narrative">
+      <div class="narrative__inner">
+        <p class="narrative__block reveal">
+          회의록은 문서 툴에, 할 일은 보드에, 대화는 메신저에 있었다.<br />
+          답은 늘 어딘가에 있었지만, 어디에도 없었다.
+        </p>
+        <p class="narrative__block narrative__block--emphasis reveal">
+          우리가 낭비한 것은 시간이 아니라,<br />
+          집중할 수 있었던 시간이다.
         </p>
       </div>
+    </section>
 
-      <aside class="briefing" aria-label="AI 브리핑 예시">
-        <header>
-          <strong>AI 브리핑</strong>
-          <span>09:42 업데이트</span>
-        </header>
-        <div class="briefing__item">
-          <p class="briefing__title">마감 임박</p>
-          <p>Q2 런칭 태스크 4건이 24시간 내 만료됩니다.</p>
+    <section id="features" class="solution">
+      <div class="solution__inner">
+        <div class="solution__intro reveal">
+          <p>바은 워크스페이스.</p>
+          <p>위키, 작업보드, 채널, 데이터 — 하나의 프로젝트 공간에서.</p>
+          <p class="solution__tagline">Pay only for what you need.</p>
         </div>
-        <div class="briefing__item">
-          <p class="briefing__title">협업 병목</p>
-          <p>디자인 검토 대기 11건이 동일 승인자에게 몰려 있습니다.</p>
+
+        <div class="solution__grid">
+          <article v-for="feature in features" :key="feature.title" class="solution__card reveal">
+            <h3>{{ feature.title }}</h3>
+            <p>{{ feature.description }}</p>
+          </article>
         </div>
-        <div class="briefing__item">
-          <p class="briefing__title">추천 액션</p>
-          <p>우선순위 P1 카드 3건을 오늘 스탠드업 안건으로 등록하세요.</p>
+
+        <div class="solution__cta">
+          <router-link class="btn btn--lg" to="/signup">무료로 시작하기</router-link>
         </div>
-      </aside>
+      </div>
     </section>
   </main>
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from "vue";
-import api from "../../lib/axios";
+import { onBeforeUnmount, onMounted, ref } from "vue";
 
-const onlineCount = ref(null);
-const onlineCountLabel = computed(() => {
-  if (onlineCount.value === null) return "-";
-  return `${onlineCount.value}명`;
-});
+const rootEl = ref(null);
+let observer = null;
 
-const loadOnlineCount = async () => {
-  try {
-    const response = await api.get("/metrics/online");
-    const sockets = Number(response?.data?.data?.sockets ?? 0);
-    onlineCount.value = Number.isFinite(sockets) ? sockets : 0;
-  } catch (error) {
-    onlineCount.value = null;
-  }
-};
-
-const stats = [
-  { value: "1,280", label: "주간 자동화 액션" },
-  { value: "97%", label: "이슈 맥락 연결률" },
-  { value: "3.2x", label: "결정 속도 향상" },
-  { value: "0", label: "탭 왕복 필요" },
+const features = [
+  { title: "위키", description: "계층형 트리 구조의 지식베이스" },
+  { title: "작업보드", description: "칸반 · 백로그 · 간트차트로 관리하는 태스크" },
+  { title: "채널", description: "태스크와 직접 연동되는 실시간 채팅과 DM" },
+  { title: "데이터", description: "테이블 생성 · 조인 · 시각화, 엑셀을 대체하는 데이터 관리" },
 ];
 
-const trinityFeatures = computed(() => [
-  {
-    kicker: "Wiki",
-    title: "지식 베이스 / 문서",
-    description: "기획과 아이디어를 기록하는 조직의 뇌",
-    bullets: [
-      "AI 요약으로 핵심 의사결정 자동 추출",
-      "자동 태그로 문서 연결 맥락 강화",
-      "프로젝트 기준 위키 히스토리 추적",
-    ],
-  },
-  {
-    kicker: "Kanban",
-    title: "작업 관리 / 보드",
-    description: "문서 속 할 일을 카드로 바꾸는 실행의 중심",
-    bullets: [
-      "문서 블록 드래그로 카드 즉시 생성",
-      "상태 추적과 일정 관리 일원화",
-      "카드별 담당자/우선순위 자동 동기화",
-    ],
-  },
-  {
-    kicker: "Channel",
-    title: "소통 / 메시징",
-    description: "작업 맥락을 잃지 않는 실시간 연결",
-    bullets: [
-      "칸반 카드/위키 페이지 연동 스레드",
-      "업무 단위 알림과 토론 기록 보존",
-      "결정 근거를 채팅과 함께 자동 아카이빙",
-    ],
-  },
-]);
+const scrollToFeatures = (event) => {
+  event.preventDefault();
+  document.getElementById("features")?.scrollIntoView({ behavior: "smooth", block: "start" });
+};
+
+const scrollToNarrative = () => {
+  rootEl.value?.querySelector(".narrative")?.scrollIntoView({ behavior: "smooth", block: "start" });
+};
 
 onMounted(() => {
-  loadOnlineCount();
+  const targets = rootEl.value ? Array.from(rootEl.value.querySelectorAll(".reveal")) : [];
+  if (!targets.length) return;
+
+  if (typeof IntersectionObserver === "undefined") {
+    targets.forEach((el) => el.classList.add("is-visible"));
+    return;
+  }
+
+  observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        entry.target.classList.add("is-visible");
+        observer.unobserve(entry.target);
+      });
+    },
+    { threshold: 0.2, rootMargin: "0px 0px -10% 0px" },
+  );
+
+  targets.forEach((el) => observer.observe(el));
+});
+
+onBeforeUnmount(() => {
+  observer?.disconnect();
 });
 </script>
 
 <style scoped>
 .home {
-  display: flex;
-  flex-direction: column;
-  gap: 56px;
+  --font-serif: "Noto Serif KR", "SUIT", serif;
   color: var(--color-text);
 }
 
+.PublicLayout main.home {
+  margin: 0;
+  padding: 0;
+  border-radius: 0;
+  background-color: var(--color-page-bg);
+}
+
+/* ---------- Hero ---------- */
+
 .hero {
-  display: grid;
-  grid-template-columns: 1.1fr 1fr;
-  gap: 28px;
-  align-items: stretch;
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 120px 24px 96px;
 }
 
-.hero__eyebrow {
-  margin: 0 0 8px;
-  font-size: 13px;
-  text-transform: uppercase;
-  letter-spacing: 0.2em;
+.hero__frame {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 36px;
+  max-width: 640px;
+}
+
+.hero__headline {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-weight: 600;
+  font-size: clamp(32px, 6vw, 56px);
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+}
+
+.hero__sub {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: clamp(16px, 2.2vw, 20px);
+  line-height: 1.85;
   color: var(--color-text-muted);
 }
 
-.hero__title {
-  margin: 0 0 12px;
-  font-size: clamp(30px, 5vw, 52px);
-  line-height: 1.1;
+.hero__closing {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
-.hero__subtitle {
-  margin: 0 0 24px;
+.hero__closing-line {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: clamp(15px, 2vw, 18px);
   color: var(--color-text-muted);
-  font-size: 15px;
-  max-width: 480px;
+}
+
+.hero__brand {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-weight: 700;
+  font-size: clamp(20px, 3vw, 26px);
+  letter-spacing: 0.02em;
+  color: var(--color-text);
 }
 
 .hero__actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
-  margin-bottom: 24px;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 8px;
 }
 
-.hero__presence {
-  margin: 0 0 16px;
-  font-size: 12px;
-  color: var(--color-text-muted);
-}
-
-.hero__stats {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.stat {
-  padding: 12px 14px;
-  border-radius: 12px;
-  background: linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--color-accent) 10%, var(--color-card-bg)),
-    var(--color-card-bg)
-  );
-  border: 1px solid var(--color-border);
-}
-
-.stat__value {
-  margin: 0 0 4px;
-  font-size: 20px;
-  font-weight: 700;
-}
-
-.stat__label {
-  margin: 0;
-  font-size: 12px;
-  color: var(--color-text-muted);
-}
-
-.hero__visual {
-  position: relative;
-  min-height: 420px;
-  border-radius: 20px;
-  padding: 20px;
-  background:
-    radial-gradient(
-      circle at 12% 10%,
-      color-mix(in srgb, var(--color-info) 20%, transparent),
-      transparent 30%
-    ),
-    radial-gradient(
-      circle at 84% 90%,
-      color-mix(in srgb, var(--color-success) 18%, transparent),
-      transparent 34%
-    ),
-    var(--color-card-bg);
-  border: 1px solid var(--color-border);
-  box-shadow: 0 24px 56px rgba(15, 23, 42, 0.08);
-  overflow: hidden;
-}
-
-.flow {
+.hero__scroll-cue {
   position: absolute;
-  width: min(290px, 78%);
-  border-radius: 14px;
-  border: 1px solid var(--color-border);
-  background: var(--color-surface);
-  padding: 14px;
-  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
-}
-
-.flow header {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
-.flow header span {
-  font-size: 11px;
+  bottom: 36px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: none;
+  border: none;
+  padding: 8px;
   color: var(--color-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  animation: hero-bob 2.4s ease-in-out infinite;
 }
 
-.flow header strong {
+@keyframes hero-bob {
+  0%,
+  100% {
+    transform: translate(-50%, 0);
+  }
+  50% {
+    transform: translate(-50%, 6px);
+  }
+}
+
+/* ---------- Narrative ---------- */
+
+.narrative {
+  padding: 160px 24px;
+}
+
+.narrative__inner {
+  max-width: 640px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 140px;
+}
+
+.narrative__block {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: clamp(18px, 2.6vw, 24px);
+  line-height: 1.9;
+  text-align: center;
+  color: var(--color-text);
+  opacity: 0;
+  transform: translateY(24px);
+  transition:
+    opacity 0.8s ease,
+    transform 0.8s ease;
+}
+
+.narrative__block.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.narrative__block--emphasis {
+  font-weight: 700;
+  font-size: clamp(22px, 3.4vw, 30px);
+}
+
+.narrative__block--emphasis::before {
+  content: "";
+  display: block;
+  width: 48px;
+  height: 2px;
+  margin: 0 auto 32px;
+  background-color: var(--color-accent);
+}
+
+/* ---------- Solution ---------- */
+
+.solution {
+  scroll-margin-top: 24px;
+  padding: 140px 24px 120px;
+  background-color: var(--color-surface);
+  border-top: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.solution__inner {
+  max-width: 1040px;
+  margin: 0 auto;
+}
+
+.solution__intro {
+  max-width: 640px;
+  margin: 0 auto 64px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-align: center;
+  font-family: var(--font-serif);
+  opacity: 0;
+  transform: translateY(24px);
+  transition:
+    opacity 0.8s ease,
+    transform 0.8s ease;
+}
+
+.solution__intro.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.solution__intro p {
+  margin: 0;
+  font-size: clamp(18px, 2.4vw, 22px);
+  line-height: 1.7;
+}
+
+.solution__tagline {
+  margin-top: 8px !important;
+  font-family: "SUIT", sans-serif;
   font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-accent);
 }
 
-.flow p,
-.flow ul {
-  margin: 0;
-  font-size: 12px;
-  line-height: 1.45;
-  color: var(--color-text-muted);
-}
-
-.flow ul {
-  padding-left: 16px;
+.solution__grid {
   display: grid;
-  gap: 4px;
-}
-
-.flow__tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 10px;
-}
-
-.flow__tags span {
-  font-size: 11px;
-  border-radius: 999px;
-  padding: 4px 8px;
-  border: 1px solid color-mix(in srgb, var(--color-accent) 28%, var(--color-border));
-  background: color-mix(in srgb, var(--color-accent) 12%, var(--color-surface));
-  color: var(--color-link);
-}
-
-.flow--wiki {
-  top: 16px;
-  left: 18px;
-  animation: drift-y 4.2s ease-in-out infinite;
-}
-
-.flow--kanban {
-  top: 142px;
-  right: 24px;
-  animation: drift-x 4.2s ease-in-out infinite 0.5s;
-}
-
-.flow--channel {
-  bottom: 20px;
-  left: 40px;
-  animation: drift-y 4.2s ease-in-out infinite 1s;
-}
-
-.section-heading h2 {
-  margin: 0 0 6px;
-  font-size: 22px;
-}
-
-.section-heading p {
-  margin: 0;
-  color: var(--color-text-muted);
-  font-size: 14px;
-}
-
-.trinity {
-  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 20px;
 }
 
-.trinity-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
-}
-
-.trinity-card {
-  padding: 20px;
-  border-radius: 14px;
+.solution__card {
+  padding: 28px 22px;
   border: 1px solid var(--color-border);
-  background: var(--color-card-bg);
+  border-radius: 4px;
+  background-color: var(--color-card-bg);
+  text-align: left;
+  opacity: 0;
+  transform: translateY(20px);
+  transition:
+    opacity 0.7s ease,
+    transform 0.7s ease;
 }
 
-.trinity-card__kicker {
-  margin: 0 0 8px;
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: var(--color-text-muted);
+.solution__card.is-visible {
+  opacity: 1;
+  transform: translateY(0);
 }
 
-.trinity-card h3 {
-  margin: 0 0 8px;
-  font-size: 18px;
+.solution__card:nth-child(2) {
+  transition-delay: 80ms;
 }
 
-.trinity-card__description {
+.solution__card:nth-child(3) {
+  transition-delay: 160ms;
+}
+
+.solution__card:nth-child(4) {
+  transition-delay: 240ms;
+}
+
+.solution__card h3 {
+  margin: 0 0 10px;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.solution__card p {
   margin: 0;
   font-size: 14px;
-  color: var(--color-text);
-}
-
-.trinity-card ul {
-  margin: 14px 0 0;
-  padding-left: 18px;
-  display: grid;
-  gap: 6px;
-  color: var(--color-text-muted);
-  font-size: 13px;
-}
-
-.insight {
-  display: grid;
-  grid-template-columns: 1.2fr 1fr;
-  gap: 18px;
-  align-items: start;
-}
-
-.insight h2 {
-  margin: 0 0 10px;
-  font-size: 28px;
-  line-height: 1.25;
-}
-
-.insight p {
-  margin: 0;
-  color: var(--color-text-muted);
   line-height: 1.6;
-}
-
-.briefing {
-  padding: 18px;
-  border: 1px solid var(--color-border);
-  border-radius: 16px;
-  background: linear-gradient(
-    145deg,
-    color-mix(in srgb, var(--color-accent) 10%, var(--color-card-bg)),
-    var(--color-card-bg)
-  );
-}
-
-.briefing header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-bottom: 10px;
-  border-bottom: 1px solid var(--color-border);
-  margin-bottom: 12px;
-}
-
-.briefing header strong {
-  font-size: 16px;
-}
-
-.briefing header span {
-  font-size: 12px;
   color: var(--color-text-muted);
 }
 
-.briefing__item + .briefing__item {
-  margin-top: 12px;
+.solution__cta {
+  margin-top: 56px;
+  text-align: center;
 }
 
-.briefing__title {
-  margin: 0 0 4px;
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--color-text);
-}
+/* ---------- Responsive ---------- */
 
-.briefing__item p {
-  margin: 0;
-  font-size: 13px;
-  color: var(--color-text-muted);
-}
-
-@keyframes drift-y {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-8px);
-  }
-}
-
-@keyframes drift-x {
-  0%,
-  100% {
-    transform: translateX(0);
-  }
-  50% {
-    transform: translateX(8px);
-  }
-}
-
-@keyframes pulse {
-  0%,
-  100% {
-    opacity: 0.45;
-  }
-  50% {
-    opacity: 1;
-  }
-}
-
-@media (max-width: 980px) {
-  .hero,
-  .insight {
-    flex-direction: column;
-    grid-template-columns: 1fr;
-  }
-
-  .trinity-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .hero__visual {
-    min-height: 500px;
+@media (max-width: 900px) {
+  .solution__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 640px) {
-  .hero__stats {
+  .hero {
+    padding: 96px 20px 80px;
+  }
+
+  .narrative {
+    padding: 100px 20px;
+  }
+
+  .narrative__inner {
+    gap: 96px;
+  }
+
+  .solution {
+    padding: 96px 20px 80px;
+  }
+
+  .solution__grid {
     grid-template-columns: 1fr;
   }
+}
 
-  .flow {
-    width: calc(100% - 32px);
+@media (prefers-reduced-motion: reduce) {
+  .hero__scroll-cue {
+    animation: none;
   }
 
-  .flow--wiki {
-    left: 16px;
-    top: 18px;
-  }
-
-  .flow--kanban {
-    right: 16px;
-    top: 186px;
-  }
-
-  .flow--channel {
-    left: 16px;
-    bottom: 20px;
+  .narrative__block,
+  .solution__intro,
+  .solution__card {
+    transition: opacity 0.4s ease;
+    transform: none;
   }
 }
 </style>

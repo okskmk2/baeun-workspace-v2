@@ -25,6 +25,18 @@
       </div>
     </header>
     <router-view></router-view>
+
+    <footer class="PublicLayout-footer">
+      <div class="container inner-footer">
+        <p class="footer-copyright">{{ t("layout.default.footer.copyright", { year: currentYear }) }}</p>
+
+        <nav class="footer-links" :aria-label="t('layout.default.brand')">
+          <router-link to="/pricing">{{ t("layout.default.footer.pricing") }}</router-link>
+          <router-link to="/#features">{{ t("layout.default.footer.features") }}</router-link>
+          <a href="#" @click.prevent>{{ t("layout.default.footer.contact") }}</a>
+        </nav>
+      </div>
+    </footer>
   </div>
 </template>
 
@@ -39,6 +51,7 @@ import { clearThemeSeedFromRoot } from "../../lib/themeSeed";
 const { t } = useI18n();
 const appStore = useAppStore();
 const isAuthenticated = computed(() => Boolean(appStore.currentUser));
+const currentYear = new Date().getFullYear();
 
 onMounted(() => {
   if (typeof document === "undefined") return;

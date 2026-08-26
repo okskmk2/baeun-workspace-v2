@@ -70,6 +70,12 @@
         "errorLoad": "Failed to load workspace list.",
         "emptyWorkspaces": "No workspaces available.",
         "emptyProjects": "No projects available."
+      },
+      "footer": {
+        "pricing": "Pricing",
+        "features": "Features",
+        "contact": "Contact",
+        "copyright": "© {year} Baeun Workspace. All rights reserved."
       }
     },
     "account": {

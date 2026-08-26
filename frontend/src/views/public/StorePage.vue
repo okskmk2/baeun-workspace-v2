@@ -1,43 +1,32 @@
-﻿<template>
+<template>
   <main class="store container">
-    <hgroup>
-      <div>
-        <h1>슬롯 스토어</h1>
-        <p class="subtitle">필요한 만큼 슬롯을 추가하여 조직의 규모를 확장하세요.</p>
-      </div>
-    </hgroup>
+    <header class="store-header">
+      <h1 class="store-header__title">슬롯 스토어</h1>
+      <p class="store-header__sub">필요한 만큼 슬롯을 추가하여 조직의 규모를 확장하세요.</p>
+      <p class="store-header__link">
+        슬롯 단가와 무료 한도가 궁금하신가요?
+        <router-link to="/pricing">요금제 안내 보기</router-link>
+      </p>
+    </header>
 
-    <nav class="billing-switch" aria-label="결제 주기 선택">
-      <button
-        v-for="option in billingOptions"
-        :key="option.key"
-        type="button"
-        class="billing-switch__item"
-        :class="{ 'billing-switch__item--active': selectedBilling === option.key }"
-        @click="selectedBilling = option.key"
-      >
-        <span>{{ option.label }}</span>
-        <small v-if="option.badge">{{ option.badge }}</small>
-      </button>
-    </nav>
+    <div class="store-billing">
+      <BillingCycleToggle v-model="billingCycle" />
+      <p v-if="billingCycle === 'yearly'" class="store-billing__badge">
+        {{ copy.billingToggle.yearlySelectedBadge }}
+      </p>
+    </div>
 
     <section class="slot-grid" aria-label="상품 결제 선택">
       <article v-for="item in slotItems" :key="item.key" class="slot-card">
-        <figure class="slot-card__media" aria-hidden="true">
-          <img :src="item.image" :alt="item.name" loading="lazy" />
-        </figure>
-
-        <h2>{{ item.name }}</h2>
+        <h2 class="slot-card__name">{{ item.name }}</h2>
         <p class="slot-card__desc">{{ item.description }}</p>
 
         <p class="slot-card__price">
-          <strong>${{ formatAmount(unitPrice(item.price)) }}</strong>
-          <span>/ {{ selectedBillingData.unit }}</span>
+          <strong class="slot-card__amount">{{ item.formattedPrice }}</strong>
+          <span class="slot-card__unit">/ {{ periodLabel }}</span>
         </p>
 
-        <button type="button" class="btn slot-card__button" @click="goToCart(item)">
-          결제하기
-        </button>
+        <button type="button" class="btn slot-card__button" @click="goToCart(item)">결제하기</button>
       </article>
     </section>
   </main>
@@ -46,52 +35,35 @@
 <script setup>
 import { computed, ref } from "vue";
 import { useRouter } from "vue-router";
+import { PRICE, YEARLY_DISCOUNT } from "../../constants/pricing";
+import { pricingCopy as copy } from "../../constants/pricingCopy";
+import { formatCurrency } from "../../utils/currency";
+import BillingCycleToggle from "./pricing/BillingCycleToggle.vue";
 
 const router = useRouter();
 
-const slotItems = [
-  {
-    key: "workspace",
-    name: "워크스페이스 슬롯",
-    description: "독립된 조직 공간 생성",
-    price: 10,
-    image: "/assets/card_office.png",
-    codeName: "WORKSPACE",
-  },
-  {
-    key: "member",
-    name: "멤버 슬롯",
-    description: "워크스페이스 멤버 초대",
-    price: 1,
-    image: "/assets/card_member.png",
-    codeName: "WORKSPACEMEMBER",
-  },
-  {
-    key: "project",
-    name: "프로젝트 슬롯",
-    description: "협업 프로젝트 생성",
-    price: 3,
-    image: "/assets/card_team.png",
-    codeName: "PROJECT",
-  },
-];
+const CODE_NAMES = {
+  workspace: "WORKSPACE",
+  project: "PROJECT",
+  member: "WORKSPACEMEMBER",
+};
 
-const billingOptions = [
-  { key: "monthly", label: "월간 구독", badge: "", multiplier: 1, unit: "월" },
-  { key: "yearly", label: "연간 구독", badge: "15% 할인", multiplier: 0.85, unit: "월" },
-  { key: "lifetime", label: "영구 사용권", badge: "3년치 일시불", multiplier: 36, unit: "일시불" },
-];
+const billingCycle = ref("monthly");
 
-const selectedBilling = ref("monthly");
+const periodLabel = computed(() => (billingCycle.value === "yearly" ? "월 (연간 결제)" : "월"));
 
-const selectedBillingData = computed(
-  () => billingOptions.find((option) => option.key === selectedBilling.value) || billingOptions[0]
-);
+const slotItems = computed(() => {
+  const multiplier = billingCycle.value === "yearly" ? 1 - YEARLY_DISCOUNT : 1;
 
-const unitPrice = (basePrice) => basePrice * selectedBillingData.value.multiplier;
+  return copy.slotCards.items.map((item) => ({
+    ...item,
+    codeName: CODE_NAMES[item.key],
+    formattedPrice: formatCurrency(PRICE[item.key] * multiplier),
+  }));
+});
 
 const buildProductCode = (item) => {
-  const billingCode = selectedBilling.value.toUpperCase();
+  const billingCode = billingCycle.value.toUpperCase();
   const year = new Date().getFullYear();
   return `${item.codeName}_${billingCode}_${year}`;
 };
@@ -104,228 +76,141 @@ const goToCart = (item) => {
     },
   });
 };
-
-const formatAmount = (value) =>
-  Number(value).toLocaleString("en-US", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
 </script>
 
 <style scoped>
 .store {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: var(--space-8);
+  padding-block: var(--space-8);
 }
 
 .store-header {
-  text-align: center;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  align-items: center;
+  gap: var(--space-2);
+  text-align: center;
 }
 
-.store-header h1 {
+.store-header__title {
   margin: 0;
-  font-size: clamp(var(--font-size-title-md), 3vw, var(--font-size-title-lg));
-  line-height: var(--line-height-tight);
+  font-family: var(--font-serif);
+  font-size: var(--text-h1);
+  font-weight: 600;
   letter-spacing: -0.01em;
-  font-weight: 800;
+  color: var(--color-text);
 }
 
-.store-header p {
+.store-header__sub {
   margin: 0;
-  font-size: var(--font-size-body);
-  line-height: var(--line-height-relaxed);
+  font-size: var(--text-body);
+  line-height: 1.6;
   color: var(--color-text-muted);
 }
 
-.billing-switch {
-  width: min(100%, 560px);
-  margin-inline: auto;
-  border: 1px solid var(--color-border);
-  background: var(--color-surface);
-  border-radius: 999px;
-  padding: 4px;
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 4px;
+.store-header__link {
+  margin: 0;
+  font-size: var(--text-caption);
+  color: var(--color-text-muted);
 }
 
-.billing-switch__item {
-  border: 1px solid transparent;
-  border-radius: 999px;
-  background: transparent;
-  color: var(--color-text);
-  min-height: 40px;
-  font-weight: 600;
-  font-size: var(--font-size-label);
-  cursor: pointer;
-  display: inline-flex;
+.store-header__link a {
+  color: var(--color-accent);
+}
+
+.store-billing {
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
-  transition:
-    background-color 0.15s ease,
-    border-color 0.15s ease,
-    color 0.15s ease;
+  gap: var(--space-3);
 }
 
-.billing-switch__item small {
-  font-size: var(--font-size-caption);
+.store-billing > :deep(.billing-toggle) {
+  width: min(100%, 360px);
+}
+
+.store-billing__badge {
+  margin: 0;
+  font-size: var(--text-caption);
   font-weight: 600;
   color: var(--color-accent);
-  background: color-mix(in srgb, var(--color-accent) 12%, var(--color-page-bg));
-  border-radius: 999px;
-  padding: 2px 9px;
-}
-
-/* .billing-switch__item:hover {
-  background: var(--color-surface-alt);
-} */
-
-.billing-switch__item--active {
-  background: var(--color-accent);
-  border-color: var(--color-accent);
-  color: var(--color-text-inverse);
-}
-
-.billing-switch__item--active small {
-  color: var(--color-accent);
-  background: color-mix(in srgb, var(--color-page-bg) 92%, white 8%);
 }
 
 .slot-grid {
+  width: 100%;
+  max-width: 1040px;
+  margin: 0 auto;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
+  gap: var(--space-5);
 }
 
 .slot-card {
-  background: var(--color-card-bg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-7) var(--space-6);
   border: 1px solid var(--color-border);
-  border-radius: 12px;
-  padding: 20px 16px;
-  text-align: center;
-  box-shadow: 0 2px 8px color-mix(in srgb, var(--color-text) 8%, transparent);
-  display: grid;
-  gap: 10px;
+  border-radius: var(--radius-lg);
+  background-color: var(--color-card-bg);
+  box-shadow: var(--shadow-card);
+  text-align: left;
 }
 
-.slot-card h2,
-.slot-card__desc,
-.slot-card__price {
+.slot-card__name {
   margin: 0;
-}
-
-.slot-card__media {
-  margin: -8px -4px 2px;
-  border-radius: 10px;
-  overflow: hidden;
-  /* background: color-mix(in srgb, var(--color-surface) 88%, white 12%); */
-}
-
-.slot-card__media img {
-  display: block;
-  width: 100%;
-  object-fit: cover;
-}
-
-.slot-card h2 {
-  font-size: var(--font-size-title-md);
-  line-height: var(--line-height-tight);
-  letter-spacing: -0.01em;
+  font-size: var(--text-h2);
+  font-weight: 700;
+  color: var(--color-text);
 }
 
 .slot-card__desc {
-  font-size: var(--font-size-label);
-  line-height: var(--line-height-body);
+  margin: 0;
+  flex: 1;
+  font-size: var(--text-body);
+  line-height: 1.6;
   color: var(--color-text-muted);
 }
 
 .slot-card__price {
-  display: inline-flex;
-  justify-content: center;
-  align-items: flex-end;
-  gap: 6px;
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
 }
 
-.slot-card__price strong {
-  font-size: clamp(var(--font-size-title-md), 2.4vw, var(--font-size-title-lg));
-  line-height: 1;
+.slot-card__amount {
+  font-size: var(--text-price);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
   color: var(--color-text);
 }
 
-.slot-card__price span {
-  font-size: var(--font-size-label);
+.slot-card__unit {
+  font-size: var(--text-caption);
   color: var(--color-text-muted);
 }
 
 .slot-card__button {
-  margin-top: 6px;
-  background: var(--color-accent);
-  color: var(--color-text-inverse);
+  margin-top: var(--space-1);
   width: 100%;
-  min-height: 38px;
-  border-radius: 8px;
-  font-size: var(--font-size-label);
+  min-height: 44px;
+  border-radius: var(--radius-md);
+  font-size: var(--text-body);
   font-weight: 600;
-  letter-spacing: -0.01em;
-  padding: 8px 14px;
 }
 
-@media (max-width: 980px) {
+@media (max-width: 1023px) {
   .slot-grid {
     grid-template-columns: 1fr;
   }
 }
 
-@media (max-width: 720px) {
-  .store {
-    padding-block: 8px 20px;
-    gap: 16px;
-  }
-
-  .store-header p {
-    font-size: var(--font-size-label);
-  }
-
-  .store-header h1 {
-    font-size: var(--font-size-title-md);
-  }
-
-  .billing-switch {
-    grid-template-columns: 1fr;
-    border-radius: 12px;
-    width: 100%;
-  }
-
-  .billing-switch__item {
-    justify-content: space-between;
-    padding: 0 12px;
-    border-radius: 10px;
-  }
-
-  .slot-card {
-    padding: 16px 14px;
-  }
-
-  .slot-card__media img {
-    height: 136px;
-  }
-
-  .slot-card h2 {
-    font-size: var(--font-size-title-sm);
-  }
-
-  .slot-card__price strong {
-    font-size: clamp(var(--font-size-title-sm), 8vw, var(--font-size-title-md));
-  }
-
-  .slot-card__button {
-    min-height: 36px;
-    font-size: var(--font-size-label);
+@media (max-width: 767px) {
+  .store-header__title {
+    font-size: var(--text-h2);
   }
 }
 </style>

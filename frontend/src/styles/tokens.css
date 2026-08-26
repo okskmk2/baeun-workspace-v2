@@ -1,0 +1,40 @@
+/*
+  Pricing page design tokens.
+  Color tokens intentionally alias the app's existing theme variables
+  (defined in assets/theme/semantic.css) so this page stays visually
+  consistent with the rest of the site instead of forking the palette.
+*/
+:root {
+  --color-accent-contrast: var(--color-text-inverse);
+
+  --font-serif: "Noto Serif KR", "SUIT", serif;
+  --font-sans: "SUIT", sans-serif;
+
+  --text-hero: clamp(32px, 6vw, 52px);
+  --text-h1: clamp(26px, 4vw, 38px);
+  --text-h2: clamp(20px, 2.6vw, 28px);
+  --text-price: clamp(32px, 5vw, 48px);
+  --text-body: 16px;
+  --text-caption: 13px;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 28px;
+  --space-8: 32px;
+  --space-9: 36px;
+  --space-10: 40px;
+  --space-11: 44px;
+  --space-12: 48px;
+
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 16px;
+
+  --shadow-card: 0 2px 8px color-mix(in srgb, var(--color-text) 8%, transparent);
+
+  --transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}

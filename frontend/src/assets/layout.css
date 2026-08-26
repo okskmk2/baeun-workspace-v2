@@ -75,6 +75,46 @@
   padding: 4px;
 }
 
+.PublicLayout > *:not(header):not(.PublicLayout-footer) {
+  flex: 1 0 auto;
+}
+
+.PublicLayout-footer {
+  border-top: 1px solid var(--color-border);
+  background-color: var(--color-page-bg);
+}
+
+.PublicLayout-footer .inner-footer {
+  padding: 20px 24px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+}
+
+.PublicLayout-footer .footer-copyright {
+  margin: 0;
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.PublicLayout-footer .footer-links {
+  display: flex;
+  gap: 16px;
+  font-size: 12px;
+}
+
+.PublicLayout-footer .footer-links a {
+  color: var(--color-text-muted);
+  text-decoration: none;
+}
+
+.PublicLayout-footer .footer-links a:hover {
+  color: var(--color-text);
+  text-decoration: underline;
+}
+
 .ProjectLayout {
   display: flex;
   flex-direction: column;
