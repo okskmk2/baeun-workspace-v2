@@ -1,6 +1,8 @@
 import { createI18n } from "vue-i18n";
 import ko from "./locales/ko.json";
 import en from "./locales/en.json";
+import landingKo from "../locales/ko.json";
+import landingEn from "../locales/en.json";
 
 export const supportedLocales = ["ko", "en"];
 export const localeStorageKey = "app.locale";
@@ -20,7 +22,10 @@ export const i18n = createI18n({
   legacy: false,
   locale: getInitialLocale(),
   fallbackLocale: "en",
-  messages: { ko, en },
+  messages: {
+    ko: { ...ko, ...landingKo },
+    en: { ...en, ...landingEn },
+  },
 });
 
 export const persistLocale = (value) => {

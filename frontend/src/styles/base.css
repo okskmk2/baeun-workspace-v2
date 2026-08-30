@@ -1,0 +1,68 @@
+.landing *,
+.landing *::before,
+.landing *::after {
+  box-sizing: border-box;
+}
+
+.landing {
+  isolation: isolate;
+}
+
+.landing h1,
+.landing h2,
+.landing h3 {
+  color: inherit;
+}
+
+.landing a:focus-visible,
+.landing button:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+}
+
+.landing-wrap {
+  width: min(1120px, calc(100% - 48px));
+  margin-inline: auto;
+}
+
+.landing .reveal,
+.landing .reveal-up {
+  opacity: 0;
+  transform: translateY(16px);
+  transition:
+    opacity var(--dur) var(--ease),
+    transform var(--dur) var(--ease);
+}
+
+.landing .reveal-up {
+  transform: translateY(24px);
+}
+
+.landing .reveal.is-visible,
+.landing .reveal-up.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+@media (max-width: 767px) {
+  .landing-wrap {
+    width: min(1120px, calc(100% - 40px));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing,
+  .landing *,
+  .landing *::before,
+  .landing *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+
+  .landing .reveal,
+  .landing .reveal-up {
+    opacity: 1;
+    transform: none;
+  }
+}

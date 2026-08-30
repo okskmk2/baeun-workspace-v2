@@ -16,28 +16,8 @@
     </button>
 
     <div v-if="isMenuOpen" class="account-menu__panel" role="menu">
-      <div
-        class="account-menu__locale"
-        role="group"
-        :aria-label="t('layout.default.util.language')"
-      >
-        <span class="account-menu__locale-label">
-          <MaterialSymbol
-            name="translate"
-            type="rounded"
-            :size="16"
-            :alt="t('layout.default.util.language')"
-          />
-          {{ t("layout.default.util.language") }}
-        </span>
-        <select
-          v-model="locale"
-          class="account-menu__locale-select"
-          :aria-label="t('layout.default.util.language')"
-        >
-          <option value="ko">{{ t("layout.default.util.languageKo") }}</option>
-          <option value="en">{{ t("layout.default.util.languageEn") }}</option>
-        </select>
+      <div class="account-menu__locale">
+        <LocaleSwitcher />
       </div>
 
       <div class="account-menu__quick-section">
@@ -136,12 +116,12 @@ import { storeToRefs } from "pinia";
 import { useAppStore } from "../stores/appStore";
 import { GNB_OVERLAYS, useGnbOverlayStore } from "../stores/gnbOverlayStore";
 import { useWorkspaceStore } from "../stores/workspaceStore";
-import { persistLocale, supportedLocales } from "../i18n";
 import api from "../lib/axios";
 import Avatar from "./Avatar.vue";
+import LocaleSwitcher from "./LocaleSwitcher.vue";
 import MaterialSymbol from "./MaterialSymbol.vue";
 
-const { t, locale } = useI18n();
+const { t } = useI18n();
 const router = useRouter();
 const appStore = useAppStore();
 const gnbOverlayStore = useGnbOverlayStore();
@@ -292,10 +272,7 @@ watch(
   { immediate: true }
 );
 
-watch(locale, (value) => {
-  if (!supportedLocales.includes(value)) return;
-  persistLocale(value);
-});
+
 </script>
 
 <style scoped>
@@ -377,32 +354,6 @@ watch(locale, (value) => {
 
 .account-menu__locale {
   margin-bottom: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.account-menu__locale-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  color: var(--color-text-muted);
-}
-
-.account-menu__locale-select {
-  border: 1px solid var(--color-border);
-  background: var(--color-surface);
-  color: var(--color-text);
-  border-radius: 6px;
-  padding: 4px 8px;
-  font-size: 12px;
-}
-
-.account-menu__locale-select:focus {
-  outline: none;
-  border-color: var(--color-accent);
 }
 
 .account-menu__profile-link {

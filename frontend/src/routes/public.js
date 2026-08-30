@@ -1,5 +1,5 @@
 import PublicLayout from "../views/public/PublicLayout.vue";
-import HomePage from "../views/public/HomePage.vue";
+import HomeView from "../views/HomeView.vue";
 import PricingView from "../views/public/PricingView.vue";
 import StorePage from "../views/public/StorePage.vue";
 import CartPage from "../views/public/CartPage.vue";
@@ -22,7 +22,7 @@ export const publicRoutes = [
     children: [
       {
         path: "",
-        component: HomePage,
+        component: HomeView,
       },
       {
         path: "pricing",

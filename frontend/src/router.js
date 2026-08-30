@@ -6,6 +6,21 @@ import { useProjectMemberStore } from "./stores/projectMemberStore";
 export const router = createRouter({
   routes,
   history: createWebHistory(),
+  scrollBehavior(to, from, savedPosition) {
+    if (savedPosition) return savedPosition;
+    if (to.hash) {
+      const reduce =
+        typeof window !== "undefined" &&
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      return {
+        el: to.hash,
+        top: 64,
+        behavior: reduce ? "auto" : "smooth",
+      };
+    }
+    if (to.path !== from.path) return { top: 0 };
+    return undefined;
+  },
 });
 
 router.beforeEach(async (to, from, next) => {

@@ -61,6 +61,12 @@
   border-radius: 8px;
 }
 
+.PublicLayout main.landing {
+  margin: 0;
+  padding: 0;
+  border-radius: 0;
+}
+
 .PublicLayout,
 .PublicLayout main {
   color: var(--color-text);
@@ -97,6 +103,13 @@
   margin: 0;
   font-size: 12px;
   color: var(--color-text-muted);
+}
+
+.PublicLayout-footer .footer-end {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
 }
 
 .PublicLayout-footer .footer-links {

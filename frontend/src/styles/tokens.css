@@ -3,6 +3,9 @@
   Color tokens intentionally alias the app's existing theme variables
   (defined in assets/theme/semantic.css) so this page stays visually
   consistent with the rest of the site instead of forking the palette.
+
+  Landing-page tokens live on `.landing` so they do not override the
+  app-wide `--color-bg` / `--color-accent` used by authenticated shells.
 */
 :root {
   --color-accent-contrast: var(--color-text-inverse);
@@ -37,4 +40,56 @@
   --shadow-card: 0 2px 8px color-mix(in srgb, var(--color-text) 8%, transparent);
 
   --transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Landing (spec names). Values are applied on `.landing` below. */
+  --color-bg-dark: #141513;
+  --color-fg: #1a1916;
+  --color-fg-on-dark: #ede9e0;
+  --color-muted: #6b665f;
+  --color-line: #ddd8ce;
+  --mock-bg: #fffcf7;
+  --mock-line: #d4cfc4;
+  --mock-fill: #e8e3d8;
+  --mock-fill-dim: #2a2b28;
+  --fs-display: clamp(2.125rem, 4.2vw, 3.5rem);
+  --fs-display-sm: clamp(1.875rem, 3.6vw, 3.125rem);
+  --fs-h2: clamp(1.5rem, 3vw, 2.5rem);
+  --fs-lede: 1.25rem;
+  --fs-body: 1.125rem;
+  --space-section: 160px;
+  --space-section-m: 96px;
+  --radius: 8px;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur: 600ms;
+}
+
+.landing {
+  --color-bg: var(--color-page-bg);
+  --color-bg-dark: #141513;
+  --color-fg: var(--color-text);
+  --color-fg-on-dark: #ede9e0;
+  --color-muted: var(--color-text-muted);
+  --color-line: var(--color-border);
+  --mock-bg: var(--color-card-bg);
+  --mock-line: var(--color-border);
+  --mock-fill: var(--color-surface-alt);
+  --mock-fill-dim: #2a2b28;
+  --font-serif: "Noto Serif KR", "SUIT", serif;
+  --font-sans: "SUIT", sans-serif;
+  --fs-display: clamp(2.125rem, 4.2vw, 3.5rem);
+  --fs-display-sm: clamp(1.875rem, 3.6vw, 3.125rem);
+  --fs-h2: clamp(1.5rem, 3vw, 2.5rem);
+  --fs-lede: 1.25rem;
+  --fs-body: 1.125rem;
+  --space-section: 160px;
+  --space-section-m: 96px;
+  --radius: 8px;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur: 600ms;
+
+  font-family: var(--font-sans);
+  color: var(--color-fg);
+  background-color: var(--color-bg);
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }

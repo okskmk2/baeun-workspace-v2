@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="PublicLayout">
     <header>
       <div class="container inner-gnb">
@@ -30,11 +30,14 @@
       <div class="container inner-footer">
         <p class="footer-copyright">{{ t("layout.default.footer.copyright", { year: currentYear }) }}</p>
 
-        <nav class="footer-links" :aria-label="t('layout.default.brand')">
-          <router-link to="/pricing">{{ t("layout.default.footer.pricing") }}</router-link>
-          <router-link to="/#features">{{ t("layout.default.footer.features") }}</router-link>
-          <a href="#" @click.prevent>{{ t("layout.default.footer.contact") }}</a>
-        </nav>
+        <div class="footer-end">
+          <nav class="footer-links" :aria-label="t('layout.default.brand')">
+            <router-link to="/pricing">{{ t("layout.default.footer.pricing") }}</router-link>
+            <router-link to="/#features">{{ t("layout.default.footer.features") }}</router-link>
+            <a href="#" @click.prevent>{{ t("layout.default.footer.contact") }}</a>
+          </nav>
+          <LocaleSwitcher variant="footer" />
+        </div>
       </div>
     </footer>
   </div>
@@ -45,6 +48,7 @@ import { computed, onMounted } from "vue";
 import { useI18n } from "vue-i18n";
 import { useAppStore } from "../../stores/appStore";
 import ContextSwicher from "../../components/ContextSwicher.vue";
+import LocaleSwitcher from "../../components/LocaleSwitcher.vue";
 import MaterialSymbol from "../../components/MaterialSymbol.vue";
 import { clearThemeSeedFromRoot } from "../../lib/themeSeed";
 
