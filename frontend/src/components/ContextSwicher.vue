@@ -21,7 +21,7 @@
       </div>
 
       <div class="account-menu__quick-section">
-        <p class="account-menu__section-title">계정</p>
+        <p class="account-menu__section-title">{{ t("layout.default.util.account") }}</p>
         <router-link class="account-menu__row-link" to="/settings/profile" @click="closeMenu">
           <span>{{ t("layout.default.util.profile") }}</span>
           <MaterialSymbol name="chevron_right" type="rounded" :size="16" alt="" />
@@ -29,11 +29,11 @@
       </div>
 
       <div v-if="isSystemAdmin" class="account-menu__quick-section">
-        <p class="account-menu__section-title">관리</p>
+        <p class="account-menu__section-title">{{ t("layout.default.util.admin") }}</p>
         <router-link class="account-menu__row-link" to="/admin" @click="closeMenu">
           <span class="account-menu__admin-main">
             <MaterialSymbol name="admin_panel_settings" type="rounded" :size="18" alt="" />
-            <span>관리자 콘솔</span>
+            <span>{{ t("layout.default.util.adminConsole") }}</span>
           </span>
           <MaterialSymbol name="chevron_right" type="rounded" :size="16" alt="" />
         </router-link>

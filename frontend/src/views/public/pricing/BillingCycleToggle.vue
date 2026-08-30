@@ -23,7 +23,9 @@
 </template>
 
 <script setup>
-import { pricingCopy as copy } from "../../../constants/pricingCopy";
+import { usePricingCopy } from "../../../composables/usePricingCopy";
+
+const { copy } = usePricingCopy();
 
 const model = defineModel({ type: String, required: true });
 </script>

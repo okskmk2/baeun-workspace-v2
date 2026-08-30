@@ -2,6 +2,8 @@
   <section class="slot-cards" aria-labelledby="slot-cards-title">
     <h2 id="slot-cards-title" class="slot-cards__title">{{ copy.slotCards.title }}</h2>
 
+    <BillingCycleToggle v-model="billingCycle" />
+
     <div class="slot-cards__grid">
       <article v-for="item in items" :key="item.key" class="slot-card">
         <h3 class="slot-card__name">{{ item.name }}</h3>
@@ -17,16 +19,22 @@
 
 <script setup>
 import { computed } from "vue";
-import { PRICE } from "../../../constants/pricing";
-import { pricingCopy as copy } from "../../../constants/pricingCopy";
-import { formatCurrency } from "../../../utils/currency";
+import { PRICE, YEARLY_DISCOUNT } from "../../../constants/pricing";
+import { usePricingCopy } from "../../../composables/usePricingCopy";
+import { formatSlotPrice } from "../../../utils/currency";
+import BillingCycleToggle from "./BillingCycleToggle.vue";
 
-const items = computed(() =>
-  copy.slotCards.items.map((item) => ({
+const billingCycle = defineModel("billingCycle", { type: String, required: true });
+const { copy } = usePricingCopy();
+
+const items = computed(() => {
+  const multiplier = billingCycle.value === "yearly" ? 1 - YEARLY_DISCOUNT : 1;
+
+  return copy.value.slotCards.items.map((item) => ({
     ...item,
-    formattedPrice: formatCurrency(PRICE[item.key]),
-  })),
-);
+    formattedPrice: formatSlotPrice(PRICE[item.key] * multiplier),
+  }));
+});
 </script>
 
 <style scoped>

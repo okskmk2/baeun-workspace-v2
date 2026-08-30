@@ -6,21 +6,13 @@
         {{ line }}<br v-if="index < copy.header.subLines.length - 1" />
       </template>
     </p>
-
-    <div class="pricing-header__billing">
-      <BillingCycleToggle v-model="billingCycle" />
-      <p v-if="billingCycle === 'yearly'" class="pricing-header__badge">
-        {{ copy.billingToggle.yearlySelectedBadge }}
-      </p>
-    </div>
   </header>
 </template>
 
 <script setup>
-import { pricingCopy as copy } from "../../../constants/pricingCopy";
-import BillingCycleToggle from "./BillingCycleToggle.vue";
+import { usePricingCopy } from "../../../composables/usePricingCopy";
 
-const billingCycle = defineModel("billingCycle", { type: String, required: true });
+const { copy } = usePricingCopy();
 </script>
 
 <style scoped>
@@ -28,7 +20,7 @@ const billingCycle = defineModel("billingCycle", { type: String, required: true 
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--space-8);
+  gap: var(--space-6);
   text-align: center;
   padding: var(--space-12) var(--space-4) var(--space-8);
 }
@@ -51,20 +43,6 @@ const billingCycle = defineModel("billingCycle", { type: String, required: true 
   font-size: var(--text-body);
   line-height: 1.85;
   color: var(--color-text-muted);
-}
-
-.pricing-header__billing {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-3);
-}
-
-.pricing-header__badge {
-  margin: 0;
-  font-size: var(--text-caption);
-  font-weight: 600;
-  color: var(--color-accent);
 }
 
 @media (max-width: 767px) {

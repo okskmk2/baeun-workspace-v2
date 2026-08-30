@@ -15,9 +15,6 @@ const scrollToFragmented = () => {
     <div class="hero__copy landing-wrap">
       <h1 class="hero__headline">{{ $t("landing.hero.headline") }}</h1>
       <p class="hero__sub">{{ $t("landing.hero.sub") }}</p>
-      <router-link class="btn btn--lg" to="/signup">
-        {{ $t("landing.cta.start") }}
-      </router-link>
     </div>
     <button
       class="hero__scroll"
@@ -25,7 +22,6 @@ const scrollToFragmented = () => {
       :aria-label="$t('landing.hero.scroll')"
       @click="scrollToFragmented"
     >
-      <span>{{ $t("landing.hero.scroll") }}</span>
       <svg viewBox="0 0 16 24" aria-hidden="true">
         <path d="M8 3v16M3 14l5 6 5-6" fill="none" stroke="currentColor" stroke-width="1.25" />
       </svg>
@@ -49,7 +45,7 @@ const scrollToFragmented = () => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 32px;
+  gap: 20px;
   max-width: 820px;
 }
 
@@ -76,16 +72,12 @@ const scrollToFragmented = () => {
   bottom: 28px;
   left: 50%;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 6px;
+  justify-content: center;
   padding: 8px;
   border: 0;
   background: none;
   color: var(--color-muted);
-  font-family: inherit;
-  font-size: 0.75rem;
-  letter-spacing: 0.06em;
   transform: translateX(-50%);
   cursor: pointer;
 }

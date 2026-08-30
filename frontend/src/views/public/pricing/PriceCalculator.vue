@@ -11,6 +11,7 @@
           v-model="workspaces"
           :label="copy.calculator.sliders.workspaces.label"
           :unit="copy.calculator.sliders.workspaces.unit"
+          :input-aria="copy.calculator.directInput"
           :min="CALCULATOR_SLIDERS.workspaces.min"
           :max="CALCULATOR_SLIDERS.workspaces.max"
         />
@@ -18,6 +19,7 @@
           v-model="projects"
           :label="copy.calculator.sliders.projects.label"
           :unit="copy.calculator.sliders.projects.unit"
+          :input-aria="copy.calculator.directInput"
           :min="CALCULATOR_SLIDERS.projects.min"
           :max="CALCULATOR_SLIDERS.projects.max"
         />
@@ -25,27 +27,10 @@
           v-model="members"
           :label="copy.calculator.sliders.members.label"
           :unit="copy.calculator.sliders.members.unit"
+          :input-aria="copy.calculator.directInput"
           :min="CALCULATOR_SLIDERS.members.min"
           :max="CALCULATOR_SLIDERS.members.max"
         />
-
-        <div class="price-calculator__business">
-          <div class="price-calculator__business-text">
-            <p class="price-calculator__business-label">{{ copy.calculator.businessToggle.label }}</p>
-            <p class="price-calculator__business-desc">{{ copy.calculator.businessToggle.description }}</p>
-          </div>
-          <button
-            type="button"
-            role="switch"
-            :aria-checked="businessEnabled"
-            :aria-label="copy.calculator.businessToggle.label"
-            class="price-calculator__switch"
-            :class="{ 'price-calculator__switch--on': businessEnabled }"
-            @click="businessEnabled = !businessEnabled"
-          >
-            <span class="price-calculator__switch-thumb"></span>
-          </button>
-        </div>
       </div>
 
       <div class="price-calculator__result">
@@ -65,9 +50,11 @@
 <script setup>
 import { computed, onBeforeUnmount, ref, watch } from "vue";
 import { CALCULATOR_SLIDERS, FREE, PRICE, YEARLY_DISCOUNT } from "../../../constants/pricing";
-import { pricingCopy as copy } from "../../../constants/pricingCopy";
+import { usePricingCopy } from "../../../composables/usePricingCopy";
 import CalculatorSlider from "./CalculatorSlider.vue";
 import PriceSummaryPanel from "./PriceSummaryPanel.vue";
+
+const { copy } = usePricingCopy();
 
 const props = defineProps({
   billingCycle: { type: String, required: true },
@@ -76,20 +63,16 @@ const props = defineProps({
 const workspaces = ref(CALCULATOR_SLIDERS.workspaces.default);
 const projects = ref(CALCULATOR_SLIDERS.projects.default);
 const members = ref(CALCULATOR_SLIDERS.members.default);
-const businessEnabled = ref(false);
 
 const billableWorkspace = computed(() => Math.max(0, workspaces.value - FREE.workspace));
 const billableProject = computed(() => Math.max(0, projects.value - FREE.project));
 const billableMember = computed(() => Math.max(0, members.value - FREE.member));
 
-const businessCost = computed(() => (businessEnabled.value ? workspaces.value * PRICE.business : 0));
-
 const monthlyTotal = computed(
   () =>
     billableWorkspace.value * PRICE.workspace +
     billableProject.value * PRICE.project +
-    billableMember.value * PRICE.member +
-    businessCost.value,
+    billableMember.value * PRICE.member,
 );
 
 const yearlyTotal = computed(() => monthlyTotal.value * 12 * (1 - YEARLY_DISCOUNT));
@@ -101,10 +84,10 @@ const primaryTotal = computed(() =>
   props.billingCycle === "yearly" ? yearlyMonthlyEquivalent.value : monthlyTotal.value,
 );
 
-const breakdown = copy.calculator.breakdown;
-
 const rows = computed(() => {
-  const list = [
+  const breakdown = copy.value.calculator.breakdown;
+
+  return [
     {
       key: "workspace",
       label: breakdown.workspaceLabel,
@@ -124,17 +107,6 @@ const rows = computed(() => {
       amount: billableMember.value * PRICE.member,
     },
   ];
-
-  if (businessEnabled.value) {
-    list.push({
-      key: "business",
-      label: breakdown.businessLabel,
-      detail: breakdown.businessDetail(workspaces.value),
-      amount: businessCost.value,
-    });
-  }
-
-  return list;
 });
 
 const showTransitionNotice = ref(false);
@@ -207,71 +179,6 @@ onBeforeUnmount(() => {
   background-color: var(--color-surface);
 }
 
-.price-calculator__business {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-4);
-  padding-top: var(--space-5);
-  border-top: 1px solid var(--color-border);
-}
-
-.price-calculator__business-text {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.price-calculator__business-label {
-  margin: 0;
-  font-size: var(--text-body);
-  font-weight: 600;
-  color: var(--color-text);
-}
-
-.price-calculator__business-desc {
-  margin: 0;
-  font-size: var(--text-caption);
-  color: var(--color-text-muted);
-}
-
-.price-calculator__switch {
-  flex-shrink: 0;
-  width: 52px;
-  height: 32px;
-  padding: 4px;
-  border-radius: 999px;
-  border: 1px solid var(--color-border);
-  background-color: var(--color-page-bg);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  transition: background-color var(--transition-base), border-color var(--transition-base);
-}
-
-.price-calculator__switch-thumb {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background-color: var(--color-text-muted);
-  transition: transform var(--transition-base), background-color var(--transition-base);
-}
-
-.price-calculator__switch--on {
-  background-color: var(--color-accent);
-  border-color: var(--color-accent);
-}
-
-.price-calculator__switch--on .price-calculator__switch-thumb {
-  transform: translateX(20px);
-  background-color: var(--color-accent-contrast);
-}
-
-.price-calculator__switch:focus-visible {
-  outline: 2px solid var(--color-accent);
-  outline-offset: 2px;
-}
-
 .price-calculator__result {
   position: sticky;
   top: var(--space-6);
@@ -284,13 +191,6 @@ onBeforeUnmount(() => {
 
   .price-calculator__result {
     position: static;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .price-calculator__switch,
-  .price-calculator__switch-thumb {
-    transition: none;
   }
 }
 </style>

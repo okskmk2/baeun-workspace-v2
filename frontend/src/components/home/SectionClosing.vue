@@ -9,36 +9,28 @@ useReveal(rootEl, { once: true, threshold: 0.2 });
 <template>
   <section id="closing" ref="rootEl" class="closing">
     <div class="closing__inner landing-wrap">
-      <ul class="closing__points">
-        <li class="closing__point reveal">
-          <p>{{ $t("landing.closing.price") }}</p>
-          <router-link class="btn btn--link" to="/pricing">
-            {{ $t("landing.cta.pricing") }}
+      <div class="closing__end">
+        <h2 class="closing__headline reveal">{{ $t("landing.closing.headline") }}</h2>
+        <div class="closing__cta reveal">
+          <router-link class="btn btn--lg" to="/signup">
+            {{ $t("landing.cta.start") }}
           </router-link>
-        </li>
-        <li class="closing__point reveal">
-          <p>{{ $t("landing.closing.import") }}</p>
-        </li>
-        <li class="closing__point reveal">
-          <p>{{ $t("landing.closing.trust") }}</p>
-        </li>
-      </ul>
-
-      <h2 class="closing__headline reveal">{{ $t("landing.closing.headline") }}</h2>
-
-      <div class="closing__cta reveal">
-        <router-link class="btn btn--lg" to="/signup">
-          {{ $t("landing.cta.start") }}
-        </router-link>
-        <p class="closing__note">{{ $t("landing.cta.noCard") }}</p>
+        </div>
       </div>
+
+      <p class="closing__price reveal">
+        {{ $t("landing.closing.price") }}
+        <router-link class="closing__link" to="/pricing">
+          {{ $t("landing.cta.pricing") }}
+        </router-link>
+      </p>
     </div>
   </section>
 </template>
 
 <style scoped>
 .closing {
-  padding: var(--space-section) 0 calc(var(--space-section) - 24px);
+  padding: var(--space-section) 0 72px;
   scroll-margin-top: 64px;
 }
 
@@ -47,56 +39,43 @@ useReveal(rootEl, { once: true, threshold: 0.2 });
   flex-direction: column;
   align-items: center;
   gap: 72px;
-  max-width: 760px;
+  max-width: 40rem;
   text-align: center;
 }
 
-.closing__points {
-  width: 100%;
+.closing__price {
   margin: 0;
-  padding: 0;
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 28px;
-}
-
-.closing__point {
-  display: flex;
-  align-items: baseline;
-  justify-content: center;
-  gap: 16px 24px;
-  font-size: var(--fs-body);
+  color: var(--color-muted);
+  font-size: 0.875rem;
   line-height: 1.7;
 }
 
-.closing__point:first-child {
-  justify-content: space-between;
-  width: min(100%, 640px);
-  margin-inline: auto;
-  text-align: left;
+.closing__link {
+  margin-left: 0.6em;
+  color: inherit;
+  font-size: inherit;
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: color-mix(in srgb, currentColor 35%, transparent);
 }
 
-.closing__point p {
-  margin: 0;
+.closing__link:hover {
+  color: var(--color-fg);
+  text-decoration-color: currentColor;
 }
 
-.closing__point:nth-child(1) {
-  transition-delay: 0ms;
-}
-
-.closing__point:nth-child(2) {
-  transition-delay: 120ms;
-}
-
-.closing__point:nth-child(3) {
-  transition-delay: 240ms;
+.closing__end {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 36px;
 }
 
 .closing__headline {
   margin: 0;
   font-family: var(--font-serif);
-  font-size: var(--fs-display-sm);
+  font-size: var(--fs-h2);
   font-weight: 600;
   letter-spacing: -0.01em;
   line-height: 1.4;
@@ -107,34 +86,19 @@ useReveal(rootEl, { once: true, threshold: 0.2 });
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
-}
-
-.closing__note {
-  margin: 0;
-  color: var(--color-muted);
-  font-size: 0.875rem;
 }
 
 @media (max-width: 767px) {
   .closing {
-    padding: var(--space-section-m) 0;
+    padding: var(--space-section-m) 0 56px;
   }
 
   .closing__inner {
-    gap: 48px;
+    gap: 64px;
   }
 
-  .closing__point {
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .closing__point:nth-child(n) {
-    transition-delay: 0ms;
+  .closing__end {
+    gap: 28px;
   }
 }
 </style>

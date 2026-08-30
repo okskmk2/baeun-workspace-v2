@@ -2,10 +2,10 @@
   "landing": {
     "brand": "Baeun Workspace",
     "cta": {
-      "start": "Start for free",
+      "start": "Begin",
       "login": "Log in",
-      "pricing": "Calculate pricing",
-      "noCard": "No credit card required."
+      "pricing": "See pricing",
+      "noCard": "Begin without a card."
     },
     "nav": {
       "features": "Features",
@@ -15,81 +15,81 @@
       "footerNav": "Footer navigation"
     },
     "hero": {
-      "headline": "이것은 시간에 관한 문제다.",
-      "sub": "문제를 푸는 시간보다,\n툴을 오가는 시간이 더 길었다면.",
-      "scroll": "아래로"
+      "headline": "The day is scattered.",
+      "sub": "The work is not in one place.",
+      "scroll": "Down"
     },
     "fragmented": {
-      "block1": "회의록은 문서 툴에, 할 일은 보드에, 대화는 메신저에 있었다.\n답은 늘 어딘가에 있었지만, 어디에도 없었다.",
-      "block2": "우리가 낭비한 것은 시간이 아니라,\n집중할 수 있었던 시간이다."
+      "block1": "Meetings lived in documents, tasks on a board, talk in a messenger.\nThe answer was always somewhere, and nowhere.",
+      "block2": "What we lost was not time.\nIt was the gaze that could have stayed."
     },
     "unified": {
-      "headline": "이제, 일이 있는 곳에 모든 것이 있다.",
-      "caption": "위키, 작업보드, 채널, 데이터 — 하나의 프로젝트 공간에서."
+      "headline": "Now the work is in one place.",
+      "caption": "What was scattered returns to that place."
     },
     "switch": {
-      "previous": "이전",
-      "now": "이제"
+      "previous": "Before",
+      "now": "Now"
     },
     "scenes": {
       "channel": {
-        "title": "대화가 곧 할 일이 된다.",
-        "body": "옮겨 적지 않는다."
+        "title": "Talk becomes a task.",
+        "body": "It is not copied over."
       },
       "wiki": {
-        "title": "문서는 낡지 않는다.",
-        "body": "진행 상황이 문서 안에 있다."
+        "title": "Documents do not age.",
+        "body": "The work grows inside them."
       },
       "data": {
-        "title": "숫자를 캡처하지 않는다.",
-        "body": "살아 있는 표를 붙인다."
+        "title": "Numbers live where they are.",
+        "body": "Not a picture. A living table."
       }
     },
     "features": {
       "wiki": {
-        "title": "위키",
-        "body": "계층형 트리 구조의 지식베이스"
+        "title": "Wiki",
+        "body": "A record that branches as it grows."
       },
       "board": {
-        "title": "작업보드",
-        "body": "칸반 · 백로그 · 간트차트로 관리하는 태스크"
+        "title": "Board",
+        "body": "Three faces of one work — kanban, backlog, gantt."
       },
       "channel": {
-        "title": "채널",
-        "body": "태스크와 직접 연동되는 실시간 채팅과 DM"
+        "title": "Channel",
+        "body": "Talk that does not leave the work."
       },
       "data": {
-        "title": "데이터",
-        "body": "테이블 생성 · 조인 · 시각화, 엑셀을 대체하는 데이터 관리"
+        "title": "Data",
+        "body": "Tables that live inside the page."
       }
     },
     "closing": {
-      "price": "5명까지 무료. 이후엔 쓴 슬롯만큼만.",
-      "import": "기존 문서, 태스크, 대화는 임포트 도구로 그대로 옮겨온다.",
-      "trust": "문서와 대화는 AI 학습에 사용되지 않는다.",
-      "headline": "시간에 관한 문제였다.\n이제, 일에 관한 문제만 남는다."
+      "price": "Free for five. After that, only what you use.",
+      "import": "Existing docs, tasks, and talk come over with the import tools.",
+      "trust": "Documents and conversations are not used to train AI.",
+      "headline": "The day came together.\nNow you can stay."
     },
     "footer": {
       "copyright": "© {year} Baeun Workspace. All rights reserved."
     },
     "mock": {
-      "projectName": "프로젝트",
+      "projectName": "Project",
       "menu": {
-        "wiki": "위키",
-        "board": "작업보드",
-        "channel": "채널",
-        "data": "데이터"
+        "wiki": "Wiki",
+        "board": "Board",
+        "channel": "Channel",
+        "data": "Data"
       },
       "columns": {
-        "todo": "할 일",
-        "doing": "진행 중",
-        "done": "완료"
+        "todo": "To do",
+        "doing": "In progress",
+        "done": "Done"
       },
       "status": {
-        "doing": "진행 중",
-        "done": "완료"
+        "doing": "In progress",
+        "done": "Done"
       },
-      "makeTask": "태스크로 만들기"
+      "makeTask": "Turn into a task"
     }
   }
 }

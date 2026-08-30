@@ -15,3 +15,8 @@ export function formatCurrency(amount, options = {}) {
     minimumFractionDigits: 0,
   }).format(amount);
 }
+
+/** Monthly slot prices stay whole dollars; yearly equivalents may need cents. */
+export function formatSlotPrice(amount, options = {}) {
+  return formatCurrency(amount, { ...options, maximumFractionDigits: 2 });
+}

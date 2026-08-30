@@ -33,7 +33,7 @@
             <span>{{ row.label }}</span>
             <span class="price-summary__row-detail">{{ row.detail }}</span>
           </dt>
-          <dd class="price-summary__row-amount">{{ formatCurrency(row.amount) }}</dd>
+          <dd class="price-summary__row-amount">{{ formatRowAmount(row.amount) }}</dd>
         </template>
 
         <dt class="price-summary__row-label price-summary__row-label--total">
@@ -53,8 +53,11 @@
 
 <script setup>
 import { computed, onBeforeUnmount, ref, watch } from "vue";
-import { pricingCopy as copy } from "../../../constants/pricingCopy";
-import { formatCurrency } from "../../../utils/currency";
+import { YEARLY_DISCOUNT } from "../../../constants/pricing";
+import { usePricingCopy } from "../../../composables/usePricingCopy";
+import { formatSlotPrice } from "../../../utils/currency";
+
+const { copy } = usePricingCopy();
 
 const props = defineProps({
   billingCycle: { type: String, required: true },
@@ -111,9 +114,14 @@ onBeforeUnmount(() => {
   if (rafId !== null) cancelAnimationFrame(rafId);
 });
 
-const formattedAmount = computed(() => formatCurrency(Math.round(displayedAmount.value)));
-const stableFormattedAmount = computed(() => formatCurrency(Math.round(props.primaryTotal)));
-const yearlyNoteText = computed(() => copy.calculator.yearlyNote(formatCurrency(props.yearlyTotal)));
+const formatRowAmount = (amount) => {
+  const value = props.billingCycle === "yearly" ? amount * (1 - YEARLY_DISCOUNT) : amount;
+  return formatSlotPrice(value);
+};
+
+const formattedAmount = computed(() => formatSlotPrice(displayedAmount.value));
+const stableFormattedAmount = computed(() => formatSlotPrice(props.primaryTotal));
+const yearlyNoteText = computed(() => copy.value.calculator.yearlyNote(formatSlotPrice(props.yearlyTotal)));
 </script>
 
 <style scoped>
@@ -238,7 +246,9 @@ const yearlyNoteText = computed(() => copy.calculator.yearlyNote(formatCurrency(
 
 .price-summary__cta {
   margin-top: var(--space-2);
-  width: 100%;
+  align-self: stretch;
+  width: auto;
+  max-width: 100%;
 }
 
 @media (prefers-reduced-motion: reduce) {

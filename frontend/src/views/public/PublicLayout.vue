@@ -17,7 +17,12 @@
           <router-link v-if="!isAuthenticated" to="/login">{{
             t("layout.default.util.login")
           }}</router-link>
-          <router-link v-if="isAuthenticated" to="/store/cart" aria-label="장바구니" title="장바구니">
+          <router-link
+            v-if="isAuthenticated"
+            to="/store/cart"
+            :aria-label="t('layout.default.util.cart')"
+            :title="t('layout.default.util.cart')"
+          >
             <MaterialSymbol name="shopping_cart" :size="20" alt="" />
           </router-link>
           <ContextSwicher />

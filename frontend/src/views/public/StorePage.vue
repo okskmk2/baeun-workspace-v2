@@ -36,11 +36,12 @@
 import { computed, ref } from "vue";
 import { useRouter } from "vue-router";
 import { PRICE, YEARLY_DISCOUNT } from "../../constants/pricing";
-import { pricingCopy as copy } from "../../constants/pricingCopy";
-import { formatCurrency } from "../../utils/currency";
+import { usePricingCopy } from "../../composables/usePricingCopy";
+import { formatSlotPrice } from "../../utils/currency";
 import BillingCycleToggle from "./pricing/BillingCycleToggle.vue";
 
 const router = useRouter();
+const { copy } = usePricingCopy();
 
 const CODE_NAMES = {
   workspace: "WORKSPACE",
@@ -55,10 +56,10 @@ const periodLabel = computed(() => (billingCycle.value === "yearly" ? "월 (연�
 const slotItems = computed(() => {
   const multiplier = billingCycle.value === "yearly" ? 1 - YEARLY_DISCOUNT : 1;
 
-  return copy.slotCards.items.map((item) => ({
+  return copy.value.slotCards.items.map((item) => ({
     ...item,
     codeName: CODE_NAMES[item.key],
-    formattedPrice: formatCurrency(PRICE[item.key] * multiplier),
+    formattedPrice: formatSlotPrice(PRICE[item.key] * multiplier),
   }));
 });
 

@@ -16,8 +16,10 @@
 </template>
 
 <script setup>
-import { pricingCopy as copy } from "../../../constants/pricingCopy";
+import { usePricingCopy } from "../../../composables/usePricingCopy";
 import MaterialSymbol from "../../../components/MaterialSymbol.vue";
+
+const { copy } = usePricingCopy();
 </script>
 
 <style scoped>

@@ -1,10 +1,9 @@
-export const pricingCopy = {
+const ko = {
   header: {
     headline: "쓰지 않는 자리에 돈을 내지 마세요.",
     subLines: [
       "대부분의 협업 툴은 사람 수로 값을 매깁니다.",
-      "바은 워크스페이스는 필요한 만큼의 슬롯만 조립합니다.",
-      "5명까지는, 무료입니다.",
+      "바은은 필요한 슬롯만 조립합니다.",
     ],
   },
 
@@ -18,22 +17,22 @@ export const pricingCopy = {
 
   slotCards: {
     title: "세 개의 슬롯. 그게 전부입니다.",
-    unitLabel: "per month",
+    unitLabel: "/ 월",
     items: [
       {
         key: "workspace",
         name: "워크스페이스 슬롯",
-        description: "독립된 조직 공간 하나. 회사, 팀, 또는 하나의 세계.",
+        description: "회사나 팀을 담는 독립된 공간 하나.",
       },
       {
         key: "project",
         name: "프로젝트 슬롯",
-        description: "워크스페이스 안의 작업 공간 하나. 위키·작업보드·채널·데이터가 함께 들어옵니다.",
+        description: "위키, 작업보드, 채널, 데이터가 함께 있는 작업 공간 하나.",
       },
       {
         key: "member",
         name: "멤버 슬롯",
-        description: "편집 권한을 가진 구성원 한 명. 외부 게스트는 몇 명이든 무료입니다.",
+        description: "편집 권한을 가진 구성원 한 명. 게스트는 무료입니다.",
       },
     ],
   },
@@ -48,31 +47,26 @@ export const pricingCopy = {
       "저장 공간 2GB",
       "최근 90일 기록 열람",
     ],
-    note: "신용카드 없이 시작합니다. 팀이 커지면, 그때 넘은 만큼만 결제됩니다.",
+    note: "카드 없이 시작합니다. 팀이 커지면 넘은 만큼만 결제됩니다.",
     cta: "무료로 시작하기",
   },
 
   calculator: {
-    title: "우리 팀은 얼마일까요?",
-    subtitle: "슬라이더를 움직여 보세요. 숨겨진 비용은 없습니다.",
+    title: "필요한 만큼의 값.",
+    subtitle: "숨겨진 비용은 없습니다.",
     sliders: {
       workspaces: { label: "워크스페이스 수", unit: "개" },
       projects: { label: "프로젝트 수", unit: "개" },
       members: { label: "멤버 수", unit: "명" },
     },
-    businessToggle: {
-      label: "Business 애드온",
-      description: "SSO · 감사 로그 등 조직 기능 추가",
-    },
+    directInput: "직접 입력",
     breakdown: {
       workspaceLabel: "워크스페이스",
       projectLabel: "프로젝트",
       memberLabel: "멤버",
-      businessLabel: "Business",
       totalLabel: "합계",
       countDetail: (total, billable) => `${total}개 중 ${billable}개 유료`,
       memberDetail: (total, billable) => `${total}명 중 ${billable}명 유료`,
-      businessDetail: (workspaces) => `워크스페이스 ${workspaces}개`,
     },
     perMonthSuffix: "/ 월",
     yearlyNote: (yearlyTotal) => `연 ${yearlyTotal} 일시 결제 · 15% 절약`,
@@ -86,16 +80,16 @@ export const pricingCopy = {
   },
 
   business: {
-    title: "조직이 요구하는 것들",
+    title: "조직에서 필요한 기능.",
+    pricePrefix: "워크스페이스당 +",
     plans: [
       {
         key: "business",
         name: "Business",
-        priceLabel: "워크스페이스당 +$50 per month",
         features: [
           "SSO (SAML · OIDC)",
           "SCIM 자동 계정 관리",
-          "감사 로그(Audit Log)",
+          "감사 로그",
           "데이터 보존 정책 설정",
           "무제한 기록 열람",
           "도메인 통합 관리",
@@ -113,13 +107,16 @@ export const pricingCopy = {
           "조직 단위 통합 대시보드",
           "보안 심사 및 계약 지원",
         ],
-        cta: "영업팀에 문의하기",
       },
     ],
   },
 
   trust: {
-    lines: ["귀사의 문서와 대화는 AI 학습에 사용되지 않습니다.", "데이터의 소유권은 언제나 고객에게 있습니다."],
+    ariaLabel: "데이터 신뢰 안내",
+    lines: [
+      "문서와 대화는 AI 학습에 쓰이지 않습니다.",
+      "데이터는 언제나 당신의 것입니다.",
+    ],
   },
 
   faq: {
@@ -128,7 +125,7 @@ export const pricingCopy = {
       {
         q: "무료로 계속 쓸 수 있나요?",
         a: [
-          "네. 무료 한도 안에서는 기간 제한 없이 사용할 수 있습니다.",
+          "네. 무료 한도 안에서는 기한 없이 쓸 수 있습니다.",
           "위키, 작업보드, 채널, 데이터 — 핵심 기능은 무료에서도 전부 열려 있습니다.",
         ],
       },
@@ -148,6 +145,13 @@ export const pricingCopy = {
         a: ["언제든 가능합니다. 프로젝트가 끝나면 슬롯을 반납하고, 그만큼 청구가 줄어듭니다."],
       },
       {
+        q: "저장 공간과 기록은 어떻게 되나요?",
+        a: [
+          "무료는 저장 공간 2GB, 최근 90일 기록입니다.",
+          "Business는 기록을 기한 없이 열람할 수 있습니다.",
+        ],
+      },
+      {
         q: "왜 인당 과금이 아닌가요?",
         a: ["조직마다 필요한 것이 다르기 때문입니다.", "사람은 적고 프로젝트가 많은 팀도, 그 반대인 팀도 있습니다."],
       },
@@ -157,4 +161,191 @@ export const pricingCopy = {
       },
     ],
   },
+
+  close: {
+    headline: "필요한 만큼만 시작하세요.",
+    cta: "무료로 시작하기",
+  },
 };
+
+const en = {
+  header: {
+    headline: "Don't pay for a seat you don't use.",
+    subLines: [
+      "Most collaboration tools charge by headcount.",
+      "Baeun assembles only the slots you need.",
+    ],
+  },
+
+  billingToggle: {
+    monthlyLabel: "Monthly",
+    yearlyLabel: "Yearly",
+    yearlyBadge: "15% off",
+    yearlySelectedBadge: "15% off with yearly billing",
+    ariaLabel: "Billing cycle",
+  },
+
+  slotCards: {
+    title: "Three slots. That is all.",
+    unitLabel: "/ mo",
+    items: [
+      {
+        key: "workspace",
+        name: "Workspace slot",
+        description: "One independent space for a company or a team.",
+      },
+      {
+        key: "project",
+        name: "Project slot",
+        description: "One place for wiki, board, channel, and data.",
+      },
+      {
+        key: "member",
+        name: "Member slot",
+        description: "One member with edit rights. Guests are free.",
+      },
+    ],
+  },
+
+  freeTier: {
+    title: "This far is free.",
+    items: [
+      "1 workspace",
+      "3 projects",
+      "5 members",
+      "Unlimited guests — read and comment stay free",
+      "2 GB storage",
+      "90 days of history",
+    ],
+    note: "Start without a card. When the team grows, you pay only for what you cross.",
+    cta: "Start for free",
+  },
+
+  calculator: {
+    title: "The price of what you need.",
+    subtitle: "There are no hidden costs.",
+    sliders: {
+      workspaces: { label: "Workspaces", unit: "" },
+      projects: { label: "Projects", unit: "" },
+      members: { label: "Members", unit: "" },
+    },
+    directInput: "Type a number",
+    breakdown: {
+      workspaceLabel: "Workspaces",
+      projectLabel: "Projects",
+      memberLabel: "Members",
+      totalLabel: "Total",
+      countDetail: (total, billable) => `${billable} of ${total} paid`,
+      memberDetail: (total, billable) => `${billable} of ${total} paid`,
+    },
+    perMonthSuffix: "/ mo",
+    yearlyNote: (yearlyTotal) => `${yearlyTotal} billed yearly · 15% off`,
+    freeState: {
+      title: "It's free.",
+      subtitle: "Start now.",
+      cta: "Start for free",
+    },
+    paidCta: "Start with this setup",
+    transitionNotice: "You've crossed the free limit. Only the extra slots are billed.",
+  },
+
+  business: {
+    title: "Features an organization needs.",
+    pricePrefix: "+",
+    priceSuffix: " per workspace",
+    plans: [
+      {
+        key: "business",
+        name: "Business",
+        features: [
+          "SSO (SAML · OIDC)",
+          "SCIM provisioning",
+          "Audit log",
+          "Retention policy",
+          "Unlimited history",
+          "Domain management",
+        ],
+        cta: "Start Business",
+      },
+      {
+        key: "enterprise",
+        name: "Enterprise",
+        priceLabel: "Let's talk",
+        features: [
+          "Dedicated instance or on-prem",
+          "Data region choice",
+          "SLA and dedicated support",
+          "Org-wide dashboard",
+          "Security review and contracting",
+        ],
+      },
+    ],
+  },
+
+  trust: {
+    ariaLabel: "Data trust",
+    lines: [
+      "Documents and conversations are not used to train AI.",
+      "The data is always yours.",
+    ],
+  },
+
+  faq: {
+    title: "Questions",
+    items: [
+      {
+        q: "Can I stay on the free plan?",
+        a: [
+          "Yes. Inside the free limits, there is no time cap.",
+          "Wiki, board, channel, data — the core is open on free.",
+        ],
+      },
+      {
+        q: "Are guests really free?",
+        a: [
+          "Guests who can read and comment are free, with no seat limit.",
+          "Creating pages or editing tasks needs a member slot.",
+        ],
+      },
+      {
+        q: "What happens if I go over?",
+        a: ["Nothing locks. Only the extra slots are added on the next bill."],
+      },
+      {
+        q: "Can I drop slots?",
+        a: ["Whenever you want. When a project ends, return the slot. The bill shrinks with it."],
+      },
+      {
+        q: "What about storage and history?",
+        a: [
+          "Free includes 2 GB and 90 days of history.",
+          "Business can read history with no time cap.",
+        ],
+      },
+      {
+        q: "Why not charge per person?",
+        a: [
+          "Teams need different things.",
+          "Some have few people and many projects. Some, the reverse.",
+        ],
+      },
+      {
+        q: "Can I bring work from other tools?",
+        a: ["Import tools are available. Docs, tasks, and talk come over as they are."],
+      },
+    ],
+  },
+
+  close: {
+    headline: "Start with only what you need.",
+    cta: "Start for free",
+  },
+};
+
+export const pricingCopyByLocale = { ko, en };
+
+export function getPricingCopy(locale) {
+  return pricingCopyByLocale[locale] ?? ko;
+}
+
+export const pricingCopy = ko;

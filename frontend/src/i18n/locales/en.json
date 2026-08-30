@@ -58,6 +58,9 @@
       "util": {
         "signup": "Sign up",
         "login": "Login",
+        "cart": "Cart",
+        "admin": "Admin",
+        "adminConsole": "Admin console",
         "account": "Account",
         "accountMenu": "Account menu",
         "language": "Language",

@@ -10,23 +10,40 @@
         :class="`business-plan--${plan.key}`"
       >
         <h3 class="business-plan__name">{{ plan.name }}</h3>
-        <p class="business-plan__price">{{ plan.priceLabel }}</p>
+        <p class="business-plan__price">{{ priceText(plan) }}</p>
 
         <ul class="business-plan__features">
           <li v-for="feature in plan.features" :key="feature">{{ feature }}</li>
         </ul>
 
-        <router-link v-if="plan.key === 'business'" class="btn business-plan__cta" to="/signup">
+        <router-link v-if="plan.cta" class="btn business-plan__cta" to="/signup">
           {{ plan.cta }}
         </router-link>
-        <a v-else class="btn btn--secondary business-plan__cta" href="#" @click.prevent>{{ plan.cta }}</a>
       </article>
     </div>
   </section>
 </template>
 
 <script setup>
-import { pricingCopy as copy } from "../../../constants/pricingCopy";
+import { PRICE, YEARLY_DISCOUNT } from "../../../constants/pricing";
+import { usePricingCopy } from "../../../composables/usePricingCopy";
+import { formatSlotPrice } from "../../../utils/currency";
+
+const props = defineProps({
+  billingCycle: { type: String, required: true },
+});
+
+const { copy } = usePricingCopy();
+
+const priceText = (plan) => {
+  if (plan.priceLabel) return plan.priceLabel;
+
+  const multiplier = props.billingCycle === "yearly" ? 1 - YEARLY_DISCOUNT : 1;
+  const amount = formatSlotPrice(PRICE.business * multiplier);
+  const prefix = copy.value.business.pricePrefix;
+  const suffix = copy.value.business.priceSuffix ?? "";
+  return `${prefix}${amount} ${copy.value.slotCards.unitLabel}${suffix}`;
+};
 </script>
 
 <style scoped>
@@ -111,7 +128,9 @@ import { pricingCopy as copy } from "../../../constants/pricingCopy";
 }
 
 .business-plan__cta {
-  width: 100%;
+  align-self: stretch;
+  width: auto;
+  max-width: 100%;
 }
 
 @media (max-width: 767px) {

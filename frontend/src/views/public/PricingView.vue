@@ -1,12 +1,13 @@
 <template>
-  <main class="pricing-view container">
-    <PricingHeader v-model:billing-cycle="billingCycle" />
-    <SlotCards />
+  <main class="pricing-view">
+    <PricingHeader />
+    <SlotCards v-model:billing-cycle="billingCycle" />
     <FreeTierSection />
     <PriceCalculator :billing-cycle="billingCycle" />
-    <BusinessPlans />
+    <BusinessPlans :billing-cycle="billingCycle" />
     <TrustNote />
     <PricingFaq />
+    <PricingClose />
   </main>
 </template>
 
@@ -19,6 +20,7 @@ import PriceCalculator from "./pricing/PriceCalculator.vue";
 import BusinessPlans from "./pricing/BusinessPlans.vue";
 import TrustNote from "./pricing/TrustNote.vue";
 import PricingFaq from "./pricing/PricingFaq.vue";
+import PricingClose from "./pricing/PricingClose.vue";
 
 const billingCycle = ref("monthly");
 </script>
@@ -27,5 +29,14 @@ const billingCycle = ref("monthly");
 .pricing-view {
   display: flex;
   flex-direction: column;
+  width: 100%;
+  max-width: 80rem;
+  margin-left: auto;
+  margin-right: auto;
+  box-sizing: border-box;
+}
+
+.pricing-view :deep(*) {
+  box-sizing: border-box;
 }
 </style>

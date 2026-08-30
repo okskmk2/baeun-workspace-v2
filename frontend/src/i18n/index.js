@@ -28,8 +28,17 @@ export const i18n = createI18n({
   },
 });
 
+export const applyDocumentLang = (value) => {
+  if (typeof document === "undefined") return;
+  document.documentElement.lang = value === "en" ? "en" : "ko-KR";
+};
+
 export const persistLocale = (value) => {
   if (typeof window === "undefined") return;
   if (!supportedLocales.includes(value)) return;
   window.localStorage.setItem(localeStorageKey, value);
+  applyDocumentLang(value);
 };
+
+const initialLocale = i18n.global.locale;
+applyDocumentLang(typeof initialLocale === "string" ? initialLocale : initialLocale.value);

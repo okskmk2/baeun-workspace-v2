@@ -10,7 +10,7 @@
           :min="min"
           :max="max"
           :step="step"
-          :aria-label="`${label} 직접 입력`"
+          :aria-label="`${label} ${inputAria}`"
           v-model.number="model"
           @change="clamp"
         />
@@ -41,12 +41,13 @@
 <script setup>
 import { computed, useId } from "vue";
 
-const { label, unit, min, max, step } = defineProps({
+const { label, unit, min, max, step, inputAria } = defineProps({
   label: { type: String, required: true },
   unit: { type: String, default: "" },
   min: { type: Number, required: true },
   max: { type: Number, required: true },
   step: { type: Number, default: 1 },
+  inputAria: { type: String, default: "" },
 });
 
 const model = defineModel({ type: Number, required: true });

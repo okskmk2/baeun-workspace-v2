@@ -1,5 +1,5 @@
 <template>
-  <section class="trust-note" aria-label="데이터 신뢰 안내">
+  <section class="trust-note" :aria-label="copy.trust.ariaLabel">
     <p v-for="(line, index) in copy.trust.lines" :key="index" class="trust-note__line">
       {{ line }}
     </p>
@@ -7,7 +7,9 @@
 </template>
 
 <script setup>
-import { pricingCopy as copy } from "../../../constants/pricingCopy";
+import { usePricingCopy } from "../../../composables/usePricingCopy";
+
+const { copy } = usePricingCopy();
 </script>
 
 <style scoped>

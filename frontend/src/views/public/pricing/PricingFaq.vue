@@ -17,10 +17,12 @@
 
 <script setup>
 import { ref } from "vue";
-import { pricingCopy as copy } from "../../../constants/pricingCopy";
+import { usePricingCopy } from "../../../composables/usePricingCopy";
 import FaqItem from "./FaqItem.vue";
 
-const openStates = ref(copy.faq.items.map(() => false));
+const { copy } = usePricingCopy();
+
+const openStates = ref(copy.value.faq.items.map(() => false));
 
 const toggle = (index) => {
   openStates.value[index] = !openStates.value[index];
@@ -33,7 +35,8 @@ const toggle = (index) => {
   flex-direction: column;
   gap: var(--space-6);
   padding: var(--space-10) var(--space-4);
-  min-width: 880px;
+  width: 100%;
+  max-width: 880px;
   margin: 0 auto;
 }
 
