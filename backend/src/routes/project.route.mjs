@@ -43,9 +43,9 @@ const router = express.Router();
  *       500:
  *         $ref: "#/components/responses/ErrorResponse"
  */
-router.get("/", isAuth, withPagination({ defaultPageSize: 10, maxPageSize: 100 }), async (req, res) => {
+router.get("/", withPagination({ defaultPageSize: 10, maxPageSize: 100 }), async (req, res) => {
   const { workspaceId } = req.query;
-  const userId = req.session.userId;
+  const userId = req.session?.userId || null;
   const { hasPageQuery, page, pageSize } = req.pagination;
 
   if (!workspaceId) {
@@ -53,18 +53,31 @@ router.get("/", isAuth, withPagination({ defaultPageSize: 10, maxPageSize: 100 }
   }
 
   try {
-    const memberCheck = await pool.query(
-      "SELECT id FROM workspace_member WHERE workspace_id = $1 AND member_id = $2",
-      [workspaceId, userId]
-    );
+    const memberCheck = userId
+      ? await pool.query(
+          "SELECT id FROM workspace_member WHERE workspace_id = $1 AND member_id = $2",
+          [workspaceId, userId]
+        )
+      : { rows: [] };
+    const isMember = memberCheck.rows.length > 0;
 
-    if (memberCheck.rows.length === 0) {
-      return res.status(403).json({ name: "Forbidden", message: "Access denied." });
+    if (!isMember) {
+      const publicCheck = await pool.query(
+        "SELECT id FROM workspace WHERE id = $1 AND is_public = true",
+        [workspaceId]
+      );
+      if (publicCheck.rows.length === 0) {
+        return res.status(403).json({ name: "Forbidden", message: "Access denied." });
+      }
     }
+
+    // Being allowed to list a workspace's projects (member, or anyone when the
+    // workspace itself is public) shows the full project directory; per-project
+    // is_public only gates deeper content access (wiki/board/channel).
 
     if (hasPageQuery) {
       const countRes = await pool.query(
-        "SELECT COUNT(*)::int AS total FROM project WHERE workspace_id = $1",
+        `SELECT COUNT(*)::int AS total FROM project WHERE workspace_id = $1`,
         [workspaceId]
       );
 
@@ -100,7 +113,7 @@ router.get("/", isAuth, withPagination({ defaultPageSize: 10, maxPageSize: 100 }
     }
 
     const projectsRes = await pool.query(
-      "SELECT * FROM project WHERE workspace_id = $1 ORDER BY sort_order ASC, id DESC",
+      `SELECT * FROM project WHERE workspace_id = $1 ORDER BY sort_order ASC, id DESC`,
       [workspaceId]
     );
 
@@ -172,12 +185,22 @@ router.post("/", isAuth, async (req, res) => {
 
     await client.query("BEGIN");
 
+    const workspaceRes = await client.query("SELECT is_public FROM workspace WHERE id = $1", [
+      workspace_id,
+    ]);
+    const isWorkspacePublic = Boolean(workspaceRes.rows[0]?.is_public);
+
     const projectQuery = `
-      INSERT INTO project (name, workspace_id, summary)
-      VALUES ($1, $2, $3)
+      INSERT INTO project (name, workspace_id, summary, is_public)
+      VALUES ($1, $2, $3, $4)
       RETURNING *;
     `;
-    const projectResult = await client.query(projectQuery, [name, workspace_id, summary ?? null]);
+    const projectResult = await client.query(projectQuery, [
+      name,
+      workspace_id,
+      summary ?? null,
+      isWorkspacePublic,
+    ]);
     const newProject = projectResult.rows[0];
 
     const memberQuery = `
@@ -429,18 +452,26 @@ router.delete("/:projectId/members/:memberId", isAuth, async (req, res) => {
  *       500:
  *         $ref: "#/components/responses/ErrorResponse"
  */
-router.get("/:projectId", isAuth, async (req, res) => {
+router.get("/:projectId", async (req, res) => {
   const { projectId } = req.params;
-  const userId = req.session.userId;
+  const userId = req.session?.userId || null;
 
   try {
-    const memberCheck = await pool.query(
-      "SELECT id FROM project_member WHERE project_id = $1 AND member_id = $2",
-      [projectId, userId]
-    );
+    const memberCheck = userId
+      ? await pool.query(
+          "SELECT id FROM project_member WHERE project_id = $1 AND member_id = $2",
+          [projectId, userId]
+        )
+      : { rows: [] };
 
     if (memberCheck.rows.length === 0) {
-      return res.status(403).json({ name: "Forbidden", message: "Access denied." });
+      const publicCheck = await pool.query(
+        "SELECT id FROM project WHERE id = $1 AND is_public = true",
+        [projectId]
+      );
+      if (publicCheck.rows.length === 0) {
+        return res.status(403).json({ name: "Forbidden", message: "Access denied." });
+      }
     }
 
     const result = await pool.query("SELECT * FROM project WHERE id = $1", [projectId]);
@@ -508,7 +539,7 @@ router.get("/:projectId", isAuth, async (req, res) => {
  */
 router.patch("/:projectId", isAuth, async (req, res) => {
   const { projectId } = req.params;
-  const { name, img_url, theme_json, summary } = req.body;
+  const { name, img_url, theme_json, summary, is_public } = req.body;
   const normalizedThemeJson = normalizeThemeJson(theme_json);
   const userId = req.session.userId;
 
@@ -524,11 +555,24 @@ router.patch("/:projectId", isAuth, async (req, res) => {
         .json({ name: "Forbidden", message: "No permission to update project." });
     }
 
+    // Projects under a public workspace are always public; ignore attempts to
+    // toggle them private.
+    let nextIsPublic = typeof is_public === "boolean" ? is_public : null;
+    if (nextIsPublic === false) {
+      const workspacePublicRes = await pool.query(
+        `SELECT w.is_public FROM project p JOIN workspace w ON w.id = p.workspace_id WHERE p.id = $1`,
+        [projectId]
+      );
+      if (workspacePublicRes.rows[0]?.is_public) {
+        nextIsPublic = true;
+      }
+    }
+
     const result = await pool.query(
       `UPDATE project 
-       SET name = COALESCE($1, name), img_url = COALESCE($2, img_url), theme_json = COALESCE($3, theme_json), summary = COALESCE($4, summary)
-       WHERE id = $5 RETURNING *`,
-      [name, img_url, normalizedThemeJson, summary, projectId]
+       SET name = COALESCE($1, name), img_url = COALESCE($2, img_url), theme_json = COALESCE($3, theme_json), summary = COALESCE($4, summary), is_public = COALESCE($5, is_public)
+       WHERE id = $6 RETURNING *`,
+      [name, img_url, normalizedThemeJson, summary, nextIsPublic, projectId]
     );
 
     if (result.rows.length === 0) {

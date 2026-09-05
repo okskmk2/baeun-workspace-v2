@@ -67,6 +67,7 @@ import { useRoute, useRouter } from "vue-router";
 import api from "../lib/axios";
 import { GNB_OVERLAYS, useGnbOverlayStore } from "../stores/gnbOverlayStore";
 import { useRealtimeStore } from "../stores/realtimeStore";
+import { useAppStore } from "../stores/appStore";
 import { resolveNotificationPath } from "../lib/notificationNav";
 import MaterialSymbol from "./MaterialSymbol.vue";
 
@@ -76,6 +77,7 @@ const router = useRouter();
 const gnbOverlayStore = useGnbOverlayStore();
 const { isProjectNotificationsOpen: isOpen } = storeToRefs(gnbOverlayStore);
 const realtimeStore = useRealtimeStore();
+const appStore = useAppStore();
 const menuRef = ref(null);
 const notifications = ref([]);
 const unreadCount = ref(0);
@@ -94,6 +96,7 @@ const formatDateTime = (value) => {
 
 
 const loadNotifications = async () => {
+  if (!appStore.currentUser) return;
   try {
     isLoading.value = true;
     const res = await api.get("/notifications", {
@@ -174,6 +177,7 @@ const toggleMenu = () => {
 };
 
 onMounted(() => {
+  if (!appStore.currentUser) return;
   loadNotifications();
   unsubscribeNotification = realtimeStore.subscribe("notification", () => {
     loadNotifications();

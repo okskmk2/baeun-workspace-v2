@@ -585,7 +585,7 @@ const enterTaskChatRoom = async () => {
 
 const fetchTaskMembers = async (options = {}) => {
   const { silent = false } = options;
-  if (!taskId.value) {
+  if (!taskId.value || !appStore.currentUser) {
     updateTaskMembers([]);
     return;
   }

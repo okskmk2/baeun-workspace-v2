@@ -58,6 +58,7 @@ import MaterialSymbol from "../../components/MaterialSymbol.vue";
 import Avatar from "../../components/Avatar.vue";
 import AgentChatWidget from "../../components/AgentChatWidget.vue";
 import { addToast } from "../../lib/toast";
+import { recordRecentVisit } from "../../lib/recentVisits";
 import { useWorkspaceStore } from "../../stores/workspaceStore";
 import { useAppStore } from "../../stores/appStore";
 import {
@@ -179,6 +180,20 @@ watch(
     if (!value) return;
     if (workspaceStore.workspaceById[value]) return;
     await workspaceStore.fetchWorkspace(value);
+  },
+  { immediate: true }
+);
+
+watch(
+  currentWorkspace,
+  (value) => {
+    if (!value?.id || !value?.name) return;
+    recordRecentVisit({
+      type: "workspace",
+      id: value.id,
+      name: value.name,
+      imgUrl: value.img_url || "",
+    });
   },
   { immediate: true }
 );

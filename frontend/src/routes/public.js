@@ -14,6 +14,7 @@ import PlanLicensePage from "../views/public/PlanLicensePage.vue";
 import BillingPage from "../views/public/BillingPage.vue";
 import WorkspaceListPage from "../views/public/WorkspaceListPage.vue";
 import WorkspaceDetailPage from "../views/public/WorkspaceDetailPage.vue";
+import OpenProjectsPage from "../views/public/OpenProjectsPage.vue";
 
 export const publicRoutes = [
   {
@@ -31,6 +32,10 @@ export const publicRoutes = [
       {
         path: "store",
         component: StorePage,
+      },
+      {
+        path: "open-projects",
+        component: OpenProjectsPage,
       },
       {
         path: "store/cart",

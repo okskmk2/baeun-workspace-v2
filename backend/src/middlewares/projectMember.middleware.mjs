@@ -104,3 +104,46 @@ export const requireProjectMember = async (req, res, next) => {
     res.status(500).json({ name: "InternalServerError", message: error.message });
   }
 };
+
+/**
+ * @desc Allow project members through as usual, but also allow anonymous/non-member
+ * read access when the project is marked public. Write routes must keep using
+ * requireProjectMember instead.
+ */
+export const requireProjectMemberOrPublic = async (req, res, next) => {
+  const projectId = req.projectId;
+  const userId = req.session?.userId || null;
+
+  if (!projectId) {
+    return res.status(500).json({
+      name: "InternalServerError",
+      message: "projectId is not resolved before membership check",
+    });
+  }
+
+  try {
+    if (userId) {
+      const memberCheck = await pool.query(
+        "SELECT id FROM project_member WHERE project_id = $1 AND member_id = $2",
+        [projectId, userId]
+      );
+      if (memberCheck.rows.length > 0) return next();
+    }
+
+    const publicCheck = await pool.query(
+      "SELECT id FROM project WHERE id = $1 AND is_public = true",
+      [projectId]
+    );
+
+    if (publicCheck.rows.length > 0) return next();
+
+    return res.status(403).json({ name: "Forbidden", message: "접근 권한이 없습니다." });
+  } catch (error) {
+    logger.error("project member or public auth error", {
+      err: error?.message,
+      stack: error?.stack,
+    });
+    res.status(500).json({ name: "InternalServerError", message: error.message });
+  }
+};
+

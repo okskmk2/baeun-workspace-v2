@@ -133,7 +133,9 @@ const fetchRooms = async () => {
 
   try {
     await chatStore.fetchRooms(projectId.value);
-    await projectMemberStore.fetchProjectMembers(projectId.value);
+    if (appStore.currentUser) {
+      await projectMemberStore.fetchProjectMembers(projectId.value);
+    }
     projectSearchStore.upsertChannels(projectId.value, chatStore.getRooms(projectId.value));
   } catch (error) {
     if (error?.response?.status === 404) {

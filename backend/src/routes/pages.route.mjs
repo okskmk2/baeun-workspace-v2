@@ -3,6 +3,7 @@ import pool from "../db.mjs";
 import { isAuth } from "../middlewares/auth.middleware.mjs";
 import {
   requireProjectMember,
+  requireProjectMemberOrPublic,
   resolveProjectIdFromOrderedPages,
   resolveProjectIdFromPageId,
   resolveProjectIdFromRequest,
@@ -56,7 +57,7 @@ const ensureProjectExists = async (projectId, res) => {
  *       500:
  *         $ref: "#/components/responses/ErrorResponse"
  */
-router.get("/", isAuth, resolveProjectIdFromRequest, requireProjectMember, async (req, res) => {
+router.get("/", resolveProjectIdFromRequest, requireProjectMemberOrPublic, async (req, res) => {
   const projectId = req.projectId;
 
   try {
@@ -152,9 +153,8 @@ router.get("/", isAuth, resolveProjectIdFromRequest, requireProjectMember, async
  */
 router.get(
   "/recent",
-  isAuth,
   resolveProjectIdFromRequest,
-  requireProjectMember,
+  requireProjectMemberOrPublic,
   async (req, res) => {
   const projectId = req.projectId;
 
@@ -243,7 +243,7 @@ router.get(
  *       500:
  *         $ref: "#/components/responses/ErrorResponse"
  */
-router.get("/:pageId", isAuth, resolveProjectIdFromPageId, requireProjectMember, async (req, res) => {
+router.get("/:pageId", resolveProjectIdFromPageId, requireProjectMemberOrPublic, async (req, res) => {
   const { pageId } = req.params;
 
   try {

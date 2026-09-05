@@ -243,18 +243,27 @@ router.get("/my", isAuth, async (req, res) => {
  *       500:
  *         $ref: "#/components/responses/ErrorResponse"
  */
-router.get("/:workspaceId", isAuth, async (req, res) => {
+router.get("/:workspaceId", async (req, res) => {
   const { workspaceId } = req.params;
-  const userId = req.session.userId;
+  const userId = req.session?.userId || null;
 
   try {
-    const memberCheck = await pool.query(
-      "SELECT id FROM workspace_member WHERE workspace_id = $1 AND member_id = $2",
-      [workspaceId, userId]
-    );
+    const memberCheck = userId
+      ? await pool.query(
+          "SELECT id FROM workspace_member WHERE workspace_id = $1 AND member_id = $2",
+          [workspaceId, userId]
+        )
+      : { rows: [] };
+    const isMember = memberCheck.rows.length > 0;
 
-    if (memberCheck.rows.length === 0) {
-      return res.status(403).json({ name: "Forbidden", message: "Access denied." });
+    if (!isMember) {
+      const publicCheck = await pool.query(
+        "SELECT id FROM workspace WHERE id = $1 AND is_public = true",
+        [workspaceId]
+      );
+      if (publicCheck.rows.length === 0) {
+        return res.status(403).json({ name: "Forbidden", message: "Access denied." });
+      }
     }
 
     const workspaceRes = await pool.query(
@@ -268,8 +277,8 @@ router.get("/:workspaceId", isAuth, async (req, res) => {
           LIMIT 1
         ) AS owner_name
        FROM workspace w
-       JOIN workspace_member wm ON w.id = wm.workspace_id
-       WHERE w.id = $1 AND wm.member_id = $2`,
+       LEFT JOIN workspace_member wm ON w.id = wm.workspace_id AND wm.member_id = $2
+       WHERE w.id = $1`,
       [workspaceId, userId]
     );
 
@@ -287,15 +296,17 @@ router.get("/:workspaceId", isAuth, async (req, res) => {
   }
 });
 
+
 router.put("/:workspaceId", isAuth, async (req, res) => {
   const { workspaceId } = req.params;
-  const { name, theme_json } = req.body;
+  const { name, theme_json, is_public } = req.body;
   const normalizedThemeJson = normalizeThemeJson(theme_json);
   const userId = req.session.userId;
 
   const hasName = Object.prototype.hasOwnProperty.call(req.body || {}, "name");
   const hasThemeJson = Object.prototype.hasOwnProperty.call(req.body || {}, "theme_json");
-  if (!hasName && !hasThemeJson) {
+  const hasIsPublic = Object.prototype.hasOwnProperty.call(req.body || {}, "is_public");
+  if (!hasName && !hasThemeJson && !hasIsPublic) {
     return res.status(400).json({ name: "BadRequest", message: "Update fields are required." });
   }
 
@@ -329,15 +340,26 @@ router.put("/:workspaceId", isAuth, async (req, res) => {
       paramIndex += 1;
     }
 
+    if (hasIsPublic) {
+      fields.push(`is_public = $${paramIndex}`);
+      values.push(Boolean(is_public));
+      paramIndex += 1;
+    }
+
     values.push(workspaceId);
 
     const updateRes = await pool.query(
-      `UPDATE workspace SET ${fields.join(", ")} WHERE id = $${paramIndex} RETURNING id, name, theme_json`,
+      `UPDATE workspace SET ${fields.join(", ")} WHERE id = $${paramIndex} RETURNING id, name, theme_json, is_public`,
       values
     );
 
     if (updateRes.rows.length === 0) {
       return res.status(404).json({ name: "NotFound", message: "Workspace not found." });
+    }
+
+    if (hasIsPublic && Boolean(is_public)) {
+      // Public workspaces expose all of their projects; cascade the flag down.
+      await pool.query("UPDATE project SET is_public = true WHERE workspace_id = $1", [workspaceId]);
     }
 
     res.json({

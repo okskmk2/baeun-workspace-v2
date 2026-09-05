@@ -74,6 +74,17 @@
     <p v-else-if="nameSuccess" class="status success">{{ nameSuccess }}</p>
     <p v-if="!canManageWorkspace" class="status muted">OWNER 또는 ADMIN만 수정할 수 있습니다.</p>
 
+    <section class="visibility-section">
+      <ToggleSwitch
+        v-model="isPublic"
+        label="워크스페이스 공개"
+        description="공개로 설정하면 로그인하지 않은 사용자도 퍼블릭 페이지에서 이 워크스페이스를 볼 수 있습니다."
+        on-label="공개"
+        off-label="비공개"
+        :disabled="!canManageWorkspace || isUpdatingName"
+      />
+    </section>
+
     <div class="theme-section">
       <div class="theme-header">
         <h2>테마</h2>
@@ -150,6 +161,7 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 import Avatar from "../../components/Avatar.vue";
+import ToggleSwitch from "../../components/ToggleSwitch.vue";
 import ThemeBuilderModal from "../../components/modals/ThemeBuilderModal.vue";
 import { addToast } from "../../lib/toast";
 import { useWorkspaceStore } from "../../stores/workspaceStore";
@@ -176,6 +188,7 @@ const workspaceImageFallback = computed(() => {
 const isLoading = ref(false);
 const errorMessage = ref("");
 const nameForm = ref("");
+const isPublic = ref(false);
 const isUpdatingName = ref(false);
 const nameError = ref("");
 const nameSuccess = ref("");
@@ -246,6 +259,7 @@ const fetchWorkspaceDetail = async () => {
   try {
     await workspaceStore.fetchWorkspace(workspaceId.value);
     nameForm.value = workspaceStore.workspaceById[workspaceId.value]?.name || "";
+    isPublic.value = Boolean(workspaceStore.workspaceById[workspaceId.value]?.is_public);
     const currentTheme = workspaceStore.workspaceById[workspaceId.value]?.theme_json?.gnb;
     const resolvedThemeId = resolveThemeId(currentTheme);
     const customColors = resolveCustomColors(currentTheme);
@@ -299,6 +313,7 @@ const saveSettings = async () => {
     currentTheme.seedL === form.value.seedL;
   if (
     nextName === workspaceName.value &&
+    isPublic.value === Boolean(workspace.value?.is_public) &&
     ((isCustom && currentThemeId === "custom" && sameCustomTheme) ||
       (!isCustom && currentThemeId === selected))
   ) {
@@ -311,6 +326,7 @@ const saveSettings = async () => {
   try {
     await workspaceStore.updateWorkspaceSettings(workspaceId.value, {
       name: nextName,
+      is_public: isPublic.value,
       theme_json: {
         gnb: {
           ...(isCustom
@@ -509,6 +525,12 @@ onBeforeUnmount(() => {
 }
 
 .image-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.visibility-section {
   display: flex;
   flex-direction: column;
   gap: 8px;

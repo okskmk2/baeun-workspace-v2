@@ -32,6 +32,21 @@
       :placeholder="t('settings.home.form.descriptionPlaceholder')"
     ></textarea>
 
+    <section class="visibility-section">
+      <ToggleSwitch
+        v-model="form.isPublic"
+        :label="t('settings.home.form.visibilityLabel')"
+        :description="
+          isWorkspacePublic
+            ? t('settings.home.form.visibilityLockedByWorkspace')
+            : t('settings.home.form.visibilityDescription')
+        "
+        :on-label="t('settings.home.form.visibilityOn')"
+        :off-label="t('settings.home.form.visibilityOff')"
+        :disabled="isWorkspacePublic"
+      />
+    </section>
+
     <div class="theme-section">
       <div class="theme-header">
         <h2>{{ t("settings.home.theme.title") }}</h2>
@@ -157,6 +172,7 @@ import api from "../../lib/axios";
 import BaseModal from "../../components/BaseModal.vue";
 import DangerZone from "../../components/DangerZone.vue";
 import MaterialSymbol from "../../components/MaterialSymbol.vue";
+import ToggleSwitch from "../../components/ToggleSwitch.vue";
 import ThemeBuilderModal from "../../components/modals/ThemeBuilderModal.vue";
 import { addToast } from "../../lib/toast";
 import { useAppStore } from "../../stores/appStore";
@@ -178,9 +194,13 @@ const isThemeBuilderOpen = ref(false);
 const errorMessage = ref("");
 const formError = ref("");
 const projectWorkspaceId = ref(null);
+const isWorkspacePublic = computed(
+  () => Boolean(workspaceStore.workspaceById[projectWorkspaceId.value]?.is_public)
+);
 const form = ref({
   name: "",
   description: "",
+  isPublic: false,
   themeId: "",
   customBackground: "#1f2937",
   customForeground: "#ffffff",
@@ -243,6 +263,7 @@ const fetchProject = async () => {
     const data = res.data || {};
     form.value.name = data.name || "";
     form.value.description = data.description ?? data.summary ?? "";
+    form.value.isPublic = Boolean(data.is_public);
     const gnbTheme = data.theme_json?.gnb || null;
     form.value.themeId = resolveThemeId(gnbTheme);
     const customColors = resolveCustomColors(gnbTheme);
@@ -252,6 +273,12 @@ const fetchProject = async () => {
     form.value.seedS = gnbTheme?.seedS ?? null;
     form.value.seedL = gnbTheme?.seedL ?? null;
     projectWorkspaceId.value = data.workspace_id || null;
+    if (projectWorkspaceId.value) {
+      await workspaceStore.fetchWorkspace(projectWorkspaceId.value);
+    }
+    if (isWorkspacePublic.value) {
+      form.value.isPublic = true;
+    }
   } catch (error) {
     errorMessage.value = t("settings.home.status.errorLoad");
   } finally {
@@ -283,6 +310,7 @@ const saveSettings = async () => {
     await api.patch(`/projects/${projectId.value}`, {
       name: form.value.name,
       summary: form.value.description || null,
+      is_public: form.value.isPublic,
       theme_json: isInherit
         ? {}
         : {
@@ -328,6 +356,7 @@ const saveSettings = async () => {
         name: form.value.name,
         summary: form.value.description || null,
         description: form.value.description || null,
+        is_public: form.value.isPublic,
         theme_json: nextThemeJson,
       };
     }
@@ -478,6 +507,12 @@ onBeforeUnmount(() => {
   background-color: var(--color-input-bg);
   color: var(--color-text);
   resize: vertical;
+}
+
+.visibility-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .theme-section {

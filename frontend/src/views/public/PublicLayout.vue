@@ -8,6 +8,7 @@
         </router-link>
         <nav class="mainnav">
           <router-link to="/">{{ t("layout.default.nav.about") }}</router-link>
+          <router-link to="/open-projects">{{ t("layout.default.nav.openProjects") }}</router-link>
           <router-link to="/store">{{ t("layout.default.nav.store") }}</router-link>
         </nav>
         <nav class="utilnav">

@@ -36,7 +36,7 @@ export const projectRoutes = [
   {
     path: "/project/:projectId",
     component: ProjectLayout,
-    meta: { requiresProjectMember: true },
+    meta: { requiresProjectView: true },
     children: [
       {
         path: "",
@@ -141,7 +141,7 @@ export const projectRoutes = [
       },
       {
         path: "settings",
-        meta: { requiresProjectAdmin: true },
+        meta: { requiresProjectMember: true, requiresProjectAdmin: true },
         component: ProjectSettingsLayout,
         children: [
           {

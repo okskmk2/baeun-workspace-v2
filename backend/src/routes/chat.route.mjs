@@ -31,29 +31,22 @@ const NOTICE_WRITER_ROLES = ["OWNER", "ADMIN"];
 const isNoticeWriterRole = (roleName) =>
   NOTICE_WRITER_ROLES.includes(String(roleName || "").toUpperCase());
 
-const resolveNoticeMemberRole = async (channel, userId) => {
-  const scope = String(channel?.scope || "").toUpperCase();
-  const hasWorkspaceId = Boolean(channel?.workspace_id);
-  const hasProjectId = Boolean(channel?.project_id);
-  const shouldUseWorkspaceRole = scope === "WORKSPACE" || (hasWorkspaceId && !hasProjectId);
-
-  if (shouldUseWorkspaceRole) {
-    const wsRoleRes = await pool.query(
-      "SELECT role_name FROM workspace_member WHERE workspace_id = $1 AND member_id = $2",
-      [channel.workspace_id, userId]
+const isProjectOrWorkspacePublic = async (channel) => {
+  if (channel?.project_id) {
+    const projectRes = await pool.query(
+      "SELECT id FROM project WHERE id = $1 AND is_public = true",
+      [channel.project_id]
     );
-    return String(wsRoleRes.rows[0]?.role_name || "").toUpperCase();
+    return projectRes.rows.length > 0;
   }
-
-  if (!NOTICE_SCOPES.includes(scope) && !hasProjectId) {
-    return "";
+  if (channel?.workspace_id) {
+    const workspaceRes = await pool.query(
+      "SELECT id FROM workspace WHERE id = $1 AND is_public = true",
+      [channel.workspace_id]
+    );
+    return workspaceRes.rows.length > 0;
   }
-
-  const projectRoleRes = await pool.query(
-    "SELECT role_name FROM project_member WHERE project_id = $1 AND member_id = $2",
-    [channel.project_id, userId]
-  );
-  return String(projectRoleRes.rows[0]?.role_name || "").toUpperCase();
+  return false;
 };
 
 const ensureChannelReadable = async (channelId, userId) => {
@@ -71,20 +64,33 @@ const ensureChannelReadable = async (channelId, userId) => {
   if (channelType === "NOTICE") {
     const noticeRole = await resolveNoticeMemberRole(channel, userId);
     if (!noticeRole) {
+      if (await isProjectOrWorkspacePublic(channel)) {
+        return { ok: true, channel, viewerRoleName: "", readOnly: true };
+      }
       return { ok: false, status: 403, message: "접근 권한이 없습니다." };
     }
-  } else {
-    const memberCheck = await pool.query(
-      "SELECT id FROM channel_member WHERE channel_id = $1 AND member_id = $2",
-      [channelId, userId]
-    );
-    if (memberCheck.rows.length === 0) {
-      return { ok: false, status: 403, message: "접근 권한이 없습니다." };
-    }
+    return { ok: true, channel, viewerRoleName: noticeRole, readOnly: false };
   }
 
-  return { ok: true, channel };
+  const memberCheck = await pool.query(
+    "SELECT role_name FROM channel_member WHERE channel_id = $1 AND member_id = $2",
+    [channelId, userId]
+  );
+  if (memberCheck.rows.length === 0) {
+    if (channelType !== "DM" && (await isProjectOrWorkspacePublic(channel))) {
+      return { ok: true, channel, viewerRoleName: "", readOnly: true };
+    }
+    return { ok: false, status: 403, message: "접근 권한이 없습니다." };
+  }
+
+  return {
+    ok: true,
+    channel,
+    viewerRoleName: String(memberCheck.rows[0]?.role_name || "").toUpperCase(),
+    readOnly: false,
+  };
 };
+
 
 const createDmPairKey = (memberIdA, memberIdB) => {
   const first = Number(memberIdA);
@@ -496,9 +502,9 @@ router.post("/dm", isAuth, async (req, res) => {
  *       500:
  *         $ref: "#/components/responses/ErrorResponse"
  */
-router.get("/:channelId", isAuth, async (req, res) => {
+router.get("/:channelId", async (req, res) => {
   const { channelId } = req.params;
-  const userId = req.session.userId;
+  const userId = req.session?.userId || null;
 
   // 추가 보안: channelId가 숫자인지 확인 (필요한 경우)
   if (isNaN(parseInt(channelId))) {
@@ -519,33 +525,22 @@ router.get("/:channelId", isAuth, async (req, res) => {
     }
 
     const channel = chatRes.rows[0];
+    const access = await ensureChannelReadable(channelId, userId);
+    if (!access.ok) {
+      return res.status(access.status).json({ name: "Forbidden", message: access.message });
+    }
+
     const channelType = String(channel.type || "").toUpperCase();
+    const canPostMessage = access.readOnly
+      ? false
+      : channelType === "NOTICE"
+        ? isNoticeWriterRole(access.viewerRoleName)
+        : true;
 
-    if (channelType === "NOTICE") {
-      const noticeRole = await resolveNoticeMemberRole(channel, userId);
-      if (!noticeRole) {
-        return res.status(403).json({ name: "Forbidden", message: "접근 권한이 없습니다." });
-      }
-      return res.json({
-        ...channel,
-        viewer_role_name: noticeRole,
-        can_post_message: isNoticeWriterRole(noticeRole),
-      });
-    }
-
-    const memberCheck = await pool.query(
-      "SELECT role_name FROM channel_member WHERE channel_id = $1 AND member_id = $2",
-      [channelId, userId]
-    );
-    if (memberCheck.rows.length === 0) {
-      return res.status(403).json({ name: "Forbidden", message: "접근 권한이 없습니다." });
-    }
-
-    const roleName = String(memberCheck.rows[0]?.role_name || "").toUpperCase();
     res.json({
       ...channel,
-      viewer_role_name: roleName,
-      can_post_message: true,
+      viewer_role_name: access.viewerRoleName,
+      can_post_message: canPostMessage,
     });
   } catch (error) {
     logger.error("channel detail error", {
@@ -555,6 +550,7 @@ router.get("/:channelId", isAuth, async (req, res) => {
     res.status(500).json({ name: "InternalServerError", message: error.message });
   }
 });
+
 
 /**
  * @swagger
@@ -669,11 +665,10 @@ router.patch("/:channelId", isAuth, async (req, res) => {
  */
 router.get(
   "/:channelId/messages",
-  isAuth,
   withPagination({ defaultLimit: 30, maxLimit: 100 }),
   async (req, res) => {
     const { channelId } = req.params;
-    const userId = req.session.userId;
+    const userId = req.session?.userId || null;
     const { limit } = req.pagination;
 
     const rawBeforeId = req.query.before_id;
@@ -696,22 +691,9 @@ router.get(
         return res.status(404).json({ name: "NotFound", message: "채널을 찾을 수 없습니다." });
       }
 
-    const channel = channelRes.rows[0];
-    const channelType = String(channel.type || "").toUpperCase();
-
-    if (channelType === "NOTICE") {
-      const noticeRole = await resolveNoticeMemberRole(channel, userId);
-      if (!noticeRole) {
-        return res.status(403).json({ name: "Forbidden", message: "접근 권한이 없습니다." });
-      }
-    } else {
-      const memberCheck = await pool.query(
-        "SELECT * FROM channel_member WHERE channel_id = $1 AND member_id = $2",
-        [channelId, userId]
-      );
-      if (memberCheck.rows.length === 0) {
-        return res.status(403).json({ name: "Forbidden", message: "접근 권한이 없습니다." });
-      }
+    const access = await ensureChannelReadable(channelId, userId);
+    if (!access.ok) {
+      return res.status(access.status).json({ name: "Forbidden", message: access.message });
     }
 
     if (beforeMessageId) {
@@ -1263,24 +1245,34 @@ router.post("/:channelId/invite", isAuth, async (req, res) => {
  *       500:
  *         $ref: "#/components/responses/ErrorResponse"
  */
-router.get("/", isAuth, async (req, res) => {
+router.get("/", async (req, res) => {
   const projectId = req.query.project_id;
   const archivedParam = String(req.query.archived || "").toLowerCase();
   const archivedOnly = archivedParam === "1" || archivedParam === "true";
   const typeParam = String(req.query.type || "").trim();
-  const userId = req.session.userId;
+  const userId = req.session?.userId || null;
 
   if (!projectId) {
     return res.status(400).json({ name: "BadRequest", message: "project_id is required" });
   }
 
   try {
-    const memberCheck = await pool.query(
-      "SELECT id FROM project_member WHERE project_id = $1 AND member_id = $2",
-      [projectId, userId]
-    );
-    if (memberCheck.rows.length === 0) {
-      return res.status(403).json({ name: "Forbidden", message: "접근 권한이 없습니다." });
+    const memberCheck = userId
+      ? await pool.query(
+          "SELECT id FROM project_member WHERE project_id = $1 AND member_id = $2",
+          [projectId, userId]
+        )
+      : { rows: [] };
+    const isMember = memberCheck.rows.length > 0;
+
+    if (!isMember) {
+      const publicCheck = await pool.query(
+        "SELECT id FROM project WHERE id = $1 AND is_public = true",
+        [projectId]
+      );
+      if (publicCheck.rows.length === 0) {
+        return res.status(403).json({ name: "Forbidden", message: "접근 권한이 없습니다." });
+      }
     }
 
     const projectRes = await pool.query("SELECT workspace_id FROM project WHERE id = $1", [projectId]);
@@ -1316,7 +1308,11 @@ router.get("/", isAuth, async (req, res) => {
           )
           AND c.status = $3
           AND c.type = ANY($4::text[])
-          AND (c.type = 'NOTICE' OR cm.member_id IS NOT NULL)
+          AND (
+            c.type = 'NOTICE'
+            OR cm.member_id IS NOT NULL
+            OR ($6 AND c.type != 'DM')
+          )
         ORDER BY
           CASE
             WHEN c.type = 'NOTICE' AND c.scope = 'WORKSPACE' THEN 0
@@ -1326,7 +1322,8 @@ router.get("/", isAuth, async (req, res) => {
           c.sort_order ASC,
           c.created_at ASC
       `,
-      [projectId, userId, status, requestedTypes, workspaceId]
+
+      [projectId, userId, status, requestedTypes, workspaceId, !isMember]
     );
 
     res.json(roomsRes.rows);
@@ -1616,9 +1613,9 @@ router.post(
   }
 );
 
-router.get("/:channelId/attachments/:attachmentId", isAuth, async (req, res) => {
+router.get("/:channelId/attachments/:attachmentId", async (req, res) => {
   const { channelId, attachmentId } = req.params;
-  const userId = req.session.userId;
+  const userId = req.session?.userId || null;
 
   try {
     const access = await ensureChannelReadable(channelId, userId);

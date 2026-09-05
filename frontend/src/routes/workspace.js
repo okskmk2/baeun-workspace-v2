@@ -17,7 +17,7 @@ import WorkspaceBoardQnaPage from "../views/workspace/WorkspaceBoardQnaPage.vue"
 export const workspaceRoutes = [
   {
     path: "/workspace/:workspaceId",
-    meta: { requiresAuth: true },
+    meta: { requiresWorkspaceView: true },
     component: WorkspaceLayout,
     children: [
       {
@@ -74,6 +74,7 @@ export const workspaceRoutes = [
       },
       {
         path: "settings",
+        meta: { requiresAuth: true },
         component: WorkspaceSettingsLayout,
         children: [
           {

@@ -129,9 +129,9 @@ const broadcastTaskEventToProjectMembers = async (
  *       500:
  *         $ref: "#/components/responses/ErrorResponse"
  */
-router.get("/recent", isAuth, async (req, res) => {
+router.get("/recent", async (req, res) => {
   const projectId = req.query.project_id;
-  const userId = req.session.userId;
+  const userId = req.session?.userId || null;
 
   if (!projectId) {
     return res.status(400).json({ name: "BadRequest", message: "project_id is required" });
@@ -141,13 +141,21 @@ router.get("/recent", isAuth, async (req, res) => {
     const projectExists = await ensureProjectExists(projectId, res);
     if (!projectExists) return;
 
-    const memberCheck = await pool.query(
-      "SELECT id FROM project_member WHERE project_id = $1 AND member_id = $2",
-      [projectId, userId]
-    );
+    const memberCheck = userId
+      ? await pool.query(
+          "SELECT id FROM project_member WHERE project_id = $1 AND member_id = $2",
+          [projectId, userId]
+        )
+      : { rows: [] };
 
     if (memberCheck.rows.length === 0) {
-      return res.status(403).json({ name: "Forbidden", message: "접근 권한이 없습니다." });
+      const publicCheck = await pool.query(
+        "SELECT id FROM project WHERE id = $1 AND is_public = true",
+        [projectId]
+      );
+      if (publicCheck.rows.length === 0) {
+        return res.status(403).json({ name: "Forbidden", message: "접근 권한이 없습니다." });
+      }
     }
 
     const recentRes = await pool.query(
@@ -213,9 +221,9 @@ router.get("/recent", isAuth, async (req, res) => {
  *       500:
  *         $ref: "#/components/responses/ErrorResponse"
  */
-router.get("/", isAuth, async (req, res) => {
+router.get("/", async (req, res) => {
   const projectId = req.query.project_id;
-  const userId = req.session.userId;
+  const userId = req.session?.userId || null;
 
   if (!projectId) {
     return res.status(400).json({ name: "BadRequest", message: "project_id is required" });
@@ -225,13 +233,21 @@ router.get("/", isAuth, async (req, res) => {
     const projectExists = await ensureProjectExists(projectId, res);
     if (!projectExists) return;
 
-    const memberCheck = await pool.query(
-      "SELECT id FROM project_member WHERE project_id = $1 AND member_id = $2",
-      [projectId, userId]
-    );
+    const memberCheck = userId
+      ? await pool.query(
+          "SELECT id FROM project_member WHERE project_id = $1 AND member_id = $2",
+          [projectId, userId]
+        )
+      : { rows: [] };
 
     if (memberCheck.rows.length === 0) {
-      return res.status(403).json({ name: "Forbidden", message: "접근 권한이 없습니다." });
+      const publicCheck = await pool.query(
+        "SELECT id FROM project WHERE id = $1 AND is_public = true",
+        [projectId]
+      );
+      if (publicCheck.rows.length === 0) {
+        return res.status(403).json({ name: "Forbidden", message: "접근 권한이 없습니다." });
+      }
     }
 
     const taskRes = await pool.query(
@@ -400,15 +416,38 @@ router.post("/", isAuth, async (req, res) => {
  *       500:
  *         $ref: "#/components/responses/ErrorResponse"
  */
-router.get("/:taskId", isAuth, async (req, res) => {
+router.get("/:taskId", async (req, res) => {
   const { taskId } = req.params;
+  const userId = req.session?.userId || null;
   try {
-    const taskRes = await pool.query(`SELECT * FROM task WHERE id = $1`, [taskId]);
+    const taskRes = await pool.query(
+      `SELECT t.*, k.project_id FROM task t JOIN kanban k ON k.id = t.kanban_id WHERE t.id = $1`,
+      [taskId]
+    );
     if (taskRes.rows.length === 0) {
       return res.status(404).json({ name: "NotFound", message: "작업을 찾을 수 없습니다." });
     }
 
-    res.json(taskRes.rows[0]);
+    const task = taskRes.rows[0];
+    const memberCheck = userId
+      ? await pool.query(
+          "SELECT id FROM project_member WHERE project_id = $1 AND member_id = $2",
+          [task.project_id, userId]
+        )
+      : { rows: [] };
+
+    if (memberCheck.rows.length === 0) {
+      const publicCheck = await pool.query(
+        "SELECT id FROM project WHERE id = $1 AND is_public = true",
+        [task.project_id]
+      );
+      if (publicCheck.rows.length === 0) {
+        return res.status(403).json({ name: "Forbidden", message: "접근 권한이 없습니다." });
+      }
+    }
+
+    delete task.project_id;
+    res.json(task);
   } catch (error) {
     res.status(500).json({ name: "InternalServerError", message: error.message });
   }

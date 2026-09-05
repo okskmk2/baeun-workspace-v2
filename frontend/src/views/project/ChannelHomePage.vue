@@ -30,10 +30,12 @@ import { computed, onMounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import api from "../../lib/axios";
 import FeedList from "../../components/FeedList.vue";
+import { useAppStore } from "../../stores/appStore";
 
 const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
+const appStore = useAppStore();
 
 const projectId = computed(() => route.params.projectId);
 const isLoading = ref(false);
@@ -41,7 +43,7 @@ const errorMessage = ref("");
 const messages = ref([]);
 
 const fetchRecentMessages = async () => {
-  if (!projectId.value) return;
+  if (!projectId.value || !appStore.currentUser) return;
   isLoading.value = true;
   errorMessage.value = "";
 

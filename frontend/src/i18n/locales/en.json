@@ -53,7 +53,8 @@
       "brand": "Baeun Workspace",
       "nav": {
         "about": "About",
-        "store": "Store"
+        "store": "Store",
+        "openProjects": "Open Projects"
       },
       "util": {
         "signup": "Sign up",
@@ -243,7 +244,12 @@
         "nameLabel": "Project Name",
         "namePlaceholder": "Project name",
         "descriptionLabel": "Project Description",
-        "descriptionPlaceholder": "Project description"
+        "descriptionPlaceholder": "Project description",
+        "visibilityLabel": "Public Project",
+        "visibilityDescription": "When public, anyone can view this project on the public page without logging in.",
+        "visibilityOn": "Public",
+        "visibilityOff": "Private",
+        "visibilityLockedByWorkspace": "The parent workspace is public, so this project is always public too."
       },
       "theme": {
         "title": "GNB Theme",
@@ -1395,6 +1401,29 @@
       "primary": "Start free"
     }
   },
+  "openProjects": {
+    "header": {
+      "title": "Explore Open Projects",
+      "subtitle": "Browse the public workspaces and projects teams have opened up."
+    },
+    "workspaces": {
+      "title": "Public Workspaces",
+      "empty": "No public workspaces yet."
+    },
+    "projects": {
+      "title": "Public Projects",
+      "empty": "No public projects yet."
+    },
+    "card": {
+      "members": "Members",
+      "projects": "Projects",
+      "goTo": "Go to"
+    },
+    "status": {
+      "loading": "Loading...",
+      "error": "Failed to load the list."
+    }
+  },
   "store": {
     "hero": {
       "eyebrow": "Store",
@@ -1612,6 +1641,12 @@
     "actions": {
       "logout": "Log out",
       "loggingOut": "Logging out..."
+    },
+    "guest": {
+      "recentVisits": "Recent visits",
+      "empty": "No recently visited workspaces or projects.",
+      "workspaceTag": "Workspace",
+      "projectTag": "Project"
     }
   },
   "notFound": {

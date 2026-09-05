@@ -1,5 +1,5 @@
 <template>
-  <div v-if="isAuthenticated" class="account-menu" ref="menuRef">
+  <div class="account-menu" ref="menuRef">
     <button
       type="button"
       class="account-menu__trigger"
@@ -8,14 +8,60 @@
       @click="toggleMenu"
     >
       <Avatar
+        v-if="isAuthenticated"
         :text="accountInitials"
         :label="accountLabel"
         :image-url="accountImageUrl"
         :size="32"
       />
+      <span v-else class="account-menu__guest-avatar" :aria-label="accountLabel">
+        <MaterialSymbol name="account_circle" type="rounded" :size="28" alt="" />
+      </span>
     </button>
 
-    <div v-if="isMenuOpen" class="account-menu__panel" role="menu">
+    <div v-if="isMenuOpen && !isAuthenticated" class="account-menu__panel" role="menu">
+      <div class="account-menu__locale">
+        <LocaleSwitcher />
+      </div>
+
+      <p class="account-menu__caption">{{ t("contextSwitcher.guest.recentVisits") }}</p>
+      <ul v-if="recentVisits.length" class="account-menu__tree">
+        <li v-for="visit in recentVisits" :key="`${visit.type}-${visit.id}`">
+          <router-link
+            class="account-menu__row-link"
+            :to="visit.type === 'workspace' ? `/workspace/${visit.id}` : `/project/${visit.id}`"
+            @click="closeMenu"
+          >
+            <span class="account-menu__visit-main">
+              <Tag
+                :label="
+                  visit.type === 'workspace'
+                    ? t('contextSwitcher.guest.workspaceTag')
+                    : t('contextSwitcher.guest.projectTag')
+                "
+                :variant="visit.type === 'workspace' ? 'info' : 'success'"
+              />
+              <span>{{ visit.name }}</span>
+            </span>
+            <MaterialSymbol name="chevron_right" type="rounded" :size="16" alt="" />
+          </router-link>
+        </li>
+      </ul>
+      <p v-else class="account-menu__status">{{ t("contextSwitcher.guest.empty") }}</p>
+
+      <div class="account-menu__footer account-menu__footer--guest">
+        <router-link class="account-menu__row-link" to="/login" @click="closeMenu">
+          <span>{{ t("layout.default.util.login") }}</span>
+          <MaterialSymbol name="chevron_right" type="rounded" :size="16" alt="" />
+        </router-link>
+        <router-link class="account-menu__row-link" to="/signup" @click="closeMenu">
+          <span>{{ t("layout.default.util.signup") }}</span>
+          <MaterialSymbol name="chevron_right" type="rounded" :size="16" alt="" />
+        </router-link>
+      </div>
+    </div>
+
+    <div v-else-if="isMenuOpen" class="account-menu__panel" role="menu">
       <div class="account-menu__locale">
         <LocaleSwitcher />
       </div>
@@ -117,9 +163,11 @@ import { useAppStore } from "../stores/appStore";
 import { GNB_OVERLAYS, useGnbOverlayStore } from "../stores/gnbOverlayStore";
 import { useWorkspaceStore } from "../stores/workspaceStore";
 import api from "../lib/axios";
+import { getRecentVisits } from "../lib/recentVisits";
 import Avatar from "./Avatar.vue";
 import LocaleSwitcher from "./LocaleSwitcher.vue";
 import MaterialSymbol from "./MaterialSymbol.vue";
+import Tag from "./Tag.vue";
 
 const { t } = useI18n();
 const router = useRouter();
@@ -139,6 +187,7 @@ const inflightLoad = ref(null);
 const workspaceItems = ref([]);
 const isLoggingOut = ref(false);
 const logoutError = ref("");
+const recentVisits = ref([]);
 
 const accountInitials = computed(() => {
   const name = appStore.currentUser?.name || "";
@@ -146,7 +195,11 @@ const accountInitials = computed(() => {
   return name.slice(0, 2).toUpperCase();
 });
 
-const accountLabel = computed(() => appStore.currentUser?.name || t("layout.default.util.account"));
+const accountLabel = computed(() =>
+  isAuthenticated.value
+    ? appStore.currentUser?.name || t("layout.default.util.account")
+    : t("layout.default.util.accountMenu")
+);
 const accountImageUrl = computed(() => String(appStore.currentUser?.img_url || ""));
 const isSystemAdmin = computed(
   () => String(appStore.currentUser?.role_name || "").toUpperCase() === "SYSTEM_ADMIN"
@@ -215,15 +268,17 @@ const ensureWorkspaceTree = async ({ force = false } = {}) => {
 };
 
 const toggleMenu = async () => {
-  if (!isAuthenticated.value) return;
-
   if (isMenuOpen.value) {
     closeMenu();
     return;
   }
 
   gnbOverlayStore.open(GNB_OVERLAYS.CONTEXT_SWITCHER);
-  await ensureWorkspaceTree();
+  if (isAuthenticated.value) {
+    await ensureWorkspaceTree();
+  } else {
+    recentVisits.value = getRecentVisits();
+  }
 
   await nextTick();
   document.removeEventListener("click", onDocumentClick);
@@ -290,6 +345,18 @@ watch(
   align-items: center;
 }
 
+.account-menu__guest-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  color: var(--color-text-muted);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+}
+
 .account-menu__panel {
   position: absolute;
   right: 0;
@@ -337,6 +404,19 @@ watch(
 
 .account-menu__row-link:hover {
   background: var(--color-surface-muted);
+}
+
+.account-menu__visit-main {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.account-menu__visit-main span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .account-menu__admin-main {
@@ -455,6 +535,12 @@ watch(
   margin-top: 10px;
   padding-top: 10px;
   border-top: 1px solid var(--color-divider);
+}
+
+.account-menu__footer--guest {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .account-menu__logout-btn {

@@ -314,7 +314,7 @@ const fetchPageMembers = async () => {
   pendingRequestCount.value = 0;
   hasRequestPending.value = false;
 
-  if (!projectId.value || !pageId.value) {
+  if (!projectId.value || !pageId.value || !appStore.currentUser) {
     pageMembers.value = [];
     return;
   }

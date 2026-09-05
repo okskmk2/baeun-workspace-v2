@@ -2,6 +2,19 @@ import { createWebHistory, createRouter } from "vue-router";
 import { routes } from "./routes";
 import { useAppStore } from "./stores/appStore";
 import { useProjectMemberStore } from "./stores/projectMemberStore";
+import api from "./lib/axios";
+import { AUTH_SKIP_REDIRECT_PARAM, AUTH_SKIP_REDIRECT_VALUE } from "./lib/authFlags";
+
+const skipAuthRedirectParams = { [AUTH_SKIP_REDIRECT_PARAM]: AUTH_SKIP_REDIRECT_VALUE };
+
+const canViewPublicly = async (url) => {
+  try {
+    await api.get(url, { params: skipAuthRedirectParams });
+    return true;
+  } catch {
+    return false;
+  }
+};
 
 export const router = createRouter({
   routes,
@@ -37,15 +50,52 @@ router.beforeEach(async (to, from, next) => {
   const requiresAdmin = to.matched.some((record) => record.meta?.requiresAdmin);
   const requiresProjectMember = to.matched.some((record) => record.meta?.requiresProjectMember);
   const requiresProjectAdmin = to.matched.some((record) => record.meta?.requiresProjectAdmin);
+  const requiresWorkspaceView = to.matched.some((record) => record.meta?.requiresWorkspaceView);
+  const requiresProjectView = to.matched.some((record) => record.meta?.requiresProjectView);
 
   if ((requiresAuth || requiresAdmin || requiresProjectMember || requiresProjectAdmin) && !isAuthenticated) {
     return next({ path: "/login" });
+  }
+
+  if (requiresWorkspaceView && !isAuthenticated) {
+    const { workspaceId } = to.params;
+    const isPublic = await canViewPublicly(`/workspaces/${workspaceId}`);
+    if (!isPublic) {
+      return next({ path: "/login" });
+    }
   }
 
   if (requiresAdmin) {
     const roleName = String(appStore.currentUser?.role_name || "").toUpperCase();
     if (roleName !== "SYSTEM_ADMIN") {
       return next({ path: "/" });
+    }
+  }
+
+  if (requiresProjectView) {
+    const { projectId } = to.params;
+    if (!isAuthenticated) {
+      const isPublic = await canViewPublicly(`/projects/${projectId}`);
+      if (!isPublic) {
+        return next({ path: "/login" });
+      }
+    } else {
+      try {
+        const members = await projectMemberStore.fetchProjectMembers(projectId);
+        const currentUserId = appStore.currentUser?.id;
+        const isMember = members.some((m) => String(m.id) === String(currentUserId));
+        if (!isMember) {
+          const isPublic = await canViewPublicly(`/projects/${projectId}`);
+          if (!isPublic) {
+            return next({ path: `/project/${projectId}/forbidden` });
+          }
+        }
+      } catch {
+        const isPublic = await canViewPublicly(`/projects/${projectId}`);
+        if (!isPublic) {
+          return next({ path: `/project/${projectId}/forbidden` });
+        }
+      }
     }
   }
 

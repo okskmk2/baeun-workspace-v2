@@ -118,6 +118,7 @@ import { useProjectSearchStore } from "../../stores/projectSearchStore";
 import { useRealtimeStore } from "../../stores/realtimeStore";
 import { convertSnakeToCamel } from "../../lib/utils";
 import { toggleAssistantModal } from "../../lib/assistantModal";
+import { recordRecentVisit } from "../../lib/recentVisits";
 import {
   applyThemeSeedToRoot,
   clearThemeSeedFromRoot,
@@ -503,7 +504,9 @@ watch(
     if (workspaceStore.getProject(value)?.workspace_id) {
       await workspaceStore.fetchWorkspace(workspaceStore.getProject(value).workspace_id);
     }
-    projectMemberStore.fetchProjectMembers(value);
+    if (currentUser.value) {
+      projectMemberStore.fetchProjectMembers(value);
+    }
   },
   { immediate: true }
 );
@@ -514,6 +517,20 @@ watch(
     if (!value) return;
     if (workspaceStore.workspaceById[value]) return;
     await workspaceStore.fetchWorkspace(value);
+  },
+  { immediate: true }
+);
+
+watch(
+  currentProject,
+  (value) => {
+    if (!value?.id || !value?.name) return;
+    recordRecentVisit({
+      type: "project",
+      id: value.id,
+      name: value.name,
+      imgUrl: value.img_url || "",
+    });
   },
   { immediate: true }
 );
