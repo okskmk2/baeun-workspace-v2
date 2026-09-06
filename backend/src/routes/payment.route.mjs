@@ -7,7 +7,10 @@ import { withPagination } from "../middlewares/pagination.middleware.mjs";
 import { getMemberEntitlements } from "../lib/entitlements.mjs";
 import {
   getAppPublicUrl,
+  getPolarReturnUrl,
   isPolarConfigured,
+  isPolarCustomerMissing,
+  polarClientHttpStatus,
   PolarApiError,
   polar,
 } from "../lib/polar.client.mjs";
@@ -145,7 +148,7 @@ router.post("/checkout", isAuth, async (req, res) => {
 
     const unitAmount = toPolarMinorUnits(license.price, license.currency);
     const estimatedTotal = Number(license.price) * quantity;
-    const appUrl = getAppPublicUrl();
+    const appUrl = getAppPublicUrl(req);
     const successUrl = `${appUrl}/settings/billing?checkout=success&checkout_id={CHECKOUT_ID}`;
     const returnUrl = `${appUrl}/store/cart`;
 
@@ -227,7 +230,10 @@ router.post("/checkout", isAuth, async (req, res) => {
   } catch (error) {
     if (error instanceof PolarApiError) {
       logger.error("Polar checkout failed", { status: error.status, body: error.body });
-      return res.status(502).json({ name: "BadGateway", message: error.message });
+      return res.status(polarClientHttpStatus(error.status)).json({
+        name: "BadGateway",
+        message: error.message,
+      });
     }
     logger.error("Checkout failed", { err: error?.message, stack: error?.stack });
     return res.status(500).json({ name: "InternalServerError", message: error.message });
@@ -386,12 +392,26 @@ router.get("/sync", isAuth, async (req, res) => {
     });
   } catch (error) {
     if (error instanceof PolarApiError) {
-      return res.status(502).json({ name: "BadGateway", message: error.message });
+      logger.error("Polar checkout sync failed", { status: error.status, body: error.body });
+      return res.status(polarClientHttpStatus(error.status)).json({
+        name: "BadGateway",
+        message: error.message,
+      });
     }
     logger.error("Checkout sync failed", { err: error?.message, stack: error?.stack });
     return res.status(500).json({ name: "InternalServerError", message: error.message });
   }
 });
+
+const missingPolarCustomer = () => ({
+  name: "NotFound",
+  message: "No Polar customer exists yet. Complete a purchase first.",
+});
+
+const createPolarCustomerSession = async (payload) => {
+  const session = await polar.customerSessions.create(payload);
+  return session.customer_portal_url || session.customerPortalUrl || null;
+};
 
 router.post("/portal", isAuth, async (req, res) => {
   if (!isPolarConfigured()) {
@@ -399,21 +419,57 @@ router.post("/portal", isAuth, async (req, res) => {
   }
 
   try {
-    const session = await polar.customerSessions.create({
-      external_customer_id: String(req.session.userId),
-      return_url: `${getAppPublicUrl()}/settings/billing`,
-    });
-    return res.json({ url: session.customer_portal_url || session.customerPortalUrl });
-  } catch (error) {
-    if (error instanceof PolarApiError) {
-      return res.status(error.status === 404 ? 404 : 502).json({
-        name: error.status === 404 ? "NotFound" : "BadGateway",
-        message:
-          error.status === 404
-            ? "No Polar customer exists yet. Complete a purchase first."
-            : error.message,
+    const externalCustomerId = String(req.session.userId);
+    const returnUrl = getPolarReturnUrl(req, "/settings/billing");
+    const sessionPayload = { external_customer_id: externalCustomerId };
+    if (returnUrl) sessionPayload.return_url = returnUrl;
+
+    let url = null;
+    try {
+      url = await createPolarCustomerSession(sessionPayload);
+    } catch (error) {
+      if (!(error instanceof PolarApiError) || !isPolarCustomerMissing(error)) throw error;
+
+      const member = await loadMember(req.session.userId);
+      const email = String(member?.email || "").trim();
+      if (!email) throw error;
+
+      const listed = await polar.customers.listByEmail(email);
+      const customer = (listed?.items || listed?.data || []).find((item) => item?.id);
+      if (!customer?.id) throw error;
+
+      const byCustomerId = { customer_id: customer.id };
+      if (returnUrl) byCustomerId.return_url = returnUrl;
+      url = await createPolarCustomerSession(byCustomerId);
+    }
+
+    if (!url) {
+      logger.error("Polar customer session missing portal url");
+      return res.status(503).json({
+        name: "ServiceUnavailable",
+        message: "Polar did not return a customer portal URL.",
       });
     }
+    return res.json({ url });
+  } catch (error) {
+    if (error instanceof PolarApiError) {
+      logger.error("Polar customer portal failed", { status: error.status, body: error.body });
+      if (isPolarCustomerMissing(error)) {
+        return res.status(404).json(missingPolarCustomer());
+      }
+      if (error.status === 401 || error.status === 403) {
+        return res.status(503).json({
+          name: "ServiceUnavailable",
+          message:
+            "Polar customer portal is unavailable. The Polar access token may be missing the customer_sessions:write scope.",
+        });
+      }
+      return res.status(polarClientHttpStatus(error.status)).json({
+        name: error.status === 409 ? "Conflict" : "BadGateway",
+        message: error.message,
+      });
+    }
+    logger.error("Customer portal failed", { err: error?.message, stack: error?.stack });
     return res.status(500).json({ name: "InternalServerError", message: error.message });
   }
 });

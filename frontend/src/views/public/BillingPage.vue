@@ -288,7 +288,10 @@ const openPortal = async () => {
     window.location.assign(url);
   } catch (error) {
     addToast({
-      message: error?.response?.data?.message || t("settings.billing.portal.error"),
+      message:
+        error?.response?.data?.message ||
+        error?.response?.data?.detail ||
+        t("settings.billing.portal.error"),
       type: "error",
     });
   } finally {
