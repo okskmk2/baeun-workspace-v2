@@ -151,59 +151,17 @@
   </section>
 
   <section class="wire-card settings-card">
-    <h3>웹훅 설정 (프로토타입)</h3>
-    <p class="webhook-help">현재 화면에서만 동작하는 UI 프로토타입입니다. 서버에는 저장되지 않습니다.</p>
-
-    <div class="webhook-form">
-      <label for="webhook-url-input">웹훅 URL</label>
-      <input
-        id="webhook-url-input"
-        v-model="webhookUrl"
-        type="url"
-        placeholder="https://example.com/hooks/table-events"
-      />
-    </div>
-
-    <div class="webhook-form">
-      <label for="webhook-secret-input">서명 시크릿 (선택)</label>
-      <input id="webhook-secret-input" v-model="webhookSecret" type="text" placeholder="whsec_..." />
-    </div>
-
-    <div class="webhook-events">
-      <p class="webhook-events__title">웹훅 이벤트</p>
-      <label class="webhook-event-item">
-        <input v-model="webhookEvents.addOrDelete" type="checkbox" />
-        <span>테이블 데이터 추가/삭제</span>
-      </label>
-      <label class="webhook-event-item">
-        <input v-model="webhookEvents.dataUpdated" type="checkbox" />
-        <span>테이블 데이터 변경 시</span>
-      </label>
-      <label class="webhook-event-item">
-        <input v-model="webhookEvents.tableRenamed" type="checkbox" />
-        <span>테이블 이름 변경 시</span>
-      </label>
-      <label class="webhook-event-item">
-        <input v-model="webhookEvents.tableDeleted" type="checkbox" />
-        <span>테이블 삭제 시</span>
-      </label>
-    </div>
-
-    <div class="settings-actions webhook-actions">
-      <button type="button" class="btn" @click="saveWebhookSettings">웹훅 설정 저장 (로컬)</button>
-      <button type="button" class="btn" @click="previewWebhookPayload" :disabled="!hasSelectedWebhookEvent">
-        테스트 페이로드 미리보기
-      </button>
-    </div>
-
-    <p v-if="webhookStatus.message" class="status" :class="webhookStatus.type">
-      {{ webhookStatus.message }}
-    </p>
+    <h3>{{ t("data.tableSettings.webhook.title") }}</h3>
+    <p class="webhook-help">{{ t("data.tableSettings.webhook.description") }}</p>
+    <router-link class="btn btn--secondary" :to="`/project/${projectId}/data/webhooks/new`">
+      {{ t("data.tableSettings.webhook.action") }}
+    </router-link>
   </section>
 </template>
 
 <script setup>
 import { computed, onMounted, ref, watch } from "vue";
+import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
 import { addToast } from "../../lib/toast";
@@ -212,6 +170,7 @@ import BackLinkButton from "../../components/BackLinkButton.vue";
 import DangerZone from "../../components/DangerZone.vue";
 import MaterialSymbol from "../../components/MaterialSymbol.vue";
 
+const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const dataStore = useDataStore();
@@ -244,27 +203,6 @@ const newColumnName = ref("");
 const newColumnType = ref("TEXT");
 const isSchemaSaving = ref(false);
 const schemaErrorMessage = ref("");
-const webhookUrl = ref("");
-const webhookSecret = ref("");
-const webhookEvents = ref({
-  addOrDelete: true,
-  dataUpdated: true,
-  tableRenamed: true,
-  tableDeleted: true,
-});
-const webhookStatus = ref({ type: "", message: "" });
-
-const hasSelectedWebhookEvent = computed(() => Object.values(webhookEvents.value).some(Boolean));
-
-const isValidWebhookUrl = (value) => {
-  if (!value) return false;
-  try {
-    const parsed = new URL(value);
-    return parsed.protocol === "http:" || parsed.protocol === "https:";
-  } catch {
-    return false;
-  }
-};
 
 watch(
   tableName,
@@ -449,41 +387,6 @@ const deleteTable = async () => {
   }
 };
 
-const saveWebhookSettings = () => {
-  webhookStatus.value = { type: "", message: "" };
-
-  if (!isValidWebhookUrl(String(webhookUrl.value || "").trim())) {
-    webhookStatus.value = { type: "error", message: "유효한 웹훅 URL(http/https)을 입력하세요." };
-    return;
-  }
-
-  if (!hasSelectedWebhookEvent.value) {
-    webhookStatus.value = { type: "error", message: "최소 1개 이상의 웹훅 이벤트를 선택하세요." };
-    return;
-  }
-
-  webhookStatus.value = { type: "success", message: "웹훅 설정이 로컬 프로토타입 상태로 저장되었습니다." };
-  addToast({ message: "웹훅 프로토타입 설정이 저장되었습니다.", type: "success" });
-};
-
-const previewWebhookPayload = () => {
-  const selectedEvents = Object.entries(webhookEvents.value)
-    .filter(([, enabled]) => enabled)
-    .map(([name]) => name);
-
-  const payloadPreview = {
-    table_id: tableId.value,
-    table_name: tableName.value,
-    events: selectedEvents,
-    has_secret: Boolean(String(webhookSecret.value || "").trim()),
-  };
-
-  webhookStatus.value = {
-    type: "success",
-    message: `미리보기 준비 완료: ${JSON.stringify(payloadPreview)}`,
-  };
-};
-
 onMounted(load);
 </script>
 
@@ -555,49 +458,6 @@ dd {
   margin: 0.35rem 0 0.8rem;
   color: var(--color-text-secondary, #71717a);
   font-size: 13px;
-}
-
-.webhook-form {
-  display: grid;
-  gap: 0.45rem;
-  margin-top: 0.7rem;
-}
-
-.webhook-form label {
-  font-size: 12px;
-  color: var(--color-text-secondary, #71717a);
-}
-
-.webhook-form input {
-  border: 1px solid var(--color-border, #e4e4e7);
-  border-radius: 8px;
-  padding: 0.55rem 0.65rem;
-}
-
-.webhook-events {
-  margin-top: 0.9rem;
-  padding: 0.8rem;
-  border: 1px solid var(--color-border, #e4e4e7);
-  border-radius: 10px;
-  display: grid;
-  gap: 0.55rem;
-}
-
-.webhook-events__title {
-  margin: 0;
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.webhook-event-item {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 14px;
-}
-
-.webhook-actions {
-  margin-top: 0.85rem;
 }
 
 .schema-create {

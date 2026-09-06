@@ -1678,16 +1678,327 @@
   },
   "data": {
     "layout": {
+      "title": "Data",
       "nav": {
         "home": "Data Home"
+      },
+      "sections": {
+        "tables": "Tables",
+        "views": "Views",
+        "charts": "Charts",
+        "webhooks": "Webhooks"
+      },
+      "actions": {
+        "addTable": "New table",
+        "addView": "New view",
+        "addChart": "New chart",
+        "addWebhook": "New webhook",
+        "refresh": "Refresh"
+      },
+      "empty": {
+        "tables": "No tables yet",
+        "views": "No views yet",
+        "charts": "No charts yet",
+        "webhooks": "No webhooks yet"
+      },
+      "badge": {
+        "asset": "Asset",
+        "local": "Local"
+      },
+      "toast": {
+        "refreshed": "Data list refreshed."
       }
+    },
+    "prototype": {
+      "banner": "Prototype · not saved to the server"
     },
     "home": {
       "header": {
-        "title": "Data"
+        "title": "Data",
+        "subtitle": "Create and explore tables, views, charts, and webhooks in one place."
       },
       "empty": {
         "description": "No data available."
+      },
+      "cards": {
+        "tables": "Tables",
+        "views": "Views",
+        "charts": "Charts",
+        "webhooks": "Webhooks"
+      },
+      "quickLinks": {
+        "open": "Open {name}",
+        "empty": "Create or select a table from the left menu."
+      }
+    },
+    "createTable": {
+      "back": "Back to data",
+      "title": "Create a sheet",
+      "subtitle": "Like an Excel sheet, first set the column titles, then fill in the rows.",
+      "fields": {
+        "name": "Sheet name",
+        "namePlaceholder": "Customer list",
+        "description": "Description",
+        "descriptionPlaceholder": "A short note makes this sheet easier to find",
+        "columns": "Column titles for the first row",
+        "columnsHelp": "The top item is the leftmost column. Later, you will type values under these titles.",
+        "columnName": "Column name",
+        "columnNamePlaceholder": "Example: Name",
+        "columnType": "What goes in this column?",
+        "required": "Cannot be left blank",
+        "requiredHelp": "This column must be filled in before a row can be saved.",
+        "selectValues": "Choices",
+        "selectPlaceholder": "Example: Waiting",
+        "selectEmpty": "Example: Waiting, In progress, Done",
+        "previewEmpty": "Type column names to see the sheet layout here.",
+        "previewBlank": "Empty — you can add rows after creating the sheet",
+        "previewRequired": "Required",
+        "columnItem": "Column {index}"
+      },
+      "sections": {
+        "columns": "Set the columns",
+        "preview": "Preview"
+      },
+      "types": {
+        "TEXT": "Text",
+        "NUMBER": "Number",
+        "DATE": "Date",
+        "SELECT": "Choice"
+      },
+      "typeHints": {
+        "TEXT": "Words such as a name, address, or note.",
+        "NUMBER": "Values you can add up or compare, such as quantity or amount.",
+        "DATE": "Picked from a calendar, such as an application date.",
+        "SELECT": "Only the values you list, such as Waiting / In progress / Done."
+      },
+      "actions": {
+        "addColumn": "Add column",
+        "removeColumn": "Remove this column",
+        "moveUp": "Move up",
+        "moveDown": "Move down",
+        "addOption": "Add",
+        "removeOption": "Remove value",
+        "cancel": "Cancel",
+        "submit": "Create",
+        "submitting": "Creating..."
+      },
+      "error": {
+        "nameRequired": "Enter a sheet name.",
+        "columnRequired": "Add at least one column.",
+        "columnNameRequired": "Give every column a name.",
+        "columnNameDuplicate": "Two columns have the same name. Please use different names.",
+        "selectOptionsRequired": "Add at least one choice.",
+        "forbidden": "You do not have permission to create a sheet. Ask a project admin.",
+        "nameConflict": "A sheet with this name already exists.",
+        "createFailed": "Could not create the sheet. Please try again."
+      },
+      "toast": {
+        "created": "Created the “{name}” sheet."
+      }
+    },
+    "createView": {
+      "back": "Back to data",
+      "title": "Create a view",
+      "subtitle": "Combine two sheets into one new sheet by matching the same value. The original sheets stay unchanged.",
+      "help": "This is like lining up two Excel sheets on the same ID and pasting them into one sheet.",
+      "fields": {
+        "name": "View name",
+        "namePlaceholder": "Orders by customer",
+        "description": "Description",
+        "base": "Base sheet",
+        "attach": "Sheet to attach",
+        "baseHelp": "Rows from this sheet are the starting point.",
+        "attachHelp": "This sheet is attached onto the base sheet.",
+        "sourcePlaceholder": "Choose a sheet",
+        "groupTables": "Sheets",
+        "groupViews": "Already combined views",
+        "viewSuffix": "{name} (view)",
+        "match": "Rows are combined when these fields have the same value",
+        "matchHint": "Pick the matching fields from both sheets. Example: customer number and customer number.",
+        "columnPlaceholder": "Choose a field",
+        "createTable": "New table"
+      },
+      "sections": {
+        "sources": "What should we combine?",
+        "joinType": "How should we combine them?",
+        "match": "Which fields have the same value?",
+        "preview": "Result preview"
+      },
+      "join": {
+        "matching": {
+          "title": "Keep matching rows only",
+          "description": "Keep a row only when both sheets have the same value. Rows that exist on just one side are dropped.",
+          "hint": "INNER"
+        },
+        "keepBase": {
+          "title": "Keep every row from the base sheet",
+          "description": "Every row from the base sheet stays. If the other sheet has no match, those fields are blank.",
+          "hint": "LEFT"
+        }
+      },
+      "example": {
+        "base": "Base",
+        "attach": "Attach",
+        "result": "Result",
+        "minsu": "Mina Kim",
+        "younghee": "Young Lee",
+        "orders": "3 orders",
+        "none": "(none)",
+        "dropped": "(not in result)",
+        "blank": "(blank)"
+      },
+      "preview": {
+        "matching": "Attach “{right}” to “{left}”. Keep only rows where “{leftColumn}” and “{rightColumn}” match.",
+        "keepBase": "Keep every row from “{left}” and attach “{right}”. Unmatched fields stay blank.",
+        "columns": "Result fields",
+        "note": "Actual values will appear after the sheets are connected to the server.",
+        "waiting": "Choose the base sheet, the sheet to attach, and the matching fields to see a summary here."
+      },
+      "types": {
+        "TEXT": "text",
+        "NUMBER": "number",
+        "DATE": "date",
+        "SELECT": "choice"
+      },
+      "typeWarning": "The matching fields have different types ({leftType}, {rightType}). Values still need to be the same. You can create it anyway.",
+      "actions": {
+        "cancel": "Cancel",
+        "submit": "Create"
+      },
+      "error": {
+        "nameRequired": "Enter a view name.",
+        "baseRequired": "Choose a base sheet.",
+        "attachRequired": "Choose a sheet to attach.",
+        "sameSource": "The same sheet cannot be used on both sides.",
+        "overlap": "A sheet already used to build this view cannot be chosen again.",
+        "matchRequired": "Choose the fields that should have the same value.",
+        "noTables": "Create a table first.",
+        "needTwoSources": "There is no other sheet to attach. Create another table, or choose an existing view."
+      },
+      "toast": {
+        "created": "View created. (prototype)"
+      }
+    },
+    "createChart": {
+      "back": "Back to data",
+      "title": "Add chart",
+      "subtitle": "Define a chart for table data.",
+      "fields": {
+        "name": "Chart name",
+        "table": "Source table",
+        "tablePlaceholder": "Select a table",
+        "chartType": "Chart type",
+        "xColumn": "X-axis column",
+        "yColumn": "Y-axis column",
+        "columnPlaceholder": "Select a column"
+      },
+      "types": {
+        "bar": "Bar",
+        "line": "Line",
+        "pie": "Pie"
+      },
+      "actions": {
+        "cancel": "Cancel",
+        "submit": "Create"
+      },
+      "error": {
+        "nameRequired": "Enter a chart name.",
+        "tableRequired": "Select a source table.",
+        "noTables": "Create a table first."
+      },
+      "toast": {
+        "created": "Chart created. (prototype)"
+      }
+    },
+    "createWebhook": {
+      "back": "Back to data",
+      "title": "Add webhook",
+      "subtitle": "Define a webhook to call when table events occur.",
+      "fields": {
+        "name": "Name",
+        "table": "Source table",
+        "tablePlaceholder": "Select a table",
+        "url": "Webhook URL",
+        "secret": "Signing secret (optional)",
+        "events": "Webhook events",
+        "addOrDelete": "Row added or deleted",
+        "dataUpdated": "Row updated",
+        "tableRenamed": "Table renamed",
+        "tableDeleted": "Table deleted"
+      },
+      "actions": {
+        "cancel": "Cancel",
+        "submit": "Create"
+      },
+      "error": {
+        "nameRequired": "Enter a webhook name.",
+        "tableRequired": "Select a source table.",
+        "urlInvalid": "Enter a valid webhook URL (http/https).",
+        "eventRequired": "Select at least one webhook event.",
+        "noTables": "Create a table first."
+      },
+      "toast": {
+        "created": "Webhook created. (prototype)"
+      }
+    },
+    "viewPage": {
+      "back": "Back to data",
+      "title": "View",
+      "notFound": "View not found.",
+      "legacy": "This is an older view format. Please create it again.",
+      "kind": {
+        "table": "Sheet",
+        "view": "View"
+      },
+      "fields": {
+        "summary": "How it is combined",
+        "base": "Base sheet",
+        "attach": "Sheet to attach",
+        "joinType": "Combine method",
+        "match": "Matching fields",
+        "matchValue": "“{left}” = “{right}”",
+        "columns": "Result fields",
+        "description": "Description",
+        "openTable": "Open sheet",
+        "openView": "Open view"
+      }
+    },
+    "chartPage": {
+      "back": "Back to data",
+      "title": "Chart",
+      "notFound": "Chart not found.",
+      "placeholder": "Chart rendering will be connected in a later sprint.",
+      "fields": {
+        "table": "Source table",
+        "chartType": "Chart type",
+        "xColumn": "X-axis",
+        "yColumn": "Y-axis",
+        "openTable": "Open table"
+      }
+    },
+    "webhookPage": {
+      "back": "Back to data",
+      "title": "Webhook",
+      "notFound": "Webhook not found.",
+      "fields": {
+        "table": "Source table",
+        "url": "URL",
+        "secret": "Secret",
+        "secretSet": "Set",
+        "secretEmpty": "None",
+        "events": "Events",
+        "openTable": "Open table"
+      },
+      "actions": {
+        "preview": "Preview test payload"
+      },
+      "previewReady": "Preview ready: {payload}"
+    },
+    "tableSettings": {
+      "webhook": {
+        "title": "Webhooks",
+        "description": "Add webhooks from the Webhooks section in the data menu.",
+        "action": "Add webhook"
       }
     },
     "tablePage": {

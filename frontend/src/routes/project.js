@@ -8,6 +8,13 @@ import DataLayout from "../views/project/DataLayout.vue";
 import DataHomePage from "../views/project/DataHomePage.vue";
 import DataTablePage from "../views/project/DataTablePage.vue";
 import DataTableSettingsPage from "../views/project/DataTableSettingsPage.vue";
+import DataTableCreatePage from "../views/project/DataTableCreatePage.vue";
+import DataViewCreatePage from "../views/project/DataViewCreatePage.vue";
+import DataChartCreatePage from "../views/project/DataChartCreatePage.vue";
+import DataWebhookCreatePage from "../views/project/DataWebhookCreatePage.vue";
+import DataViewPage from "../views/project/DataViewPage.vue";
+import DataChartPage from "../views/project/DataChartPage.vue";
+import DataWebhookPage from "../views/project/DataWebhookPage.vue";
 import ProjectLayout from "../views/project/ProjectLayout.vue";
 import KanbanPage from "../views/project/KanbanPage.vue";
 import GanttPage from "../views/project/GanttPage.vue";
@@ -128,6 +135,34 @@ export const projectRoutes = [
           {
             path: "",
             component: DataHomePage,
+          },
+          {
+            path: "tables/new",
+            component: DataTableCreatePage,
+          },
+          {
+            path: "views/new",
+            component: DataViewCreatePage,
+          },
+          {
+            path: "charts/new",
+            component: DataChartCreatePage,
+          },
+          {
+            path: "webhooks/new",
+            component: DataWebhookCreatePage,
+          },
+          {
+            path: "views/:viewId",
+            component: DataViewPage,
+          },
+          {
+            path: "charts/:chartId",
+            component: DataChartPage,
+          },
+          {
+            path: "webhooks/:webhookId",
+            component: DataWebhookPage,
           },
           {
             path: ":tableId/settings",

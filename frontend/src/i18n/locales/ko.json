@@ -1651,16 +1651,327 @@
   },
   "data": {
     "layout": {
+      "title": "데이터",
       "nav": {
         "home": "데이터 홈"
+      },
+      "sections": {
+        "tables": "테이블",
+        "views": "뷰",
+        "charts": "차트",
+        "webhooks": "웹훅"
+      },
+      "actions": {
+        "addTable": "새 테이블",
+        "addView": "새 뷰",
+        "addChart": "새 차트",
+        "addWebhook": "새 웹훅",
+        "refresh": "새로고침"
+      },
+      "empty": {
+        "tables": "테이블이 없습니다",
+        "views": "뷰가 없습니다",
+        "charts": "차트가 없습니다",
+        "webhooks": "웹훅이 없습니다"
+      },
+      "badge": {
+        "asset": "Asset",
+        "local": "Local"
+      },
+      "toast": {
+        "refreshed": "데이터 목록을 새로고침했습니다."
       }
+    },
+    "prototype": {
+      "banner": "프로토타입 · 서버에 저장되지 않습니다"
     },
     "home": {
       "header": {
-        "title": "데이터"
+        "title": "데이터",
+        "subtitle": "테이블, 뷰, 차트, 웹훅을 한곳에서 만들고 탐색하세요."
       },
       "empty": {
         "description": "데이터가 없습니다."
+      },
+      "cards": {
+        "tables": "테이블",
+        "views": "뷰",
+        "charts": "차트",
+        "webhooks": "웹훅"
+      },
+      "quickLinks": {
+        "open": "{name} 열기",
+        "empty": "왼쪽 메뉴에서 테이블을 생성하거나 선택하세요."
+      }
+    },
+    "createTable": {
+      "back": "데이터로 돌아가기",
+      "title": "표 만들기",
+      "subtitle": "엑셀 시트처럼, 칸 제목을 정한 뒤 줄을 채워 넣는 표를 만듭니다.",
+      "fields": {
+        "name": "표 이름",
+        "namePlaceholder": "고객 명단",
+        "description": "설명",
+        "descriptionPlaceholder": "누구를 위한 표인지 적어두면 찾기 쉽습니다",
+        "columns": "맨 윗줄에 들어갈 칸",
+        "columnsHelp": "왼쪽이 표의 앞쪽 칸입니다. 나중에 줄을 추가할 때 이 제목 아래에 내용을 적습니다.",
+        "columnName": "칸 이름",
+        "columnNamePlaceholder": "예: 이름",
+        "columnType": "이 칸에 무엇을 넣나요?",
+        "required": "비워 둘 수 없음",
+        "requiredHelp": "줄을 저장할 때 이 칸은 반드시 채워야 합니다.",
+        "selectValues": "고를 수 있는 값",
+        "selectPlaceholder": "예: 대기",
+        "selectEmpty": "예: 대기, 진행, 완료",
+        "previewEmpty": "칸 이름을 적으면 여기에 표 모양이 보입니다.",
+        "previewBlank": "비어 있음 — 만든 뒤에 줄을 추가합니다",
+        "previewRequired": "꼭 필요",
+        "columnItem": "칸 {index}"
+      },
+      "sections": {
+        "columns": "칸을 정하세요",
+        "preview": "미리보기"
+      },
+      "types": {
+        "TEXT": "글자",
+        "NUMBER": "숫자",
+        "DATE": "날짜",
+        "SELECT": "고르기"
+      },
+      "typeHints": {
+        "TEXT": "이름, 주소, 메모처럼 글을 적습니다.",
+        "NUMBER": "더하거나 비교할 수 있는 값입니다. 예: 수량, 금액",
+        "DATE": "달력으로 고릅니다. 예: 신청일",
+        "SELECT": "정해 둔 값만 고를 수 있습니다. 예: 대기 / 진행 / 완료"
+      },
+      "actions": {
+        "addColumn": "칸 추가",
+        "removeColumn": "이 칸 빼기",
+        "moveUp": "위로 이동",
+        "moveDown": "아래로 이동",
+        "addOption": "추가",
+        "removeOption": "값 지우기",
+        "cancel": "취소",
+        "submit": "만들기",
+        "submitting": "만드는 중..."
+      },
+      "error": {
+        "nameRequired": "표 이름을 입력하세요.",
+        "columnRequired": "칸을 하나 이상 만들어 주세요.",
+        "columnNameRequired": "모든 칸에 이름을 적어 주세요.",
+        "columnNameDuplicate": "같은 칸 이름이 두 개입니다. 이름을 다르게 적어 주세요.",
+        "selectOptionsRequired": "고를 수 있는 값을 하나 이상 넣어 주세요.",
+        "forbidden": "표를 만들 권한이 없습니다. 프로젝트 관리자에게 요청하세요.",
+        "nameConflict": "같은 이름의 표가 이미 있습니다.",
+        "createFailed": "표를 만들지 못했습니다. 잠시 후 다시 시도하세요."
+      },
+      "toast": {
+        "created": "「{name}」 표를 만들었습니다."
+      }
+    },
+    "createView": {
+      "back": "데이터로 돌아가기",
+      "title": "뷰 만들기",
+      "subtitle": "두 개의 표를 같은 값 기준으로 한 줄로 합친 새 표를 만듭니다. 원본 표는 바뀌지 않습니다.",
+      "help": "엑셀에서 두 시트를 같은 번호로 맞춰 한 시트로 붙이는 것과 같습니다.",
+      "fields": {
+        "name": "뷰 이름",
+        "namePlaceholder": "고객별 주문 현황",
+        "description": "설명",
+        "base": "기준 표",
+        "attach": "이어 붙일 표",
+        "baseHelp": "이 표의 줄이 결과의 출발점입니다.",
+        "attachHelp": "기준 표에 붙여 볼 표입니다.",
+        "sourcePlaceholder": "표를 고르세요",
+        "groupTables": "표",
+        "groupViews": "이미 만든 뷰",
+        "viewSuffix": "{name} (뷰)",
+        "match": "이 칸의 값이 같으면 한 줄로 합칩니다",
+        "matchHint": "두 표에서 짝을 맞출 칸을 고르세요. 예: 고객번호와 고객번호",
+        "columnPlaceholder": "칸을 고르세요",
+        "createTable": "새 테이블"
+      },
+      "sections": {
+        "sources": "무엇을 합칠까요",
+        "joinType": "어떻게 합칠까요",
+        "match": "어느 칸이 같은 값인가요",
+        "preview": "결과 미리보기"
+      },
+      "join": {
+        "matching": {
+          "title": "짝이 맞는 것만",
+          "description": "두 표에서 같은 값이 있는 줄만 남깁니다. 한쪽에만 있는 줄은 결과에서 빠집니다.",
+          "hint": "INNER"
+        },
+        "keepBase": {
+          "title": "기준 표는 모두 남기기",
+          "description": "기준 표의 줄은 하나도 빠지지 않습니다. 이어 붙일 표에 짝이 없으면 그 칸은 빈칸입니다.",
+          "hint": "LEFT"
+        }
+      },
+      "example": {
+        "base": "기준",
+        "attach": "이어 붙임",
+        "result": "결과",
+        "minsu": "김민수",
+        "younghee": "이영희",
+        "orders": "3건",
+        "none": "(없음)",
+        "dropped": "(결과에 없음)",
+        "blank": "(빈칸)"
+      },
+      "preview": {
+        "matching": "「{left}」을 기준으로 「{right}」을 붙입니다. 「{leftColumn}」과 「{rightColumn}」이 같은 줄만 남깁니다.",
+        "keepBase": "「{left}」의 모든 줄에 「{right}」을 붙입니다. 짝이 없으면 빈칸입니다.",
+        "columns": "결과 칸",
+        "note": "실제 숫자는 표가 서버에 연결된 뒤에 채워집니다.",
+        "waiting": "기준 표, 이어 붙일 표, 짝을 맞출 칸을 고르면 여기에 결과가 요약됩니다."
+      },
+      "types": {
+        "TEXT": "글자",
+        "NUMBER": "숫자",
+        "DATE": "날짜",
+        "SELECT": "선택값"
+      },
+      "typeWarning": "맞출 칸의 종류가 다릅니다 ({leftType}, {rightType}). 값이 같아야 합쳐집니다. 이대로 만들 수도 있습니다.",
+      "actions": {
+        "cancel": "취소",
+        "submit": "만들기"
+      },
+      "error": {
+        "nameRequired": "뷰 이름을 입력하세요.",
+        "baseRequired": "기준 표를 고르세요.",
+        "attachRequired": "이어 붙일 표를 고르세요.",
+        "sameSource": "같은 표는 양쪽에서 고를 수 없습니다.",
+        "overlap": "이 뷰를 만들 때 쓰인 표는 다시 고를 수 없습니다.",
+        "matchRequired": "두 표에서 같은 값으로 맞출 칸을 고르세요.",
+        "noTables": "먼저 표를 만들어 주세요.",
+        "needTwoSources": "이어 붙일 다른 표가 없습니다. 표를 하나 더 만들거나, 이미 만든 뷰를 고르세요."
+      },
+      "toast": {
+        "created": "뷰가 생성되었습니다. (프로토타입)"
+      }
+    },
+    "createChart": {
+      "back": "데이터로 돌아가기",
+      "title": "차트 추가",
+      "subtitle": "테이블 데이터를 시각화할 차트를 정의합니다.",
+      "fields": {
+        "name": "차트 이름",
+        "table": "대상 테이블",
+        "tablePlaceholder": "테이블을 선택하세요",
+        "chartType": "차트 종류",
+        "xColumn": "X축 컬럼",
+        "yColumn": "Y축 컬럼",
+        "columnPlaceholder": "컬럼을 선택하세요"
+      },
+      "types": {
+        "bar": "막대",
+        "line": "라인",
+        "pie": "파이"
+      },
+      "actions": {
+        "cancel": "취소",
+        "submit": "생성"
+      },
+      "error": {
+        "nameRequired": "차트 이름을 입력하세요.",
+        "tableRequired": "대상 테이블을 선택하세요.",
+        "noTables": "먼저 테이블을 만드세요."
+      },
+      "toast": {
+        "created": "차트가 생성되었습니다. (프로토타입)"
+      }
+    },
+    "createWebhook": {
+      "back": "데이터로 돌아가기",
+      "title": "웹훅 추가",
+      "subtitle": "테이블 이벤트 발생 시 호출할 웹훅을 정의합니다.",
+      "fields": {
+        "name": "이름",
+        "table": "대상 테이블",
+        "tablePlaceholder": "테이블을 선택하세요",
+        "url": "웹훅 URL",
+        "secret": "서명 시크릿 (선택)",
+        "events": "웹훅 이벤트",
+        "addOrDelete": "테이블 데이터 추가/삭제",
+        "dataUpdated": "테이블 데이터 변경 시",
+        "tableRenamed": "테이블 이름 변경 시",
+        "tableDeleted": "테이블 삭제 시"
+      },
+      "actions": {
+        "cancel": "취소",
+        "submit": "생성"
+      },
+      "error": {
+        "nameRequired": "웹훅 이름을 입력하세요.",
+        "tableRequired": "대상 테이블을 선택하세요.",
+        "urlInvalid": "유효한 웹훅 URL(http/https)을 입력하세요.",
+        "eventRequired": "최소 1개 이상의 웹훅 이벤트를 선택하세요.",
+        "noTables": "먼저 테이블을 만드세요."
+      },
+      "toast": {
+        "created": "웹훅이 생성되었습니다. (프로토타입)"
+      }
+    },
+    "viewPage": {
+      "back": "데이터로 돌아가기",
+      "title": "뷰",
+      "notFound": "뷰를 찾을 수 없습니다.",
+      "legacy": "이전 형식 뷰입니다. 다시 만들어 주세요.",
+      "kind": {
+        "table": "표",
+        "view": "뷰"
+      },
+      "fields": {
+        "summary": "합치는 방법",
+        "base": "기준 표",
+        "attach": "이어 붙일 표",
+        "joinType": "합치는 방식",
+        "match": "짝을 맞춘 칸",
+        "matchValue": "「{left}」 = 「{right}」",
+        "columns": "결과 칸",
+        "description": "설명",
+        "openTable": "표 열기",
+        "openView": "뷰 열기"
+      }
+    },
+    "chartPage": {
+      "back": "데이터로 돌아가기",
+      "title": "차트",
+      "notFound": "차트를 찾을 수 없습니다.",
+      "placeholder": "차트 렌더링은 이후 스프린트에서 연결됩니다.",
+      "fields": {
+        "table": "대상 테이블",
+        "chartType": "차트 종류",
+        "xColumn": "X축",
+        "yColumn": "Y축",
+        "openTable": "테이블 열기"
+      }
+    },
+    "webhookPage": {
+      "back": "데이터로 돌아가기",
+      "title": "웹훅",
+      "notFound": "웹훅을 찾을 수 없습니다.",
+      "fields": {
+        "table": "대상 테이블",
+        "url": "URL",
+        "secret": "시크릿",
+        "secretSet": "설정됨",
+        "secretEmpty": "없음",
+        "events": "이벤트",
+        "openTable": "테이블 열기"
+      },
+      "actions": {
+        "preview": "테스트 페이로드 미리보기"
+      },
+      "previewReady": "미리보기 준비 완료: {payload}"
+    },
+    "tableSettings": {
+      "webhook": {
+        "title": "웹훅",
+        "description": "웹훅은 데이터 메뉴 웹훅 섹션에서 추가하세요.",
+        "action": "웹훅 추가"
       }
     },
     "tablePage": {

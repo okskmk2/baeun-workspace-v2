@@ -1,19 +1,27 @@
 <template>
   <hgroup>
     <div>
-      <h1>데이터</h1>
-      <p class="subtitle">워크스페이스 표준 자산과 프로젝트 임시 테이블을 탐색하고 편집하세요.</p>
+      <h1>{{ t("data.home.header.title") }}</h1>
+      <p class="subtitle">{{ t("data.home.header.subtitle") }}</p>
     </div>
   </hgroup>
 
   <section class="overview-grid">
     <article class="wire-card card">
-      <h3>Standard Assets</h3>
-      <p>{{ assets.length }}개</p>
+      <h3>{{ t("data.home.cards.tables") }}</h3>
+      <p>{{ allTables.length }}</p>
     </article>
     <article class="wire-card card">
-      <h3>Project Local</h3>
-      <p>{{ locals.length }}개</p>
+      <h3>{{ t("data.home.cards.views") }}</h3>
+      <p>{{ views.length }}</p>
+    </article>
+    <article class="wire-card card">
+      <h3>{{ t("data.home.cards.charts") }}</h3>
+      <p>{{ charts.length }}</p>
+    </article>
+    <article class="wire-card card">
+      <h3>{{ t("data.home.cards.webhooks") }}</h3>
+      <p>{{ webhooks.length }}</p>
     </article>
   </section>
 
@@ -24,30 +32,36 @@
       class="quick-link"
       :to="`/project/${projectId}/data/${table.id}/list`"
     >
-      {{ table.name }} 열기
+      {{ t("data.home.quickLinks.open", { name: table.name }) }}
     </router-link>
     <p v-if="quickLinks.length === 0" class="status">
-      왼쪽 메뉴에서 테이블을 생성하거나 선택하세요.
+      {{ t("data.home.quickLinks.empty") }}
     </p>
   </section>
 </template>
 
 <script setup>
 import { computed, onMounted } from "vue";
+import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 import { storeToRefs } from "pinia";
 import { useDataStore } from "../../stores/dataStore";
 
+const { t } = useI18n();
 const route = useRoute();
 const dataStore = useDataStore();
-const { tablesByProject } = storeToRefs(dataStore);
+const { tablesByProject, prototypesByProject } = storeToRefs(dataStore);
 const projectId = computed(() => route.params.projectId);
-const assets = computed(() => tablesByProject.value[projectId.value]?.assets || []);
-const locals = computed(() => tablesByProject.value[projectId.value]?.locals || []);
-const quickLinks = computed(() => [...assets.value, ...locals.value].slice(0, 6));
+const tables = computed(() => tablesByProject.value[projectId.value] || { assets: [], locals: [] });
+const allTables = computed(() => [...(tables.value.assets || []), ...(tables.value.locals || [])]);
+const views = computed(() => prototypesByProject.value[projectId.value]?.views || []);
+const charts = computed(() => prototypesByProject.value[projectId.value]?.charts || []);
+const webhooks = computed(() => prototypesByProject.value[projectId.value]?.webhooks || []);
+const quickLinks = computed(() => allTables.value.slice(0, 6));
 
 onMounted(async () => {
   if (!projectId.value) return;
+  dataStore.hydratePrototypes(projectId.value);
   await dataStore.fetchTables(projectId.value);
 });
 </script>
@@ -88,5 +102,10 @@ onMounted(async () => {
   text-decoration: none;
   color: inherit;
   background: var(--color-surface, #fff);
+}
+
+.status {
+  margin: 0;
+  color: var(--color-text-secondary, #71717a);
 }
 </style>
