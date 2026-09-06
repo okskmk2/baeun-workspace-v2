@@ -2,7 +2,7 @@
   <main class="admin-page">
     <header class="admin-page__header">
       <h1>Workspace Slot Usage</h1>
-      <router-link class="back-link" :to="{ name: 'AdminLicenseManager' }">목록으로</router-link>
+      <router-link class="back-link" :to="{ name: 'AdminLicenses' }">목록으로</router-link>
     </header>
 
     <section class="wire-card">

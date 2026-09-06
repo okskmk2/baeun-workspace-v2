@@ -2,7 +2,7 @@
   <main class="admin-page">
     <header class="admin-page__header">
       <div>
-        <h1>Member Approvals</h1>
+        <h1>가입 승인</h1>
         <p class="subtitle">퍼블릭 사이트에서 신청된 회원가입을 승인하거나 거절합니다.</p>
       </div>
       <div class="actions">
@@ -40,6 +40,7 @@
 
 <script setup>
 import { computed, h, onMounted, ref } from "vue";
+import { RouterLink } from "vue-router";
 import DataTable from "../../components/DataTable.vue";
 import api from "../../lib/axios";
 
@@ -53,7 +54,13 @@ const actionError = ref("");
 
 const tableHeaders = computed(() => [
   { text: "ID", key: "id", align: "right" },
-  { text: "이름", key: "name", align: "left" },
+  {
+    text: "이름",
+    key: "name",
+    align: "left",
+    render: (value, row) =>
+      h(RouterLink, { class: "admin-link", to: { name: "AdminUserDetail", params: { memberId: row.id } } }, () => value || "-"),
+  },
   { text: "이메일", key: "email", align: "left" },
   { text: "신청일", key: "created_at", align: "left" },
   {

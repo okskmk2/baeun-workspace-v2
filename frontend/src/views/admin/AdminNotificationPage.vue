@@ -1,7 +1,7 @@
 <template>
   <main class="admin-page">
     <header class="admin-page__header">
-      <h1>System Notifications</h1>
+      <h1>시스템 방송</h1>
       <button type="button" class="wire-button">Send Broadcast</button>
     </header>
 

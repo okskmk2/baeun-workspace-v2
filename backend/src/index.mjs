@@ -37,6 +37,7 @@ import dataRouter from "./routes/data.route.mjs";
 import assistantRouter from "./routes/assistant.route.mjs";
 import fileRouter from "./routes/file.route.mjs";
 import publicRouter from "./routes/public.route.mjs";
+import adminRouter from "./routes/admin.route.mjs";
 
 const app = express();
 const pgSession = connectPgSimple(session);
@@ -90,6 +91,7 @@ app.use("/api/data", dataRouter);
 app.use("/api/assistant", assistantRouter);
 app.use("/api/files", fileRouter);
 app.use("/api/public", publicRouter);
+app.use("/api/admin", adminRouter);
 
 // Static files serve
 const staticPath = path.join(__dirname, "../../frontend/dist");

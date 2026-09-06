@@ -2,8 +2,8 @@
   <main class="admin-page">
     <header class="admin-page__header">
       <div>
-        <h1>User & Workspace License Assignment</h1>
-        <p class="subtitle">관리자가 사용자/워크스페이스에 라이선스를 수동 지급합니다.</p>
+        <h1>수동 지급</h1>
+        <p class="subtitle">CS·베타·보상으로 라이선스를 회원 또는 워크스페이스에 지급합니다.</p>
       </div>
       <div class="actions">
         <button

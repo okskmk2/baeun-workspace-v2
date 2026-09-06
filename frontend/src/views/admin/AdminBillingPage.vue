@@ -1,7 +1,7 @@
 <template>
   <main class="admin-page">
     <header class="admin-page__header">
-      <h1>License & Payment</h1>
+      <h1>결제</h1>
       <div class="actions">
         <button type="button" class="wire-button">Refund Payment</button>
         <button type="button" class="wire-button">Update Master Price</button>

@@ -34,18 +34,24 @@
           >
             <MaterialSymbol name="settings" :size="18" alt="" />
           </router-link>
+          <button
+            type="button"
+            class="btn btn--icon"
+            aria-label="챗봇 열기"
+            title="챗봇 열기"
+            @click="toggleAssistantModal"
+          >
+            <MaterialSymbol name="smart_toy" :size="18" alt="" />
+          </button>
+          <AgentChatWidget
+            :showTrigger="false"
+            :menuAriaLabel="`${workspaceName || '워크스페이스'} AI`"
+          />
           <ContextSwicher />
         </nav>
       </div>
     </header>
     <router-view></router-view>
-
-    <AgentChatWidget
-      :actions="fabActions"
-      button-aria-label="워크스페이스 빠른 액션 메뉴"
-      menu-aria-label="워크스페이스 빠른 액션"
-      @action-click="onClickFabAction"
-    />
   </div>
 </template>
 
@@ -57,7 +63,7 @@ import ContextSwicher from "../../components/ContextSwicher.vue";
 import MaterialSymbol from "../../components/MaterialSymbol.vue";
 import Avatar from "../../components/Avatar.vue";
 import AgentChatWidget from "../../components/AgentChatWidget.vue";
-import { addToast } from "../../lib/toast";
+import { toggleAssistantModal } from "../../lib/assistantModal";
 import { recordRecentVisit } from "../../lib/recentVisits";
 import { useWorkspaceStore } from "../../stores/workspaceStore";
 import { useAppStore } from "../../stores/appStore";
@@ -142,16 +148,6 @@ const workspaceSettingsTo = computed(() => ({
   name: "workspace-settings",
   params: workspaceRouteParams.value,
 }));
-
-const fabActions = [
-  { key: "new-post", label: "게시글 작성", icon: "edit" },
-  { key: "new-project", label: "프로젝트 생성", icon: "add_circle" },
-  { key: "workspace-settings", label: "워크스페이스 설정", icon: "settings" },
-];
-
-const onClickFabAction = (action) => {
-  addToast({ message: `${action.label} 기능은 프로토타입입니다.`, type: "info" });
-};
 
 const applyTheme = (value) => {
   if (typeof document === "undefined") return;

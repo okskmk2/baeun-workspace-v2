@@ -1,9 +1,10 @@
 import express from "express";
 import { randomUUID } from "crypto";
 import pool from "../db.mjs";
-import { isAuth } from "../middlewares/auth.middleware.mjs";
+import { isAuth, isSystemAdmin } from "../middlewares/auth.middleware.mjs";
 import { withPagination } from "../middlewares/pagination.middleware.mjs";
 import { normalizeUpper, parseBooleanQuery, parsePositiveInt } from "../utils/parsers.mjs";
+import { writeAdminAudit } from "../utils/adminAudit.mjs";
 
 const router = express.Router();
 
@@ -150,6 +151,7 @@ router.get("/", isAuth, withPagination({ defaultPageSize: 10, maxPageSize: 100 }
 router.get(
   "/manual/users",
   isAuth,
+  isSystemAdmin,
   withPagination({ defaultPageSize: 10, maxPageSize: 100 }),
   async (req, res) => {
     const keyword = String(req.query.q || "").trim();
@@ -216,6 +218,7 @@ router.get(
 router.get(
   "/manual/workspaces",
   isAuth,
+  isSystemAdmin,
   withPagination({ defaultPageSize: 10, maxPageSize: 100 }),
   async (req, res) => {
     const keyword = String(req.query.q || "").trim();
@@ -281,7 +284,7 @@ router.get(
   }
 );
 
-router.post("/manual/assign", isAuth, async (req, res) => {
+router.post("/manual/assign", isAuth, isSystemAdmin, async (req, res) => {
   const licenseId = parsePositiveInt(req.body.license_id);
   const targetType = normalizeUpper(req.body.target_type);
   const targetId = parsePositiveInt(req.body.target_id);
@@ -391,6 +394,19 @@ router.post("/manual/assign", isAuth, async (req, res) => {
       ]
     );
 
+    await writeAdminAudit(client, {
+      actorId: req.session.userId,
+      action: "license.assign",
+      targetType: targetType === "MEMBER" ? "member" : "workspace",
+      targetId,
+      afterData: {
+        license_id: licenseId,
+        purchased_license_id: insertRes.rows[0]?.id,
+        quantity,
+        payment_id: paymentId,
+      },
+    });
+
     await client.query("COMMIT");
     return res.status(201).json({
       message: "License assigned manually.",
@@ -433,7 +449,7 @@ router.get("/:licenseId", isAuth, async (req, res) => {
   }
 });
 
-router.post("/", isAuth, async (req, res) => {
+router.post("/", isAuth, isSystemAdmin, async (req, res) => {
   const targetResource = normalizeUpper(req.body.target_resource);
   const billingCycle = normalizeUpper(req.body.billing_cycle);
   const currency = normalizeUpper(req.body.currency || "KRW");
@@ -513,7 +529,7 @@ router.post("/", isAuth, async (req, res) => {
   }
 });
 
-router.patch("/:licenseId", isAuth, async (req, res) => {
+router.patch("/:licenseId", isAuth, isSystemAdmin, async (req, res) => {
   const licenseId = parsePositiveInt(req.params.licenseId);
   if (!licenseId) {
     return res.status(400).json({ name: "BadRequest", message: "Invalid licenseId." });
@@ -625,7 +641,7 @@ router.patch("/:licenseId", isAuth, async (req, res) => {
   }
 });
 
-router.delete("/:licenseId", isAuth, async (req, res) => {
+router.delete("/:licenseId", isAuth, isSystemAdmin, async (req, res) => {
   const licenseId = parsePositiveInt(req.params.licenseId);
   if (!licenseId) {
     return res.status(400).json({ name: "BadRequest", message: "Invalid licenseId." });
@@ -656,7 +672,7 @@ router.delete("/:licenseId", isAuth, async (req, res) => {
   }
 });
 
-router.get("/:licenseId/usage", isAuth, async (req, res) => {
+router.get("/:licenseId/usage", isAuth, isSystemAdmin, async (req, res) => {
   const licenseId = parsePositiveInt(req.params.licenseId);
   if (!licenseId) {
     return res.status(400).json({ name: "BadRequest", message: "Invalid licenseId." });

@@ -11,6 +11,7 @@ export const NOTIFICATION_TYPES = {
   CHANNEL_NOTICE_WORKSPACE_NEW_MESSAGE: "channel.notice_workspace_new_message",
   PAGE_PERMISSION_REQUESTED: "page_permission_request",
   PAGE_PERMISSION_RESOLVED: "page_permission_resolved",
+  SYSTEM_BROADCAST: "system.broadcast",
 };
 
 const toUniqueRecipientIds = (recipientIds, actorId) => {

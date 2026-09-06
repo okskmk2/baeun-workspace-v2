@@ -130,6 +130,7 @@ CREATE TABLE data_column (
 |----------|------|-----------|
 | `isAuth` | `req.session.userId` 존재 | `401 Unauthorized` |
 | `isGuest` | 세션 없음(미로그인) | `400 Bad Request` |
+| `isSystemAdmin` | `member.role_name === SYSTEM_ADMIN` (`isAuth` 이후) | `403 Forbidden` |
 
 ### 3.2 프로젝트 멤버십 미들웨어 (`projectMember.middleware.mjs`)
 
@@ -210,7 +211,8 @@ CREATE TABLE data_column (
 
 ```
 1. requiresAuth → 로그인 여부 확인
-2. requiresProjectAdmin → projectMemberStore에서 역할 조회
+2. requiresAdmin → role_name === SYSTEM_ADMIN, 아니면 /
+3. requiresProjectAdmin → projectMemberStore에서 역할 조회
    - OWNER 또는 ADMIN: 진입 허용
    - 그 외: /project/:id/kanban 으로 redirect
 ```
@@ -220,6 +222,7 @@ CREATE TABLE data_column (
 | 메타 속성 | 적용 라우트 | 동작 |
 |-----------|-------------|------|
 | `requiresAuth: true` | 워크스페이스, 어드민 라우트 전체 | 미로그인 시 로그인 페이지로 redirect |
+| `requiresAdmin: true` | `/admin/**` | `role_name !== SYSTEM_ADMIN`이면 `/`로 redirect |
 | `requiresProjectAdmin: true` | `/project/:id/settings/**` | 프로젝트 `OWNER`·`ADMIN`이 아니면 칸반으로 redirect |
 
 ### 4.3 관련 스토어
@@ -267,7 +270,8 @@ CREATE TABLE data_column (
 - [task.route.mjs](../backend/src/routes/task.route.mjs) — 태스크 권한
 - [chat.route.mjs](../backend/src/routes/chat.route.mjs) — 채널/공지 권한
 - [data.route.mjs](../backend/src/routes/data.route.mjs) — 데이터 테이블 권한
-- [license.route.mjs](../backend/src/routes/license.route.mjs) — 라이선스 접근
+- [license.route.mjs](../backend/src/routes/license.route.mjs) — 라이선스 접근. 생성·수정·지급·사용량은 `isSystemAdmin`
+- [admin.route.mjs](../backend/src/routes/admin.route.mjs) — 대시보드·회원 제재·테넌트·공개 검수·결제 환불·방송·감사 로그
 - [ddl.sql](../backend/sql/ddl.sql) — 전체 DB 스키마
 
 ### 프론트엔드

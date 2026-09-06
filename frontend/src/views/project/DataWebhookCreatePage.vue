@@ -170,7 +170,7 @@ onMounted(async () => {
 }
 
 .create-form label {
-  display: grid;
+  /* display: grid; */
   gap: 0.35rem;
   font-size: 13px;
 }

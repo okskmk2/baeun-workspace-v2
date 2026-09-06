@@ -39,8 +39,9 @@ Member (계정)
 /  퍼블릭 사이트 (PublicLayout)
 ├── /                         소개(랜딩)
 ├── /pricing                  요금제
-├── /store                    슬롯 스토어
-│   └── /store/cart           장바구니
+├── /store                    → /pricing
+├── /store/cart               장바구니
+├── /open-projects            공개 워크스페이스·프로젝트 카탈로그
 ├── /login                    로그인
 ├── /signup                   회원가입
 │   └── /signup/complete      가입 완료
@@ -104,15 +105,32 @@ Member (계정)
 
 /admin  어드민 사이트 (AdminLayout, SYSTEM_ADMIN)
 ├── /                     → /admin/dashboard
-├── /dashboard            대시보드
-├── /members              회원가입 승인
-├── /users                사용자·워크스페이스
-├── /billing              결제
-├── /notifications        시스템 알림
-└── /licenses             라이선스 카탈로그
-    ├── /workspace        워크스페이스 라이선스 사용량
-    ├── /project          프로젝트 라이선스 사용량
-    └── /workspace-member 워크스페이스 멤버 라이선스 사용량
+├── /dashboard            운영 홈
+├── /people               → /people/approvals
+│   ├── /approvals        가입 승인 큐
+│   ├── /users            회원 목록
+│   └── /users/:memberId  회원 상세
+├── /tenants              → /tenants/workspaces
+│   ├── /workspaces       워크스페이스 목록
+│   ├── /workspaces/:id   워크스페이스 상세
+│   ├── /projects         프로젝트 목록
+│   ├── /projects/:id     프로젝트 상세
+│   └── /public-catalog   공개 카탈로그 검수
+├── /commerce             → /commerce/licenses
+│   ├── /licenses         라이선스 카탈로그
+│   ├── /licenses/workspace
+│   ├── /licenses/project
+│   ├── /licenses/workspace-member
+│   ├── /assignments      수동 지급
+│   └── /payments         결제 (플레이스홀더)
+├── /communications       → /communications/broadcasts
+│   └── /broadcasts       시스템 방송 (플레이스홀더)
+└── 구 URL 리다이렉트
+    /members → /people/approvals
+    /users → /commerce/assignments
+    /billing → /commerce/payments
+    /notifications → /communications/broadcasts
+    /licenses → /commerce/licenses
 ```
 
 ---
@@ -267,18 +285,24 @@ FAB(빠른 액션: 게시글 작성, 프로젝트 생성, 설정)는 토스트�
 
 레이아웃: `AdminLayout.vue`.
 
-GNB는 브랜드 텍스트 `Baeun Admin`과 Context Switcher만 있다. LNB가 본 메뉴다.
+GNB는 브랜드 텍스트 `Baeun Admin`과 Context Switcher만 있다. LNB가 본 메뉴다. 어드민은 테넌트 화면을 복제하지 않고, 사람·테넌트·커머스·공개 검수·시스템 방송을 플랫폼 관점으로 본다.
 
-| 라벨 | 경로 |
-|---|---|
-| Dashboard | `/admin/dashboard` |
-| Members | `/admin/members` |
-| Users & Workspaces | `/admin/users` |
-| Billing | `/admin/billing` |
-| Licenses | `/admin/licenses` |
-| Notifications | `/admin/notifications` |
+| 그룹 | 라벨 | 경로 |
+|---|---|---|
+| — | 대시보드 | `/admin/dashboard` |
+| 사람 | 가입 승인 | `/admin/people/approvals` |
+| 사람 | 회원 | `/admin/people/users` |
+| 테넌트 | 워크스페이스 | `/admin/tenants/workspaces` |
+| 테넌트 | 프로젝트 | `/admin/tenants/projects` |
+| 테넌트 | 공개 검수 | `/admin/tenants/public-catalog` |
+| 커머스 | 라이선스 | `/admin/commerce/licenses` |
+| 커머스 | 수동 지급 | `/admin/commerce/assignments` |
+| 커머스 | 결제 | `/admin/commerce/payments` |
+| 커뮤니케이션 | 시스템 방송 | `/admin/communications/broadcasts` |
 
-라이선스 사용량 페이지(`/licenses/workspace|project|workspace-member`)는 LNB에 없고, 카탈로그에서 리소스 타입별로 들어간다.
+가입 승인 대기 건수는 LNB 뱃지로 표시한다. 라이선스 사용량 페이지는 LNB에 없고, 카탈로그에서 리소스 타입별로 들어간다. 회원·워크스페이스·프로젝트 상세는 목록에서 드릴다운한다.
+
+플랫폼 운영(`/admin/ops`: 세션, 스토리지, 웹훅, 감사 로그)은 LNB에 아직 없다.
 
 ---
 
@@ -360,20 +384,29 @@ GNB는 브랜드 텍스트 `Baeun Admin`과 Context Switcher만 있다. LNB가 �
 
 ### 4.4 어드민 사이트
 
-시스템 운영. `requiresAdmin` + `role_name === SYSTEM_ADMIN`. 실패 시 `/`로 보낸다.
+시스템 운영. `requiresAdmin` + `role_name === SYSTEM_ADMIN`. 실패 시 `/`로 보낸다. 위키·칸반·채널 콘텐츠는 편집하지 않는다.
 
 | 경로 | 화면 | 목적 | 주요 링크 |
 |---|---|---|---|
-| `/admin` | redirect | 대시보드 | `/admin/dashboard` |
-| `/dashboard` | AdminDashboardPage | 가입자·워크스페이스·매출. 현재 플레이스홀더 | — |
-| `/members` | AdminMemberApprovalPage | 회원가입 승인·거절 | — |
-| `/users` | AdminUserWorkspacePage | 회원·워크스페이스 조회 | — |
-| `/billing` | AdminBillingPage | 결제 모니터링 | — |
-| `/notifications` | AdminNotificationPage | 시스템 알림 발송 | — |
-| `/licenses` | AdminLicenseCatalogPage | 라이선스 마스터 | 사용량 3면 |
-| `/licenses/workspace` | AdminLicenseWorkspaceUsagePage | 워크스페이스 슬롯 사용 | 카탈로그 |
-| `/licenses/project` | AdminLicenseProjectUsagePage | 프로젝트 슬롯 사용 | 카탈로그 |
-| `/licenses/workspace-member` | AdminLicenseWorkspaceMemberUsagePage | 멤버 슬롯 사용 | 카탈로그 |
+| `/admin` | redirect | 운영 홈 | `/admin/dashboard` |
+| `/dashboard` | AdminDashboardPage | 승인 대기·회원·테넌트·공개·결제·소켓 KPI. 대기 큐·만료 임박 | 승인, 회원, 테넌트, 공개 검수, 결제 |
+| `/people/approvals` | AdminMemberApprovalPage | 회원가입 승인·거절 | 회원 상세 |
+| `/people/users` | AdminUserListPage | 회원 목록 (상태·역할 필터) | 회원 상세 |
+| `/people/users/:memberId` | AdminUserDetailPage | 계정·소속 테넌트·라이선스·세션 수 | 워크스페이스·프로젝트 상세 |
+| `/tenants/workspaces` | AdminWorkspaceListPage | 워크스페이스 전역 목록 | 상세 |
+| `/tenants/workspaces/:id` | AdminWorkspaceDetailPage | 멤버·프로젝트·슬롯 조회, 강제 비공개 | 서비스 `/workspace/:id` |
+| `/tenants/projects` | AdminProjectListPage | 프로젝트 전역 목록 | 상세, 워크스페이스 상세 |
+| `/tenants/projects/:id` | AdminProjectDetailPage | 규모 요약·멤버·강제 비공개 | 서비스 `/project/:id` |
+| `/tenants/public-catalog` | AdminPublicCatalogPage | `/open-projects` 노출분 검수·내리기 | 워크스페이스/프로젝트 상세 |
+| `/commerce/licenses` | AdminLicenseCatalogPage | 슬롯 상품 마스터 | 사용량 3면 |
+| `/commerce/licenses/workspace` | AdminLicenseWorkspaceUsagePage | 워크스페이스 슬롯 사용 | 카탈로그 |
+| `/commerce/licenses/project` | AdminLicenseProjectUsagePage | 프로젝트 슬롯 사용 | 카탈로그 |
+| `/commerce/licenses/workspace-member` | AdminLicenseWorkspaceMemberUsagePage | 멤버 슬롯 사용 | 카탈로그 |
+| `/commerce/assignments` | AdminUserWorkspacePage | 라이선스 수동 지급 | — |
+| `/commerce/payments` | AdminBillingPage | 결제 모니터링. 현재 플레이스홀더 | — |
+| `/communications/broadcasts` | AdminNotificationPage | 시스템 방송. 현재 플레이스홀더 | — |
+
+구 경로 `/admin/members`, `/users`, `/billing`, `/notifications`, `/licenses`는 위 표의 신규 경로로 리다이렉트한다.
 
 ---
 
@@ -400,7 +433,10 @@ flowchart LR
   end
 
   subgraph admin [어드민]
-    AdminDash["/admin"]
+    AdminDash["/admin/dashboard"]
+    AdminPeople["/admin/people"]
+    AdminTenants["/admin/tenants"]
+    AdminCommerce["/admin/commerce"]
   end
 
   Landing -->|"CTA"| Auth
@@ -413,6 +449,9 @@ flowchart LR
   WSProjects -->|"프로젝트 열기"| Wiki
   WSSettings -->|"슬롯 구매"| Account
   Account -->|"SYSTEM_ADMIN"| AdminDash
+  Auth -->|"가입 승인"| AdminPeople
+  WSSettings -->|"공개 검수"| AdminTenants
+  Store -->|"카탈로그·지급"| AdminCommerce
   AdminDash -->|"Context Switcher"| Account
   AdminDash -->|"Context Switcher"| WSProjects
 ```
@@ -492,13 +531,14 @@ flowchart LR
 | 설정은 항상 `settings` 하위 | 계정 `/settings`, 워크스페이스 `/workspace/:id/settings`, 프로젝트 `/project/:id/settings` |
 | 아카이브는 도구 LNB 하단 | `/kanban/archive`, `/channel/archive` |
 | 구매는 퍼블릭에 모음 | `/store`, `/store/cart`, `/settings/plan`, `/settings/billing` |
+| 어드민은 도메인 그룹 | `/admin/people`, `/tenants`, `/commerce`, `/communications` |
 
 정적 경로와 동적 파라미터 충돌을 피한 예:
 
 - `/kanban/gantt`, `/archive`, `/backlog`가 `/kanban/:kanbanId`보다 먼저 선언됨
 - `/channel/archive`, `/channel/:roomId/settings`가 `/channel/:roomId`보다 먼저 선언됨
 - `/data/:tableId/settings`가 `/data/:tableId/:pageType`보다 먼저 선언됨
-- `/admin/licenses/workspace` 등이 `/admin/licenses` 하위로 분리됨
+- `/admin/commerce/licenses/workspace` 등이 카탈로그 하위로 분리됨. 구 `/admin/licenses/*`는 리다이렉트
 
 데이터 `pageType`은 `list|form|chart`만 허용한다.
 
@@ -513,7 +553,8 @@ flowchart LR
 | 워크스페이스 게시판 5면, 랭킹 | 라우트·GNB 있음. UI는 와이어프레임 |
 | 워크스페이스 FAB | 라우트 없음. 토스트만 |
 | `WorkspaceKanbanPage.vue` | 파일만 있음. `workspace.js`에 미등록 |
-| 어드민 대시보드 | 플레이스홀더 통계 |
+| 어드민 결제·시스템 방송 | 라우트·LNB 있음. UI는 플레이스홀더 |
+| 어드민 회원 정지·비번 재설정·감사 로그 | 상세 조회만. 제재 액션·`/ops`는 미구현 |
 | 데이터 form/chart 뷰 | 라우트 있음. 「준비 중」 안내 |
 | Footer 문의 | `href="#"` |
 | 전역 캐치올 404 | 없음. `/not-found`만 명시 이동 |
@@ -533,7 +574,7 @@ flowchart LR
 |---|---|---|
 | `/` | 공개 | HomeView |
 | `/pricing` | 공개 | PricingView |
-| `/store` | 공개 | StorePage |
+| `/open-projects` | 공개 | OpenProjectsPage |
 | `/store/cart` | 공개 | CartPage |
 | `/not-found` | 공개 | NotFoundPage |
 | `/login` | 공개 | LoginPage |
@@ -597,14 +638,21 @@ flowchart LR
 | 경로 | 인증 | 뷰 |
 |---|---|---|
 | `/admin/dashboard` | SYSTEM_ADMIN | AdminDashboardPage |
-| `/admin/members` | SYSTEM_ADMIN | AdminMemberApprovalPage |
-| `/admin/users` | SYSTEM_ADMIN | AdminUserWorkspacePage |
-| `/admin/billing` | SYSTEM_ADMIN | AdminBillingPage |
-| `/admin/notifications` | SYSTEM_ADMIN | AdminNotificationPage |
-| `/admin/licenses` | SYSTEM_ADMIN | AdminLicenseCatalogPage |
-| `/admin/licenses/workspace` | SYSTEM_ADMIN | AdminLicenseWorkspaceUsagePage |
-| `/admin/licenses/project` | SYSTEM_ADMIN | AdminLicenseProjectUsagePage |
-| `/admin/licenses/workspace-member` | SYSTEM_ADMIN | AdminLicenseWorkspaceMemberUsagePage |
+| `/admin/people/approvals` | SYSTEM_ADMIN | AdminMemberApprovalPage |
+| `/admin/people/users` | SYSTEM_ADMIN | AdminUserListPage |
+| `/admin/people/users/:memberId` | SYSTEM_ADMIN | AdminUserDetailPage |
+| `/admin/tenants/workspaces` | SYSTEM_ADMIN | AdminWorkspaceListPage |
+| `/admin/tenants/workspaces/:workspaceId` | SYSTEM_ADMIN | AdminWorkspaceDetailPage |
+| `/admin/tenants/projects` | SYSTEM_ADMIN | AdminProjectListPage |
+| `/admin/tenants/projects/:projectId` | SYSTEM_ADMIN | AdminProjectDetailPage |
+| `/admin/tenants/public-catalog` | SYSTEM_ADMIN | AdminPublicCatalogPage |
+| `/admin/commerce/licenses` | SYSTEM_ADMIN | AdminLicenseCatalogPage |
+| `/admin/commerce/licenses/workspace` | SYSTEM_ADMIN | AdminLicenseWorkspaceUsagePage |
+| `/admin/commerce/licenses/project` | SYSTEM_ADMIN | AdminLicenseProjectUsagePage |
+| `/admin/commerce/licenses/workspace-member` | SYSTEM_ADMIN | AdminLicenseWorkspaceMemberUsagePage |
+| `/admin/commerce/assignments` | SYSTEM_ADMIN | AdminUserWorkspacePage |
+| `/admin/commerce/payments` | SYSTEM_ADMIN | AdminBillingPage |
+| `/admin/communications/broadcasts` | SYSTEM_ADMIN | AdminNotificationPage |
 
 ---
 
@@ -617,8 +665,48 @@ flowchart LR
 | 워크스페이스 라우트 | `frontend/src/routes/workspace.js` |
 | 프로젝트 라우트 | `frontend/src/routes/project.js` |
 | 어드민 라우트 | `frontend/src/routes/admin.js` |
+| 어드민 API | `backend/src/routes/admin.route.mjs` |
+| SYSTEM_ADMIN 가드 | `backend/src/middlewares/auth.middleware.mjs` (`isSystemAdmin`) |
 | 가드·스크롤 | `frontend/src/router.js` |
 | 전역 전환 메뉴 | `frontend/src/components/ContextSwicher.vue` |
 | 알림 딥링크 | `frontend/src/lib/notificationNav.js` |
 | 검색 딥링크 | `frontend/src/stores/projectSearchStore.js` |
 | 역할 정의 | `docs/permissions.md` |
+
+---
+
+## 11. 어드민 설계 원칙
+
+어드민은 퍼블릭·워크스페이스·프로젝트 사이트의 **플랫폼 백오피스**다. 테넌트 OWNER/ADMIN 화면을 복제하지 않는다.
+
+### 11.1 책임 경계
+
+| 세 사이트의 표면 | 어드민이 하는 일 | 어드민이 하지 않는 일 |
+|---|---|---|
+| 퍼블릭 가입 (`approval_status`) | 승인 큐, 회원 상태 조회 | 프로필 편집 |
+| 퍼블릭 슬롯 구매 | 카탈로그·수동 지급·결제 조회 | 장바구니 UI |
+| 퍼블릭 `/open-projects` | 공개 검수, 강제 비공개 | 마케팅 카피 |
+| 워크스페이스 설정 | 전역 목록·상세·슬롯 대조 | 멤버 초대, 테마 |
+| 프로젝트 도구 | 전역 목록·규모 요약 | 위키/칸반/채널/데이터 편집 |
+| 프로젝트 알림 | 시스템 방송 (플랫폼 → 다수) | 이슈 배정 알림 처리 |
+
+워크스페이스를 공개하면 하위 프로젝트가 따라 공개된다. 어드민에서 워크스페이스를 내리면 하위 프로젝트도 함께 비공개한다. 프로젝트만 내리는 조치는 워크스페이스가 공개여도 허용한다.
+
+### 11.2 필수 기능 우선순위
+
+| 우선 | 기능 | 상태 |
+|---|---|---|
+| P0 | 가입 승인 큐 | 구현 |
+| P0 | 회원 목록·상세 | 구현 |
+| P0 | 워크스페이스 목록·상세 | 구현 |
+| P0 | 라이선스 카탈로그·수동 지급 | 구현 |
+| P0 | 공개 카탈로그 검수 | 구현 |
+| P0 | 운영 홈 KPI | 구현 |
+| P1 | 프로젝트 목록·상세 | 구현 |
+| P1 | 결제 목록·환불 | 백엔드 구현 (`/api/admin/payments`) |
+| P1 | 시스템 방송 | 백엔드 구현 (`/api/admin/broadcasts`) |
+| P1 | 계정 정지·세션 종료·비밀번호 재설정 | 백엔드 구현 (`/api/admin/users/:id`) |
+| P2 | 감사 로그 | 백엔드 구현 (`/api/admin/audit`) |
+| P2 | 스토리지·웹훅·AI 사용량 | 미구현 |
+
+라이선스 생성·수정·삭제·수동 지급·사용량 조회 API는 `SYSTEM_ADMIN`만 호출할 수 있다. 카탈로그 조회(`GET /api/licenses`)는 로그인 사용자에게 열려 있다.

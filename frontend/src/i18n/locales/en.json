@@ -555,6 +555,74 @@
           "Check member slot balance before inviting new members."
         ]
       }
+    },
+    "projects": {
+      "header": {
+        "title": "My projects",
+        "subtitle": "See progress and recent updates for the projects you belong to."
+      },
+      "overview": {
+        "joined": "Joined",
+        "joinedDesc": "Projects you currently belong to in this workspace",
+        "todo": "My tasks",
+        "todoDesc": "Your remaining tasks across these projects",
+        "updates": "Has updates",
+        "updatesDesc": "Projects with recent changes or unread activity"
+      },
+      "filters": {
+        "search": "Search projects",
+        "searchPlaceholder": "Search by name, description, or your role",
+        "label": "Project filters",
+        "all": "All",
+        "favorites": "Favorites",
+        "updates": "Has updates",
+        "myTasks": "Has my tasks"
+      },
+      "sections": {
+        "priority": "Projects to check now",
+        "priorityDesc": "Projects are ranked by your tasks, recent updates, and favorites."
+      },
+      "results": "{count} projects",
+      "empty": {
+        "title": "No projects to show",
+        "search": "Try a different search or filter to find other projects.",
+        "default": "You are not in any matching projects yet."
+      },
+      "fallback": {
+        "description": "No project description has been added yet.",
+        "role": "Member",
+        "status": "In progress",
+        "updated": "No update info"
+      },
+      "badges": {
+        "favorite": "Favorite",
+        "updated": "Has updates",
+        "risk": "Needs attention"
+      },
+      "meta": {
+        "role": "My role",
+        "updated": "Last updated",
+        "progress": "Status"
+      },
+      "stats": {
+        "myTasks": "My tasks",
+        "unread": "Unread",
+        "issues": "Open issues"
+      },
+      "actions": {
+        "open": "Open project"
+      },
+      "updated": {
+        "justNow": "Just now",
+        "hoursAgo": "{count} hours ago",
+        "daysAgo": "{count} days ago"
+      },
+      "highlights": {
+        "myTasks": "You still have {count} tasks to review.",
+        "unread": "You have {count} missed updates.",
+        "updated": "There are recent changes worth a look.",
+        "default": "Review the project status and pick up where you left off."
+      }
     }
   },
   "kanban": {
@@ -2002,39 +2070,69 @@
       }
     },
     "tablePage": {
+      "fallbackName": "Sheet",
+      "subtitle": "{columns} columns · {rows} rows",
+      "assetBadge": "Shared sheet",
+      "loading": "Loading the sheet",
+      "savingCell": "Saving",
+      "selectPlaceholder": "Choose",
       "actions": {
-        "addRow": "Add Row",
+        "addRow": "Add row",
+        "addFirstRow": "Add the first row",
         "refresh": "Refresh",
-        "downloadTsv": "Download TSV",
+        "download": "Download for Excel",
+        "settings": "Sheet settings",
         "editRow": "Edit",
-        "deleteRow": "Delete",
+        "deleteRow": "Delete this row",
         "cancel": "Cancel",
         "save": "Save",
-        "create": "Create",
+        "create": "Add",
         "saving": "Saving...",
-        "creating": "Creating..."
+        "creating": "Adding...",
+        "openChart": "Create a chart"
       },
       "table": {
-        "management": "Actions",
-        "empty": "No data available."
+        "rowActions": "This row",
+        "emptyRows": "There are no rows yet.",
+        "emptyRowsHelp": "This is like filling in from the second line in Excel.",
+        "emptyColumns": "This sheet has no columns.",
+        "requiredMark": "Required"
+      },
+      "notice": {
+        "form": "A separate input layout is not available yet. Add rows in this sheet.",
+        "chart": "To see a chart, create one in Charts on the left."
       },
       "modal": {
-        "titleEdit": "Edit Row",
-        "titleCreate": "Add Row",
-        "emptyEditableColumns": "No editable columns are available. Check column permissions."
+        "titleEdit": "Edit row",
+        "titleCreate": "Add row",
+        "emptyEditableColumns": "There are no fields you can edit in this sheet."
       },
       "confirm": {
-        "deleteRow": "Are you sure you want to delete this row?"
+        "title": "Delete this row?",
+        "message": "Deleted rows cannot be restored.",
+        "confirm": "Delete",
+        "deleting": "Deleting..."
+      },
+      "audit": {
+        "title": "Recent changes",
+        "empty": "No changes yet.",
+        "system": "System",
+        "insert": "{name} added a row",
+        "update": "{name} edited a row",
+        "delete": "{name} deleted a row",
+        "other": "{name} changed the sheet"
       },
       "toast": {
-        "rowUpdated": "Row has been updated.",
-        "rowCreated": "Row has been added.",
-        "rowDeleted": "Row has been deleted."
+        "rowUpdated": "Row updated.",
+        "rowCreated": "Row added.",
+        "rowDeleted": "Row deleted."
       },
       "error": {
-        "updateRow": "Failed to update row.",
-        "createRow": "Failed to add row.",
-        "deleteRow": "Failed to delete row.",
+        "updateRow": "Could not save the row.",
+        "createRow": "Could not save the row.",
+        "deleteRow": "Could not delete the row.",
+        "saveCell": "Could not save.",
+        "required": "“{name}” cannot be left blank.",
         "downloadNoColumns": "There are no columns to download."
       }
     }

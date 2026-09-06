@@ -3,7 +3,7 @@ import bcrypt from "bcrypt"; // bcrypt module.
 import { randomUUID } from "crypto";
 import multer from "multer";
 import { Storage } from "@google-cloud/storage";
-import { isAuth, isGuest } from "../middlewares/auth.middleware.mjs";
+import { isAuth, isGuest, isSystemAdmin } from "../middlewares/auth.middleware.mjs";
 import pool from "../db.mjs"; // DB connection config.
 import {
   DEFAULT_PROJECT_WIKI_CONTENT,
@@ -211,16 +211,6 @@ const createApprovedMemberResources = async (client, userId, userName) => {
   );
 
   return { workspaceId, projectId, pageId: pageRes.rows[0].id };
-};
-
-const requireSystemAdmin = async (req, res) => {
-  const memberResult = await pool.query("SELECT id, role_name FROM member WHERE id = $1", [req.session.userId]);
-  const member = memberResult.rows[0];
-  if (!member || String(member.role_name || "").toUpperCase() !== "SYSTEM_ADMIN") {
-    res.status(403).json({ name: "Forbidden", message: "Admin access required." });
-    return null;
-  }
-  return member;
 };
 
 const listMemberProfileFiles = async (memberId) => {
@@ -440,6 +430,14 @@ router.post("/login", async (req, res) => {
       });
     }
 
+    const accountStatus = String(user.account_status || "ACTIVE").toUpperCase();
+    if (accountStatus === "SUSPENDED") {
+      return res.status(403).json({
+        name: "Forbidden",
+        message: "Account is suspended.",
+      });
+    }
+
     // 3. Set session.
     req.session.userId = user.id;
     req.session.userName = user.name;
@@ -464,6 +462,7 @@ router.post("/login", async (req, res) => {
       email: user.email,
       role_name: user.role_name,
       approval_status: approvalStatus,
+      account_status: accountStatus,
     });
   } catch (error) {
     res.status(500).json({ name: "InternalServerError", message: error.message });
@@ -479,9 +478,7 @@ router.post("/login", async (req, res) => {
  *     tags:
  *       - Member
  */
-router.get("/admin/signups", isAuth, async (req, res) => {
-  const adminCheck = await requireSystemAdmin(req, res);
-  if (!adminCheck) return;
+router.get("/admin/signups", isAuth, isSystemAdmin, async (req, res) => {
 
   const page = Math.max(Number.parseInt(String(req.query.page || "1"), 10) || 1, 1);
   const pageSize = Math.min(Math.max(Number.parseInt(String(req.query.pageSize || "10"), 10) || 10, 1), 100);
@@ -527,9 +524,7 @@ router.get("/admin/signups", isAuth, async (req, res) => {
  *     tags:
  *       - Member
  */
-router.patch("/admin/signups/:memberId", isAuth, async (req, res) => {
-  const adminCheck = await requireSystemAdmin(req, res);
-  if (!adminCheck) return;
+router.patch("/admin/signups/:memberId", isAuth, isSystemAdmin, async (req, res) => {
 
   const memberId = Number.parseInt(req.params.memberId, 10);
   const action = String(req.body?.action || "").toUpperCase();
@@ -651,7 +646,7 @@ router.post("/logout", isAuth, (req, res) => {
 router.get("/me", isAuth, async (req, res) => {
   try {
     const query =
-      "SELECT id, name, email, img_url, locale, region, role_name, approval_status, created_at FROM member WHERE id = $1";
+      "SELECT id, name, email, img_url, locale, region, role_name, approval_status, COALESCE(account_status, 'ACTIVE') AS account_status, created_at FROM member WHERE id = $1";
     const result = await pool.query(query, [req.session.userId]);
     const row = result.rows[0];
     if (!row) {
