@@ -8,7 +8,7 @@
       <button
         type="button"
         class="btn"
-        :disabled="!canManageWorkspace"
+        :disabled="!canManageWorkspace || projectRemaining < 1"
         @click="openCreateModal"
       >
         프로젝트 생성
@@ -40,9 +40,16 @@
 
     <p v-if="memberModalError" class="status error">{{ memberModalError }}</p>
 
+    <p v-if="canManageWorkspace && projectRemaining < 1" class="status error">
+      프로젝트 슬롯이 없습니다.
+      <router-link :to="projectCartTo">슬롯 구매</router-link>
+    </p>
+
     <CreateProjectModal
       :open="isCreateModalOpen"
       :workspace-id="workspaceId || ''"
+      :remaining="projectRemaining"
+      :granted="projectGranted"
       @close="closeCreateModal"
       @created="onProjectCreated"
     />
@@ -66,6 +73,7 @@ import DataTable from "../../components/DataTable.vue";
 import AddProjectMemberModal from "../../components/modals/AddProjectMemberModal.vue";
 import CreateProjectModal from "../../components/modals/CreateProjectModal.vue";
 import { addToast } from "../../lib/toast";
+import { monthlyCartTo } from "../../lib/slots";
 import { useProjectMemberStore } from "../../stores/projectMemberStore";
 import { useWorkspaceStore } from "../../stores/workspaceStore";
 
@@ -80,6 +88,9 @@ const projectTotal = computed(() => Number(projectPagination.value.total || proj
 
 const workspaceRoleUpper = computed(() => String(workspace.value?.role_name || "").toUpperCase());
 const canManageWorkspace = computed(() => ["OWNER", "ADMIN"].includes(workspaceRoleUpper.value));
+const projectRemaining = computed(() => Number(workspace.value?.project_slot_remaining ?? 0));
+const projectGranted = computed(() => Number(workspace.value?.project_slot_total ?? 0));
+const projectCartTo = computed(() => monthlyCartTo("PROJECT", workspaceId.value));
 
 const isLoading = ref(false);
 const errorMessage = ref("");
@@ -193,10 +204,13 @@ const closeCreateModal = () => {
 
 const onProjectCreated = async () => {
   try {
-    await workspaceStore.fetchProjects(workspaceId.value, {
-      page: projectPagination.value.page,
-      pageSize: projectPagination.value.pageSize,
-    });
+    await Promise.all([
+      workspaceStore.fetchWorkspace(workspaceId.value),
+      workspaceStore.fetchProjects(workspaceId.value, {
+        page: projectPagination.value.page,
+        pageSize: projectPagination.value.pageSize,
+      }),
+    ]);
     syncPagination();
     addToast({ message: "프로젝트를 생성했습니다.", type: "success" });
   } catch (error) {

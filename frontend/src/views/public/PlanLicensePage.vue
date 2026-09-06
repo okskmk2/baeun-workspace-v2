@@ -1,288 +1,325 @@
 <template>
-  <main class="plan-page">
-    <section class="hero">
-      <p class="hero-eyebrow">{{ t("store.hero.eyebrow") }}</p>
-      <h1>{{ t("store.hero.title") }}</h1>
-      <p class="hero-subtitle">{{ t("store.hero.subtitle") }}</p>
-    </section>
+  <main class="slots-page">
+    <hgroup>
+      <h1>{{ t("settings.slots.title") }}</h1>
+      <p class="subtitle">{{ t("settings.slots.subtitle") }}</p>
+    </hgroup>
 
-    <section class="plan-groups">
-      <article v-for="group in planGroups" :key="group.id" class="group-card">
-        <header class="group-header">
-          <h2>{{ group.title }}</h2>
-          <p>{{ group.description }}</p>
-        </header>
+    <p v-if="isLoading" class="status">{{ t("settings.slots.loading") }}</p>
+    <p v-else-if="errorMessage" class="status error">{{ errorMessage }}</p>
 
-        <div class="plan-grid">
-          <article v-for="plan in group.plans" :key="plan.name" class="plan-card">
-            <div class="plan-head">
-              <h3>{{ plan.name }}</h3>
-              <span v-if="plan.badge" class="badge">{{ plan.badge }}</span>
-            </div>
-            <p class="price">{{ plan.price }}</p>
-            <p class="period">{{ plan.period }}</p>
-            <ul>
-              <li v-for="item in plan.includes" :key="item">{{ item }}</li>
-            </ul>
-          </article>
+    <template v-else>
+      <section class="summary-grid" aria-label="슬롯 요약">
+        <article class="summary-card">
+          <p class="summary-label">{{ t("settings.slots.workspaceCard.label") }}</p>
+          <p class="summary-value">{{ workspaceSlot.remaining }} / {{ workspaceSlot.granted }}</p>
+          <p class="summary-meta">
+            {{
+              t("settings.slots.workspaceCard.meta", {
+                used: workspaceSlot.used,
+                free: workspaceSlot.free,
+                purchased: workspaceSlot.purchased,
+              })
+            }}
+          </p>
+        </article>
+        <article class="summary-card">
+          <p class="summary-label">{{ t("settings.slots.expiryCard.label") }}</p>
+          <p class="summary-value summary-value--name">{{ nearestExpiryLabel }}</p>
+          <p class="summary-meta">{{ t("settings.slots.expiryCard.meta") }}</p>
+        </article>
+        <article class="summary-card">
+          <p class="summary-label">{{ t("settings.slots.cancelCard.label") }}</p>
+          <p class="summary-value">{{ cancelingCount }}</p>
+          <p class="summary-meta">{{ t("settings.slots.cancelCard.meta") }}</p>
+        </article>
+      </section>
+
+      <section class="card">
+        <div class="card__header">
+          <h2>{{ t("settings.slots.holdings.title") }}</h2>
+          <router-link class="btn btn--sm" :to="workspaceCartTo">
+            {{ t("settings.slots.holdings.buy") }}
+          </router-link>
         </div>
-      </article>
-    </section>
+        <p v-if="!holdings.length" class="status muted">{{ t("settings.slots.holdings.empty") }}</p>
+        <div v-else class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>{{ t("settings.slots.holdings.columns.product") }}</th>
+                <th>{{ t("settings.slots.holdings.columns.quantity") }}</th>
+                <th>{{ t("settings.slots.holdings.columns.status") }}</th>
+                <th>{{ t("settings.slots.holdings.columns.end") }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="item in holdings" :key="item.id">
+                <td>{{ item.license_name }} · {{ cycleLabel(item.billing_cycle) }}</td>
+                <td>{{ item.quantity }}</td>
+                <td>
+                  <span class="status-pill" :class="holdingClass(item)">{{ holdingLabel(item) }}</span>
+                </td>
+                <td>{{ formatDate(item.end_date) }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
 
-    <section class="policy-grid">
-      <article class="policy-card">
-        <h2>{{ t("store.sections.lifecycle.title") }}</h2>
-        <ol>
-          <li v-for="step in lifecycleSteps" :key="step.title">
-            <strong>{{ step.title }}</strong>
-            <p>{{ step.description }}</p>
-          </li>
-        </ol>
-      </article>
-      <article class="policy-card">
-        <h2>{{ t("store.sections.payment.title") }}</h2>
-        <ul>
-          <li v-for="item in paymentNotes" :key="item">{{ item }}</li>
-        </ul>
-      </article>
-    </section>
+      <section class="card">
+        <h2>{{ t("settings.slots.workspaces.title") }}</h2>
+        <p v-if="!workspaceRows.length" class="status muted">{{ t("settings.slots.workspaces.empty") }}</p>
+        <div v-else class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>{{ t("settings.slots.workspaces.columns.name") }}</th>
+                <th>{{ t("settings.slots.workspaces.columns.project") }}</th>
+                <th>{{ t("settings.slots.workspaces.columns.member") }}</th>
+                <th>{{ t("settings.slots.workspaces.columns.action") }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="row in workspaceRows" :key="row.workspace_id">
+                <td>
+                  <router-link :to="`/workspace/${row.workspace_id}/settings/license`">
+                    {{ row.name }}
+                  </router-link>
+                </td>
+                <td :class="{ 'is-short': row.project.remaining < 1 }">
+                  {{ row.project.remaining }} / {{ row.project.granted }}
+                </td>
+                <td :class="{ 'is-short': row.member.remaining < 1 }">
+                  {{ row.member.remaining }} / {{ row.member.granted }}
+                </td>
+                <td>
+                  <router-link class="btn btn--sm btn--secondary" :to="`/workspace/${row.workspace_id}/settings/license`">
+                    {{ t("settings.slots.workspaces.license") }}
+                  </router-link>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </template>
   </main>
 </template>
 
 <script setup>
-import { computed } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
+import api from "../../lib/axios";
+import { emptySlot, monthlyCartTo } from "../../lib/slots";
 
 const { t } = useI18n();
 
-const planGroups = computed(() => [
-  {
-    id: "workspace",
-    title: t("store.groups.workspace.title"),
-    description: t("store.groups.workspace.description"),
-    plans: [
-      {
-        name: t("store.plans.workspace.monthly.name"),
-        price: t("store.plans.workspace.monthly.price"),
-        period: t("store.plans.workspace.monthly.period"),
-        includes: [
-          t("store.plans.workspace.monthly.includes.0"),
-          t("store.plans.workspace.monthly.includes.1"),
-          t("store.plans.workspace.monthly.includes.2"),
-        ],
-      },
-      {
-        name: t("store.plans.workspace.yearly.name"),
-        price: t("store.plans.workspace.yearly.price"),
-        period: t("store.plans.workspace.yearly.period"),
-        badge: t("store.plans.badges.popular"),
-        includes: [
-          t("store.plans.workspace.yearly.includes.0"),
-          t("store.plans.workspace.yearly.includes.1"),
-          t("store.plans.workspace.yearly.includes.2"),
-        ],
-      },
-      {
-        name: t("store.plans.workspace.lifetime.name"),
-        price: t("store.plans.workspace.lifetime.price"),
-        period: t("store.plans.workspace.lifetime.period"),
-        includes: [
-          t("store.plans.workspace.lifetime.includes.0"),
-          t("store.plans.workspace.lifetime.includes.1"),
-          t("store.plans.workspace.lifetime.includes.2"),
-        ],
-      },
-    ],
-  },
-  {
-    id: "project",
-    title: t("store.groups.project.title"),
-    description: t("store.groups.project.description"),
-    plans: [
-      {
-        name: t("store.plans.project.monthly.name"),
-        price: t("store.plans.project.monthly.price"),
-        period: t("store.plans.project.monthly.period"),
-        includes: [
-          t("store.plans.project.monthly.includes.0"),
-          t("store.plans.project.monthly.includes.1"),
-          t("store.plans.project.monthly.includes.2"),
-        ],
-      },
-      {
-        name: t("store.plans.project.yearly.name"),
-        price: t("store.plans.project.yearly.price"),
-        period: t("store.plans.project.yearly.period"),
-        includes: [
-          t("store.plans.project.yearly.includes.0"),
-          t("store.plans.project.yearly.includes.1"),
-          t("store.plans.project.yearly.includes.2"),
-        ],
-      },
-      {
-        name: t("store.plans.project.lifetime.name"),
-        price: t("store.plans.project.lifetime.price"),
-        period: t("store.plans.project.lifetime.period"),
-        includes: [
-          t("store.plans.project.lifetime.includes.0"),
-          t("store.plans.project.lifetime.includes.1"),
-          t("store.plans.project.lifetime.includes.2"),
-        ],
-      },
-    ],
-  },
-]);
+const isLoading = ref(false);
+const errorMessage = ref("");
+const entitlements = ref({ workspace: emptySlot("WORKSPACE"), workspaces: [] });
+const licenses = ref([]);
 
-const lifecycleSteps = computed(() => [
-  {
-    title: t("store.sections.lifecycle.steps.0.title"),
-    description: t("store.sections.lifecycle.steps.0.description"),
-  },
-  {
-    title: t("store.sections.lifecycle.steps.1.title"),
-    description: t("store.sections.lifecycle.steps.1.description"),
-  },
-  {
-    title: t("store.sections.lifecycle.steps.2.title"),
-    description: t("store.sections.lifecycle.steps.2.description"),
-  },
-]);
+const workspaceSlot = computed(() => entitlements.value.workspace || emptySlot("WORKSPACE"));
+const workspaceRows = computed(() => entitlements.value.workspaces || []);
+const workspaceCartTo = computed(() => monthlyCartTo("WORKSPACE"));
 
-const paymentNotes = computed(() => [
-  t("store.sections.payment.bullets.0"),
-  t("store.sections.payment.bullets.1"),
-  t("store.sections.payment.bullets.2"),
-]);
+const holdings = computed(() =>
+  (licenses.value || []).filter((item) => String(item.target_resource || "").toUpperCase() === "WORKSPACE")
+);
+
+const cancelingCount = computed(
+  () => holdings.value.filter((item) => item.cancel_at_period_end && String(item.status).toUpperCase() === "ACTIVE").length
+);
+
+const nearestExpiryLabel = computed(() => {
+  const dates = holdings.value
+    .map((item) => item.end_date)
+    .filter(Boolean)
+    .map((value) => new Date(value))
+    .filter((date) => !Number.isNaN(date.getTime()) && date.getTime() > Date.now())
+    .sort((a, b) => a.getTime() - b.getTime());
+  if (!dates.length) return t("settings.slots.expiryCard.none");
+  return dates[0].toLocaleDateString();
+});
+
+const cycleLabel = (cycle) => {
+  const normalized = String(cycle || "").toUpperCase();
+  if (normalized === "MONTHLY") return t("settings.slots.cycles.monthly");
+  if (normalized === "YEARLY") return t("settings.slots.cycles.yearly");
+  if (normalized === "LIFETIME") return t("settings.slots.cycles.lifetime");
+  return cycle || "-";
+};
+
+const holdingLabel = (item) => {
+  if (item.cancel_at_period_end) return t("settings.slots.status.canceling");
+  const status = String(item.status || "").toUpperCase();
+  if (status === "ACTIVE") return t("settings.slots.status.active");
+  if (status === "EXPIRED") return t("settings.slots.status.expired");
+  if (status === "CANCELED") return t("settings.slots.status.canceled");
+  if (status === "REFUNDED") return t("settings.slots.status.refunded");
+  return status;
+};
+
+const holdingClass = (item) => {
+  if (item.cancel_at_period_end) return "warn";
+  const status = String(item.status || "").toUpperCase();
+  if (status === "ACTIVE") return "ok";
+  if (status === "REFUNDED" || status === "CANCELED") return "muted";
+  return "warn";
+};
+
+const formatDate = (value) => {
+  if (!value) return t("settings.slots.holdings.noEnd");
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "-";
+  return date.toLocaleDateString();
+};
+
+onMounted(async () => {
+  isLoading.value = true;
+  errorMessage.value = "";
+  try {
+    const [entitlementRes, meRes] = await Promise.all([
+      api.get("/payments/entitlements"),
+      api.get("/payments/me", { params: { page: 1, pageSize: 10 } }),
+    ]);
+    entitlements.value = entitlementRes.data || entitlements.value;
+    licenses.value = meRes.data?.licenses || [];
+  } catch (error) {
+    errorMessage.value = error?.response?.data?.message || t("settings.slots.error");
+  } finally {
+    isLoading.value = false;
+  }
+});
 </script>
 
 <style scoped>
-.plan-page {
-  display: grid;
-  gap: 24px;
-}
-
-.hero {
-  padding: 16px;
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
-  background: linear-gradient(135deg, rgba(37, 99, 235, 0.1), transparent 60%);
-}
-
-.hero-eyebrow {
-  margin: 0 0 8px;
-  font-size: 12px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--color-text-muted);
-}
-
-.hero h1 {
-  margin: 0 0 8px;
-  font-size: 28px;
-}
-
-.hero-subtitle {
-  margin: 0;
-  color: var(--color-text-muted);
-}
-
-.plan-groups {
+.slots-page {
   display: grid;
   gap: 16px;
 }
 
-.group-card {
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
-  padding: 16px;
-}
-
-.group-header h2 {
-  margin: 0 0 6px;
-}
-
-.group-header p {
+hgroup {
   margin: 0;
+}
+
+h1 {
+  margin: 0;
+}
+
+.subtitle {
+  margin: 8px 0 0;
   color: var(--color-text-muted);
 }
 
-.plan-grid {
-  margin-top: 14px;
+.summary-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
   gap: 12px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
-.plan-card {
+.summary-card,
+.card {
   border: 1px solid var(--color-border);
-  border-radius: 10px;
-  padding: 14px;
-  display: grid;
-  gap: 8px;
-  background-color: var(--color-page-bg);
+  border-radius: 12px;
+  background: var(--color-surface);
+  padding: 16px;
 }
 
-.plan-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.plan-head h3 {
+.summary-label,
+.summary-meta {
   margin: 0;
-  font-size: 15px;
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
 }
 
-.badge {
-  font-size: 11px;
-  padding: 3px 8px;
-  border-radius: 999px;
-  background: rgba(37, 99, 235, 0.14);
-}
-
-.price {
-  margin: 0;
-  font-size: 22px;
+.summary-value {
+  margin: 8px 0;
+  font-size: 1.6rem;
   font-weight: 700;
 }
 
-.period {
+.summary-value--name {
+  font-size: 1.1rem;
+}
+
+.card {
+  display: grid;
+  gap: 10px;
+}
+
+.card h2 {
   margin: 0;
-  font-size: 12px;
+  font-size: 1rem;
+}
+
+.card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.status {
+  margin: 0;
   color: var(--color-text-muted);
 }
 
-.plan-card ul,
-.policy-card ul,
-.policy-card ol {
-  margin: 0;
-  padding-left: 18px;
-  display: grid;
-  gap: 6px;
+.status.error {
+  color: var(--color-danger);
 }
 
-.policy-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 12px;
+.table-wrap {
+  overflow-x: auto;
 }
 
-.policy-card {
+table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 560px;
+}
+
+th,
+td {
+  text-align: left;
+  padding: 10px 8px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+th {
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+}
+
+.is-short {
+  color: var(--color-danger);
+  font-weight: 700;
+}
+
+.status-pill {
+  display: inline-flex;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 0.8rem;
   border: 1px solid var(--color-border);
-  border-radius: 12px;
-  padding: 16px;
-  background-color: var(--color-page-bg);
 }
 
-.policy-card h2 {
-  margin: 0 0 10px;
-  font-size: 17px;
+.status-pill.ok {
+  color: var(--color-success);
 }
 
-.policy-card p {
-  margin: 4px 0 0;
+.status-pill.warn {
+  color: var(--color-warning);
+}
+
+.status-pill.muted {
   color: var(--color-text-muted);
-  font-size: 13px;
+}
+
+@media (max-width: 960px) {
+  .summary-grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

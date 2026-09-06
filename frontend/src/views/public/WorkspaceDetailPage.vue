@@ -231,6 +231,7 @@ import Avatar from "../../components/Avatar.vue";
 import { useRoleLabels } from "../../lib/roleLabels";
 import { useWorkspaceStore } from "../../stores/workspaceStore";
 import { useAppStore } from "../../stores/appStore";
+import { slotErrorMessage } from "../../lib/slots";
 
 const { t, locale } = useI18n();
 const { getRoleLabel } = useRoleLabels();
@@ -448,7 +449,7 @@ const createProject = async () => {
     projectForm.value = "";
     await workspaceStore.fetchProjects(workspaceId.value);
   } catch (error) {
-    projectError.value = error?.response?.data?.message || "Failed to create project.";
+    projectError.value = slotErrorMessage(error, "Failed to create project.");
   } finally {
     isCreatingProject.value = false;
   }

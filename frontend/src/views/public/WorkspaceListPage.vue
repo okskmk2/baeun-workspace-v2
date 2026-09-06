@@ -5,7 +5,7 @@
       <p class="subtitle">{{ t("workspaceList.header.subtitle") }}</p>
     </div>
     <div>
-      <button type="button" class="btn" @click="openModal">
+      <button type="button" class="btn" :disabled="workspaceRemaining < 1" @click="openModal">
         {{ t("workspaceList.actions.add") }}
       </button>
     </div>
@@ -15,9 +15,13 @@
   <section v-else-if="workspaces.length === 0" class="empty-state">
     <h2>{{ t("workspaceList.empty.title") }}</h2>
     <p>{{ t("workspaceList.empty.workspaces") }}</p>
-    <button type="button" class="btn btn--secondary" @click="openModal">
+    <button type="button" class="btn btn--secondary" :disabled="workspaceRemaining < 1" @click="openModal">
       {{ t("workspaceList.empty.cta") }}
     </button>
+    <p v-if="workspaceRemaining < 1" class="status-error">
+      {{ t("workspaceList.slots.exhausted") }}
+      <router-link :to="workspaceCartTo">{{ t("workspaceList.slots.buy") }}</router-link>
+    </p>
   </section>
   <ul v-else class="workspace-list">
     <li v-for="workspace in workspaces" :key="workspace.id" class="workspace-item">
@@ -67,7 +71,18 @@
     </li>
   </ul>
 
-  <CreateWorkspaceModal :open="isModalOpen" @close="closeModal" @created="onWorkspaceCreated" />
+  <p v-if="!isLoading && workspaceRemaining < 1 && workspaces.length" class="status-error">
+    {{ t("workspaceList.slots.exhausted") }}
+    <router-link :to="workspaceCartTo">{{ t("workspaceList.slots.buy") }}</router-link>
+  </p>
+
+  <CreateWorkspaceModal
+    :open="isModalOpen"
+    :remaining="workspaceRemaining"
+    :granted="workspaceGranted"
+    @close="closeModal"
+    @created="onWorkspaceCreated"
+  />
 
   <BaseModal
     :open="isDeleteModalOpen"
@@ -111,12 +126,17 @@ import Tag from "../../components/Tag.vue";
 import Avatar from "../../components/Avatar.vue";
 import { useRoleLabels } from "../../lib/roleLabels";
 import { addToast } from "../../lib/toast";
+import api from "../../lib/axios";
+import { monthlyCartTo } from "../../lib/slots";
 
 const { t } = useI18n();
 const { getRoleLabel } = useRoleLabels();
 const appStore = useAppStore();
 const workspaceStore = useWorkspaceStore();
 const workspaces = ref([]);
+const workspaceRemaining = ref(1);
+const workspaceGranted = ref(1);
+const workspaceCartTo = monthlyCartTo("WORKSPACE");
 const isLoading = ref(false);
 const errorMessage = ref("");
 const isModalOpen = ref(false);
@@ -154,6 +174,14 @@ const fetchWorkspaces = async ({ force = false } = {}) => {
     await Promise.all(
       workspaces.value.map((workspace) => workspaceStore.fetchProjects(workspace.id))
     );
+
+    try {
+      const entitlementRes = await api.get("/payments/entitlements");
+      workspaceRemaining.value = Number(entitlementRes.data?.workspace?.remaining ?? 1);
+      workspaceGranted.value = Number(entitlementRes.data?.workspace?.granted ?? 1);
+    } catch {
+      /* keep last known remaining */
+    }
   } catch (error) {
     workspaces.value = [];
     errorMessage.value = t("workspaceList.status.errorLoad");

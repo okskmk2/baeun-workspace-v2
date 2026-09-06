@@ -90,11 +90,16 @@
       }
     },
     "account": {
+      "groups": {
+        "account": "계정",
+        "billing": "결제",
+        "workspaces": "워크스페이스"
+      },
       "nav": {
         "profile": "프로필",
-        "security": "계정 보안",
-        "plan": "플랜 및 구독",
-        "billing": "결제 내역",
+        "security": "보안",
+        "plan": "내 슬롯",
+        "billing": "결제",
         "workspaces": "워크스페이스"
       }
     },
@@ -411,6 +416,11 @@
       },
       "confirm": {
         "delete": "이 프로젝트를 삭제할까요?"
+      },
+      "slots": {
+        "memberRemaining": "멤버 슬롯 잔여 {remaining} / {granted}",
+        "projectRemaining": "프로젝트 슬롯 잔여 {remaining} / {granted}",
+        "buy": "슬롯 구매"
       }
     },
     "detail": {
@@ -1376,6 +1386,11 @@
     },
     "confirm": {
       "delete": "이 워크스페이스를 삭제할까요?"
+    },
+    "slots": {
+      "remaining": "잔여 워크스페이스 슬롯 {remaining} / {granted}",
+      "exhausted": "워크스페이스 슬롯이 없습니다. 구매 후 생성할 수 있습니다.",
+      "buy": "슬롯 구매"
     }
   },
   "home": {
@@ -1695,6 +1710,130 @@
       "empty": "최근 방문한 워크스페이스나 프로젝트가 없습니다.",
       "workspaceTag": "워크스페이스",
       "projectTag": "프로젝트"
+    }
+  },
+  "settings": {
+    "slots": {
+      "title": "내 슬롯",
+      "subtitle": "워크스페이스를 만들 수 있는 슬롯과 워크스페이스별 용량을 확인합니다.",
+      "loading": "슬롯 정보를 불러오는 중...",
+      "error": "슬롯 정보를 불러오지 못했습니다.",
+      "workspaceCard": {
+        "label": "워크스페이스 슬롯",
+        "meta": "사용 {used} · 무료 {free} · 구매 {purchased}"
+      },
+      "expiryCard": {
+        "label": "만료 예정",
+        "meta": "가장 가까운 유료 슬롯 종료일",
+        "none": "없음"
+      },
+      "cancelCard": {
+        "label": "해지 예약",
+        "meta": "기간이 끝나면 슬롯이 줄어듭니다"
+      },
+      "holdings": {
+        "title": "보유 중인 워크스페이스 슬롯",
+        "buy": "슬롯 추가 구매",
+        "empty": "구매한 워크스페이스 슬롯이 없습니다. 무료 슬롯 1개로 시작할 수 있습니다.",
+        "noEnd": "없음",
+        "columns": {
+          "product": "상품",
+          "quantity": "수량",
+          "status": "상태",
+          "end": "종료"
+        }
+      },
+      "workspaces": {
+        "title": "워크스페이스별 용량",
+        "empty": "속한 워크스페이스가 없습니다.",
+        "license": "라이선스",
+        "columns": {
+          "name": "워크스페이스",
+          "project": "프로젝트 잔여/보유",
+          "member": "멤버 잔여/보유",
+          "action": "바로가기"
+        }
+      },
+      "cycles": {
+        "monthly": "월간",
+        "yearly": "연간",
+        "lifetime": "평생"
+      },
+      "status": {
+        "active": "활성",
+        "canceling": "해지 예약",
+        "expired": "만료",
+        "canceled": "취소",
+        "refunded": "환불"
+      }
+    },
+    "billing": {
+      "title": "결제",
+      "subtitle": "영수증, 구독, 결제 수단은 Polar에서 관리합니다.",
+      "loading": "결제 내역을 불러오는 중...",
+      "error": "결제 내역을 불러오지 못했습니다.",
+      "buySlots": "슬롯 구매",
+      "slotStrip": "워크스페이스 슬롯 잔여 {remaining} / 보유 {granted}",
+      "slotStripLink": "내 슬롯 보기",
+      "portal": {
+        "open": "결제 수단·영수증",
+        "opening": "포털 여는 중...",
+        "unavailable": "첫 결제 후에 Polar 고객 포털을 쓸 수 있습니다.",
+        "error": "고객 포털을 열 수 없습니다."
+      },
+      "banner": {
+        "checking": "결제를 확인하는 중...",
+        "success": "결제가 반영되었습니다. 내 슬롯에서 수량을 확인하세요.",
+        "waiting": "결제 확인 중입니다. 잠시만 기다려 주세요.",
+        "failed": "결제 확인에 실패했습니다.",
+        "cancel": "결제를 마치지 않았습니다.",
+        "timeout": "결제는 완료됐을 수 있습니다. 잠시 후 새로고침하세요."
+      },
+      "subscriptions": {
+        "title": "활성 구독",
+        "empty": "정기 결제가 없습니다. 평생 이용권만 있으면 이 구역은 비어 있습니다.",
+        "quantity": "수량 {count}",
+        "renews": "다음 갱신 {date}",
+        "until": "{date}까지 슬롯 유지"
+      },
+      "history": {
+        "title": "결제 내역",
+        "empty": "아직 결제 내역이 없습니다.",
+        "pending": "진행 중인 결제 {count}건",
+        "prev": "이전",
+        "next": "다음",
+        "filters": {
+          "all": "전체 상태"
+        },
+        "columns": {
+          "date": "일시",
+          "status": "상태",
+          "amount": "금액",
+          "items": "내용",
+          "provider": "제공자"
+        }
+      },
+      "status": {
+        "SUCCESS": "완료",
+        "PENDING": "대기",
+        "FAILED": "실패",
+        "CANCELED": "취소",
+        "REFUNDED": "환불"
+      }
+    },
+    "security": {
+      "title": "보안",
+      "subtitle": "로그인 계정과 탈퇴를 관리합니다.",
+      "account": {
+        "title": "로그인 계정",
+        "email": "이메일",
+        "hint": "이름과 프로필 사진은 프로필 메뉴에서 바꿀 수 있습니다."
+      },
+      "withdraw": {
+        "title": "계정 탈퇴",
+        "body": "탈퇴하면 계정이 비활성화되고 개인정보가 익명 처리됩니다.",
+        "action": "탈퇴하기"
+      }
     }
   },
   "notFound": {

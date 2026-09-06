@@ -5,6 +5,12 @@ import pool from "../db.mjs";
 import { isAuth } from "../middlewares/auth.middleware.mjs";
 import { normalizeThemeJson } from "../utils/parsers.mjs";
 import logger from "../logger.mjs";
+import {
+  getWorkspaceResourceSlots,
+  getWorkspaceSlotBundle,
+  getWorkspaceSlotsForMember,
+  sendSlotExhausted,
+} from "../lib/entitlements.mjs";
 
 const router = express.Router();
 const WORKSPACE_IMAGE_BUCKET = "workspace.baeun.com";
@@ -97,6 +103,12 @@ router.post("/", isAuth, async (req, res) => {
   try {
     await client.query("BEGIN");
 
+    const workspaceSlots = await getWorkspaceSlotsForMember(client, userId);
+    if (workspaceSlots.remaining < 1) {
+      await client.query("ROLLBACK");
+      return sendSlotExhausted(res, "WORKSPACE", workspaceSlots);
+    }
+
     // 1. Create workspace.
     const workspaceQuery = `
             INSERT INTO workspace (name, member_id, img_url, theme_json)
@@ -112,6 +124,12 @@ router.post("/", isAuth, async (req, res) => {
             VALUES ($1, $2, 'OWNER');
         `;
     await client.query(memberQuery, [newWorkspace.id, userId]);
+
+    const memberSlots = await getWorkspaceResourceSlots(client, newWorkspace.id, "WORKSPACE_MEMBER");
+    if (memberSlots.remaining < 0) {
+      await client.query("ROLLBACK");
+      return sendSlotExhausted(res, "WORKSPACE_MEMBER", memberSlots, newWorkspace.id);
+    }
 
     const workspaceNoticeQuery = `
         INSERT INTO channel (name, workspace_id, type, scope, status)
@@ -287,9 +305,18 @@ router.get("/:workspaceId", async (req, res) => {
       return res.status(404).json({ name: "NotFound", message: "Workspace not found." });
     }
 
+    const slots = await getWorkspaceSlotBundle(pool, workspaceId);
+
     res.json({
       ...workspace,
       theme_json: normalizeThemeJson(workspace.theme_json),
+      member_count: slots.member.used,
+      project_slot_total: slots.project.granted,
+      project_slot_used: slots.project.used,
+      project_slot_remaining: slots.project.remaining,
+      member_slot_total: slots.member.granted,
+      member_slot_used: slots.member.used,
+      member_slot_remaining: slots.member.remaining,
     });
   } catch (error) {
     res.status(500).json({ name: "InternalServerError", message: error.message });
@@ -651,11 +678,12 @@ router.get("/:workspaceId/image", isAuth, async (req, res) => {
  */
 router.post("/:workspaceId/members", isAuth, async (req, res) => {
   const { workspaceId } = req.params;
-  const { email, role_name = "MEMBER" } = req.body;
+  const { email, role_name = "MEMBER", role } = req.body;
   const inviterId = req.session.userId;
 
+  const resolvedRole = String(role_name || role || "MEMBER").toUpperCase();
   const ALLOWED_ROLES = ["OWNER", "ADMIN", "MEMBER"];
-  if (!ALLOWED_ROLES.includes(String(role_name || "").toUpperCase())) {
+  if (!ALLOWED_ROLES.includes(resolvedRole)) {
     return res.status(400).json({ name: "BadRequest", message: "Invalid role_name." });
   }
 
@@ -692,10 +720,15 @@ router.post("/:workspaceId/members", isAuth, async (req, res) => {
       });
     }
 
+    const memberSlots = await getWorkspaceResourceSlots(pool, workspaceId, "WORKSPACE_MEMBER");
+    if (memberSlots.remaining < 1) {
+      return sendSlotExhausted(res, "WORKSPACE_MEMBER", memberSlots, workspaceId);
+    }
+
     // 4. Add member.
     const insertRes = await pool.query(
       "INSERT INTO workspace_member (workspace_id, member_id, role_name) VALUES ($1, $2, $3) RETURNING id",
-      [workspaceId, targetUserId, role_name]
+      [workspaceId, targetUserId, resolvedRole]
     );
 
     res.json({

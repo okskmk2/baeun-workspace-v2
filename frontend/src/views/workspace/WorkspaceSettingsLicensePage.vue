@@ -203,8 +203,15 @@ const selectedOverflowProject = ref(null);
 const workspaceId = computed(() => route.params.workspaceId);
 const workspace = computed(() => workspaceStore.workspaceById[workspaceId.value] || null);
 const projects = computed(() => workspaceStore.getProjects(workspaceId.value) || []);
-const usedSlots = computed(() => projects.value.length);
-const usedMemberSlots = computed(() => parseNonNegativeInt(workspace.value?.member_count, 0));
+const usedSlots = computed(() =>
+  parseNonNegativeInt(workspace.value?.project_slot_used, projects.value.length)
+);
+const usedMemberSlots = computed(() =>
+  parseNonNegativeInt(
+    workspace.value?.member_slot_used ?? workspace.value?.member_count,
+    0
+  )
+);
 
 const projectPurchaseTo = computed(() => ({
   path: "/store/cart",
@@ -231,37 +238,23 @@ const parseNonNegativeInt = (value, fallback = 0) => {
   return Math.floor(number);
 };
 
-const totalSlots = computed(() => {
-  const fromWorkspace =
-    workspace.value?.project_slot_total ?? workspace.value?.project_slots ?? workspace.value?.slot_total;
+const totalSlots = computed(() => parseNonNegativeInt(workspace.value?.project_slot_total, 0));
 
-  if (fromWorkspace !== undefined && fromWorkspace !== null) {
-    return parseNonNegativeInt(fromWorkspace, Math.max(usedSlots.value, 3));
-  }
-
-  return Math.max(usedSlots.value, 3);
-});
-
-const totalMemberSlots = computed(() => {
-  const fromWorkspace =
-    workspace.value?.member_slot_total ??
-    workspace.value?.member_slots ??
-    workspace.value?.workspace_member_slot_total;
-
-  if (fromWorkspace !== undefined && fromWorkspace !== null) {
-    return parseNonNegativeInt(fromWorkspace, usedMemberSlots.value);
-  }
-
-  return usedMemberSlots.value;
-});
+const totalMemberSlots = computed(() => parseNonNegativeInt(workspace.value?.member_slot_total, 0));
 
 const remainingSlots = computed(() => totalSlots.value - usedSlots.value);
-const isOverLimit = computed(() => remainingSlots.value < 0);
-const missingSlots = computed(() => (isOverLimit.value ? Math.abs(remainingSlots.value) : 0));
+const isOverLimit = computed(() => remainingSlots.value < 1);
+const missingSlots = computed(() =>
+  remainingSlots.value < 0 ? Math.abs(remainingSlots.value) : remainingSlots.value < 1 ? 1 : 0
+);
 const remainingMemberSlots = computed(() => totalMemberSlots.value - usedMemberSlots.value);
-const isOverMemberLimit = computed(() => remainingMemberSlots.value < 0);
+const isOverMemberLimit = computed(() => remainingMemberSlots.value < 1);
 const missingMemberSlots = computed(() =>
-  isOverMemberLimit.value ? Math.abs(remainingMemberSlots.value) : 0
+  remainingMemberSlots.value < 0
+    ? Math.abs(remainingMemberSlots.value)
+    : remainingMemberSlots.value < 1
+      ? 1
+      : 0
 );
 
 const projectAllocations = computed(() => {

@@ -26,12 +26,19 @@
             <option value="ADMIN">ADMIN</option>
             <option value="OWNER">OWNER</option>
           </select>
-          <button type="submit" class="btn" :disabled="isInvitingMember">
+          <button type="submit" class="btn" :disabled="isInvitingMember || memberRemaining < 1">
             {{ isInvitingMember ? "초대 중..." : "초대" }}
           </button>
         </div>
       </form>
 
+      <p class="status muted">
+        멤버 슬롯 잔여 {{ memberRemaining }} / {{ memberGranted }}
+      </p>
+      <p v-if="memberRemaining < 1" class="status error">
+        멤버 슬롯이 없습니다.
+        <router-link :to="memberCartTo">슬롯 구매</router-link>
+      </p>
       <p v-if="memberActionError" class="status error">{{ memberActionError }}</p>
       <p v-else-if="memberActionSuccess" class="status success">{{ memberActionSuccess }}</p>
       <p v-if="isMembersLoading" class="status">멤버 정보를 불러오는 중...</p>
@@ -69,6 +76,7 @@ import Tag from "../../components/Tag.vue";
 import { useRoleLabels } from "../../lib/roleLabels";
 import { useWorkspaceStore } from "../../stores/workspaceStore";
 import { useAppStore } from "../../stores/appStore";
+import { monthlyCartTo, slotErrorMessage } from "../../lib/slots";
 
 const route = useRoute();
 const workspaceStore = useWorkspaceStore();
@@ -79,6 +87,9 @@ const workspaceId = computed(() => route.params.workspaceId);
 const workspace = computed(() => workspaceStore.workspaceById[workspaceId.value] || null);
 const workspaceRoleUpper = computed(() => String(workspace.value?.role_name || "").toUpperCase());
 const canManageWorkspace = computed(() => ["OWNER", "ADMIN"].includes(workspaceRoleUpper.value));
+const memberRemaining = computed(() => Number(workspace.value?.member_slot_remaining ?? 0));
+const memberGranted = computed(() => Number(workspace.value?.member_slot_total ?? 0));
+const memberCartTo = computed(() => monthlyCartTo("WORKSPACE_MEMBER", workspaceId.value));
 const currentUserId = computed(() => appStore.currentUser?.id);
 
 const members = ref([]);
@@ -123,7 +134,7 @@ const inviteMember = async () => {
     memberActionSuccess.value = "멤버를 초대했습니다.";
     await Promise.all([fetchMembers(), workspaceStore.fetchWorkspace(workspaceId.value)]);
   } catch (error) {
-    memberActionError.value = error?.response?.data?.message || "멤버 초대에 실패했습니다.";
+    memberActionError.value = slotErrorMessage(error, "멤버 초대에 실패했습니다.");
   } finally {
     isInvitingMember.value = false;
   }
@@ -159,8 +170,12 @@ const removeMember = async (member) => {
   }
 };
 
-onMounted(fetchMembers);
-watch(() => route.params.workspaceId, fetchMembers);
+const loadPage = async () => {
+  await Promise.all([fetchMembers(), workspaceStore.fetchWorkspace(workspaceId.value)]);
+};
+
+onMounted(loadPage);
+watch(() => route.params.workspaceId, loadPage);
 </script>
 
 <style scoped>

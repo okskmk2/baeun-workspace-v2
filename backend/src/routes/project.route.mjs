@@ -4,6 +4,7 @@ import { isAuth } from "../middlewares/auth.middleware.mjs";
 import { normalizeThemeJson } from "../utils/parsers.mjs";
 import { withPagination } from "../middlewares/pagination.middleware.mjs";
 import logger from "../logger.mjs";
+import { getWorkspaceResourceSlots, sendSlotExhausted } from "../lib/entitlements.mjs";
 
 const router = express.Router();
 
@@ -181,6 +182,11 @@ router.post("/", isAuth, async (req, res) => {
 
     if (!authCheck.rows[0] || !["OWNER", "ADMIN"].includes(authCheck.rows[0].role_name)) {
       return res.status(403).json({ name: "Forbidden", message: "No permission to create project." });
+    }
+
+    const projectSlots = await getWorkspaceResourceSlots(client, workspace_id, "PROJECT");
+    if (projectSlots.remaining < 1) {
+      return sendSlotExhausted(res, "PROJECT", projectSlots, workspace_id);
     }
 
     await client.query("BEGIN");

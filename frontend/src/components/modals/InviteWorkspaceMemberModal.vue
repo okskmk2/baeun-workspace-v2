@@ -18,12 +18,18 @@
           <option value="MEMBER">{{ t("roles.workspace_member.member") }}</option>
         </select>
       </div>
+      <p class="slot-hint" :class="{ 'is-short': remaining < 1 }">
+        {{ t("workspace.home.slots.memberRemaining", { remaining, granted }) }}
+      </p>
+      <p v-if="remaining < 1" class="form-error">
+        <router-link :to="buyTo">{{ t("workspace.home.slots.buy") }}</router-link>
+      </p>
       <p v-if="formError" class="form-error">{{ formError }}</p>
       <div class="modal-actions">
         <button type="button" class="btn btn--secondary" @click="handleClose">
           {{ t("workspace.home.actions.cancel") }}
         </button>
-        <button type="submit" class="btn" :disabled="isInviting">
+        <button type="submit" class="btn" :disabled="isInviting || remaining < 1">
           {{
             isInviting
               ? t("workspace.home.actions.invitingMember")
@@ -36,10 +42,11 @@
 </template>
 
 <script setup>
-import { ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import api from "../../lib/axios";
 import BaseModal from "../BaseModal.vue";
+import { monthlyCartTo, slotErrorMessage } from "../../lib/slots";
 
 const { t } = useI18n();
 
@@ -52,7 +59,19 @@ const props = defineProps({
     type: [Number, String],
     required: true,
   },
+  remaining: {
+    type: Number,
+    default: 0,
+  },
+  granted: {
+    type: Number,
+    default: 0,
+  },
 });
+
+const remaining = computed(() => Number(props.remaining) || 0);
+const granted = computed(() => Number(props.granted) || 0);
+const buyTo = computed(() => monthlyCartTo("WORKSPACE_MEMBER", props.workspaceId));
 
 const emit = defineEmits(["close", "invited"]);
 
@@ -76,12 +95,12 @@ const handleSubmit = async () => {
   try {
     await api.post(`/workspaces/${props.workspaceId}/members`, {
       email: form.value.email,
-      role: form.value.role,
+      role_name: form.value.role,
     });
     emit("invited");
     handleClose();
   } catch (error) {
-    formError.value = error?.response?.data?.message || t("workspace.home.status.errorInvite");
+    formError.value = slotErrorMessage(error, t("workspace.home.status.errorInvite"));
   } finally {
     isInviting.value = false;
   }
@@ -98,4 +117,16 @@ watch(
   }
 );
 </script>
+
+<style scoped>
+.slot-hint {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+}
+
+.slot-hint.is-short {
+  color: var(--color-danger);
+}
+</style>
 

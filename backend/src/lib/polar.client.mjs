@@ -26,8 +26,11 @@ export const getPolarAccessToken = () => String(process.env.POLAR_ACCESS_TOKEN |
 
 export const getPolarWebhookSecret = () => String(process.env.POLAR_WEBHOOK_SECRET || "").trim();
 
+const DEFAULT_APP_PUBLIC_URL =
+  process.env.NODE_ENV === "production" ? "https://workspace.baeun.com" : "http://localhost:8081";
+
 export const getAppPublicUrl = () =>
-  String(process.env.APP_PUBLIC_URL || process.env.PUBLIC_APP_URL || "http://localhost:8081").replace(/\/$/, "");
+  String(process.env.APP_PUBLIC_URL || process.env.PUBLIC_APP_URL || DEFAULT_APP_PUBLIC_URL).replace(/\/$/, "");
 
 export const isPolarConfigured = () => Boolean(getPolarAccessToken());
 

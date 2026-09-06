@@ -2,7 +2,9 @@ import express from "express";
 import pool from "../db.mjs";
 import logger from "../logger.mjs";
 import { isAuth } from "../middlewares/auth.middleware.mjs";
-import { parsePositiveInt } from "../utils/parsers.mjs";
+import { normalizeUpper, parsePositiveInt } from "../utils/parsers.mjs";
+import { withPagination } from "../middlewares/pagination.middleware.mjs";
+import { getMemberEntitlements } from "../lib/entitlements.mjs";
 import {
   getAppPublicUrl,
   isPolarConfigured,
@@ -232,8 +234,53 @@ router.post("/checkout", isAuth, async (req, res) => {
   }
 });
 
-router.get("/me", isAuth, async (req, res) => {
+router.get("/entitlements", isAuth, async (req, res) => {
   try {
+    const entitlements = await getMemberEntitlements(pool, req.session.userId);
+    return res.json(entitlements);
+  } catch (error) {
+    logger.error("Entitlements failed", { err: error?.message, stack: error?.stack });
+    return res.status(500).json({ name: "InternalServerError", message: error.message });
+  }
+});
+
+router.get("/me", isAuth, withPagination({ defaultPageSize: 10, maxPageSize: 100 }), async (req, res) => {
+  const workspaceId = parsePositiveInt(req.query.workspaceId);
+  const { page, pageSize } = req.pagination;
+  const memberId = req.session.userId;
+
+  try {
+    const conditions = ["p.member_id = $1"];
+    const values = [memberId];
+    if (workspaceId) {
+      values.push(workspaceId);
+      conditions.push(
+        `EXISTS (
+           SELECT 1 FROM purchased_license pl_filter
+           WHERE pl_filter.payment_id = p.id
+             AND pl_filter.target_workspace_id = $${values.length}
+         )`
+      );
+    }
+    const status = normalizeUpper(req.query.status);
+    if (["PENDING", "SUCCESS", "FAILED", "CANCELED", "REFUNDED"].includes(status)) {
+      values.push(status);
+      conditions.push(`p.status = $${values.length}`);
+    }
+    const whereClause = `WHERE ${conditions.join(" AND ")}`;
+
+    const totalRes = await pool.query(
+      `SELECT COUNT(*)::integer AS total
+       FROM payment p
+       ${whereClause}`,
+      values
+    );
+    const total = Number(totalRes.rows[0]?.total || 0);
+    const totalPages = Math.max(1, Math.ceil(total / pageSize) || 1);
+    const normalizedPage = Math.min(Math.max(page, 1), totalPages);
+    const offset = (normalizedPage - 1) * pageSize;
+    const listValues = [...values, pageSize, offset];
+
     const paymentsRes = await pool.query(
       `SELECT
          p.id,
@@ -266,11 +313,12 @@ router.get("/me", isAuth, async (req, res) => {
        FROM payment p
        LEFT JOIN purchased_license pl ON pl.payment_id = p.id
        LEFT JOIN license l ON l.id = pl.license_id
-       WHERE p.member_id = $1
+       ${whereClause}
        GROUP BY p.id
        ORDER BY p.id DESC
-       LIMIT 50`,
-      [req.session.userId]
+       LIMIT $${listValues.length - 1}
+       OFFSET $${listValues.length}`,
+      listValues
     );
 
     const licensesRes = await pool.query(
@@ -293,13 +341,19 @@ router.get("/me", isAuth, async (req, res) => {
             SELECT workspace_id FROM workspace_member WHERE member_id = $1 AND role_name IN ('OWNER', 'ADMIN')
           )
        ORDER BY pl.id DESC
-       LIMIT 50`,
-      [req.session.userId]
+       LIMIT 100`,
+      [memberId]
     );
 
     return res.json({
       payments: paymentsRes.rows,
       licenses: licensesRes.rows,
+      pagination: {
+        page: normalizedPage,
+        pageSize,
+        total,
+        totalPages,
+      },
     });
   } catch (error) {
     return res.status(500).json({ name: "InternalServerError", message: error.message });
