@@ -28,6 +28,7 @@
             <button type="button" class="qty-btn" @click="increase">+</button>
           </div>
         </div>
+        <p class="billing-note">이번에 정한 수량은 한 구독이라 결제일이 같습니다. 나중에 자리를 더 사면 새 구독이 열려 결제일이 따로 갑니다.</p>
 
         <dl class="summary-list">
           <div class="summary-row">
@@ -308,6 +309,13 @@ const formatAmount = (value) =>
   margin: 0;
   color: var(--color-text-muted);
   font-size: var(--font-size-label);
+}
+
+.billing-note {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-caption, 0.8125rem);
+  line-height: 1.4;
 }
 
 .qty-stepper {

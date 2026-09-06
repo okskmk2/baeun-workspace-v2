@@ -9,8 +9,24 @@
     <p v-else-if="errorMessage" class="status error">{{ errorMessage }}</p>
 
     <template v-else>
+      <p v-if="workspaceShortageCount > 0" class="banner danger" role="status">
+        <span>{{ t("settings.slots.shortage.workspace", { count: workspaceShortageCount }) }}</span>
+        <router-link class="btn btn--sm" :to="workspaceCartTo">{{ t("settings.slots.holdings.buy") }}</router-link>
+      </p>
+      <p
+        v-for="row in shortWorkspaceRows"
+        :key="`short-${row.workspace_id}`"
+        class="banner danger"
+        role="status"
+      >
+        <span>{{ workspaceResourceShortage(row) }}</span>
+        <router-link class="btn btn--sm btn--secondary" :to="`/workspace/${row.workspace_id}/settings/license`">
+          {{ t("settings.slots.workspaces.license") }}
+        </router-link>
+      </p>
+
       <section class="summary-grid" aria-label="슬롯 요약">
-        <article class="summary-card">
+        <article class="summary-card" :class="{ 'is-short-card': workspaceShortageCount > 0 }">
           <p class="summary-label">{{ t("settings.slots.workspaceCard.label") }}</p>
           <p class="summary-value">{{ workspaceSlot.remaining }} / {{ workspaceSlot.granted }}</p>
           <p class="summary-meta">
@@ -42,6 +58,7 @@
             {{ t("settings.slots.holdings.buy") }}
           </router-link>
         </div>
+        <p class="billing-note">{{ t("settings.slots.holdings.billingNote") }}</p>
         <p v-if="!holdings.length" class="status muted">{{ t("settings.slots.holdings.empty") }}</p>
         <div v-else class="table-wrap">
           <table>
@@ -123,6 +140,36 @@ const licenses = ref([]);
 const workspaceSlot = computed(() => entitlements.value.workspace || emptySlot("WORKSPACE"));
 const workspaceRows = computed(() => entitlements.value.workspaces || []);
 const workspaceCartTo = computed(() => monthlyCartTo("WORKSPACE"));
+
+const workspaceShortageCount = computed(() => {
+  const remaining = Number(workspaceSlot.value.remaining);
+  return remaining < 0 ? Math.abs(remaining) : 0;
+});
+
+const shortWorkspaceRows = computed(() =>
+  workspaceRows.value
+    .map((row) => {
+      const projectShort = Math.max(0, -Number(row.project?.remaining || 0));
+      const memberShort = Math.max(0, -Number(row.member?.remaining || 0));
+      if (projectShort < 1 && memberShort < 1) return null;
+      return { ...row, projectShort, memberShort };
+    })
+    .filter(Boolean)
+);
+
+const workspaceResourceShortage = (row) => {
+  if (row.projectShort && row.memberShort) {
+    return t("settings.slots.shortage.workspaceBoth", {
+      name: row.name,
+      project: row.projectShort,
+      member: row.memberShort,
+    });
+  }
+  if (row.projectShort) {
+    return t("settings.slots.shortage.workspaceProject", { name: row.name, count: row.projectShort });
+  }
+  return t("settings.slots.shortage.workspaceMember", { name: row.name, count: row.memberShort });
+};
 
 const holdings = computed(() =>
   (licenses.value || []).filter((item) => String(item.target_resource || "").toUpperCase() === "WORKSPACE")
@@ -211,6 +258,32 @@ h1 {
 .subtitle {
   margin: 8px 0 0;
   color: var(--color-text-muted);
+}
+
+.banner {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.banner.danger {
+  color: var(--color-danger);
+}
+
+.billing-note {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+}
+
+.is-short-card {
+  border-color: var(--color-danger);
 }
 
 .summary-grid {

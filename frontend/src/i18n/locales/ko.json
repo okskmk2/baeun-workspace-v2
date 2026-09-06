@@ -268,6 +268,8 @@
         "subtitle": "배경과 글자색 조합을 선택하세요.",
         "inheritName": "워크스페이스 기본값",
         "inheritSubtitle": "프로젝트 테마를 별도로 지정하지 않습니다.",
+        "customBackground": "GNB 배경색",
+        "customForeground": "GNB 글자색",
         "themes": {
           "light": "라이트",
           "dark": "다크",
@@ -278,7 +280,8 @@
           "sky": "스카이",
           "stone": "스톤",
           "violet": "바이올렛",
-          "teal": "틸"
+          "teal": "틸",
+          "custom": "커스텀"
         }
       },
       "themeBuilder": {
@@ -323,6 +326,7 @@
       },
       "status": {
         "loading": "불러오는 중...",
+        "errorLoad": "구성원 목록을 불러오지 못했습니다.",
         "errorInvite": "초대에 실패했습니다.",
         "errorRemove": "구성원을 제거하지 못했습니다.",
         "errorChangeRole": "역할을 변경하지 못했습니다."
@@ -342,6 +346,7 @@
       },
       "validation": {
         "selectMember": "초대할 구성원을 선택하세요.",
+        "memberRequired": "초대할 구성원을 선택하세요.",
         "noProject": "선택된 프로젝트가 없습니다."
       },
       "confirm": {
@@ -366,6 +371,137 @@
           "error": "처리에 실패했습니다."
         }
       }
+    },
+    "slots": {
+      "title": "내 슬롯",
+      "subtitle": "워크스페이스를 만들 수 있는 슬롯과 워크스페이스별 용량을 확인합니다.",
+      "loading": "슬롯 정보를 불러오는 중...",
+      "error": "슬롯 정보를 불러오지 못했습니다.",
+      "workspaceCard": {
+        "label": "워크스페이스 슬롯",
+        "meta": "사용 {used} · 무료 {free} · 구매 {purchased}"
+      },
+      "expiryCard": {
+        "label": "만료 예정",
+        "meta": "가장 가까운 유료 슬롯 종료일",
+        "none": "없음"
+      },
+      "cancelCard": {
+        "label": "해지 예약",
+        "meta": "기간이 끝나면 슬롯이 줄어듭니다"
+      },
+      "shortage": {
+        "workspace": "워크스페이스 슬롯이 {count}개 부족합니다. 이미 가진 워크스페이스는 그대로 쓸 수 있습니다. 새로 만들려면 슬롯을 사거나 소유 워크스페이스를 줄이세요.",
+        "workspaceProject": "{name}: 프로젝트 슬롯이 {count}개 부족합니다. 기존 프로젝트는 유지됩니다.",
+        "workspaceMember": "{name}: 멤버 슬롯이 {count}개 부족합니다. 기존 멤버는 유지됩니다.",
+        "workspaceBoth": "{name}: 프로젝트 슬롯 {project}개, 멤버 슬롯 {member}개가 부족합니다. 기존 프로젝트와 멤버는 유지됩니다."
+      },
+      "holdings": {
+        "title": "보유 중인 워크스페이스 슬롯",
+        "buy": "슬롯 추가 구매",
+        "billingNote": "같은 결제에서 산 수량은 결제일이 같고, 나중에 추가한 자리는 새 구독이라 결제일이 따로 갑니다.",
+        "empty": "구매한 워크스페이스 슬롯이 없습니다. 무료 슬롯 1개로 시작할 수 있습니다.",
+        "noEnd": "없음",
+        "columns": {
+          "product": "상품",
+          "quantity": "수량",
+          "status": "상태",
+          "end": "종료"
+        }
+      },
+      "workspaces": {
+        "title": "워크스페이스별 용량",
+        "empty": "속한 워크스페이스가 없습니다.",
+        "license": "라이선스",
+        "columns": {
+          "name": "워크스페이스",
+          "project": "프로젝트 잔여/보유",
+          "member": "멤버 잔여/보유",
+          "action": "바로가기"
+        }
+      },
+      "cycles": {
+        "monthly": "월간",
+        "yearly": "연간",
+        "lifetime": "평생"
+      },
+      "status": {
+        "active": "활성",
+        "canceling": "해지 예약",
+        "expired": "만료",
+        "canceled": "취소",
+        "refunded": "환불"
+      }
+    },
+    "billing": {
+      "title": "결제",
+      "subtitle": "영수증, 구독, 결제 수단은 Polar에서 관리합니다.",
+      "loading": "결제 내역을 불러오는 중...",
+      "error": "결제 내역을 불러오지 못했습니다.",
+      "buySlots": "슬롯 구매",
+      "slotStrip": "워크스페이스 슬롯 잔여 {remaining} / 보유 {granted}",
+      "slotStripLink": "내 슬롯 보기",
+      "portal": {
+        "open": "결제 수단·영수증",
+        "opening": "포털 여는 중...",
+        "unavailable": "첫 결제 후에 Polar 고객 포털을 쓸 수 있습니다.",
+        "error": "고객 포털을 열 수 없습니다.",
+        "note": "Polar 포털에서는 카드와 영수증만 다루세요. 슬롯을 늘리려면 스토어에서 새로 구매하세요. Polar에서 기존 구독 수량을 바꾸면 결제일이 합쳐져 남은 날짜를 잃을 수 있습니다."
+      },
+      "banner": {
+        "checking": "결제를 확인하는 중...",
+        "success": "결제가 반영되었습니다. 내 슬롯에서 수량을 확인하세요.",
+        "waiting": "결제 확인 중입니다. 잠시만 기다려 주세요.",
+        "failed": "결제 확인에 실패했습니다.",
+        "cancel": "결제를 마치지 않았습니다.",
+        "timeout": "결제는 완료됐을 수 있습니다. 잠시 후 새로고침하세요."
+      },
+      "subscriptions": {
+        "title": "활성 구독",
+        "empty": "정기 결제가 없습니다. 평생 이용권만 있으면 이 구역은 비어 있습니다.",
+        "billingNote": "구독마다 갱신일이 다를 수 있습니다. 슬롯을 늘릴 때는 Polar에서 수량을 바꾸지 말고 스토어에서 새로 구매하세요.",
+        "quantity": "수량 {count}",
+        "renews": "다음 갱신 {date}",
+        "until": "{date}까지 슬롯 유지"
+      },
+      "history": {
+        "title": "결제 내역",
+        "empty": "아직 결제 내역이 없습니다.",
+        "pending": "진행 중인 결제 {count}건",
+        "prev": "이전",
+        "next": "다음",
+        "filters": {
+          "all": "전체 상태"
+        },
+        "columns": {
+          "date": "일시",
+          "status": "상태",
+          "amount": "금액",
+          "items": "내용",
+          "provider": "제공자"
+        }
+      },
+      "status": {
+        "SUCCESS": "완료",
+        "PENDING": "대기",
+        "FAILED": "실패",
+        "CANCELED": "취소",
+        "REFUNDED": "환불"
+      }
+    },
+    "security": {
+      "title": "보안",
+      "subtitle": "로그인 계정과 탈퇴를 관리합니다.",
+      "account": {
+        "title": "로그인 계정",
+        "email": "이메일",
+        "hint": "이름과 프로필 사진은 프로필 메뉴에서 바꿀 수 있습니다."
+      },
+      "withdraw": {
+        "title": "계정 탈퇴",
+        "body": "탈퇴하면 계정이 비활성화되고 개인정보가 익명 처리됩니다.",
+        "action": "탈퇴하기"
+      }
     }
   },
   "workspace": {
@@ -377,7 +513,8 @@
         "loading": "불러오는 중...",
         "errorLoad": "프로젝트를 불러오지 못했습니다.",
         "errorCreate": "프로젝트를 생성하지 못했습니다.",
-        "errorDelete": "프로젝트를 삭제하지 못했습니다."
+        "errorDelete": "프로젝트를 삭제하지 못했습니다.",
+        "errorInvite": "초대에 실패했습니다."
       },
       "empty": {
         "projects": "프로젝트가 없습니다."
@@ -412,6 +549,7 @@
       },
       "validation": {
         "nameRequired": "프로젝트 이름을 입력하세요.",
+        "emailRequired": "이메일을 입력하세요.",
         "noWorkspace": "선택된 워크스페이스가 없습니다."
       },
       "confirm": {
@@ -1078,7 +1216,8 @@
         "submitting": "신청 중...",
         "toast": {
           "success": "편집 권한 신청이 완료되었습니다.",
-          "error": "신청에 실패했습니다."
+          "error": "신청에 실패했습니다.",
+          "alreadyPending": "이미 대기 중인 신청이 있습니다."
         }
       },
       "permissionRequestsModal": {
@@ -1206,8 +1345,13 @@
         "disconnected": "연결 끊김",
         "errorDelete": "채널 삭제에 실패했습니다.",
         "errorLeave": "채널 나가기에 실패했습니다.",
+        "errorInvite": "초대에 실패했습니다.",
+        "errorSend": "메시지 전송에 실패했습니다.",
         "left": "채널에서 나갔습니다.",
         "readOnlyNotice": "공지 채널은 관리자(OWNER/ADMIN)만 메시지를 작성할 수 있습니다."
+      },
+      "validation": {
+        "memberRequired": "초대할 멤버를 선택해 주세요."
       },
       "actions": {
         "linkedIssue": "연결된 이슈",
@@ -1692,6 +1836,10 @@
         "success": "회원 탈퇴가 완료되었습니다.",
         "autoDeleted": "기본 워크스페이스와 프로젝트를 삭제하고 탈퇴했습니다."
       },
+      "validation": {
+        "passwordRequired": "비밀번호를 입력하세요."
+      },
+      "error": "회원 탈퇴에 실패했습니다.",
       "cancel": "취소",
       "confirm": "탈퇴",
       "withdrawing": "탈퇴 처리 중..."
@@ -1710,130 +1858,6 @@
       "empty": "최근 방문한 워크스페이스나 프로젝트가 없습니다.",
       "workspaceTag": "워크스페이스",
       "projectTag": "프로젝트"
-    }
-  },
-  "settings": {
-    "slots": {
-      "title": "내 슬롯",
-      "subtitle": "워크스페이스를 만들 수 있는 슬롯과 워크스페이스별 용량을 확인합니다.",
-      "loading": "슬롯 정보를 불러오는 중...",
-      "error": "슬롯 정보를 불러오지 못했습니다.",
-      "workspaceCard": {
-        "label": "워크스페이스 슬롯",
-        "meta": "사용 {used} · 무료 {free} · 구매 {purchased}"
-      },
-      "expiryCard": {
-        "label": "만료 예정",
-        "meta": "가장 가까운 유료 슬롯 종료일",
-        "none": "없음"
-      },
-      "cancelCard": {
-        "label": "해지 예약",
-        "meta": "기간이 끝나면 슬롯이 줄어듭니다"
-      },
-      "holdings": {
-        "title": "보유 중인 워크스페이스 슬롯",
-        "buy": "슬롯 추가 구매",
-        "empty": "구매한 워크스페이스 슬롯이 없습니다. 무료 슬롯 1개로 시작할 수 있습니다.",
-        "noEnd": "없음",
-        "columns": {
-          "product": "상품",
-          "quantity": "수량",
-          "status": "상태",
-          "end": "종료"
-        }
-      },
-      "workspaces": {
-        "title": "워크스페이스별 용량",
-        "empty": "속한 워크스페이스가 없습니다.",
-        "license": "라이선스",
-        "columns": {
-          "name": "워크스페이스",
-          "project": "프로젝트 잔여/보유",
-          "member": "멤버 잔여/보유",
-          "action": "바로가기"
-        }
-      },
-      "cycles": {
-        "monthly": "월간",
-        "yearly": "연간",
-        "lifetime": "평생"
-      },
-      "status": {
-        "active": "활성",
-        "canceling": "해지 예약",
-        "expired": "만료",
-        "canceled": "취소",
-        "refunded": "환불"
-      }
-    },
-    "billing": {
-      "title": "결제",
-      "subtitle": "영수증, 구독, 결제 수단은 Polar에서 관리합니다.",
-      "loading": "결제 내역을 불러오는 중...",
-      "error": "결제 내역을 불러오지 못했습니다.",
-      "buySlots": "슬롯 구매",
-      "slotStrip": "워크스페이스 슬롯 잔여 {remaining} / 보유 {granted}",
-      "slotStripLink": "내 슬롯 보기",
-      "portal": {
-        "open": "결제 수단·영수증",
-        "opening": "포털 여는 중...",
-        "unavailable": "첫 결제 후에 Polar 고객 포털을 쓸 수 있습니다.",
-        "error": "고객 포털을 열 수 없습니다."
-      },
-      "banner": {
-        "checking": "결제를 확인하는 중...",
-        "success": "결제가 반영되었습니다. 내 슬롯에서 수량을 확인하세요.",
-        "waiting": "결제 확인 중입니다. 잠시만 기다려 주세요.",
-        "failed": "결제 확인에 실패했습니다.",
-        "cancel": "결제를 마치지 않았습니다.",
-        "timeout": "결제는 완료됐을 수 있습니다. 잠시 후 새로고침하세요."
-      },
-      "subscriptions": {
-        "title": "활성 구독",
-        "empty": "정기 결제가 없습니다. 평생 이용권만 있으면 이 구역은 비어 있습니다.",
-        "quantity": "수량 {count}",
-        "renews": "다음 갱신 {date}",
-        "until": "{date}까지 슬롯 유지"
-      },
-      "history": {
-        "title": "결제 내역",
-        "empty": "아직 결제 내역이 없습니다.",
-        "pending": "진행 중인 결제 {count}건",
-        "prev": "이전",
-        "next": "다음",
-        "filters": {
-          "all": "전체 상태"
-        },
-        "columns": {
-          "date": "일시",
-          "status": "상태",
-          "amount": "금액",
-          "items": "내용",
-          "provider": "제공자"
-        }
-      },
-      "status": {
-        "SUCCESS": "완료",
-        "PENDING": "대기",
-        "FAILED": "실패",
-        "CANCELED": "취소",
-        "REFUNDED": "환불"
-      }
-    },
-    "security": {
-      "title": "보안",
-      "subtitle": "로그인 계정과 탈퇴를 관리합니다.",
-      "account": {
-        "title": "로그인 계정",
-        "email": "이메일",
-        "hint": "이름과 프로필 사진은 프로필 메뉴에서 바꿀 수 있습니다."
-      },
-      "withdraw": {
-        "title": "계정 탈퇴",
-        "body": "탈퇴하면 계정이 비활성화되고 개인정보가 익명 처리됩니다.",
-        "action": "탈퇴하기"
-      }
     }
   },
   "notFound": {

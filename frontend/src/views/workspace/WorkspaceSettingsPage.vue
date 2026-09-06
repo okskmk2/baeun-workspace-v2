@@ -116,12 +116,12 @@
         >
           <input type="radio" name="theme" value="custom" v-model="form.themeId" />
           <div class="swatch">Aa</div>
-          <span class="theme-name">Custom</span>
+          <span class="theme-name">{{ t("settings.home.theme.themes.custom") }}</span>
         </label>
       </div>
 
       <div v-if="form.themeId === 'custom'" class="custom-theme-controls">
-        <label for="workspace-theme-bg">GNB 배경색</label>
+        <label for="workspace-theme-bg">{{ t("settings.home.theme.customBackground") }}</label>
         <input
           id="workspace-theme-bg"
           v-model="form.customBackground"
@@ -129,7 +129,7 @@
           :disabled="!canManageWorkspace || isUpdatingName"
         />
 
-        <label for="workspace-theme-fg">GNB 글자색</label>
+        <label for="workspace-theme-fg">{{ t("settings.home.theme.customForeground") }}</label>
         <input
           id="workspace-theme-fg"
           v-model="form.customForeground"

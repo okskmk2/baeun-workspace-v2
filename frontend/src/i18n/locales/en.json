@@ -30,7 +30,7 @@
       "member": "Member",
       "guest": "Guest"
     },
-    "issue_member": {
+    "task_member": {
       "assignee": "Assignee",
       "reporter": "Reporter",
       "reviewer": "Reviewer",
@@ -268,6 +268,8 @@
         "subtitle": "Select a background and foreground pair.",
         "inheritName": "Use Workspace Default",
         "inheritSubtitle": "Do not set a project-specific theme.",
+        "customBackground": "GNB Background",
+        "customForeground": "GNB Foreground",
         "themes": {
           "light": "Light",
           "dark": "Dark",
@@ -278,7 +280,8 @@
           "sky": "Sky",
           "stone": "Stone",
           "violet": "Violet",
-          "teal": "Teal"
+          "teal": "Teal",
+          "custom": "Custom"
         }
       },
       "themeBuilder": {
@@ -323,6 +326,7 @@
       },
       "status": {
         "loading": "Loading...",
+        "errorLoad": "Failed to load member list.",
         "errorInvite": "Invite failed.",
         "errorRemove": "Failed to remove member.",
         "errorChangeRole": "Failed to change member role."
@@ -342,6 +346,7 @@
       },
       "validation": {
         "selectMember": "Please select a member to invite.",
+        "memberRequired": "Please select a member to invite.",
         "noProject": "No project selected."
       },
       "confirm": {
@@ -366,6 +371,137 @@
           "error": "Failed to process request."
         }
       }
+    },
+    "slots": {
+      "title": "My slots",
+      "subtitle": "See how many workspaces you can create and the capacity of each workspace.",
+      "loading": "Loading slots...",
+      "error": "Could not load slot information.",
+      "workspaceCard": {
+        "label": "Workspace slots",
+        "meta": "Used {used} · Free {free} · Purchased {purchased}"
+      },
+      "expiryCard": {
+        "label": "Next expiry",
+        "meta": "Soonest paid slot end date",
+        "none": "None"
+      },
+      "cancelCard": {
+        "label": "Cancel scheduled",
+        "meta": "Slots drop when the period ends"
+      },
+      "shortage": {
+        "workspace": "You are short {count} workspace slot(s). Existing workspaces stay available. Buy more slots or reduce owned workspaces to create another.",
+        "workspaceProject": "{name}: short {count} project slot(s). Existing projects stay available.",
+        "workspaceMember": "{name}: short {count} member slot(s). Existing members stay available.",
+        "workspaceBoth": "{name}: short {project} project slot(s) and {member} member slot(s). Existing projects and members stay available."
+      },
+      "holdings": {
+        "title": "Workspace slots you hold",
+        "buy": "Buy more slots",
+        "billingNote": "Quantity bought in one checkout shares a billing date. Slots you add later start a new subscription with its own billing date.",
+        "empty": "No purchased workspace slots. You can start with 1 free slot.",
+        "noEnd": "None",
+        "columns": {
+          "product": "Product",
+          "quantity": "Qty",
+          "status": "Status",
+          "end": "Ends"
+        }
+      },
+      "workspaces": {
+        "title": "Capacity by workspace",
+        "empty": "You don't belong to a workspace yet.",
+        "license": "License",
+        "columns": {
+          "name": "Workspace",
+          "project": "Projects remaining/granted",
+          "member": "Members remaining/granted",
+          "action": "Open"
+        }
+      },
+      "cycles": {
+        "monthly": "Monthly",
+        "yearly": "Yearly",
+        "lifetime": "Lifetime"
+      },
+      "status": {
+        "active": "Active",
+        "canceling": "Cancel at period end",
+        "expired": "Expired",
+        "canceled": "Canceled",
+        "refunded": "Refunded"
+      }
+    },
+    "billing": {
+      "title": "Billing",
+      "subtitle": "Receipts, subscriptions, and payment methods are managed on Polar.",
+      "loading": "Loading billing...",
+      "error": "Could not load billing.",
+      "buySlots": "Buy slots",
+      "slotStrip": "Workspace slots remaining {remaining} / granted {granted}",
+      "slotStripLink": "View my slots",
+      "portal": {
+        "open": "Payment methods & receipts",
+        "opening": "Opening portal...",
+        "unavailable": "The Polar customer portal is available after your first payment.",
+        "error": "Could not open the customer portal.",
+        "note": "Use Polar for cards and receipts only. To add slots, buy a new subscription in the store. Changing quantity on an existing Polar subscription can merge billing dates and you may lose remaining days."
+      },
+      "banner": {
+        "checking": "Confirming payment...",
+        "success": "Payment applied. Check quantities on My slots.",
+        "waiting": "Still confirming payment. Please wait.",
+        "failed": "Could not confirm payment.",
+        "cancel": "Checkout was not completed.",
+        "timeout": "Payment may have completed. Refresh in a moment."
+      },
+      "subscriptions": {
+        "title": "Active subscriptions",
+        "empty": "No recurring payments. Lifetime licenses leave this section empty.",
+        "billingNote": "Each subscription can renew on a different date. To add slots, buy in the store instead of changing quantity on Polar.",
+        "quantity": "Quantity {count}",
+        "renews": "Renews {date}",
+        "until": "Slots stay until {date}"
+      },
+      "history": {
+        "title": "Payment history",
+        "empty": "No payments yet.",
+        "pending": "{count} payment(s) in progress",
+        "prev": "Previous",
+        "next": "Next",
+        "filters": {
+          "all": "All statuses"
+        },
+        "columns": {
+          "date": "Date",
+          "status": "Status",
+          "amount": "Amount",
+          "items": "Items",
+          "provider": "Provider"
+        }
+      },
+      "status": {
+        "SUCCESS": "Paid",
+        "PENDING": "Pending",
+        "FAILED": "Failed",
+        "CANCELED": "Canceled",
+        "REFUNDED": "Refunded"
+      }
+    },
+    "security": {
+      "title": "Security",
+      "subtitle": "Manage the login account and withdrawal.",
+      "account": {
+        "title": "Login account",
+        "email": "Email",
+        "hint": "Change your name and photo in Profile."
+      },
+      "withdraw": {
+        "title": "Delete account",
+        "body": "Withdrawal deactivates the account and anonymizes personal data.",
+        "action": "Withdraw"
+      }
     }
   },
   "workspace": {
@@ -377,7 +513,8 @@
         "loading": "Loading...",
         "errorLoad": "Failed to load projects.",
         "errorCreate": "Failed to create project.",
-        "errorDelete": "Failed to delete project."
+        "errorDelete": "Failed to delete project.",
+        "errorInvite": "Invite failed."
       },
       "empty": {
         "projects": "No projects."
@@ -412,6 +549,7 @@
       },
       "validation": {
         "nameRequired": "Please enter a project name.",
+        "emailRequired": "Please enter an email.",
         "noWorkspace": "No workspace selected."
       },
       "slots": {
@@ -1209,8 +1347,13 @@
         "disconnected": "Disconnected",
         "errorDelete": "Failed to delete channel.",
         "errorLeave": "Failed to leave channel.",
+        "errorInvite": "Invite failed.",
+        "errorSend": "Failed to send message.",
         "left": "You left the channel.",
         "readOnlyNotice": "Only OWNER/ADMIN can post messages in notice channels."
+      },
+      "validation": {
+        "memberRequired": "Please select a member to invite."
       },
       "actions": {
         "linkedIssue": "Linked Issue",
@@ -1719,6 +1862,10 @@
         "success": "Account withdrawal completed.",
         "autoDeleted": "Deleted the default workspace and project, then withdrew the account."
       },
+      "validation": {
+        "passwordRequired": "Please enter your password."
+      },
+      "error": "Failed to withdraw account.",
       "cancel": "Cancel",
       "confirm": "Withdraw",
       "withdrawing": "Withdrawing..."
@@ -1737,130 +1884,6 @@
       "empty": "No recently visited workspaces or projects.",
       "workspaceTag": "Workspace",
       "projectTag": "Project"
-    }
-  },
-  "settings": {
-    "slots": {
-      "title": "My slots",
-      "subtitle": "See how many workspaces you can create and the capacity of each workspace.",
-      "loading": "Loading slots...",
-      "error": "Could not load slot information.",
-      "workspaceCard": {
-        "label": "Workspace slots",
-        "meta": "Used {used} · Free {free} · Purchased {purchased}"
-      },
-      "expiryCard": {
-        "label": "Next expiry",
-        "meta": "Soonest paid slot end date",
-        "none": "None"
-      },
-      "cancelCard": {
-        "label": "Cancel scheduled",
-        "meta": "Slots drop when the period ends"
-      },
-      "holdings": {
-        "title": "Workspace slots you hold",
-        "buy": "Buy more slots",
-        "empty": "No purchased workspace slots. You can start with 1 free slot.",
-        "noEnd": "None",
-        "columns": {
-          "product": "Product",
-          "quantity": "Qty",
-          "status": "Status",
-          "end": "Ends"
-        }
-      },
-      "workspaces": {
-        "title": "Capacity by workspace",
-        "empty": "You don't belong to a workspace yet.",
-        "license": "License",
-        "columns": {
-          "name": "Workspace",
-          "project": "Projects remaining/granted",
-          "member": "Members remaining/granted",
-          "action": "Open"
-        }
-      },
-      "cycles": {
-        "monthly": "Monthly",
-        "yearly": "Yearly",
-        "lifetime": "Lifetime"
-      },
-      "status": {
-        "active": "Active",
-        "canceling": "Cancel at period end",
-        "expired": "Expired",
-        "canceled": "Canceled",
-        "refunded": "Refunded"
-      }
-    },
-    "billing": {
-      "title": "Billing",
-      "subtitle": "Receipts, subscriptions, and payment methods are managed on Polar.",
-      "loading": "Loading billing...",
-      "error": "Could not load billing.",
-      "buySlots": "Buy slots",
-      "slotStrip": "Workspace slots remaining {remaining} / granted {granted}",
-      "slotStripLink": "View my slots",
-      "portal": {
-        "open": "Payment methods & receipts",
-        "opening": "Opening portal...",
-        "unavailable": "The Polar customer portal is available after your first payment.",
-        "error": "Could not open the customer portal."
-      },
-      "banner": {
-        "checking": "Confirming payment...",
-        "success": "Payment applied. Check quantities on My slots.",
-        "waiting": "Still confirming payment. Please wait.",
-        "failed": "Could not confirm payment.",
-        "cancel": "Checkout was not completed.",
-        "timeout": "Payment may have completed. Refresh in a moment."
-      },
-      "subscriptions": {
-        "title": "Active subscriptions",
-        "empty": "No recurring payments. Lifetime licenses leave this section empty.",
-        "quantity": "Quantity {count}",
-        "renews": "Renews {date}",
-        "until": "Slots stay until {date}"
-      },
-      "history": {
-        "title": "Payment history",
-        "empty": "No payments yet.",
-        "pending": "{count} payment(s) in progress",
-        "prev": "Previous",
-        "next": "Next",
-        "filters": {
-          "all": "All statuses"
-        },
-        "columns": {
-          "date": "Date",
-          "status": "Status",
-          "amount": "Amount",
-          "items": "Items",
-          "provider": "Provider"
-        }
-      },
-      "status": {
-        "SUCCESS": "Paid",
-        "PENDING": "Pending",
-        "FAILED": "Failed",
-        "CANCELED": "Canceled",
-        "REFUNDED": "Refunded"
-      }
-    },
-    "security": {
-      "title": "Security",
-      "subtitle": "Manage the login account and withdrawal.",
-      "account": {
-        "title": "Login account",
-        "email": "Email",
-        "hint": "Change your name and photo in Profile."
-      },
-      "withdraw": {
-        "title": "Delete account",
-        "body": "Withdrawal deactivates the account and anonymizes personal data.",
-        "action": "Withdraw"
-      }
     }
   },
   "notFound": {

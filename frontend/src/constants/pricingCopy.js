@@ -86,6 +86,20 @@ const ko = {
         a: ["삭제하지 않습니다. 새로 만드는 작업만 제한됩니다."],
       },
       {
+        q: "다른 날에 슬롯을 더 사면 결제일이 합쳐지나요?",
+        a: [
+          "아닙니다. 나중에 산 자리는 새 구독이라 결제일이 따로 갑니다.",
+          "같은 장바구니에서 한 번에 산 수량만 결제일이 같습니다.",
+        ],
+      },
+      {
+        q: "Polar 포털에서 구독 수량을 바꿔도 되나요?",
+        a: [
+          "카드와 영수증만 쓰세요. 슬롯을 늘리려면 스토어에서 새로 구매하세요.",
+          "Polar에서 기존 구독 수량을 올리면 결제일이 합쳐져 남은 날짜를 잃을 수 있습니다.",
+        ],
+      },
+      {
         q: "가입하면 바로 결제하나요?",
         a: ["시작 한도 안이면 결제하지 않습니다. 워크스페이스 1개, 프로젝트 3개, 멤버 5명까지는 바로 시작할 수 있습니다."],
       },
@@ -179,6 +193,20 @@ const en = {
       {
         q: "If I go over, are files deleted?",
         a: ["No. Existing files stay. New creates are limited."],
+      },
+      {
+        q: "If I buy more slots on another day, do billing dates merge?",
+        a: [
+          "No. Slots you buy later start a new subscription with its own billing date.",
+          "Only quantity bought in the same checkout shares a billing date.",
+        ],
+      },
+      {
+        q: "Can I change subscription quantity on Polar?",
+        a: [
+          "Use Polar for cards and receipts only. To add slots, buy a new subscription in the store.",
+          "Raising quantity on an existing Polar subscription can merge billing dates and you may lose remaining days.",
+        ],
       },
       {
         q: "Do I pay as soon as I sign up?",

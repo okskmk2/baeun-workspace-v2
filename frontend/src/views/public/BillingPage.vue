@@ -13,6 +13,7 @@
       </div>
     </hgroup>
     <p v-if="!canOpenPortal && !isLoading" class="status muted">{{ t("settings.billing.portal.unavailable") }}</p>
+    <p class="status muted">{{ t("settings.billing.portal.note") }}</p>
 
     <p v-if="bannerMessage" class="banner" :class="bannerClass">{{ bannerMessage }}</p>
     <p v-if="errorMessage" class="status error">{{ errorMessage }}</p>
@@ -33,6 +34,7 @@
 
       <section class="card">
         <h2>{{ t("settings.billing.subscriptions.title") }}</h2>
+        <p class="status muted">{{ t("settings.billing.subscriptions.billingNote") }}</p>
         <p v-if="!subscriptions.length" class="status muted">{{ t("settings.billing.subscriptions.empty") }}</p>
         <ul v-else class="subscription-list">
           <li v-for="item in subscriptions" :key="item.id" class="subscription-card">

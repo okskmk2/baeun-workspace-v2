@@ -84,15 +84,15 @@
         >
           <input type="radio" name="theme" value="custom" v-model="form.themeId" />
           <div class="swatch">Aa</div>
-          <span class="theme-name">Custom</span>
+          <span class="theme-name">{{ t("settings.home.theme.themes.custom") }}</span>
         </label>
       </div>
 
       <div v-if="form.themeId === 'custom'" class="custom-theme-controls">
-        <label for="project-theme-bg">GNB Background</label>
+        <label for="project-theme-bg">{{ t("settings.home.theme.customBackground") }}</label>
         <input id="project-theme-bg" v-model="form.customBackground" type="color" />
 
-        <label for="project-theme-fg">GNB Foreground</label>
+        <label for="project-theme-fg">{{ t("settings.home.theme.customForeground") }}</label>
         <input id="project-theme-fg" v-model="form.customForeground" type="color" />
 
         <button type="button" class="btn btn--secondary btn--builder" @click="isThemeBuilderOpen = true">
