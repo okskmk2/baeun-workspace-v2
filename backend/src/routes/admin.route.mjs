@@ -8,6 +8,9 @@ import { createNotifications, NOTIFICATION_TYPES } from "../notification.mjs";
 import { writeAdminAudit, revokeMemberSessions } from "../utils/adminAudit.mjs";
 import { normalizeUpper, parseBooleanQuery, parsePositiveInt } from "../utils/parsers.mjs";
 import { getActiveSocketCount } from "../ws.mjs";
+import { PolarApiError, polar } from "../lib/polar.client.mjs";
+import { toPolarMinorUnits } from "../lib/polar.catalog.mjs";
+import { applyRefundedOrder } from "../lib/polar.fulfillment.mjs";
 
 const router = express.Router();
 
@@ -877,8 +880,12 @@ router.get("/payments", withPagination({ defaultPageSize: 10, maxPageSize: 100 }
         p.id,
         p.member_id,
         p.total_amount,
+        p.currency,
         p.status,
+        p.provider,
         p.pg_transaction_id,
+        p.polar_order_id,
+        p.polar_checkout_id,
         p.created_at,
         p.updated_at,
         m.name AS member_name,
@@ -934,8 +941,13 @@ router.get("/payments/:paymentId", async (req, res) => {
         p.id,
         p.member_id,
         p.total_amount,
+        p.currency,
         p.status,
+        p.provider,
         p.pg_transaction_id,
+        p.polar_order_id,
+        p.polar_checkout_id,
+        p.polar_subscription_id,
         p.created_at,
         p.updated_at,
         m.name AS member_name,
@@ -988,7 +1000,7 @@ router.post("/payments/:paymentId/refund", async (req, res) => {
   try {
     await client.query("BEGIN");
     const paymentRes = await client.query(
-      `SELECT id, status, total_amount, member_id, pg_transaction_id
+      `SELECT id, status, total_amount, currency, member_id, pg_transaction_id, provider, polar_order_id
        FROM payment
        WHERE id = $1
        FOR UPDATE`,
@@ -1005,6 +1017,33 @@ router.post("/payments/:paymentId/refund", async (req, res) => {
       return res.status(400).json({
         name: "BadRequest",
         message: `Only SUCCESS payments can be refunded. Current status is ${payment.status}.`,
+      });
+    }
+
+    if (String(payment.provider || "").toUpperCase() === "POLAR") {
+      if (!payment.polar_order_id) {
+        await client.query("ROLLBACK");
+        return res.status(400).json({
+          name: "BadRequest",
+          message: "Polar payment is missing order id.",
+        });
+      }
+      await client.query("COMMIT");
+      try {
+        await polar.refunds.create({
+          order_id: payment.polar_order_id,
+          reason: "customer_request",
+          amount: toPolarMinorUnits(payment.total_amount, payment.currency || "USD"),
+        });
+      } catch (error) {
+        if (!(error instanceof PolarApiError && error.status === 403)) {
+          return res.status(502).json({ name: "BadGateway", message: error.message });
+        }
+      }
+      const refunded = await applyRefundedOrder({ id: payment.polar_order_id });
+      return res.json({
+        message: "Payment refunded.",
+        payment_id: refunded.paymentId || paymentId,
       });
     }
 

@@ -52,12 +52,13 @@
 <script setup>
 import { ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import api from "../../lib/axios";
 import { useAppStore } from "../../stores/appStore";
 import { useWorkspaceStore } from "../../stores/workspaceStore";
 
 const router = useRouter();
+const route = useRoute();
 const { t } = useI18n();
 const appStore = useAppStore();
 const workspaceStore = useWorkspaceStore();
@@ -110,6 +111,12 @@ const onSubmit = async () => {
     const response = await api.get("/members/me");
 
     appStore.setCurrentUser(response.data);
+
+    const redirect = Array.isArray(route.query.redirect) ? route.query.redirect[0] : route.query.redirect;
+    if (typeof redirect === "string" && redirect.startsWith("/") && !redirect.startsWith("//")) {
+      router.push(redirect);
+      return;
+    }
 
     const workspaces = await workspaceStore.fetchWorkspaces({ force: true });
     if (workspaces.length > 0) {

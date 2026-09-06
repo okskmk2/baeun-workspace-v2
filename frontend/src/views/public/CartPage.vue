@@ -44,18 +44,37 @@
           </div>
         </dl>
 
-        <button type="button" class="btn checkout-btn" @click="checkout">결제하기</button>
+        <div v-if="needsWorkspace" class="workspace-box">
+          <label for="workspace-select">워크스페이스</label>
+          <select id="workspace-select" v-model="selectedWorkspaceId">
+            <option value="">워크스페이스를 선택하세요</option>
+            <option v-for="workspace in workspaces" :key="workspace.id" :value="String(workspace.id)">
+              {{ workspace.name }}
+            </option>
+          </select>
+        </div>
+
+        <p v-if="checkoutError" class="checkout-error">{{ checkoutError }}</p>
+        <button type="button" class="btn checkout-btn" :disabled="isCheckingOut" @click="checkout">
+          {{ isCheckingOut ? "결제 페이지로 이동 중..." : "결제하기" }}
+        </button>
       </div>
     </section>
   </main>
 </template>
 
 <script setup>
-import { computed, ref } from "vue";
-import { useRoute } from "vue-router";
+import { computed, onMounted, ref, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import api from "../../lib/axios";
 import { addToast } from "../../lib/toast";
+import { useAppStore } from "../../stores/appStore";
+import { useWorkspaceStore } from "../../stores/workspaceStore";
 
 const route = useRoute();
+const router = useRouter();
+const appStore = useAppStore();
+const workspaceStore = useWorkspaceStore();
 
 const productCatalog = {
   WORKSPACE: {
@@ -113,6 +132,11 @@ const parsedProductCode = computed(() => {
 });
 
 const quantity = ref(1);
+const isCheckingOut = ref(false);
+const checkoutError = ref("");
+const selectedWorkspaceId = ref("");
+const workspaces = computed(() => workspaceStore.workspaces || []);
+const needsWorkspace = computed(() => parsedProductCode.value.productKey !== "WORKSPACE");
 
 const selectedProduct = computed(() => productCatalog[parsedProductCode.value.productKey]);
 const billingPlan = computed(() => billingCatalog[parsedProductCode.value.billingKey]);
@@ -134,12 +158,58 @@ const decrease = () => {
   quantity.value -= 1;
 };
 
-const checkout = () => {
-  addToast({
-    message: `${selectedProduct.value.name} ${quantity.value}개 결제는 와이어프레임입니다.`,
-    type: "info",
-  });
+const checkout = async () => {
+  checkoutError.value = "";
+  if (!appStore.currentUser) {
+    router.push({ path: "/login", query: { redirect: route.fullPath } });
+    return;
+  }
+  if (needsWorkspace.value && !selectedWorkspaceId.value) {
+    checkoutError.value = "워크스페이스를 선택하세요.";
+    return;
+  }
+
+  isCheckingOut.value = true;
+  try {
+    const response = await api.post("/payments/checkout", {
+      product_code: productCode.value,
+      quantity: quantity.value,
+      workspace_id: needsWorkspace.value ? Number(selectedWorkspaceId.value) : undefined,
+    });
+    const url = response.data?.url;
+    if (!url) {
+      checkoutError.value = "결제 URL을 받지 못했습니다.";
+      return;
+    }
+    window.location.assign(url);
+  } catch (error) {
+    checkoutError.value =
+      error?.response?.data?.message || "결제를 시작하지 못했습니다. 잠시 후 다시 시도하세요.";
+    addToast({ message: checkoutError.value, type: "error" });
+  } finally {
+    isCheckingOut.value = false;
+  }
 };
+
+onMounted(async () => {
+  const queryWorkspace = Array.isArray(route.query.workspaceId)
+    ? route.query.workspaceId[0]
+    : route.query.workspaceId;
+  if (queryWorkspace) selectedWorkspaceId.value = String(queryWorkspace);
+  if (appStore.currentUser && needsWorkspace.value) {
+    try {
+      await workspaceStore.fetchWorkspaces();
+    } catch {
+      checkoutError.value = "워크스페이스 목록을 불러오지 못했습니다.";
+    }
+  }
+});
+
+watch(needsWorkspace, async (required) => {
+  if (required && appStore.currentUser && workspaces.value.length === 0) {
+    await workspaceStore.fetchWorkspaces();
+  }
+});
 
 const formatAmount = (value) =>
   `$${Number(value || 0).toLocaleString("en-US", {
@@ -305,6 +375,31 @@ const formatAmount = (value) =>
   font-size: var(--font-size-title-sm);
 }
 
+.workspace-box {
+  display: grid;
+  gap: 6px;
+}
+
+.workspace-box label {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-label);
+}
+
+.workspace-box select {
+  min-height: 38px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  padding: 0 10px;
+}
+
+.checkout-error {
+  margin: 0;
+  color: var(--color-danger);
+  font-size: var(--font-size-label);
+}
+
 .checkout-btn {
   width: fit-content;
   min-width: 168px;
@@ -313,6 +408,11 @@ const formatAmount = (value) =>
   align-self: end;
   background: var(--color-accent);
   color: var(--color-text-inverse);
+}
+
+.checkout-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
 }
 
 @media (max-width: 840px) {

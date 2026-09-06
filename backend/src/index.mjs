@@ -38,6 +38,8 @@ import assistantRouter from "./routes/assistant.route.mjs";
 import fileRouter from "./routes/file.route.mjs";
 import publicRouter from "./routes/public.route.mjs";
 import adminRouter from "./routes/admin.route.mjs";
+import paymentRouter from "./routes/payment.route.mjs";
+import { handlePolarWebhook } from "./routes/polarWebhook.route.mjs";
 
 const app = express();
 const pgSession = connectPgSimple(session);
@@ -46,6 +48,8 @@ const MESSAGE_TYPES = ["SYSTEM", "USER", "AGENT"];
 
 // Cloud Run and other reverse-proxy platforms
 app.set("trust proxy", 1);
+
+app.post("/api/webhooks/polar", express.raw({ type: "application/json" }), handlePolarWebhook);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -87,6 +91,7 @@ app.use("/api/channels", chatRouter);
 app.use("/api/notifications", notificationRouter);
 app.use("/api/metrics", metricsRouter);
 app.use("/api/licenses", licenseRouter);
+app.use("/api/payments", paymentRouter);
 app.use("/api/data", dataRouter);
 app.use("/api/assistant", assistantRouter);
 app.use("/api/files", fileRouter);

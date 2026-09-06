@@ -20,5 +20,8 @@
     "deploy": "gcloud config set project baeun-workspace-dev && gcloud run deploy baeun-workspace-v2 --source . --region=asia-northeast1",
     "build": "cd frontend && npm install && npm run build:prod && cd .. && cd backend && npm install",
     "start": "npm run start:backend"
+  },
+  "dependencies": {
+    "@polar-sh/sdk": "^0.49.0"
   }
 }

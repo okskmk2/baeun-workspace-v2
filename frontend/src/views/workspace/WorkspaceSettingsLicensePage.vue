@@ -207,18 +207,18 @@ const usedSlots = computed(() => projects.value.length);
 const usedMemberSlots = computed(() => parseNonNegativeInt(workspace.value?.member_count, 0));
 
 const projectPurchaseTo = computed(() => ({
-  path: "/settings/plan",
+  path: "/store/cart",
   query: {
-    resource: "PROJECT",
+    productCode: `PROJECT_MONTHLY_${new Date().getFullYear()}`,
     source: "workspace-settings-license",
     workspaceId: String(workspaceId.value || ""),
   },
 }));
 
 const workspaceMemberPurchaseTo = computed(() => ({
-  path: "/settings/plan",
+  path: "/store/cart",
   query: {
-    resource: "WORKSPACE_MEMBER",
+    productCode: `WORKSPACEMEMBER_MONTHLY_${new Date().getFullYear()}`,
     source: "workspace-settings-license",
     workspaceId: String(workspaceId.value || ""),
   },

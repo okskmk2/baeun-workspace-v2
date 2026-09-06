@@ -6,7 +6,7 @@ defineProps({
 
 <template>
   <div class="thumb" :data-variant="variant" aria-hidden="true">
-    <span class="thumb__branch" />
+    <!-- <span class="thumb__branch" /> -->
     <span class="thumb__row" style="width: 72%" />
     <span class="thumb__row is-indent" style="width: 54%" />
     <span class="thumb__row is-indent" style="width: 48%" />
