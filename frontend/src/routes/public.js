@@ -1,7 +1,6 @@
 import PublicLayout from "../views/public/PublicLayout.vue";
 import HomeView from "../views/HomeView.vue";
 import PricingView from "../views/public/PricingView.vue";
-import StorePage from "../views/public/StorePage.vue";
 import CartPage from "../views/public/CartPage.vue";
 import NotFoundPage from "../views/public/NotFoundPage.vue";
 import LoginPage from "../views/public/LoginPage.vue";
@@ -31,7 +30,7 @@ export const publicRoutes = [
       },
       {
         path: "store",
-        component: StorePage,
+        redirect: "/pricing",
       },
       {
         path: "open-projects",

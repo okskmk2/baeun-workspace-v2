@@ -31,14 +31,21 @@
           :min="CALCULATOR_SLIDERS.members.min"
           :max="CALCULATOR_SLIDERS.members.max"
         />
+        <CalculatorSlider
+          v-model="usedGb"
+          :label="copy.calculator.sliders.storage.label"
+          :unit="copy.calculator.sliders.storage.unit"
+          :input-aria="copy.calculator.directInput"
+          :min="CALCULATOR_SLIDERS.storageGb.min"
+          :max="CALCULATOR_SLIDERS.storageGb.max"
+          :step="CALCULATOR_SLIDERS.storageGb.step"
+        />
       </div>
 
       <div class="price-calculator__result">
         <PriceSummaryPanel
-          :billing-cycle="props.billingCycle"
           :is-free="isFree"
-          :primary-total="primaryTotal"
-          :yearly-total="yearlyTotal"
+          :primary-total="monthlyTotal"
           :rows="rows"
           :show-transition-notice="showTransitionNotice"
         />
@@ -49,40 +56,49 @@
 
 <script setup>
 import { computed, onBeforeUnmount, ref, watch } from "vue";
-import { CALCULATOR_SLIDERS, FREE, PRICE, YEARLY_DISCOUNT } from "../../../constants/pricing";
+import {
+  CALCULATOR_SLIDERS,
+  FREE,
+  billableSlotCount,
+  extraStorageGbUniform,
+  slotUnitPrice,
+  storageUsdUniform,
+} from "../../../constants/pricing";
 import { usePricingCopy } from "../../../composables/usePricingCopy";
 import CalculatorSlider from "./CalculatorSlider.vue";
 import PriceSummaryPanel from "./PriceSummaryPanel.vue";
 
 const { copy } = usePricingCopy();
 
-const props = defineProps({
-  billingCycle: { type: String, required: true },
-});
-
 const workspaces = ref(CALCULATOR_SLIDERS.workspaces.default);
 const projects = ref(CALCULATOR_SLIDERS.projects.default);
 const members = ref(CALCULATOR_SLIDERS.members.default);
+const usedGb = ref(CALCULATOR_SLIDERS.storageGb.default);
 
-const billableWorkspace = computed(() => Math.max(0, workspaces.value - FREE.workspace));
-const billableProject = computed(() => Math.max(0, projects.value - FREE.project));
-const billableMember = computed(() => Math.max(0, members.value - FREE.member));
+const workspacePrice = slotUnitPrice("workspace") ?? 0;
+const projectPrice = slotUnitPrice("project") ?? 0;
+const memberPrice = slotUnitPrice("member") ?? 0;
+
+const billableWorkspace = computed(() => billableSlotCount(workspaces.value, FREE.workspace));
+const billableProject = computed(() => billableSlotCount(projects.value, FREE.project));
+const billableMember = computed(() => billableSlotCount(members.value, FREE.member));
+const extraGb = computed(() => extraStorageGbUniform(workspaces.value, usedGb.value));
+const storageTotal = computed(() => storageUsdUniform(workspaces.value, usedGb.value));
 
 const monthlyTotal = computed(
   () =>
-    billableWorkspace.value * PRICE.workspace +
-    billableProject.value * PRICE.project +
-    billableMember.value * PRICE.member,
+    billableWorkspace.value * workspacePrice +
+    billableProject.value * projectPrice +
+    billableMember.value * memberPrice +
+    storageTotal.value,
 );
-
-const yearlyTotal = computed(() => monthlyTotal.value * 12 * (1 - YEARLY_DISCOUNT));
-const yearlyMonthlyEquivalent = computed(() => yearlyTotal.value / 12);
 
 const isFree = computed(() => monthlyTotal.value === 0);
 
-const primaryTotal = computed(() =>
-  props.billingCycle === "yearly" ? yearlyMonthlyEquivalent.value : monthlyTotal.value,
-);
+const formatGb = (value) => {
+  const n = Number(value) || 0;
+  return Number.isInteger(n) ? String(n) : n.toFixed(1);
+};
 
 const rows = computed(() => {
   const breakdown = copy.value.calculator.breakdown;
@@ -92,19 +108,25 @@ const rows = computed(() => {
       key: "workspace",
       label: breakdown.workspaceLabel,
       detail: breakdown.countDetail(workspaces.value, billableWorkspace.value),
-      amount: billableWorkspace.value * PRICE.workspace,
+      amount: billableWorkspace.value * workspacePrice,
     },
     {
       key: "project",
       label: breakdown.projectLabel,
       detail: breakdown.countDetail(projects.value, billableProject.value),
-      amount: billableProject.value * PRICE.project,
+      amount: billableProject.value * projectPrice,
     },
     {
       key: "member",
       label: breakdown.memberLabel,
       detail: breakdown.memberDetail(members.value, billableMember.value),
-      amount: billableMember.value * PRICE.member,
+      amount: billableMember.value * memberPrice,
+    },
+    {
+      key: "storage",
+      label: breakdown.storageLabel,
+      detail: breakdown.storageDetail(formatGb(extraGb.value)),
+      amount: storageTotal.value,
     },
   ];
 });

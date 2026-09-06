@@ -53,8 +53,9 @@
       "brand": "바은 워크스페이스",
       "nav": {
         "about": "소개",
-        "store": "스토어",
-        "openProjects": "공개 프로젝트"
+        "pricing": "요금",
+        "openProjects": "공개 프로젝트",
+        "primary": "주요 메뉴"
       },
       "util": {
         "signup": "회원가입",
@@ -76,9 +77,15 @@
         "emptyProjects": "프로젝트가 없습니다."
       },
       "footer": {
-        "pricing": "요금제",
+        "product": "제품",
+        "account": "계정",
+        "billingGuide": "요금 안내",
+        "about": "소개",
         "features": "기능",
-        "contact": "문의",
+        "pricing": "요금",
+        "login": "로그인",
+        "signup": "회원가입",
+        "storageRules": "저장 공간",
         "copyright": "© {year} Baeun Workspace. All rights reserved."
       }
     },

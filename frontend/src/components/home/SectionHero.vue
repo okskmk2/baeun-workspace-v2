@@ -1,37 +1,21 @@
-<script setup>
-const scrollToFragmented = () => {
-  const reduce =
-    typeof window !== "undefined" &&
-    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  document.getElementById("fragmented")?.scrollIntoView({
-    behavior: reduce ? "auto" : "smooth",
-    block: "start",
-  });
-};
-</script>
-
 <template>
   <section id="hero" class="hero">
     <div class="hero__copy landing-wrap">
       <h1 class="hero__headline">{{ $t("landing.hero.headline") }}</h1>
       <p class="hero__sub">{{ $t("landing.hero.sub") }}</p>
+      <p class="hero__note">{{ $t("landing.hero.note") }}</p>
+      <div class="hero__cta">
+        <router-link class="btn btn--lg" to="/signup">{{ $t("landing.cta.start") }}</router-link>
+        <router-link class="btn btn--lg btn--secondary" to="/pricing">
+          {{ $t("landing.cta.pricing") }}
+        </router-link>
+      </div>
     </div>
-    <button
-      class="hero__scroll"
-      type="button"
-      :aria-label="$t('landing.hero.scroll')"
-      @click="scrollToFragmented"
-    >
-      <svg viewBox="0 0 16 24" aria-hidden="true">
-        <path d="M8 3v16M3 14l5 6 5-6" fill="none" stroke="currentColor" stroke-width="1.25" />
-      </svg>
-    </button>
   </section>
 </template>
 
 <style scoped>
 .hero {
-  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -60,49 +44,42 @@ const scrollToFragmented = () => {
 
 .hero__sub {
   margin: 0;
-  max-width: 22em;
+  max-width: 28em;
   color: var(--color-muted);
   font-size: var(--fs-lede);
   line-height: 1.8;
-  white-space: pre-line;
 }
 
-.hero__scroll {
-  position: absolute;
-  bottom: 28px;
-  left: 50%;
+.hero__note {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 0.9375rem;
+  line-height: 1.6;
+}
+
+.hero__cta {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: center;
-  padding: 8px;
-  border: 0;
-  background: none;
-  color: var(--color-muted);
-  transform: translateX(-50%);
-  cursor: pointer;
+  gap: 12px;
+  margin-top: 8px;
 }
 
-.hero__scroll svg {
-  width: 14px;
-  height: 20px;
-  animation: hero-cue 2.4s var(--ease) infinite;
-}
-
-@keyframes hero-cue {
-  0%,
-  100% {
-    transform: translateY(0);
-    opacity: 0.55;
+@media (max-width: 767px) {
+  .hero {
+    padding: 48px 0 64px;
+    min-height: auto;
   }
-  50% {
-    transform: translateY(5px);
-    opacity: 1;
-  }
-}
 
-@media (prefers-reduced-motion: reduce) {
-  .hero__scroll svg {
-    animation: none;
+  .hero__cta {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .hero__cta .btn {
+    width: 100%;
+    max-width: 280px;
   }
 }
 </style>

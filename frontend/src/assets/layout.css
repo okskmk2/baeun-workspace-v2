@@ -42,9 +42,18 @@
 
 .PublicLayout .mainnav {
   font-size: var(--font-size-body-lg);
-  gap: 60px;
+  gap: 40px;
   font-weight: 600;
   justify-self: center;
+}
+
+.PublicLayout .mainnav a {
+  padding: 4px 0;
+  border-bottom: 2px solid transparent;
+}
+
+.PublicLayout .mainnav a.is-nav-active {
+  border-bottom-color: currentColor;
 }
 
 .PublicLayout .utilnav {
@@ -91,12 +100,52 @@
 }
 
 .PublicLayout-footer .inner-footer {
-  padding: 20px 24px;
+  padding: 40px 24px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.PublicLayout-footer .footer-columns {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 32px 24px;
+}
+
+.PublicLayout-footer .footer-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.PublicLayout-footer .footer-col h2 {
+  margin: 0 0 4px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--color-text);
+}
+
+.PublicLayout-footer .footer-col a {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  text-decoration: none;
+}
+
+.PublicLayout-footer .footer-col a:hover {
+  color: var(--color-text);
+  text-decoration: underline;
+}
+
+.PublicLayout-footer .footer-bottom {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 8px 16px;
+  gap: 12px 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-border);
 }
 
 .PublicLayout-footer .footer-copyright {
@@ -105,27 +154,39 @@
   color: var(--color-text-muted);
 }
 
-.PublicLayout-footer .footer-end {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 16px;
-}
+@media (max-width: 767px) {
+  .PublicLayout .inner-gnb {
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "brand util"
+      "nav nav";
+    gap: 12px 16px;
+    padding: 16px;
+  }
 
-.PublicLayout-footer .footer-links {
-  display: flex;
-  gap: 16px;
-  font-size: 12px;
-}
+  .PublicLayout .brand {
+    grid-area: brand;
+  }
 
-.PublicLayout-footer .footer-links a {
-  color: var(--color-text-muted);
-  text-decoration: none;
-}
+  .PublicLayout .mainnav {
+    grid-area: nav;
+    justify-self: start;
+    gap: 20px;
+    font-size: var(--font-size-body);
+  }
 
-.PublicLayout-footer .footer-links a:hover {
-  color: var(--color-text);
-  text-decoration: underline;
+  .PublicLayout .utilnav {
+    grid-area: util;
+  }
+
+  .PublicLayout-footer .inner-footer {
+    padding: 32px 16px 20px;
+  }
+
+  .PublicLayout-footer .footer-columns {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
 }
 
 .ProjectLayout {

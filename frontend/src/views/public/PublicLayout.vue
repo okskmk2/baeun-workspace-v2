@@ -6,10 +6,22 @@
           <img class="brand-logo" src="/favicon.svg" alt="Brand logo" />
           <span class="brand-text">{{ t("layout.default.brand") }}</span>
         </router-link>
-        <nav class="mainnav">
-          <router-link to="/">{{ t("layout.default.nav.about") }}</router-link>
+        <nav class="mainnav" :aria-label="t('layout.default.nav.primary')">
+          <router-link
+            to="/"
+            :class="{ 'is-nav-active': isHomeNav }"
+            :aria-current="isHomeNav ? 'page' : undefined"
+          >
+            {{ t("layout.default.nav.about") }}
+          </router-link>
+          <router-link
+            to="/pricing"
+            :class="{ 'is-nav-active': isPricingNav }"
+            :aria-current="isPricingNav ? 'page' : undefined"
+          >
+            {{ t("layout.default.nav.pricing") }}
+          </router-link>
           <router-link to="/open-projects">{{ t("layout.default.nav.openProjects") }}</router-link>
-          <router-link to="/store">{{ t("layout.default.nav.store") }}</router-link>
         </nav>
         <nav class="utilnav">
           <router-link v-if="!isAuthenticated" to="/signup">{{
@@ -34,14 +46,27 @@
 
     <footer class="PublicLayout-footer">
       <div class="container inner-footer">
-        <p class="footer-copyright">{{ t("layout.default.footer.copyright", { year: currentYear }) }}</p>
-
-        <div class="footer-end">
-          <nav class="footer-links" :aria-label="t('layout.default.brand')">
-            <router-link to="/pricing">{{ t("layout.default.footer.pricing") }}</router-link>
+        <div class="footer-columns">
+          <nav class="footer-col" :aria-labelledby="productHeadingId">
+            <h2 :id="productHeadingId">{{ t("layout.default.footer.product") }}</h2>
+            <router-link to="/">{{ t("layout.default.footer.about") }}</router-link>
             <router-link to="/#features">{{ t("layout.default.footer.features") }}</router-link>
-            <a href="#" @click.prevent>{{ t("layout.default.footer.contact") }}</a>
+            <router-link to="/pricing">{{ t("layout.default.footer.pricing") }}</router-link>
           </nav>
+          <nav class="footer-col" :aria-labelledby="accountHeadingId">
+            <h2 :id="accountHeadingId">{{ t("layout.default.footer.account") }}</h2>
+            <router-link to="/login">{{ t("layout.default.footer.login") }}</router-link>
+            <router-link to="/signup">{{ t("layout.default.footer.signup") }}</router-link>
+          </nav>
+          <nav class="footer-col" :aria-labelledby="billingHeadingId">
+            <h2 :id="billingHeadingId">{{ t("layout.default.footer.billingGuide") }}</h2>
+            <router-link to="/pricing">{{ t("layout.default.footer.pricing") }}</router-link>
+            <router-link to="/pricing#storage">{{ t("layout.default.footer.storageRules") }}</router-link>
+          </nav>
+        </div>
+
+        <div class="footer-bottom">
+          <p class="footer-copyright">{{ t("layout.default.footer.copyright", { year: currentYear }) }}</p>
           <LocaleSwitcher variant="footer" />
         </div>
       </div>
@@ -50,7 +75,8 @@
 </template>
 
 <script setup>
-import { computed, onMounted } from "vue";
+import { computed, onMounted, useId } from "vue";
+import { useRoute } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { useAppStore } from "../../stores/appStore";
 import ContextSwicher from "../../components/ContextSwicher.vue";
@@ -59,9 +85,17 @@ import MaterialSymbol from "../../components/MaterialSymbol.vue";
 import { clearThemeSeedFromRoot } from "../../lib/themeSeed";
 
 const { t } = useI18n();
+const route = useRoute();
 const appStore = useAppStore();
 const isAuthenticated = computed(() => Boolean(appStore.currentUser));
 const currentYear = new Date().getFullYear();
+const uid = useId();
+const productHeadingId = `${uid}-product`;
+const accountHeadingId = `${uid}-account`;
+const billingHeadingId = `${uid}-billing`;
+
+const isHomeNav = computed(() => route.path === "/");
+const isPricingNav = computed(() => route.path === "/pricing");
 
 onMounted(() => {
   if (typeof document === "undefined") return;

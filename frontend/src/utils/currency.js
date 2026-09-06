@@ -6,17 +6,27 @@ const DEFAULT_LOCALE = "en-US";
  * @param {{ currency?: string, locale?: string, maximumFractionDigits?: number }} [options]
  */
 export function formatCurrency(amount, options = {}) {
-  const { currency = DEFAULT_CURRENCY, locale = DEFAULT_LOCALE, maximumFractionDigits = 0 } = options;
+  const {
+    currency = DEFAULT_CURRENCY,
+    locale = DEFAULT_LOCALE,
+    maximumFractionDigits = 0,
+    minimumFractionDigits = 0,
+  } = options;
 
   return new Intl.NumberFormat(locale, {
     style: "currency",
     currency,
     maximumFractionDigits,
-    minimumFractionDigits: 0,
+    minimumFractionDigits,
   }).format(amount);
 }
 
-/** Monthly slot prices stay whole dollars; yearly equivalents may need cents. */
+/** Whole dollars stay whole; fractional amounts keep two cents. */
 export function formatSlotPrice(amount, options = {}) {
-  return formatCurrency(amount, { ...options, maximumFractionDigits: 2 });
+  const hasFraction = !Number.isInteger(Number(amount));
+  return formatCurrency(amount, {
+    maximumFractionDigits: 2,
+    minimumFractionDigits: hasFraction ? 2 : 0,
+    ...options,
+  });
 }

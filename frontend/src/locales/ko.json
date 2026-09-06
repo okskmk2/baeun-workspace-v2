@@ -4,73 +4,45 @@
     "cta": {
       "start": "시작하기",
       "login": "로그인",
-      "pricing": "요금 보기",
-      "noCard": "카드 없이 시작한다."
-    },
-    "nav": {
-      "features": "기능",
-      "pricing": "요금제",
-      "contact": "문의",
-      "primaryNav": "주요 메뉴",
-      "footerNav": "푸터 메뉴"
+      "pricing": "요금 보기"
     },
     "hero": {
-      "headline": "하루가 흩어져 있다.",
-      "sub": "일은 한 자리에 있지 않다.",
-      "scroll": "아래로"
-    },
-    "fragmented": {
-      "block1": "회의는 문서에, 할 일은 보드에, 말은 메신저에 있었다.\n답은 늘 어딘가에 있었지만, 어디에도 없었다.",
-      "block2": "잃은 것은 시간이 아니었다.\n머물 수 있던 눈이었다."
-    },
-    "unified": {
-      "headline": "이제, 일은 한 자리에 있다.",
-      "caption": "흩어졌던 것들이 그 자리로 돌아온다."
-    },
-    "switch": {
-      "previous": "이전",
-      "now": "이제"
-    },
-    "scenes": {
-      "channel": {
-        "title": "대화가 곧 할 일이 된다.",
-        "body": "옮겨 적지 않는다."
-      },
-      "wiki": {
-        "title": "문서는 낡지 않는다.",
-        "body": "일이 그 안에서 자란다."
-      },
-      "data": {
-        "title": "숫자는 그 자리에 산다.",
-        "body": "박제하지 않는다."
-      }
+      "headline": "문서, 할 일, 대화를 한곳에서 사용합니다.",
+      "sub": "위키, 칸반, 채널, 데이터를 프로젝트에서 함께 씁니다.",
+      "note": "사용한 만큼만 매달 결제합니다."
     },
     "features": {
+      "headline": "프로젝트에서 바로 쓰는 기능입니다.",
       "wiki": {
         "title": "위키",
-        "body": "가지를 치며 자라는 기록."
+        "body": "문서를 작성하고, 파일과 권한을 관리합니다."
       },
-      "board": {
-        "title": "작업보드",
-        "body": "한 일의 세 얼굴 — 칸반, 백로그, 간트."
+      "kanban": {
+        "title": "칸반",
+        "body": "보드, 일정, 백로그를 한 일감으로 봅니다."
       },
       "channel": {
         "title": "채널",
-        "body": "일을 떠나지 않는 말."
+        "body": "공지, 일반, 업무 대화를 나눕니다."
       },
       "data": {
         "title": "데이터",
-        "body": "문서 안에 사는 표."
+        "body": "목록과 표 구조를 관리합니다."
+      }
+    },
+    "structure": {
+      "headline": "팀 공간과 업무 공간을 나눴습니다.",
+      "workspace": {
+        "title": "워크스페이스",
+        "body": "공지, 게시판, 멤버를 관리하는 팀 공간입니다."
+      },
+      "project": {
+        "title": "프로젝트",
+        "body": "위키, 칸반, 채널, 데이터로 일하는 공간입니다."
       }
     },
     "closing": {
-      "price": "5명까지 무료. 이후엔 쓴 만큼만.",
-      "import": "기존 문서, 태스크, 대화는 임포트 도구로 그대로 옮겨온다.",
-      "trust": "문서와 대화는 AI 학습에 사용되지 않는다.",
-      "headline": "하루가 모였다.\n이제 머물 수 있다."
-    },
-    "footer": {
-      "copyright": "© {year} Baeun Workspace. All rights reserved."
+      "headline": "지금 시작할 수 있습니다."
     },
     "mock": {
       "projectName": "프로젝트",

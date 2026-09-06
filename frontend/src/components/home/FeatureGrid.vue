@@ -11,14 +11,14 @@ useReveal(rootEl, { once: true, threshold: 0.15 });
 
 const features = [
   { key: "wiki", thumb: MockThumbWiki },
-  { key: "board", thumb: MockThumbBoard },
+  { key: "kanban", thumb: MockThumbBoard },
   { key: "channel", thumb: MockThumbChannel },
   { key: "data", thumb: MockThumbData },
 ];
 </script>
 
 <template>
-  <div id="features" ref="rootEl" class="features">
+  <div ref="rootEl" class="features">
     <article v-for="feature in features" :key="feature.key" class="features__card reveal">
       <component :is="feature.thumb" variant="light" />
       <h3>{{ $t(`landing.features.${feature.key}.title`) }}</h3>
@@ -32,7 +32,6 @@ const features = [
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 20px;
-  scroll-margin-top: 80px;
 }
 
 .features__card {

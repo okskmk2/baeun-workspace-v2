@@ -6,6 +6,7 @@
         {{ line }}<br v-if="index < copy.header.subLines.length - 1" />
       </template>
     </p>
+    <router-link class="btn btn--lg" to="/signup">{{ copy.header.cta }}</router-link>
   </header>
 </template>
 
@@ -38,8 +39,7 @@ const { copy } = usePricingCopy();
 
 .pricing-header__sub {
   margin: 0;
-  max-width: 520px;
-  font-family: var(--font-serif);
+  max-width: 36em;
   font-size: var(--text-body);
   line-height: 1.85;
   color: var(--color-text-muted);

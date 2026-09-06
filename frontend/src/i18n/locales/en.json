@@ -53,8 +53,9 @@
       "brand": "Baeun Workspace",
       "nav": {
         "about": "About",
-        "store": "Store",
-        "openProjects": "Open Projects"
+        "pricing": "Pricing",
+        "openProjects": "Open Projects",
+        "primary": "Primary navigation"
       },
       "util": {
         "signup": "Sign up",
@@ -76,9 +77,15 @@
         "emptyProjects": "No projects available."
       },
       "footer": {
-        "pricing": "Pricing",
+        "product": "Product",
+        "account": "Account",
+        "billingGuide": "Billing",
+        "about": "About",
         "features": "Features",
-        "contact": "Contact",
+        "pricing": "Pricing",
+        "login": "Log in",
+        "signup": "Sign up",
+        "storageRules": "Storage",
         "copyright": "© {year} Baeun Workspace. All rights reserved."
       }
     },

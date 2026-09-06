@@ -1,0 +1,374 @@
+{
+  "meta": {
+    "title": "바은 워크스페이스 퍼블릭 홈·요금·푸터 리뉴얼",
+    "audience": "coding-agent",
+    "locale": "ko-KR",
+    "product": "바은 워크스페이스",
+    "scope_paths": ["/", "/pricing"],
+    "do_not_change_routes": ["/store", "/store/cart", "/login", "/signup", "/settings/*"]
+  },
+
+  "task": {
+    "summary": "퍼블릭 사이트의 홈페이지(/), 요금 페이지(/pricing), PublicLayout GNB와 Footer를 리뉴얼한다. 요금제와 가격 페이지는 하나의 /pricing 이다. 홈과 요금을 GNB에 둔다. 기존 Open Project 메뉴는 위치·라벨·링크·동작을 그대로 둔다.",
+    "goals": [
+      "홈에서 계정→워크스페이스→프로젝트 계층과 4도구(위키·칸반·채널·데이터)를 이해시킨다",
+      "요금 페이지에서 구독 티어 없이 슬롯 종량제(월 결제)를 이해시키고 스토어로 보낸다",
+      "GNB에서 소개(/)와 요금(/pricing)로 바로 가게 한다",
+      "Footer를 홈·요금·스토어·기능 앵커와 맞게 정리한다"
+    ],
+    "non_goals": [
+      "구독 플랜(Free/Team/Business/Enterprise) UI를 만들지 않는다",
+      "워크스페이스·프로젝트·어드민 사이트 레이아웃을 바꾸지 않는다",
+      "스토어·카트·결제 API·슬롯 단가 마스터를 새로 발명하지 않는다",
+      "Open Project 메뉴를 리네임·이동·삭제·숨기지 않는다",
+      "데이터 form/chart, 어드민 콘솔을 마케팅에 노출하지 않는다"
+    ]
+  },
+
+  "nav": {
+    "gnb": {
+      "layout": "PublicLayout.vue",
+      "required_items_in_order_hint": [
+        { "id": "brand", "label": "바은 워크스페이스", "to": "/", "keep": true },
+        { "id": "home", "label": "소개", "to": "/", "required": true, "note": "홈페이지. 기존 '소개'가 있으면 라벨 유지" },
+        { "id": "pricing", "label": "요금", "to": "/pricing", "required": true, "note": "요금제=가격 페이지. Footer에만 있던 요금제를 GNB로 올린다. '가격'과 '요금제'를 별도 메뉴로 나누지 말 것" },
+        { "id": "open_project", "label": "Open Project", "keep_exactly": true, "note": "이미 있는 Open Project 메뉴는 라벨, 순서, href, 노출 조건, 아이콘, 새 창 여부를 포함해 일체 수정하지 말 것. 코드에서 해당 항목을 찾지 못하면 다른 메뉴만 수정하고 Open Project로 추정되는 항목을 건드리지 말 것" },
+        { "id": "store", "label": "스토어", "to": "/store", "keep": true, "note": "기존 스토어 메뉴가 있으면 유지. 요금과 스토어는 별개다. 요금=이해, 스토어=구매" }
+      ],
+      "keep_as_is": [
+        "비로그인 회원가입·로그인",
+        "로그인 장바구니 /store/cart",
+        "로그인 Context Switcher",
+        "Open Project 메뉴 전체"
+      ],
+      "rules": [
+        "소개와 요금은 인증 없이 GNB에 항상 보인다",
+        "활성 상태는 / 와 /pricing 를 exact/prefix 규칙에 맞게 표시한다. /pricing은 / 의 하위처럼 하이라이트하지 말 것",
+        "요금 메뉴를 /store 로 보내지 말 것"
+      ]
+    },
+    "footer": {
+      "layout": "PublicLayout.vue",
+      "purpose": "퍼블릭 푸터를 홈·요금 IA에 맞게 리뉴얼한다. 문의 href='#' 죽은 링크는 살리지 못하면 제거하거나 비활성 텍스트로 둔다.",
+      "columns_suggested": [
+        {
+          "title": "제품",
+          "links": [
+            { "label": "소개", "to": "/" },
+            { "label": "기능", "to": "/#features" },
+            { "label": "요금", "to": "/pricing" },
+            { "label": "스토어", "to": "/store" }
+          ]
+        },
+        {
+          "title": "계정",
+          "links": [
+            { "label": "로그인", "to": "/login" },
+            { "label": "회원가입", "to": "/signup" }
+          ]
+        },
+        {
+          "title": "요금 안내",
+          "links": [
+            { "label": "슬롯 종량제", "to": "/pricing" },
+            { "label": "스토리지 규칙", "to": "/pricing#storage" }
+          ]
+        }
+      ],
+      "rules": [
+        "요금과 가격을 서로 다른 목적지로 나누지 말 것. 둘 다 /pricing",
+        "Open Project가 Footer에 이미 있으면 GNB와 동일하게 건드리지 말 것. 없으면 굳이 추가하지 말 것",
+        "카피라이트·브랜드 표기는 유지",
+        "기능 링크는 홈의 #features 섹션으로 스크롤되어야 한다"
+      ]
+    }
+  },
+
+  "pricing_model": {
+    "type": "metered_monthly_slots",
+    "forbidden": [
+      "Free/Team/Business/Enterprise 비교표",
+      "추천 플랜 배지",
+      "연간 구독 티어",
+      "플랜별로 위키·칸반·채널·데이터를 잠그는 카피"
+    ],
+    "meters": [
+      {
+        "id": "workspace",
+        "name": "워크스페이스 슬롯",
+        "unit": "조직 1개",
+        "period": "month",
+        "price": "USE_STORE_MASTER",
+        "unlocks": ["프로젝트 허브", "게시판", "랭킹", "워크스페이스 설정"],
+        "includes": "워크스페이스당 기본 스토리지 5GB"
+      },
+      {
+        "id": "project",
+        "name": "프로젝트 슬롯",
+        "unit": "프로젝트 1개",
+        "period": "month",
+        "price": "USE_STORE_MASTER",
+        "unlocks": ["위키", "칸반", "채널", "데이터"]
+      },
+      {
+        "id": "workspace_member",
+        "name": "워크스페이스 멤버 슬롯",
+        "unit": "좌석 1명",
+        "period": "month",
+        "price": "USE_STORE_MASTER",
+        "unlocks": ["해당 워크스페이스 초대·접속"],
+        "note": "계정 전역 좌석이 아니라 워크스페이스 좌석"
+      },
+      {
+        "id": "storage",
+        "name": "스토리지 슬롯",
+        "unit": "초과 1GB",
+        "period": "month",
+        "price_usd": 0.1,
+        "scope": "per_workspace",
+        "base_gb_per_workspace": 5,
+        "formula": "sum(max(0, used_gb_i - 5)) * 0.10",
+        "no_pool_across_workspaces": true
+      }
+    ],
+    "monthly_formula": "workspace_slots * workspace_unit_price + project_slots * project_unit_price + member_slots * member_unit_price + extra_gb * 0.10",
+    "storage_examples": [
+      { "workspaces": [{ "used_gb": 3.2 }], "billable_gb": 0, "storage_usd": 0 },
+      { "workspaces": [{ "used_gb": 7.4 }], "billable_gb": 2.4, "storage_usd": 0.24, "rounding_note": "소수 GB 그대로 곱한다. 구현에서 올림이 이미 있으면 그 정책을 화면에 명시" }
+    ],
+    "unit_price_source": {
+      "instruction": "워크스페이스·프로젝트·멤버 단가는 하드코딩하지 말고 기존 스토어/라이선스 카탈로그 값을 재사용한다. 값이 없으면 플레이스홀더와 '스토어에서 확인' CTA만 두고 가짜 달러를 만들지 말 것. 스토리지 $0.10/GB만 확정 숫자다."
+    },
+    "purchase_flow": {
+      "understand": "/pricing",
+      "buy": ["/store", "/store/cart"],
+      "entitlements": "/settings/plan",
+      "invoice": "/settings/billing",
+      "usage": "/workspace/:id/settings/license"
+    },
+    "copy_rules": {
+      "say": [
+        "묶음 요금제 없이 자리만큼 월 결제",
+        "워크스페이스마다 기본 5GB",
+        "넘는 용량만 1GB당 $0.10",
+        "도구 종류는 같고 자리가 있어야 공간이 열린다"
+      ],
+      "never_say": [
+        "무료 플랜 / 팀 플랜 / 비즈니스 플랜",
+        "공용 스토리지 풀",
+        "로그인하면 바로 칸반",
+        "요금제 페이지와 가격 페이지가 다릅니다"
+      ]
+    }
+  },
+
+  "pages": {
+    "home": {
+      "route": "/",
+      "view": "HomeView",
+      "keep_existing_anchors": { "features": "#features" },
+      "primary_cta": { "label": "시작하기", "to": "/signup" },
+      "secondary_cta": { "label": "요금 보기", "to": "/pricing" },
+      "sections": [
+        {
+          "id": "hero",
+          "purpose": "조직용 협업 허브 선언과 CTA",
+          "key_message": "계정 하나가 조직을 열고, 프로젝트에서 위키·칸반·채널·데이터를 잇는다.",
+          "headline_draft": "흩어진 업무를 한 워크스페이스로.",
+          "sub_draft": "조직은 워크스페이스에서, 일은 프로젝트에서.",
+          "notes": "플랜명을 넣지 말 것. 필요 시 '쓰는 자리만 월 결제' 한 줄만."
+        },
+        {
+          "id": "problem",
+          "purpose": "기존 '파편화된 하루' 문제 정의 유지",
+          "key_message": "문서·일·대화·시트·사내 소식이 툴마다 흩어진다.",
+          "headline_draft": "도구는 늘었는데, 하루는 더 쪼개졌다.",
+          "map_to_features": ["wiki", "kanban", "channel", "data", "board"]
+        },
+        {
+          "id": "unify",
+          "purpose": "기존 통합 섹션 강화",
+          "key_message": "검색이 위키·칸반·채널을 같이 찾고, 이슈가 채널에 붙고, 알림이 그 화면으로 간다.",
+          "headline_draft": "옮기지 말고, 이어 쓰세요."
+        },
+        {
+          "id": "structure",
+          "purpose": "계층과 과금 단위를 같은 그림으로",
+          "key_message": "계정은 나(결제 주체), 워크스페이스는 조직, 프로젝트는 일.",
+          "rows": [
+            { "layer": "계정", "does": "프로필·보안·결제·내 목록", "meter": "결제 주체" },
+            { "layer": "워크스페이스", "does": "허브·게시판·랭킹·멤버", "meter": "WS 슬롯, 멤버 슬롯, 스토리지" },
+            { "layer": "프로젝트", "does": "위키·칸반·채널·데이터", "meter": "프로젝트 슬롯" }
+          ]
+        },
+        {
+          "id": "features",
+          "anchor": "#features",
+          "purpose": "Footer 기능 링크 착지. 프로젝트 4도구",
+          "key_message": "프로젝트 GNB에 문서·일·대화·데이터가 같이 있다.",
+          "cards": [
+            { "name": "위키", "message": "최근 문서, 페이지·파일 트리, 권한 신청" },
+            { "name": "칸반", "message": "보드·간트·백로그·아카이브가 같은 일감" },
+            { "name": "채널", "message": "공지·일반·태스크·DM·에이전트. 일이 대화에 붙는다" },
+            { "name": "데이터", "message": "리스트와 스키마. form/chart는 준비 중이므로 카드에 넣지 말 것" }
+          ]
+        },
+        {
+          "id": "workspace_layer",
+          "purpose": "사내 마당을 프로젝트 툴과 분리",
+          "key_message": "공지·경조사·중고·Q&A·랭킹은 워크스페이스 자리로 열린다.",
+          "headline_draft": "일하는 공간과 함께하는 공간을 나눴습니다."
+        },
+        {
+          "id": "journey",
+          "purpose": "실제 착지와 약속 일치",
+          "key_message": "가입 → 승인 → /settings/workspaces → 워크스페이스 허브 → 프로젝트 위키",
+          "do_not_promise": "로그인 즉시 칸반"
+        },
+        {
+          "id": "pricing_teaser",
+          "purpose": "종량 모델만 미리 보여주고 /pricing으로",
+          "key_message": "조직·프로젝트·멤버·용량을 월 단위로 더한다.",
+          "show_numbers": ["워크스페이스당 5GB", "초과 $0.10/GB"],
+          "hide": ["플랜 3열", "추천 배지"],
+          "cta": [
+            { "label": "요금 자세히", "to": "/pricing" },
+            { "label": "슬롯 담기", "to": "/store" }
+          ],
+          "headline_draft": "묶음 요금제가 없습니다. 자리만큼 월 결제합니다."
+        },
+        {
+          "id": "close",
+          "purpose": "기존 클로징 유지",
+          "headline_draft": "다음 공지는 워크스페이스에 남기세요.",
+          "cta": [
+            { "label": "시작하기", "to": "/signup" },
+            { "label": "요금 보기", "to": "/pricing" }
+          ]
+        }
+      ]
+    },
+    "pricing": {
+      "route": "/pricing",
+      "view": "PricingView",
+      "also_known_as": ["요금제", "가격 페이지"],
+      "rule": "요금제 메뉴와 가격 페이지는 동일 라우트 /pricing 하나다. 별도 /plans 를 만들지 말 것.",
+      "primary_cta": { "label": "슬롯 스토어", "to": "/store" },
+      "secondary_cta": { "label": "시작하기", "to": "/signup" },
+      "sections": [
+        {
+          "id": "hero",
+          "purpose": "종량 선언",
+          "headline_draft": "쓰는 자리만, 매달.",
+          "sub_draft": "구독 티어 없이 슬롯으로 계산합니다. 워크스페이스마다 5GB, 초과 1GB당 $0.10."
+        },
+        {
+          "id": "meter_map",
+          "purpose": "4미터 의존 관계",
+          "key_message": "조직을 열려면 WS 슬롯, 일을 열려면 프로젝트 슬롯, 사람을 앉히려면 멤버 슬롯, 파일이 넘치면 스토리지."
+        },
+        {
+          "id": "slot_comparison",
+          "purpose": "구독 비교표 대신 슬롯 4열 비교",
+          "columns": ["workspace", "project", "workspace_member", "storage"],
+          "rows": ["한 줄 정의", "과금 주기(월)", "단가", "포함 용량", "열리는 면", "슬롯이 없을 때"]
+        },
+        {
+          "id": "storage",
+          "anchor": "#storage",
+          "purpose": "확정된 스토리지 규칙",
+          "rules": [
+            "제공·측정 단위는 워크스페이스",
+            "기본 5GB / 워크스페이스",
+            "초과 1GB당 월 $0.10",
+            "워크스페이스 간 용량을 합치거나 이전하지 않음",
+            "프로젝트 첨부는 소속 워크스페이스 합산"
+          ]
+        },
+        {
+          "id": "base_allowance",
+          "purpose": "기존 무료 한도를 종량 언어로 재진술",
+          "key_message": "시작 허용량 안에서 검증하고, 넘는 슬롯부터 청구한다. 'Free 플랜'이라고 이름 붙이지 말 것.",
+          "over_limit_ux": "생성 잠금 + 스토어 유도. 기존 데이터 삭제 카피 금지"
+        },
+        {
+          "id": "calculator",
+          "purpose": "월 견적",
+          "inputs": ["workspace_count", "project_count", "member_count", "used_gb_per_workspace"],
+          "outputs": ["slot_subtotal", "storage_subtotal", "monthly_total"],
+          "storage_calc": "sum(max(0, gb_i - 5)) * 0.10",
+          "disclaimer": "예상 금액. 결제는 스토어에서 확정.",
+          "cta": { "label": "스토어에서 담기", "to": "/store" }
+        },
+        {
+          "id": "examples",
+          "purpose": "플랜 추천 대신 장바구니 예시",
+          "rows": [
+            { "name": "한 팀", "ws": 1, "projects": 2, "members": 8, "storage": "4GB → $0" },
+            { "name": "작은 회사", "ws": 1, "projects": 6, "members": 25, "storage": "11GB → $0.60" },
+            { "name": "여러 조직", "ws": 3, "projects": 12, "members": 40, "storage": "4+6+9GB → 초과 5GB → $0.50" }
+          ]
+        },
+        {
+          "id": "billing_note",
+          "purpose": "사는 곳과 보는 곳",
+          "key_message": "이해는 /pricing, 구매는 /store, 사용량은 워크스페이스 라이선스, 영수증은 /settings/billing"
+        },
+        {
+          "id": "faq",
+          "items": [
+            "구독 플랜이 없나요? → 슬롯 월 결제입니다.",
+            "요금제와 가격이 다른 페이지인가요? → 아닙니다. /pricing 하나입니다.",
+            "멤버 슬롯은 계정 전체인가요? → 워크스페이스 좌석입니다.",
+            "5GB는 모든 조직 합산인가요? → 조직마다 5GB입니다.",
+            "용량이 남은 조직에서 다른 조직으로 넘길 수 있나요? → 없습니다.",
+            "한도를 넘으면 파일이 삭제되나요? → 삭제하지 않고 추가 생성을 잠급니다.",
+            "가입 즉시 결제하나요? → 시작 한도 안이면 아닙니다."
+          ]
+        },
+        {
+          "id": "close",
+          "cta": [
+            { "label": "슬롯 스토어", "to": "/store" },
+            { "label": "시작하기", "to": "/signup" }
+          ]
+        }
+      ]
+    }
+  },
+
+  "implementation": {
+    "likely_files": [
+      "frontend/src/layouts/PublicLayout.vue",
+      "frontend/src/views/HomeView.vue",
+      "frontend/src/views/PricingView.vue",
+      "frontend/src/routes/public.js",
+      "frontend/src/components/ContextSwicher.vue"
+    ],
+    "rules": [
+      "라우트 / 와 /pricing 은 유지. 새 요금제 라우트를 추가하지 말 것",
+      "퍼블릭 사이트 범위만 수정. WorkspaceLayout, ProjectLayout, AdminLayout, SettingsLayout 내비게이션을 바꾸지 말 것",
+      "기존 디자인 토큰·컴포넌트를 재사용. 새로운 디자인 시스템을 도입하지 말 것",
+      "카피는 한국어. 톤은 짧은 실무 문장",
+      "Open Project 관련 코드 경로를 grep으로 찾은 뒤 해당 블록은 diff에서 제외할 것",
+      "스토리지 $0.10과 5GB는 상수로 두되, 슬롯 3종 단가는 기존 store/license API가 있으면 연결",
+      "반응형: 홈 섹션과 요금 비교표는 모바일에서 세로 스택",
+      "기존 HomeView의 Hero/파편화/통합/클로징 의도를 삭제하지 말고 섹션 맵에 매핑해 확장",
+      "테스트가 있으면 PublicLayout GNB에 /pricing 링크가 보이는지, Footer /#features 가 살아 있는지 확인"
+    ],
+    "acceptance": [
+      "비로그인 GNB에 소개(/)와 요금(/pricing)이 보인다",
+      "GNB에 Open Project가 리뉴얼 전과 동일하게 남아 있다",
+      "요금 클릭 시 /pricing 만 열린다. /plans 같은 새 주소가 없다",
+      "홈 #features 가 Footer 기능 링크와 연결된다",
+      "/pricing에 구독 티어 표가 없고 슬롯 4종과 스토리지 5GB+$0.10/GB가 있다",
+      "요금 CTA 주 경로는 /store 또는 /signup 이다",
+      "푸터의 죽은 문의 링크(#)를 그대로 가짜 동작으로 남기지 않는다"
+    ]
+  },
+
+  "references": {
+    "ia": "첨부 IA.md — 퍼블릭 사이트, PublicLayout, HomeView, PricingView, 스토어 슬롯, 교차 결제 흐름",
+    "renewal_spec": "public-home-pricing-renewal.md — 섹션 목적·카피 초안·종량 공식"
+  }
+}

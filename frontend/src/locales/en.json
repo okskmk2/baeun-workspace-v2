@@ -2,75 +2,47 @@
   "landing": {
     "brand": "Baeun Workspace",
     "cta": {
-      "start": "Begin",
+      "start": "Get started",
       "login": "Log in",
-      "pricing": "See pricing",
-      "noCard": "Begin without a card."
-    },
-    "nav": {
-      "features": "Features",
-      "pricing": "Pricing",
-      "contact": "Contact",
-      "primaryNav": "Primary navigation",
-      "footerNav": "Footer navigation"
+      "pricing": "See pricing"
     },
     "hero": {
-      "headline": "The day is scattered.",
-      "sub": "The work is not in one place.",
-      "scroll": "Down"
-    },
-    "fragmented": {
-      "block1": "Meetings lived in documents, tasks on a board, talk in a messenger.\nThe answer was always somewhere, and nowhere.",
-      "block2": "What we lost was not time.\nIt was the gaze that could have stayed."
-    },
-    "unified": {
-      "headline": "Now the work is in one place.",
-      "caption": "What was scattered returns to that place."
-    },
-    "switch": {
-      "previous": "Before",
-      "now": "Now"
-    },
-    "scenes": {
-      "channel": {
-        "title": "Talk becomes a task.",
-        "body": "It is not copied over."
-      },
-      "wiki": {
-        "title": "Documents do not age.",
-        "body": "The work grows inside them."
-      },
-      "data": {
-        "title": "Numbers live where they are.",
-        "body": "Not a picture. A living table."
-      }
+      "headline": "Use documents, tasks, and conversations in one place.",
+      "sub": "Wiki, kanban, channel, and data live together in a project.",
+      "note": "You pay each month only for what you use."
     },
     "features": {
+      "headline": "These are the tools you use in a project.",
       "wiki": {
         "title": "Wiki",
-        "body": "A record that branches as it grows."
+        "body": "Write pages and manage files and permissions."
       },
-      "board": {
-        "title": "Board",
-        "body": "Three faces of one work — kanban, backlog, gantt."
+      "kanban": {
+        "title": "Kanban",
+        "body": "See the board, schedule, and backlog as one set of work."
       },
       "channel": {
         "title": "Channel",
-        "body": "Talk that does not leave the work."
+        "body": "Share notices, everyday talk, and work conversations."
       },
       "data": {
         "title": "Data",
-        "body": "Tables that live inside the page."
+        "body": "Manage lists and table structure."
+      }
+    },
+    "structure": {
+      "headline": "Team space and work space are separate.",
+      "workspace": {
+        "title": "Workspace",
+        "body": "A team space for notices, boards, and members."
+      },
+      "project": {
+        "title": "Project",
+        "body": "A work space for wiki, kanban, channel, and data."
       }
     },
     "closing": {
-      "price": "Free for five. After that, only what you use.",
-      "import": "Existing docs, tasks, and talk come over with the import tools.",
-      "trust": "Documents and conversations are not used to train AI.",
-      "headline": "The day came together.\nNow you can stay."
-    },
-    "footer": {
-      "copyright": "© {year} Baeun Workspace. All rights reserved."
+      "headline": "Get started today."
     },
     "mock": {
       "projectName": "Project",

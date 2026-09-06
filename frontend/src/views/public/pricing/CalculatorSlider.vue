@@ -62,12 +62,21 @@ const fillPercent = computed(() => {
   return ((model.value - min) / range) * 100;
 });
 
+const decimals = computed(() => {
+  const text = String(step);
+  const dot = text.indexOf(".");
+  return dot === -1 ? 0 : text.length - dot - 1;
+});
+
 const clamp = () => {
   if (Number.isNaN(model.value)) {
     model.value = min;
     return;
   }
-  model.value = Math.min(max, Math.max(min, Math.round(model.value)));
+  const factor = 10 ** decimals.value;
+  const stepped = Math.round(model.value / step) * step;
+  const clamped = Math.min(max, Math.max(min, stepped));
+  model.value = Math.round(clamped * factor) / factor;
 };
 </script>
 

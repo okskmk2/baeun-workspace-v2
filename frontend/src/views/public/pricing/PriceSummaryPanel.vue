@@ -1,14 +1,13 @@
 <template>
   <aside class="price-summary">
     <template v-if="props.isFree">
-      <p class="price-summary__free-title" aria-hidden="true">{{ copy.calculator.freeState.title }}</p>
-      <p class="price-summary__free-subtitle" aria-hidden="true">{{ copy.calculator.freeState.subtitle }}</p>
-      <p class="sr-only" aria-live="polite" aria-atomic="true">
-        {{ copy.calculator.freeState.title }} {{ copy.calculator.freeState.subtitle }}
+      <p class="price-summary__free-title" aria-hidden="true">{{ copy.calculator.withinAllowance.title }}</p>
+      <p class="price-summary__free-subtitle" aria-hidden="true">
+        {{ copy.calculator.withinAllowance.subtitle }}
       </p>
-      <router-link class="btn btn--lg price-summary__cta" to="/signup">
-        {{ copy.calculator.freeState.cta }}
-      </router-link>
+      <p class="sr-only" aria-live="polite" aria-atomic="true">
+        {{ copy.calculator.withinAllowance.title }} {{ copy.calculator.withinAllowance.subtitle }}
+      </p>
     </template>
 
     <template v-else>
@@ -23,47 +22,41 @@
           {{ stableFormattedAmount }} {{ copy.calculator.perMonthSuffix }}
         </span>
       </div>
-      <p v-if="props.billingCycle === 'yearly'" class="price-summary__yearly-note">
-        {{ yearlyNoteText }}
-      </p>
-
-      <dl class="price-summary__breakdown">
-        <template v-for="row in props.rows" :key="row.key">
-          <dt class="price-summary__row-label">
-            <span>{{ row.label }}</span>
-            <span class="price-summary__row-detail">{{ row.detail }}</span>
-          </dt>
-          <dd class="price-summary__row-amount">{{ formatRowAmount(row.amount) }}</dd>
-        </template>
-
-        <dt class="price-summary__row-label price-summary__row-label--total">
-          {{ copy.calculator.breakdown.totalLabel }}
-        </dt>
-        <dd class="price-summary__row-amount price-summary__row-amount--total">
-          {{ formattedAmount }} {{ copy.calculator.perMonthSuffix }}
-        </dd>
-      </dl>
-
-      <router-link class="btn btn--lg price-summary__cta" to="/signup">
-        {{ copy.calculator.paidCta }}
-      </router-link>
     </template>
+
+    <dl class="price-summary__breakdown">
+      <template v-for="row in props.rows" :key="row.key">
+        <dt class="price-summary__row-label">
+          <span>{{ row.label }}</span>
+          <span class="price-summary__row-detail">{{ row.detail }}</span>
+        </dt>
+        <dd class="price-summary__row-amount">{{ formatSlotPrice(row.amount) }}</dd>
+      </template>
+
+      <dt class="price-summary__row-label price-summary__row-label--total">
+        {{ copy.calculator.breakdown.totalLabel }}
+      </dt>
+      <dd class="price-summary__row-amount price-summary__row-amount--total">
+        {{ stableFormattedAmount }} {{ copy.calculator.perMonthSuffix }}
+      </dd>
+    </dl>
+
+    <router-link class="btn btn--lg price-summary__cta" to="/signup">
+      {{ copy.calculator.cta }}
+    </router-link>
   </aside>
 </template>
 
 <script setup>
 import { computed, onBeforeUnmount, ref, watch } from "vue";
-import { YEARLY_DISCOUNT } from "../../../constants/pricing";
 import { usePricingCopy } from "../../../composables/usePricingCopy";
 import { formatSlotPrice } from "../../../utils/currency";
 
 const { copy } = usePricingCopy();
 
 const props = defineProps({
-  billingCycle: { type: String, required: true },
   isFree: { type: Boolean, required: true },
   primaryTotal: { type: Number, required: true },
-  yearlyTotal: { type: Number, default: 0 },
   rows: { type: Array, default: () => [] },
   showTransitionNotice: { type: Boolean, default: false },
 });
@@ -114,14 +107,8 @@ onBeforeUnmount(() => {
   if (rafId !== null) cancelAnimationFrame(rafId);
 });
 
-const formatRowAmount = (amount) => {
-  const value = props.billingCycle === "yearly" ? amount * (1 - YEARLY_DISCOUNT) : amount;
-  return formatSlotPrice(value);
-};
-
 const formattedAmount = computed(() => formatSlotPrice(displayedAmount.value));
 const stableFormattedAmount = computed(() => formatSlotPrice(props.primaryTotal));
-const yearlyNoteText = computed(() => copy.value.calculator.yearlyNote(formatSlotPrice(props.yearlyTotal)));
 </script>
 
 <style scoped>
@@ -151,7 +138,7 @@ const yearlyNoteText = computed(() => copy.value.calculator.yearlyNote(formatSlo
 .price-summary__free-title {
   margin: 0;
   font-family: var(--font-serif);
-  font-size: var(--text-price);
+  font-size: var(--text-h2);
   font-weight: 700;
   color: var(--color-text);
 }
@@ -187,13 +174,6 @@ const yearlyNoteText = computed(() => copy.value.calculator.yearlyNote(formatSlo
 .price-summary__period {
   font-size: var(--text-body);
   color: var(--color-text-muted);
-}
-
-.price-summary__yearly-note {
-  margin: 0;
-  font-size: var(--text-caption);
-  color: var(--color-text-muted);
-  font-variant-numeric: tabular-nums;
 }
 
 .price-summary__breakdown {

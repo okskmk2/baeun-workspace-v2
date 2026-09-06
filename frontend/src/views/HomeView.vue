@@ -1,15 +1,15 @@
 <script setup>
 import SectionHero from "../components/home/SectionHero.vue";
-import SectionFragmented from "../components/home/SectionFragmented.vue";
-import SectionUnified from "../components/home/SectionUnified.vue";
+import SectionFeatures from "../components/home/SectionFeatures.vue";
+import SectionStructure from "../components/home/SectionStructure.vue";
 import SectionClosing from "../components/home/SectionClosing.vue";
 </script>
 
 <template>
   <main class="landing">
     <SectionHero />
-    <SectionFragmented />
-    <SectionUnified />
+    <SectionFeatures />
+    <SectionStructure />
     <SectionClosing />
   </main>
 </template>

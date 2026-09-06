@@ -15,15 +15,11 @@ useReveal(rootEl, { once: true, threshold: 0.2 });
           <router-link class="btn btn--lg" to="/signup">
             {{ $t("landing.cta.start") }}
           </router-link>
+          <router-link class="btn btn--lg btn--secondary" to="/pricing">
+            {{ $t("landing.cta.pricing") }}
+          </router-link>
         </div>
       </div>
-
-      <p class="closing__price reveal">
-        {{ $t("landing.closing.price") }}
-        <router-link class="closing__link" to="/pricing">
-          {{ $t("landing.cta.pricing") }}
-        </router-link>
-      </p>
     </div>
   </section>
 </template>
@@ -41,28 +37,6 @@ useReveal(rootEl, { once: true, threshold: 0.2 });
   gap: 72px;
   max-width: 40rem;
   text-align: center;
-}
-
-.closing__price {
-  margin: 0;
-  color: var(--color-muted);
-  font-size: 0.875rem;
-  line-height: 1.7;
-}
-
-.closing__link {
-  margin-left: 0.6em;
-  color: inherit;
-  font-size: inherit;
-  font-weight: 500;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-  text-decoration-color: color-mix(in srgb, currentColor 35%, transparent);
-}
-
-.closing__link:hover {
-  color: var(--color-fg);
-  text-decoration-color: currentColor;
 }
 
 .closing__end {
@@ -84,8 +58,10 @@ useReveal(rootEl, { once: true, threshold: 0.2 });
 
 .closing__cta {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
   align-items: center;
+  justify-content: center;
+  gap: 12px;
 }
 
 @media (max-width: 767px) {
@@ -99,6 +75,16 @@ useReveal(rootEl, { once: true, threshold: 0.2 });
 
   .closing__end {
     gap: 28px;
+  }
+
+  .closing__cta {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .closing__cta .btn {
+    width: 100%;
+    max-width: 280px;
   }
 }
 </style>
