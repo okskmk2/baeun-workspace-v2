@@ -973,8 +973,6 @@
       "actions": {
         "backToKanban": "칸반으로 돌아가기",
         "backToBacklog": "백로그로 돌아가기",
-        "enterChat": "채팅방 입장",
-        "enteringChat": "입장 중...",
         "edit": "편집",
         "save": "저장",
         "saving": "저장 중...",
@@ -985,7 +983,6 @@
       "status": {
         "loading": "불러오는 중...",
         "errorLoad": "이슈를 불러오지 못했습니다.",
-        "errorEnterChat": "이슈 채팅방에 입장하지 못했습니다.",
         "errorUpdate": "이슈를 업데이트하지 못했습니다.",
         "errorDelete": "이슈를 삭제하지 못했습니다."
       },
@@ -1022,6 +1019,13 @@
       },
       "confirm": {
         "delete": "이 이슈를 삭제할까요?"
+      },
+      "chat": {
+        "title": "작업 채팅",
+        "loading": "채팅방을 불러오는 중...",
+        "error": "채팅방을 열지 못했습니다.",
+        "retry": "다시 시도",
+        "openInMessenger": "메신저에서 열기"
       },
       "related": {
         "errorLoad": "관련 멤버를 불러오지 못했습니다.",

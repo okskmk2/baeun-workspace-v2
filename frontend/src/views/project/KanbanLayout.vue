@@ -38,7 +38,7 @@
         </router-link>
       </div>
     </aside>
-    <main>
+    <main :class="{ 'is-task-detail': isTaskDetailRoute }">
       <router-view />
     </main>
   </div>
@@ -75,6 +75,7 @@ const errorMessage = ref("");
 const isModalOpen = ref(false);
 
 const projectId = computed(() => route.params.projectId);
+const isTaskDetailRoute = computed(() => Boolean(route.params.taskId));
 const archivePath = computed(() => `/project/${projectId.value}/kanban/archive`);
 
 const fetchKanbans = async () => {
@@ -168,6 +169,19 @@ watch(projectId, fetchKanbans);
 <style scoped>
 .KanbanLayout main {
   padding: 18px 24px 3rem;
+}
+
+.KanbanLayout main.is-task-detail {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding-bottom: 18px;
+}
+
+@media (max-width: 900px) {
+  .KanbanLayout main.is-task-detail {
+    overflow: auto;
+  }
 }
 </style>
 

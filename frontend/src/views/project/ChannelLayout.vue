@@ -197,6 +197,7 @@ watch(projectId, fetchRooms);
   padding-bottom: 2rem;
   display: flex;
   flex-direction: column;
+  min-height: 0;
 }
 
 .layout-actions {

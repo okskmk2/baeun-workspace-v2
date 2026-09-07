@@ -1,5 +1,6 @@
 button {
   font-family: inherit;
+  white-space: nowrap;
 }
 
 .btn {

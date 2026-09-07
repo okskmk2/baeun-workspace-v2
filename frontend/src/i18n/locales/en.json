@@ -973,8 +973,6 @@
       "actions": {
         "backToKanban": "Back to board",
         "backToBacklog": "Back to backlog",
-        "enterChat": "Enter chat room",
-        "enteringChat": "Entering...",
         "edit": "Edit",
         "save": "Save",
         "saving": "Saving...",
@@ -985,7 +983,6 @@
       "status": {
         "loading": "Loading...",
         "errorLoad": "Failed to load issue.",
-        "errorEnterChat": "Failed to enter issue chat room.",
         "errorUpdate": "Failed to update issue.",
         "errorDelete": "Failed to delete issue."
       },
@@ -1022,6 +1019,13 @@
       },
       "confirm": {
         "delete": "Delete this issue?"
+      },
+      "chat": {
+        "title": "Task chat",
+        "loading": "Loading chat...",
+        "error": "Failed to open chat.",
+        "retry": "Retry",
+        "openInMessenger": "Open in messenger"
       },
       "related": {
         "errorLoad": "Failed to load related members.",

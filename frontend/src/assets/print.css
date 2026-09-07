@@ -14,4 +14,8 @@
   .ProjectLayout .LnbLayout > main {
     overflow: visible;
   }
+
+  .task-chat {
+    display: none !important;
+  }
 }
