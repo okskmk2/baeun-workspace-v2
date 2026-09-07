@@ -297,10 +297,20 @@ const savePage = async () => {
   }
 };
 
-const handleSaveShortcut = (event) => {
+const handleKeyboardShortcut = (event) => {
   if (event.repeat) return;
   if (!(event.ctrlKey || event.metaKey)) return;
-  if (String(event.key || "").toLowerCase() !== "s") return;
+
+  const key = String(event.key || "").toLowerCase();
+
+  if (key === "e") {
+    if (isEditing.value || !canEdit.value) return;
+    event.preventDefault();
+    startEdit();
+    return;
+  }
+
+  if (key !== "s") return;
   if (!isEditing.value) return;
 
   event.preventDefault();
@@ -455,10 +465,10 @@ const deletePage = async () => {
 
 onMounted(fetchPage);
 onMounted(() => {
-  window.addEventListener("keydown", handleSaveShortcut);
+  window.addEventListener("keydown", handleKeyboardShortcut);
 });
 onBeforeUnmount(() => {
-  window.removeEventListener("keydown", handleSaveShortcut);
+  window.removeEventListener("keydown", handleKeyboardShortcut);
 });
 watch(pageId, fetchPage);
 watch(projectId, fetchPage);

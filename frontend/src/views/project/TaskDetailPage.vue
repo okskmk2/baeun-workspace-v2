@@ -522,10 +522,20 @@ const saveTask = async () => {
   }
 };
 
-const handleSaveShortcut = (event) => {
+const handleKeyboardShortcut = (event) => {
   if (event.repeat) return;
   if (!(event.ctrlKey || event.metaKey)) return;
-  if (String(event.key || "").toLowerCase() !== "s") return;
+
+  const key = String(event.key || "").toLowerCase();
+
+  if (key === "e") {
+    if (isEditing.value) return;
+    event.preventDefault();
+    startEditing();
+    return;
+  }
+
+  if (key !== "s") return;
   if (!isEditing.value) return;
 
   event.preventDefault();
@@ -609,10 +619,10 @@ const fetchTaskMembers = async (options = {}) => {
 
 onMounted(fetchTaskMembers);
 onMounted(() => {
-  window.addEventListener("keydown", handleSaveShortcut);
+  window.addEventListener("keydown", handleKeyboardShortcut);
 });
 onBeforeUnmount(() => {
-  window.removeEventListener("keydown", handleSaveShortcut);
+  window.removeEventListener("keydown", handleKeyboardShortcut);
 });
 watch(taskId, fetchTaskMembers);
 
