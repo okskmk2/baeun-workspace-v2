@@ -599,6 +599,30 @@
         "count": "-"
       }
     },
+    "settings": {
+      "actions": {
+        "delete": "Delete Workspace",
+        "deleting": "Deleting...",
+        "cancel": "Cancel"
+      },
+      "danger": {
+        "title": "Danger zone",
+        "description": "Deleting this workspace permanently removes related projects, members, boards, and other data.",
+        "ownerOnly": "Only the workspace owner can delete this workspace.",
+        "defaultBlocked": "The default personal workspace cannot be deleted."
+      },
+      "deleteModal": {
+        "title": "Delete Workspace",
+        "description": "Are you sure you want to delete '{name}'?",
+        "warning": "This action cannot be undone."
+      },
+      "status": {
+        "errorDelete": "Failed to delete workspace."
+      },
+      "toast": {
+        "deleted": "Workspace deleted."
+      }
+    },
     "license": {
       "header": {
         "title": "Workspace License Center",

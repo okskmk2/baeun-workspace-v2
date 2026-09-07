@@ -144,6 +144,54 @@
     </div>
   </form>
 
+  <DangerZone
+    :title="t('workspace.settings.danger.title')"
+    :description="dangerDescription"
+  >
+    <template #actions>
+      <button
+        type="button"
+        class="btn btn--danger btn--with-icon"
+        :disabled="!canDeleteWorkspace || isDeleting"
+        @click="openDeleteModal"
+      >
+        <MaterialSymbol name="delete" :size="16" alt="" />
+        {{ isDeleting ? t("workspace.settings.actions.deleting") : t("workspace.settings.actions.delete") }}
+      </button>
+    </template>
+  </DangerZone>
+
+  <BaseModal
+    :open="isDeleteModalOpen"
+    :title="t('workspace.settings.deleteModal.title')"
+    :close-on-backdrop="!isDeleting"
+    @close="closeDeleteModal"
+  >
+    <div class="delete-modal-body">
+      <p>{{ t("workspace.settings.deleteModal.description", { name: nameForm || workspaceName || "-" }) }}</p>
+      <p class="delete-warning">{{ t("workspace.settings.deleteModal.warning") }}</p>
+      <div class="modal-actions">
+        <button
+          type="button"
+          class="btn btn--secondary"
+          @click="closeDeleteModal"
+          :disabled="isDeleting"
+        >
+          {{ t("workspace.settings.actions.cancel") }}
+        </button>
+        <button
+          type="button"
+          class="btn btn--danger btn--with-icon"
+          @click="confirmDeleteWorkspace"
+          :disabled="isDeleting"
+        >
+          <MaterialSymbol name="delete" :size="16" alt="" />
+          {{ isDeleting ? t("workspace.settings.actions.deleting") : t("workspace.settings.actions.delete") }}
+        </button>
+      </div>
+    </div>
+  </BaseModal>
+
   <ThemeBuilderModal
     :open="isThemeBuilderOpen"
     :initial-background="form.customBackground"
@@ -159,8 +207,11 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import Avatar from "../../components/Avatar.vue";
+import BaseModal from "../../components/BaseModal.vue";
+import DangerZone from "../../components/DangerZone.vue";
+import MaterialSymbol from "../../components/MaterialSymbol.vue";
 import ToggleSwitch from "../../components/ToggleSwitch.vue";
 import ThemeBuilderModal from "../../components/modals/ThemeBuilderModal.vue";
 import { addToast } from "../../lib/toast";
@@ -169,6 +220,7 @@ import { useAppStore } from "../../stores/appStore";
 
 const { t } = useI18n();
 const route = useRoute();
+const router = useRouter();
 const workspaceStore = useWorkspaceStore();
 const appStore = useAppStore();
 
@@ -178,6 +230,17 @@ const workspaceName = computed(() => workspace.value?.name || "");
 const workspaceImageUrl = computed(() => String(workspace.value?.img_url || ""));
 const workspaceRoleUpper = computed(() => String(workspace.value?.role_name || "").toUpperCase());
 const canManageWorkspace = computed(() => ["OWNER", "ADMIN"].includes(workspaceRoleUpper.value));
+const isDefaultWorkspace = computed(() => Boolean(workspace.value?.is_default));
+const canDeleteWorkspace = computed(
+  () => workspaceRoleUpper.value === "OWNER" && !isDefaultWorkspace.value
+);
+const dangerDescription = computed(() => {
+  if (isDefaultWorkspace.value) return t("workspace.settings.danger.defaultBlocked");
+  if (workspaceRoleUpper.value && workspaceRoleUpper.value !== "OWNER") {
+    return t("workspace.settings.danger.ownerOnly");
+  }
+  return t("workspace.settings.danger.description");
+});
 
 const workspaceImageFallback = computed(() => {
   const name = workspaceName.value;
@@ -198,6 +261,8 @@ const isRemovingWorkspaceImage = ref(false);
 const workspaceImageError = ref("");
 const workspaceImageSuccess = ref("");
 const isThemeBuilderOpen = ref(false);
+const isDeleting = ref(false);
+const isDeleteModalOpen = ref(false);
 const form = ref({
   themeId: "indigo",
   customBackground: "#1f2937",
@@ -355,6 +420,36 @@ const saveSettings = async () => {
   }
 };
 
+const openDeleteModal = () => {
+  if (!canDeleteWorkspace.value || isDeleting.value) return;
+  isDeleteModalOpen.value = true;
+};
+
+const closeDeleteModal = () => {
+  if (isDeleting.value) return;
+  isDeleteModalOpen.value = false;
+};
+
+const confirmDeleteWorkspace = async () => {
+  if (!workspaceId.value || !canDeleteWorkspace.value) return;
+
+  isDeleting.value = true;
+  errorMessage.value = "";
+
+  try {
+    await workspaceStore.deleteWorkspace(workspaceId.value);
+    addToast({ message: t("workspace.settings.toast.deleted"), type: "success" });
+    isDeleteModalOpen.value = false;
+    await router.push("/settings/workspaces");
+  } catch (error) {
+    const message = error?.response?.data?.message || t("workspace.settings.status.errorDelete");
+    errorMessage.value = message;
+    addToast({ message, type: "error" });
+  } finally {
+    isDeleting.value = false;
+  }
+};
+
 const onThemeBuilderApply = ({ background, foreground, seedH, seedS, seedL }) => {
   form.value.customBackground = background;
   form.value.customForeground = foreground;
@@ -484,6 +579,12 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   gap: 16px;
+}
+
+.btn--with-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .settings-form {
@@ -631,5 +732,20 @@ onBeforeUnmount(() => {
 
 .workspace-image-input {
   display: none;
+}
+
+.delete-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.delete-modal-body p {
+  margin: 0;
+}
+
+.delete-warning {
+  color: var(--color-danger);
+  font-size: 13px;
 }
 </style>

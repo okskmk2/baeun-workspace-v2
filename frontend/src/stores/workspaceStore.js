@@ -189,11 +189,17 @@ export const useWorkspaceStore = defineStore("workspace", {
     async deleteWorkspace(workspaceId) {
       if (!workspaceId) return;
       await api.delete(`/workspaces/${workspaceId}`);
-      this.workspaces = this.workspaces.filter((item) => item.id !== workspaceId);
-      delete this.workspaceById[workspaceId];
-      delete this.projectsByWorkspace[workspaceId];
-      delete this.pagedProjectsByWorkspace[workspaceId];
-      delete this.projectPaginationByWorkspace[workspaceId];
+      const id = String(workspaceId);
+      this.workspaces = this.workspaces.filter((item) => String(item.id) !== id);
+      delete this.workspaceById[id];
+      delete this.projectsByWorkspace[id];
+      delete this.pagedProjectsByWorkspace[id];
+      delete this.projectPaginationByWorkspace[id];
+      Object.keys(this.projectById).forEach((projectId) => {
+        if (String(this.projectById[projectId]?.workspace_id) === id) {
+          delete this.projectById[projectId];
+        }
+      });
     },
     async createProject(workspaceId, name) {
       const res = await api.post("/projects", {

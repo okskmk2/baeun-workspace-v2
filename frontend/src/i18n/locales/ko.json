@@ -599,6 +599,30 @@
         "count": "-"
       }
     },
+    "settings": {
+      "actions": {
+        "delete": "워크스페이스 삭제",
+        "deleting": "삭제 중...",
+        "cancel": "취소"
+      },
+      "danger": {
+        "title": "주의 구역",
+        "description": "워크스페이스를 삭제하면 프로젝트, 구성원, 보드를 포함한 관련 데이터가 제거되며 복구할 수 없습니다.",
+        "ownerOnly": "워크스페이스 소유자만 삭제할 수 있습니다.",
+        "defaultBlocked": "기본 개인 워크스페이스는 삭제할 수 없습니다."
+      },
+      "deleteModal": {
+        "title": "워크스페이스 삭제",
+        "description": "정말 '{name}' 워크스페이스를 삭제하시겠습니까?",
+        "warning": "이 작업은 되돌릴 수 없습니다."
+      },
+      "status": {
+        "errorDelete": "워크스페이스를 삭제하지 못했습니다."
+      },
+      "toast": {
+        "deleted": "워크스페이스가 삭제되었습니다."
+      }
+    },
     "license": {
       "header": {
         "title": "워크스페이스 라이선스 센터",
