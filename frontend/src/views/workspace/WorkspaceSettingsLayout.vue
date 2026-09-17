@@ -6,6 +6,7 @@
           <router-link :to="generalTo">기본 정보</router-link>
           <router-link :to="membersTo">멤버 관리</router-link>
           <router-link :to="projectsTo">프로젝트 관리</router-link>
+          <router-link :to="assetsTo">워크스페이스 자산</router-link>
           <router-link :to="licenseTo">라이선스</router-link>
           <router-link :to="billingTo">결제 관리</router-link>
         </nav>
@@ -27,6 +28,7 @@ const workspaceId = computed(() => route.params.workspaceId);
 const generalTo = computed(() => `/workspace/${workspaceId.value}/settings/general`);
 const membersTo = computed(() => `/workspace/${workspaceId.value}/settings/members`);
 const projectsTo = computed(() => `/workspace/${workspaceId.value}/settings/projects`);
+const assetsTo = computed(() => `/workspace/${workspaceId.value}/settings/assets`);
 const licenseTo = computed(() => `/workspace/${workspaceId.value}/settings/license`);
 const billingTo = computed(() => `/workspace/${workspaceId.value}/settings/billing`);
 </script>

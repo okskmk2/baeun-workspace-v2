@@ -429,6 +429,186 @@ router.delete("/:projectId/members/:memberId", isAuth, async (req, res) => {
 
 /**
  * @swagger
+ * /api/projects/{projectId}/transfer:
+ *   post:
+ *     summary: Transfer project to another workspace
+ *     description: >
+ *       Moves a project to a different workspace. Only the project OWNER may initiate,
+ *       and the requester must be OWNER or ADMIN of the target workspace. All membership
+ *       on the project and its pages/kanbans/channels is reset to the requester as OWNER.
+ *     tags:
+ *       - Project
+ *     parameters:
+ *       - in: path
+ *         name: projectId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               target_workspace_id:
+ *                 type: integer
+ *             required:
+ *               - target_workspace_id
+ *     responses:
+ *       200:
+ *         $ref: "#/components/responses/Success200Message"
+ *       400:
+ *         $ref: "#/components/responses/ErrorResponse"
+ *       403:
+ *         $ref: "#/components/responses/ErrorResponse"
+ *       404:
+ *         $ref: "#/components/responses/ErrorResponse"
+ *       402:
+ *         $ref: "#/components/responses/ErrorResponse"
+ *       500:
+ *         $ref: "#/components/responses/ErrorResponse"
+ */
+router.post("/:projectId/transfer", isAuth, async (req, res) => {
+  const { projectId } = req.params;
+  const targetWorkspaceId = Number(req.body.target_workspace_id);
+  const userId = req.session.userId;
+
+  if (!Number.isInteger(targetWorkspaceId) || targetWorkspaceId <= 0) {
+    return res.status(400).json({ name: "BadRequest", message: "target_workspace_id is required." });
+  }
+
+  const client = await pool.connect();
+
+  try {
+    const projectRes = await client.query("SELECT id, workspace_id FROM project WHERE id = $1", [
+      projectId,
+    ]);
+    const project = projectRes.rows[0];
+    if (!project) {
+      return res.status(404).json({ name: "NotFound", message: "Project not found." });
+    }
+
+    if (String(project.workspace_id) === String(targetWorkspaceId)) {
+      return res
+        .status(400)
+        .json({ name: "BadRequest", message: "Project already belongs to the target workspace." });
+    }
+
+    const ownerCheck = await client.query(
+      "SELECT role_name FROM project_member WHERE project_id = $1 AND member_id = $2",
+      [projectId, userId]
+    );
+    if (!ownerCheck.rows[0] || ownerCheck.rows[0].role_name !== "OWNER") {
+      return res.status(403).json({ name: "Forbidden", message: "Only the project OWNER can transfer it." });
+    }
+
+    const targetRoleCheck = await client.query(
+      "SELECT role_name FROM workspace_member WHERE workspace_id = $1 AND member_id = $2",
+      [targetWorkspaceId, userId]
+    );
+    if (!targetRoleCheck.rows[0] || !["OWNER", "ADMIN"].includes(targetRoleCheck.rows[0].role_name)) {
+      return res
+        .status(403)
+        .json({ name: "Forbidden", message: "You must be OWNER or ADMIN of the target workspace." });
+    }
+
+    const targetWorkspaceRes = await client.query("SELECT is_public FROM workspace WHERE id = $1", [
+      targetWorkspaceId,
+    ]);
+    if (!targetWorkspaceRes.rows[0]) {
+      return res.status(404).json({ name: "NotFound", message: "Target workspace not found." });
+    }
+
+    const projectSlots = await getWorkspaceResourceSlots(client, targetWorkspaceId, "PROJECT");
+    if (projectSlots.remaining < 1) {
+      return sendSlotExhausted(res, "PROJECT", projectSlots, targetWorkspaceId);
+    }
+
+    await client.query("BEGIN");
+
+    const isTargetPublic = Boolean(targetWorkspaceRes.rows[0].is_public);
+
+    await client.query(
+      "UPDATE project SET workspace_id = $1, is_public = (is_public AND $2) WHERE id = $3",
+      [targetWorkspaceId, isTargetPublic, projectId]
+    );
+
+    // data_table stores workspace_id separately from project_id, so it must follow the project too.
+    // Workspace assets promoted from this project are shared workspace-wide, so they stay behind
+    // (detached from the project) instead of moving with it.
+    await client.query(
+      "UPDATE data_table SET project_id = NULL WHERE project_id = $1 AND is_asset = true",
+      [projectId]
+    );
+    await client.query(
+      "UPDATE data_table SET workspace_id = $1 WHERE project_id = $2 AND is_asset = false",
+      [targetWorkspaceId, projectId]
+    );
+
+    // Reset membership at every level of the project so it starts clean in the new workspace.
+    await client.query("DELETE FROM project_member WHERE project_id = $1 AND member_id <> $2", [
+      projectId,
+      userId,
+    ]);
+    await client.query(
+      "UPDATE project_member SET role_name = 'OWNER' WHERE project_id = $1 AND member_id = $2",
+      [projectId, userId]
+    );
+
+    await client.query(
+      `DELETE FROM page_member
+       WHERE page_id IN (SELECT id FROM page WHERE project_id = $1) AND member_id <> $2`,
+      [projectId, userId]
+    );
+    await client.query(
+      `INSERT INTO page_member (page_id, member_id, role_name)
+       SELECT id, $2, 'OWNER' FROM page WHERE project_id = $1
+       ON CONFLICT (page_id, member_id) DO UPDATE SET role_name = 'OWNER'`,
+      [projectId, userId]
+    );
+
+    await client.query(
+      `DELETE FROM kanban_member
+       WHERE kanban_id IN (SELECT id FROM kanban WHERE project_id = $1) AND member_id <> $2`,
+      [projectId, userId]
+    );
+    await client.query(
+      `INSERT INTO kanban_member (kanban_id, member_id, role_name)
+       SELECT id, $2, 'OWNER' FROM kanban WHERE project_id = $1
+       ON CONFLICT (kanban_id, member_id) DO UPDATE SET role_name = 'OWNER'`,
+      [projectId, userId]
+    );
+
+    await client.query(
+      `DELETE FROM channel_member
+       WHERE channel_id IN (SELECT id FROM channel WHERE project_id = $1) AND member_id <> $2`,
+      [projectId, userId]
+    );
+    await client.query(
+      `INSERT INTO channel_member (channel_id, member_id, role_name)
+       SELECT id, $2, 'OWNER' FROM channel WHERE project_id = $1
+       ON CONFLICT (channel_id, member_id) DO UPDATE SET role_name = 'OWNER'`,
+      [projectId, userId]
+    );
+
+    await client.query("COMMIT");
+
+    res.json({ message: "Project transferred.", workspace_id: targetWorkspaceId });
+  } catch (error) {
+    await client.query("ROLLBACK");
+    logger.error("Project transfer error", {
+      err: error?.message,
+      stack: error?.stack,
+    });
+    res.status(500).json({ name: "InternalServerError", message: error.message });
+  } finally {
+    client.release();
+  }
+});
+
+/**
+ * @swagger
  * /api/projects/{projectId}:
  *   get:
  *     summary: Get project detail

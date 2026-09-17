@@ -101,6 +101,7 @@ const syncColumnsToDetail = (store, key, columns) => {
 export const useDataStore = defineStore("data", {
   state: () => ({
     tablesByProject: {},
+    assetsByWorkspace: {},
     tableDetailByKey: {},
     rowsByKey: {},
     columnsByKey: {},
@@ -128,6 +129,9 @@ export const useDataStore = defineStore("data", {
       return (
         this.getAllTables(projectId).find((table) => String(table.id) === String(tableId)) || null
       );
+    },
+    getWorkspaceAssets(workspaceId) {
+      return this.assetsByWorkspace[workspaceId] || [];
     },
     hydratePrototypes(projectId) {
       return ensurePrototypes(this, projectId);
@@ -297,6 +301,19 @@ export const useDataStore = defineStore("data", {
         };
         this.tablesByProject[projectId] = payload;
         return payload;
+      } finally {
+        this.setLoading(key, false);
+      }
+    },
+    async fetchWorkspaceAssets(workspaceId) {
+      if (!workspaceId) return [];
+      const key = `workspace-assets:${workspaceId}`;
+      this.setLoading(key, true);
+      try {
+        const res = await api.get(`/data/workspaces/${workspaceId}/assets`);
+        const assets = Array.isArray(res.data) ? res.data : [];
+        this.assetsByWorkspace[workspaceId] = assets;
+        return assets;
       } finally {
         this.setLoading(key, false);
       }

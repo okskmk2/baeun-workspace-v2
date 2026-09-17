@@ -300,7 +300,9 @@
         "saving": "Saving...",
         "delete": "Delete Project",
         "deleting": "Deleting...",
-        "cancel": "Cancel"
+        "cancel": "Cancel",
+        "transfer": "Move to another workspace",
+        "transferring": "Moving..."
       },
       "danger": {
         "title": "Danger zone",
@@ -311,13 +313,24 @@
         "description": "Are you sure you want to delete '{name}'?",
         "warning": "This action cannot be undone."
       },
+      "transferModal": {
+        "title": "Move to another workspace",
+        "description": "You can only move this project to a workspace where you are OWNER or ADMIN.",
+        "loading": "Loading workspaces...",
+        "empty": "No workspaces available to move to.",
+        "slotRemaining": "{remaining}/{granted} remaining",
+        "warning": "Moving resets all membership on the project, wiki, kanban, and channels except you, and makes you the OWNER of each.",
+        "confirmLabel": "Type the project name '{name}' to continue.",
+        "errorTransfer": "Failed to move the project."
+      },
       "validation": {
         "nameRequired": "Please enter a project name.",
         "themeRequired": "Please select a theme."
       },
       "toast": {
         "updated": "Project settings updated.",
-        "deleted": "Project deleted."
+        "deleted": "Project deleted.",
+        "transferred": "Project moved."
       }
     },
     "member": {
