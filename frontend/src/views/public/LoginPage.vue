@@ -2,69 +2,88 @@
   <div class="login">
     <header class="login__header">
       <h1>{{ t("auth.login.title") }}</h1>
-      <p>{{ t("auth.login.subtitle") }}</p>
+      <p>{{ passkeyAvailable ? t("auth.login.subtitlePasskey") : t("auth.login.subtitle") }}</p>
     </header>
 
-    <form class="login__form" @submit.prevent="onSubmit">
-      <div class="login__field">
-        <label for="email">{{ t("auth.login.fields.email.label") }}</label>
-        <input
-          id="email"
-          v-model.trim="email"
-          type="email"
-          autocomplete="username webauthn"
-          placeholder="name@company.com"
-        />
-        <p v-if="errors.email" class="login__error">{{ errors.email }}</p>
-      </div>
-
-      <div class="login__field">
-        <label for="password">{{ t("auth.login.fields.password.label") }}</label>
-        <input
-          id="password"
-          v-model.trim="password"
-          type="password"
-          autocomplete="current-password"
-          :placeholder="t('auth.login.fields.password.placeholder')"
-        />
-        <p v-if="errors.password" class="login__error">{{ errors.password }}</p>
-      </div>
-
-      <label class="login__remember">
-        <input v-model="remember" type="checkbox" />
-        <span>{{ t("auth.login.remember") }}</span>
-      </label>
-
-      <button
-        type="submit"
-        class="btn"
-        :disabled="loading || offerOpen"
-        :aria-busy="loading ? 'true' : 'false'"
-      >
-        <MaterialSymbol
-          v-if="loading"
-          class="login__spinner"
-          name="progress_activity"
-          :size="18"
-          alt=""
-        />
-        {{ loading ? t("auth.login.actions.signingIn") : t("auth.login.actions.signIn") }}
-      </button>
-
+    <div class="login__form">
       <template v-if="passkeyAvailable">
-        <p class="login__divider">{{ t("auth.login.or") }}</p>
         <button
           type="button"
-          class="btn btn--secondary"
-          :disabled="loading || offerOpen"
+          class="btn"
+          :disabled="isBusy"
+          :aria-busy="pending === 'passkey' ? 'true' : 'false'"
           @click="onPasskeyLogin"
         >
-          {{ loading ? t("auth.login.actions.signingIn") : t("auth.login.actions.passkey") }}
+          <MaterialSymbol
+            v-if="pending === 'passkey'"
+            class="login__spinner"
+            name="progress_activity"
+            :size="18"
+            alt=""
+          />
+          {{
+            pending === "passkey"
+              ? t("auth.login.actions.signingIn")
+              : t("auth.login.actions.passkey")
+          }}
         </button>
+        <p class="login__divider">{{ t("auth.login.orPassword") }}</p>
       </template>
 
+      <form class="login__password" @submit.prevent="onSubmit">
+        <div class="login__field">
+          <label for="email">{{ t("auth.login.fields.email.label") }}</label>
+          <input
+            id="email"
+            v-model.trim="email"
+            type="email"
+            autocomplete="username webauthn"
+            placeholder="name@company.com"
+          />
+          <p v-if="errors.email" class="login__error">{{ errors.email }}</p>
+        </div>
+
+        <div class="login__field">
+          <label for="password">{{ t("auth.login.fields.password.label") }}</label>
+          <input
+            id="password"
+            v-model.trim="password"
+            type="password"
+            autocomplete="current-password"
+            :placeholder="t('auth.login.fields.password.placeholder')"
+          />
+          <p v-if="errors.password" class="login__error">{{ errors.password }}</p>
+        </div>
+
+        <label class="login__remember">
+          <input v-model="remember" type="checkbox" />
+          <span>{{ t("auth.login.remember") }}</span>
+        </label>
+
+        <button
+          type="submit"
+          class="btn"
+          :class="{ 'btn--secondary': passkeyAvailable }"
+          :disabled="isBusy"
+          :aria-busy="pending === 'password' ? 'true' : 'false'"
+        >
+          <MaterialSymbol
+            v-if="pending === 'password'"
+            class="login__spinner"
+            name="progress_activity"
+            :size="18"
+            alt=""
+          />
+          {{
+            pending === "password"
+              ? t("auth.login.actions.signingIn")
+              : t("auth.login.actions.signIn")
+          }}
+        </button>
+      </form>
+
       <p v-if="errors.form" class="login__error">{{ errors.form }}</p>
-    </form>
+    </div>
 
     <p class="login__signup">
       {{ t("auth.login.signupPrompt") }}
@@ -82,7 +101,7 @@
 </template>
 
 <script setup>
-import { onMounted, onBeforeUnmount, ref } from "vue";
+import { computed, onMounted, onBeforeUnmount, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 import MaterialSymbol from "../../components/MaterialSymbol.vue";
@@ -90,11 +109,12 @@ import PasskeyOfferModal from "../../components/modals/PasskeyOfferModal.vue";
 import api from "../../lib/axios";
 import {
   authenticatePasskey,
+  cancelPasskeyCeremony,
   dismissPasskeyOffer,
   isPasskeyCanceled,
   isPasskeyOfferDismissed,
+  isPasskeyTimeout,
   registerPasskey,
-  supportsPasskeyAutofill,
   supportsPasskeys,
 } from "../../lib/passkey";
 import { useAppStore } from "../../stores/appStore";
@@ -109,12 +129,12 @@ const workspaceStore = useWorkspaceStore();
 const email = ref("");
 const password = ref("");
 const remember = ref(false);
-const loading = ref(false);
+const pending = ref(null);
 const passkeyAvailable = ref(false);
 const offerOpen = ref(false);
 const offerBusy = ref(false);
 const offerError = ref("");
-let passkeyAutofillActive = false;
+const isBusy = computed(() => Boolean(pending.value) || offerOpen.value);
 let offerResolve = null;
 const errors = ref({
   email: "",
@@ -171,6 +191,7 @@ const maybeOfferPasskey = (userId) => {
   if (!supportsPasskeys() || isPasskeyOfferDismissed(userId)) {
     return Promise.resolve();
   }
+  cancelPasskeyCeremony();
   offerError.value = "";
   offerBusy.value = false;
   offerOpen.value = true;
@@ -195,6 +216,10 @@ const acceptPasskeyOffer = async () => {
     finishPasskeyOffer();
   } catch (error) {
     offerBusy.value = false;
+    if (isPasskeyTimeout(error)) {
+      offerError.value = t("auth.login.passkeyOffer.timeout");
+      return;
+    }
     if (isPasskeyCanceled(error)) {
       offerError.value = t("auth.login.passkeyOffer.canceled");
       return;
@@ -206,7 +231,7 @@ const acceptPasskeyOffer = async () => {
 const afterAuthenticated = async ({ offerPasskey = false } = {}) => {
   const response = await api.get("/members/me");
   appStore.setCurrentUser(response.data);
-  loading.value = false;
+  pending.value = null;
   if (offerPasskey) {
     await maybeOfferPasskey(response.data?.id);
   }
@@ -226,7 +251,8 @@ const onSubmit = async () => {
     return;
   }
 
-  loading.value = true;
+  cancelPasskeyCeremony();
+  pending.value = "password";
   try {
     await api.post("/members/login", {
       email: email.value,
@@ -237,13 +263,13 @@ const onSubmit = async () => {
   } catch (error) {
     applyAuthError(error);
   } finally {
-    loading.value = false;
+    pending.value = null;
   }
 };
 
 const onPasskeyLogin = async () => {
   errors.value.form = "";
-  loading.value = true;
+  pending.value = "passkey";
   try {
     await authenticatePasskey({
       email: email.value,
@@ -257,32 +283,16 @@ const onPasskeyLogin = async () => {
     }
     applyAuthError(error);
   } finally {
-    loading.value = false;
+    pending.value = null;
   }
 };
 
-onMounted(async () => {
+onMounted(() => {
   passkeyAvailable.value = supportsPasskeys();
-  if (!passkeyAvailable.value) return;
-  if (!(await supportsPasskeyAutofill())) return;
-
-  passkeyAutofillActive = true;
-  try {
-    await authenticatePasskey({
-      email: email.value,
-      remember: remember.value,
-      useBrowserAutofill: true,
-    });
-    if (!passkeyAutofillActive) return;
-    await afterAuthenticated();
-  } catch (error) {
-    if (!passkeyAutofillActive || isPasskeyCanceled(error) || !error?.response) return;
-    applyAuthError(error);
-  }
 });
 
 onBeforeUnmount(() => {
-  passkeyAutofillActive = false;
+  cancelPasskeyCeremony();
   if (offerResolve) {
     offerResolve();
     offerResolve = null;
@@ -321,10 +331,14 @@ onBeforeUnmount(() => {
   font-size: 14px;
 }
 
-.login__form {
-  width: min(100%, var(--card-width));
+.login__form,
+.login__password {
   display: grid;
   gap: 16px;
+}
+
+.login__form {
+  width: min(100%, var(--card-width));
   padding: var(--card-padding);
   background-color: var(--color-page-bg);
   border-radius: 18px;
@@ -412,6 +426,7 @@ onBeforeUnmount(() => {
   text-align: center;
   font-size: 12px;
   color: var(--color-text-muted);
+  line-height: 1.5;
 }
 
 .login__signup {

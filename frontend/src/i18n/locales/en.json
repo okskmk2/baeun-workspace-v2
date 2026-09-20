@@ -150,7 +150,8 @@
   "auth": {
     "login": {
       "title": "Login",
-      "subtitle": "Sign in with email and password, or a passkey.",
+      "subtitle": "Sign in with your email and password.",
+      "subtitlePasskey": "You can sign in with Face ID or Windows Hello.",
       "fields": {
         "email": {
           "label": "Email"
@@ -162,10 +163,11 @@
       },
       "remember": "Remember me",
       "or": "or",
+      "orPassword": "or password",
       "actions": {
         "signIn": "Sign in",
         "signingIn": "Signing in...",
-        "passkey": "Sign in with a passkey"
+        "passkey": "Sign in with Face ID / Windows Hello"
       },
       "errors": {
         "emailRequired": "Please enter your email.",
@@ -174,18 +176,19 @@
         "passwordLength": "Password must be at least 6 characters.",
         "formDefault": "Login failed.",
         "approvalPending": "Your signup request is waiting for admin approval. Please try again after approval.",
-        "passkeyCanceled": "The passkey was canceled or is unavailable on this device. Use http://localhost, and make sure Windows Hello is set up."
+        "passkeyCanceled": "Sign-in was canceled or is unavailable on this device."
       },
       "signupPrompt": "Don't have an account?",
       "signupLink": "Sign up",
       "passkeyOffer": {
-        "title": "Next time, sign in with Face ID or Windows Hello",
-        "body": "This site does not create its own PIN. It uses Face ID, a fingerprint, or Windows Hello already on this device.",
-        "accept": "Use on this device",
+        "title": "Use this device next time?",
+        "body": "Sign in with Face ID, a fingerprint, or Windows Hello.",
+        "accept": "Use it",
         "later": "Not now",
-        "saving": "Saving...",
-        "canceled": "The passkey was canceled or is unavailable. Make sure Windows Hello is set up.",
-        "error": "Could not save a passkey. You can add one later in Settings → Security."
+        "saving": "Working...",
+        "canceled": "Canceled, or unavailable on this device.",
+        "timeout": "That took too long. Try again.",
+        "error": "Could not save it now. We will ask again later."
       }
     },
     "signup": {
@@ -516,33 +519,11 @@
     },
     "security": {
       "title": "Security",
-      "subtitle": "Manage the login account, passkeys, and withdrawal.",
+      "subtitle": "Manage the login account and withdrawal.",
       "account": {
         "title": "Login account",
         "email": "Email",
         "hint": "Change your name and photo in Profile."
-      },
-      "passkeys": {
-        "title": "Passkeys",
-        "body": "Sign in on this device with fingerprint, face, or a security key.",
-        "unsupported": "This browser does not support passkeys.",
-        "loading": "Loading passkeys...",
-        "empty": "No passkeys yet.",
-        "unnamed": "Passkey",
-        "created": "Added {date}",
-        "lastUsed": "Last used {date}",
-        "add": "Add passkey",
-        "adding": "Adding...",
-        "nicknamePlaceholder": "Name (optional)",
-        "delete": "Delete",
-        "deleting": "Deleting...",
-        "cancel": "Cancel",
-        "deleteTitle": "Delete passkey",
-        "deleteMessage": "Delete the passkey “{name}”?",
-        "loadError": "Could not load passkeys.",
-        "addError": "Could not add a passkey.",
-        "canceled": "The passkey was canceled or is unavailable on this device. Use http://localhost, and make sure Windows Hello is set up.",
-        "deleteError": "Could not delete the passkey."
       },
       "withdraw": {
         "title": "Delete account",

@@ -3,8 +3,40 @@ import {
   browserSupportsWebAuthnAutofill,
   startAuthentication,
   startRegistration,
+  WebAuthnAbortService,
 } from "@simplewebauthn/browser";
 import api from "./axios";
+
+const CEREMONY_TIMEOUT_MS = 45_000;
+
+export const cancelPasskeyCeremony = () => {
+  try {
+    WebAuthnAbortService.cancelCeremony();
+  } catch {
+    /* ignore */
+  }
+};
+
+const waitAfterCancel = () => new Promise((resolve) => setTimeout(resolve, 80));
+
+const withCeremonyTimeout = async (operation) => {
+  let timer;
+  try {
+    return await Promise.race([
+      operation(),
+      new Promise((_, reject) => {
+        timer = setTimeout(() => {
+          cancelPasskeyCeremony();
+          const error = new Error("Passkey timed out.");
+          error.name = "TimeoutError";
+          reject(error);
+        }, CEREMONY_TIMEOUT_MS);
+      }),
+    ]);
+  } finally {
+    clearTimeout(timer);
+  }
+};
 
 export const supportsPasskeys = () =>
   typeof window !== "undefined" && browserSupportsWebAuthn();
@@ -24,14 +56,19 @@ export const isPasskeyCanceled = (error) => {
   return (
     name === "NotAllowedError" ||
     name === "AbortError" ||
+    name === "TimeoutError" ||
     message.includes("the operation either timed out") ||
     message.includes("abort")
   );
 };
 
+export const isPasskeyTimeout = (error) => error?.name === "TimeoutError";
+
 export async function registerPasskey(nickname) {
+  cancelPasskeyCeremony();
+  await waitAfterCancel();
   const { data: optionsJSON } = await api.post("/members/passkeys/register/options");
-  const credential = await startRegistration({ optionsJSON });
+  const credential = await withCeremonyTimeout(() => startRegistration({ optionsJSON }));
   const { data } = await api.post("/members/passkeys/register", {
     credential,
     nickname,
@@ -60,13 +97,19 @@ export const dismissPasskeyOffer = (userId) => {
 };
 
 export async function authenticatePasskey({ email, remember, useBrowserAutofill } = {}) {
+  if (!useBrowserAutofill) {
+    cancelPasskeyCeremony();
+    await waitAfterCancel();
+  }
   const { data: optionsJSON } = await api.post("/members/passkeys/login/options", {
     email: email || undefined,
   });
-  const credential = await startAuthentication({
-    optionsJSON,
-    useBrowserAutofill: Boolean(useBrowserAutofill),
-  });
+  const credential = await withCeremonyTimeout(() =>
+    startAuthentication({
+      optionsJSON,
+      useBrowserAutofill: Boolean(useBrowserAutofill),
+    }),
+  );
   const { data } = await api.post("/members/passkeys/login", {
     credential,
     remember: Boolean(remember),
