@@ -11,6 +11,7 @@ useReveal(rootEl, { once: true, threshold: 0.2 });
     <div class="closing__inner landing-wrap">
       <div class="closing__end">
         <h2 class="closing__headline reveal">{{ $t("landing.closing.headline") }}</h2>
+        <p class="closing__body reveal">{{ $t("landing.closing.body") }}</p>
         <div class="closing__cta reveal">
           <router-link class="btn btn--lg" to="/signup">
             {{ $t("landing.cta.start") }}
@@ -26,15 +27,15 @@ useReveal(rootEl, { once: true, threshold: 0.2 });
 
 <style scoped>
 .closing {
-  padding: var(--space-section) 0 72px;
+  padding: var(--space-section) 0 96px;
   scroll-margin-top: 64px;
+  background-color: color-mix(in srgb, var(--mock-fill) 32%, var(--color-bg));
 }
 
 .closing__inner {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 72px;
   max-width: 40rem;
   text-align: center;
 }
@@ -43,7 +44,7 @@ useReveal(rootEl, { once: true, threshold: 0.2 });
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 36px;
+  gap: 16px;
 }
 
 .closing__headline {
@@ -56,6 +57,13 @@ useReveal(rootEl, { once: true, threshold: 0.2 });
   white-space: pre-line;
 }
 
+.closing__body {
+  margin: 0 0 12px;
+  color: var(--color-muted);
+  font-size: 1.0625rem;
+  line-height: 1.7;
+}
+
 .closing__cta {
   display: flex;
   flex-wrap: wrap;
@@ -64,17 +72,13 @@ useReveal(rootEl, { once: true, threshold: 0.2 });
   gap: 12px;
 }
 
+.closing__cta .btn {
+  min-width: 148px;
+}
+
 @media (max-width: 767px) {
   .closing {
-    padding: var(--space-section-m) 0 56px;
-  }
-
-  .closing__inner {
-    gap: 64px;
-  }
-
-  .closing__end {
-    gap: 28px;
+    padding: var(--space-section-m) 0 64px;
   }
 
   .closing__cta {

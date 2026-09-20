@@ -139,6 +139,12 @@ const columns = computed(() =>
 
 @media (max-width: 1023px) {
   .slot-compare__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 639px) {
+  .slot-compare__grid {
     grid-template-columns: 1fr;
   }
 }

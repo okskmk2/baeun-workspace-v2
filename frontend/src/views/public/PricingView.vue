@@ -1,17 +1,21 @@
 <template>
   <main class="pricing-view">
     <PricingHeader />
+    <PricingSteps />
     <SlotComparison />
     <PriceCalculator />
     <PricingFaq />
+    <PricingClose />
   </main>
 </template>
 
 <script setup>
 import PricingHeader from "./pricing/PricingHeader.vue";
+import PricingSteps from "./pricing/PricingSteps.vue";
 import SlotComparison from "./pricing/SlotComparison.vue";
 import PriceCalculator from "./pricing/PriceCalculator.vue";
 import PricingFaq from "./pricing/PricingFaq.vue";
+import PricingClose from "./pricing/PricingClose.vue";
 </script>
 
 <style scoped>

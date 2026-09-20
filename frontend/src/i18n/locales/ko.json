@@ -178,7 +178,7 @@
     },
     "signup": {
       "title": "회원가입",
-      "subtitle": "몇 분만에 워크스페이스를 시작하세요.",
+      "subtitle": "신청 후 승인이 끝나면 시작합니다.",
       "fields": {
         "name": {
           "label": "이름",

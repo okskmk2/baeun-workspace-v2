@@ -6,7 +6,12 @@
         {{ line }}<br v-if="index < copy.header.subLines.length - 1" />
       </template>
     </p>
-    <router-link class="btn btn--lg" to="/signup">{{ copy.header.cta }}</router-link>
+    <div class="pricing-header__cta">
+      <router-link class="btn btn--lg" to="/signup">{{ copy.header.cta }}</router-link>
+      <router-link class="btn btn--lg btn--secondary" :to="{ path: '/pricing', hash: '#calculator' }">
+        {{ copy.header.calculatorCta }}
+      </router-link>
+    </div>
   </header>
 </template>
 
@@ -45,9 +50,31 @@ const { copy } = usePricingCopy();
   color: var(--color-text-muted);
 }
 
+.pricing-header__cta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+}
+
+.pricing-header__cta .btn {
+  min-width: 148px;
+}
+
 @media (max-width: 767px) {
   .pricing-header {
     padding: var(--space-10) var(--space-4) var(--space-6);
+  }
+
+  .pricing-header__cta {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .pricing-header__cta .btn {
+    width: 100%;
+    max-width: 280px;
   }
 }
 </style>

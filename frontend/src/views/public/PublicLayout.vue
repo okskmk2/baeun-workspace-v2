@@ -24,7 +24,7 @@
           <router-link to="/open-projects">{{ t("layout.default.nav.openProjects") }}</router-link>
         </nav>
         <nav class="utilnav">
-          <router-link v-if="!isAuthenticated" to="/signup">{{
+          <router-link v-if="!isAuthenticated" class="util-cta" to="/signup">{{
             t("layout.default.util.signup")
           }}</router-link>
           <router-link v-if="!isAuthenticated" to="/login">{{

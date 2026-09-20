@@ -1,14 +1,28 @@
+<script setup>
+import { ref } from "vue";
+import { useReveal } from "../../composables/useReveal";
+import ProductMockFull from "../mock/ProductMockFull.vue";
+
+const rootEl = ref(null);
+useReveal(rootEl, { once: true, threshold: 0.12 });
+</script>
+
 <template>
-  <section id="hero" class="hero">
-    <div class="hero__copy landing-wrap">
-      <h1 class="hero__headline">{{ $t("landing.hero.headline") }}</h1>
-      <p class="hero__sub">{{ $t("landing.hero.sub") }}</p>
-      <p class="hero__note">{{ $t("landing.hero.note") }}</p>
-      <div class="hero__cta">
-        <router-link class="btn btn--lg" to="/signup">{{ $t("landing.cta.start") }}</router-link>
-        <router-link class="btn btn--lg btn--secondary" to="/pricing">
-          {{ $t("landing.cta.pricing") }}
-        </router-link>
+  <section id="hero" ref="rootEl" class="hero">
+    <div class="hero__inner landing-wrap">
+      <div class="hero__copy">
+        <h1 class="hero__headline">{{ $t("landing.hero.headline") }}</h1>
+        <p class="hero__sub">{{ $t("landing.hero.sub") }}</p>
+        <p class="hero__note">{{ $t("landing.hero.note") }}</p>
+        <div class="hero__cta">
+          <router-link class="btn btn--lg" to="/signup">{{ $t("landing.cta.start") }}</router-link>
+          <router-link class="btn btn--lg btn--secondary" to="/pricing">
+            {{ $t("landing.cta.pricing") }}
+          </router-link>
+        </div>
+      </div>
+      <div class="hero__visual reveal">
+        <ProductMockFull />
       </div>
     </div>
   </section>
@@ -16,20 +30,22 @@
 
 <style scoped>
 .hero {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: calc(100vh - 72px);
-  min-height: calc(100svh - 72px);
-  padding: 64px 0 80px;
+  padding: 72px 0 48px;
   text-align: center;
+}
+
+.hero__inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 48px;
 }
 
 .hero__copy {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 20px;
+  gap: 16px;
   max-width: 820px;
 }
 
@@ -66,10 +82,22 @@
   margin-top: 8px;
 }
 
+.hero__cta .btn {
+  min-width: 148px;
+}
+
+.hero__visual {
+  width: 100%;
+  max-width: 960px;
+}
+
 @media (max-width: 767px) {
   .hero {
-    padding: 48px 0 64px;
-    min-height: auto;
+    padding: 40px 0 32px;
+  }
+
+  .hero__inner {
+    gap: 32px;
   }
 
   .hero__cta {

@@ -6,6 +6,31 @@ const ko = {
       "워크스페이스마다 저장 공간 5GB가 포함되며, 초과분은 1GB당 월 $0.10입니다.",
     ],
     cta: "시작하기",
+    calculatorCta: "예상 금액 보기",
+  },
+
+  steps: {
+    title: "이렇게 계산합니다.",
+    items: [
+      {
+        title: "자리를 고릅니다",
+        body: "워크스페이스, 프로젝트, 멤버를 필요한 만큼만 엽니다.",
+      },
+      {
+        title: "한도 안이면 내지 않습니다",
+        body: "워크스페이스 1개, 프로젝트 3개, 멤버 5명까지는 결제하지 않습니다.",
+      },
+      {
+        title: "넘는 항목만 매달 결제합니다",
+        body: "자리가 모자라도 이미 만든 것은 지우지 않습니다. 새로 여는 것만 막습니다.",
+      },
+    ],
+  },
+
+  close: {
+    headline: "필요한 자리만 매달 결제합니다.",
+    cta: "시작하기",
+    calculatorCta: "예상 금액 보기",
   },
 
   slotCards: {
@@ -115,6 +140,31 @@ const en = {
       "Each workspace includes 5 GB. Extra storage is $0.10 per GB each month.",
     ],
     cta: "Get started",
+    calculatorCta: "Estimate this month",
+  },
+
+  steps: {
+    title: "This is how we count.",
+    items: [
+      {
+        title: "Pick the seats you need",
+        body: "Open workspaces, projects, and members only as you need them.",
+      },
+      {
+        title: "Stay inside the starting allowance",
+        body: "Nothing is billed for 1 workspace, 3 projects, and 5 members.",
+      },
+      {
+        title: "Pay each month only for extras",
+        body: "We do not delete what you already made. Only new creates are limited.",
+      },
+    ],
+  },
+
+  close: {
+    headline: "Pay each month only for the seats you open.",
+    cta: "Get started",
+    calculatorCta: "Estimate this month",
   },
 
   slotCards: {

@@ -27,7 +27,7 @@ export const router = createRouter({
         window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       return {
         el: to.hash,
-        top: 64,
+        top: 88,
         behavior: reduce ? "auto" : "smooth",
       };
     }

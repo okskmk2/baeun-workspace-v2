@@ -178,7 +178,7 @@
     },
     "signup": {
       "title": "Sign up",
-      "subtitle": "Start your workspace in minutes.",
+      "subtitle": "You start after your request is approved.",
       "fields": {
         "name": {
           "label": "Name",

@@ -161,6 +161,7 @@ onBeforeUnmount(() => {
   padding: var(--space-10) var(--space-4);
   max-width: 1120px;
   margin: 0 auto;
+  scroll-margin-top: 88px;
 }
 
 .price-calculator__intro {

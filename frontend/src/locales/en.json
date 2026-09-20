@@ -9,10 +9,52 @@
     "hero": {
       "headline": "Use documents, tasks, and conversations in one place.",
       "sub": "Wiki, kanban, channel, and data live together in a project.",
-      "note": "You pay each month only for what you use."
+      "note": "You pay each month only for the seats you open."
+    },
+    "problem": {
+      "kicker": "Problem",
+      "headline": "The same team, split across tools.",
+      "body": "Documents stay in docs, work stays on a board, decisions stay in chat, and data stays in a sheet. The team explains the same work again.",
+      "items": {
+        "docs": {
+          "title": "Documents",
+          "body": "The source of truth sits outside the work."
+        },
+        "tasks": {
+          "title": "Tasks",
+          "body": "Execution is visible only on a board."
+        },
+        "talk": {
+          "title": "Talk",
+          "body": "Decisions get buried in chat."
+        },
+        "sheets": {
+          "title": "Tables",
+          "body": "Data is managed somewhere else."
+        }
+      }
+    },
+    "structure": {
+      "kicker": "Structure",
+      "headline": "Team space and work space are separate.",
+      "body": "Manage people in a workspace. Do the work in a project.",
+      "workspace": {
+        "layer": "Team space",
+        "title": "Workspace",
+        "body": "A team space for notices, boards, and members.",
+        "points": ["Members and roles", "Team notices", "Seats and cost"]
+      },
+      "project": {
+        "layer": "Work space",
+        "title": "Project",
+        "body": "A work space for wiki, kanban, channel, and data.",
+        "points": ["Documents", "Tasks", "Talk", "Tables"]
+      }
     },
     "features": {
-      "headline": "These are the tools you use in a project.",
+      "kicker": "Tools",
+      "headline": "Documents become work, and work meets conversation.",
+      "sub": "Write in wiki, move on the board, decide in the channel.",
       "wiki": {
         "title": "Wiki",
         "body": "Write pages and manage files and permissions."
@@ -30,19 +72,30 @@
         "body": "Manage lists and table structure."
       }
     },
-    "structure": {
-      "headline": "Team space and work space are separate.",
-      "workspace": {
-        "title": "Workspace",
-        "body": "A team space for notices, boards, and members."
-      },
-      "project": {
-        "title": "Project",
-        "body": "A work space for wiki, kanban, channel, and data."
+    "pricing": {
+      "kicker": "Pricing",
+      "headline": "Pay each month only for the seats you open.",
+      "body": "There is no fixed plan. Nothing is billed inside the starting allowance: 1 workspace, 3 projects, and 5 members.",
+      "cta": "See how billing works",
+      "storage": "Each workspace includes 5 GB. Extra storage is $0.10 per GB each month.",
+      "items": {
+        "workspace": {
+          "title": "Workspace",
+          "body": "Opens one team space."
+        },
+        "project": {
+          "title": "Project",
+          "body": "Opens one work space."
+        },
+        "member": {
+          "title": "Member",
+          "body": "Invites one person to that workspace."
+        }
       }
     },
     "closing": {
-      "headline": "Get started today."
+      "headline": "Don’t switch tabs. Keep going.",
+      "body": "You start after your request is approved."
     },
     "mock": {
       "projectName": "Project",

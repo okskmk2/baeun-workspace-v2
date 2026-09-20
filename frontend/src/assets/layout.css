@@ -1,7 +1,9 @@
 .PublicLayout {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  min-height: 100%;
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 .PublicLayout .brand {
@@ -22,10 +24,15 @@
 
 .PublicLayout .brand-text {
   line-height: 1;
+  white-space: nowrap;
 }
 
 .PublicLayout > header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
   background-color: var(--color-gnb-bg);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-gnb-text) 12%, transparent);
 }
 
 .PublicLayout .inner-gnb {
@@ -60,6 +67,20 @@
   font-size: var(--font-size-body);
   gap: 20px;
   justify-self: end;
+}
+
+.PublicLayout .utilnav a.util-cta {
+  padding: 6px 14px;
+  border-radius: 8px;
+  background-color: var(--color-gnb-text);
+  color: var(--color-gnb-bg);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.PublicLayout .utilnav a.util-cta:hover {
+  text-decoration: none;
+  opacity: 0.92;
 }
 
 .PublicLayout main {
@@ -166,6 +187,20 @@
 
   .PublicLayout .brand {
     grid-area: brand;
+    min-width: 0;
+  }
+
+  .PublicLayout .brand-text {
+    font-size: 15px;
+  }
+
+  .PublicLayout .utilnav {
+    gap: 12px;
+  }
+
+  .PublicLayout .utilnav a.util-cta {
+    padding: 5px 10px;
+    font-size: 13px;
   }
 
   .PublicLayout .mainnav {

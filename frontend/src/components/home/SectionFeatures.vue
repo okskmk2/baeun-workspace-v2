@@ -10,7 +10,11 @@ useReveal(rootEl, { once: true, threshold: 0.15 });
 <template>
   <section id="features" ref="rootEl" class="features-section">
     <div class="features-section__inner landing-wrap">
-      <h2 class="features-section__headline reveal">{{ $t("landing.features.headline") }}</h2>
+      <header class="landing-section-head reveal">
+        <p class="landing-kicker">{{ $t("landing.features.kicker") }}</p>
+        <h2 class="landing-headline">{{ $t("landing.features.headline") }}</h2>
+        <p class="landing-lede">{{ $t("landing.features.sub") }}</p>
+      </header>
       <FeatureGrid />
     </div>
   </section>
@@ -20,23 +24,13 @@ useReveal(rootEl, { once: true, threshold: 0.15 });
 .features-section {
   padding: var(--space-section) 0;
   scroll-margin-top: 80px;
+  background-color: color-mix(in srgb, var(--mock-fill) 32%, var(--color-bg));
 }
 
 .features-section__inner {
   display: flex;
   flex-direction: column;
   gap: 48px;
-}
-
-.features-section__headline {
-  margin: 0 auto;
-  max-width: 18em;
-  font-family: var(--font-serif);
-  font-size: var(--fs-h2);
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  line-height: 1.4;
-  text-align: center;
 }
 
 @media (max-width: 767px) {
