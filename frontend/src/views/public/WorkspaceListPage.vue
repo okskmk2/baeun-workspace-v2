@@ -120,7 +120,6 @@ import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import CreateWorkspaceModal from "../../components/modals/CreateWorkspaceModal.vue";
 import BaseModal from "../../components/BaseModal.vue";
-import { useAppStore } from "../../stores/appStore";
 import { useWorkspaceStore } from "../../stores/workspaceStore";
 import Tag from "../../components/Tag.vue";
 import Avatar from "../../components/Avatar.vue";
@@ -131,7 +130,6 @@ import { monthlyCartTo } from "../../lib/slots";
 
 const { t } = useI18n();
 const { getRoleLabel } = useRoleLabels();
-const appStore = useAppStore();
 const workspaceStore = useWorkspaceStore();
 const workspaces = ref([]);
 const workspaceRemaining = ref(1);
@@ -149,31 +147,13 @@ const isDeleting = computed(
   () => !!deleteTarget.value && deletingWorkspaceId.value === deleteTarget.value.id
 );
 
-const hasWorkspaceCacheForCurrentMember = () => {
-  const currentMemberId =
-    appStore.currentUser?.id === undefined || appStore.currentUser?.id === null
-      ? null
-      : String(appStore.currentUser.id);
-  return (
-    workspaceStore.hasFetchedWorkspaces &&
-    workspaceStore.workspacesLoadedForMemberId === currentMemberId
-  );
-};
-
 const fetchWorkspaces = async ({ force = false } = {}) => {
   isLoading.value = true;
   errorMessage.value = "";
 
   try {
-    if (!force && hasWorkspaceCacheForCurrentMember()) {
-      workspaces.value = workspaceStore.workspaces || [];
-    } else {
-      workspaces.value = await workspaceStore.fetchWorkspaces({ force });
-    }
-
-    await Promise.all(
-      workspaces.value.map((workspace) => workspaceStore.fetchProjects(workspace.id))
-    );
+    await workspaceStore.fetchWorkspaceTree({ force });
+    workspaces.value = workspaceStore.workspaces || [];
 
     try {
       const entitlementRes = await api.get("/payments/entitlements");

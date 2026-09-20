@@ -216,6 +216,85 @@ router.get("/my", isAuth, async (req, res) => {
 
 /**
  * @swagger
+ * /api/workspaces/my/tree:
+ *   get:
+ *     summary: My workspaces with projects
+ *     description: List workspaces the user participates in, each with its projects
+ *     tags:
+ *       - Workspace
+ *     responses:
+ *       200:
+ *         description: Workspace tree retrieved
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: integer
+ *                   name:
+ *                     type: string
+ *                   projects:
+ *                     type: array
+ *                     items:
+ *                       type: object
+ *       500:
+ *         $ref: "#/components/responses/ErrorResponse"
+ */
+router.get("/my/tree", isAuth, async (req, res) => {
+  try {
+    const userId = req.session.userId;
+    const workspaceRes = await pool.query(
+      `SELECT w.*, wm.role_name
+       FROM workspace w
+       JOIN workspace_member wm ON w.id = wm.workspace_id
+       WHERE wm.member_id = $1
+       ORDER BY w.sort_order ASC, w.id DESC`,
+      [userId]
+    );
+
+    const workspaces = workspaceRes.rows;
+    if (workspaces.length === 0) {
+      return res.json([]);
+    }
+
+    const workspaceIds = workspaces.map((workspace) => workspace.id);
+    const projectsRes = await pool.query(
+      `SELECT *
+       FROM project
+       WHERE workspace_id = ANY($1::int[])
+       ORDER BY sort_order ASC, id DESC`,
+      [workspaceIds]
+    );
+
+    const projectsByWorkspaceId = new Map();
+    for (const project of projectsRes.rows) {
+      const key = project.workspace_id;
+      if (!projectsByWorkspaceId.has(key)) {
+        projectsByWorkspaceId.set(key, []);
+      }
+      projectsByWorkspaceId.get(key).push({
+        ...project,
+        theme_json: normalizeThemeJson(project.theme_json),
+      });
+    }
+
+    const data = workspaces.map((workspace) => ({
+      ...workspace,
+      theme_json: normalizeThemeJson(workspace.theme_json),
+      projects: projectsByWorkspaceId.get(workspace.id) || [],
+    }));
+
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ name: "InternalServerError", message: error.message });
+  }
+});
+
+/**
+ * @swagger
  * /api/workspaces/{workspaceId}:
  *   get:
  *     summary: Get workspace detail

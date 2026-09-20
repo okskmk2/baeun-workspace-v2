@@ -4,6 +4,13 @@ import { useAppStore } from "./appStore";
 
 let fetchWorkspacesInflight = null;
 let fetchWorkspacesInflightMemberId = null;
+let fetchWorkspaceTreeInflight = null;
+let fetchWorkspaceTreeInflightMemberId = null;
+
+const memberIdFromAppStore = (appStore) => {
+  const id = appStore.currentUser?.id;
+  return id === undefined || id === null ? null : String(id);
+};
 
 export const useWorkspaceStore = defineStore("workspace", {
   state: () => ({
@@ -28,13 +35,12 @@ export const useWorkspaceStore = defineStore("workspace", {
       this.projectById = {};
       fetchWorkspacesInflight = null;
       fetchWorkspacesInflightMemberId = null;
+      fetchWorkspaceTreeInflight = null;
+      fetchWorkspaceTreeInflightMemberId = null;
     },
     async fetchWorkspaces({ force = false } = {}) {
       const appStore = useAppStore();
-      const memberId =
-        appStore.currentUser?.id === undefined || appStore.currentUser?.id === null
-          ? null
-          : String(appStore.currentUser.id);
+      const memberId = memberIdFromAppStore(appStore);
 
       if (
         this.hasFetchedWorkspaces &&
@@ -59,10 +65,7 @@ export const useWorkspaceStore = defineStore("workspace", {
       fetchWorkspacesInflightMemberId = memberId;
       fetchWorkspacesInflight = (async () => {
         const res = await api.get("/workspaces/my");
-        const currentMemberId =
-          appStore.currentUser?.id === undefined || appStore.currentUser?.id === null
-            ? null
-            : String(appStore.currentUser.id);
+        const currentMemberId = memberIdFromAppStore(appStore);
 
         if (currentMemberId !== memberId) {
           return this.workspaces;
@@ -84,6 +87,75 @@ export const useWorkspaceStore = defineStore("workspace", {
         if (fetchWorkspacesInflightMemberId === memberId) {
           fetchWorkspacesInflight = null;
           fetchWorkspacesInflightMemberId = null;
+        }
+      }
+    },
+    async fetchWorkspaceTree({ force = false } = {}) {
+      const appStore = useAppStore();
+      const memberId = memberIdFromAppStore(appStore);
+
+      if (
+        this.hasFetchedWorkspaces &&
+        this.workspacesLoadedForMemberId !== null &&
+        this.workspacesLoadedForMemberId !== memberId
+      ) {
+        this.resetWorkspaceCache();
+      }
+
+      const canAssembleFromCache =
+        !force &&
+        this.hasFetchedWorkspaces &&
+        this.workspacesLoadedForMemberId === memberId &&
+        this.workspaces.every((workspace) => this.projectsByWorkspace[workspace.id] !== undefined);
+      if (canAssembleFromCache) {
+        return this.workspaces.map((workspace) => ({
+          ...workspace,
+          projects: this.projectsByWorkspace[workspace.id] || [],
+        }));
+      }
+
+      if (fetchWorkspaceTreeInflight && fetchWorkspaceTreeInflightMemberId === memberId) {
+        return fetchWorkspaceTreeInflight;
+      }
+
+      fetchWorkspaceTreeInflightMemberId = memberId;
+      fetchWorkspaceTreeInflight = (async () => {
+        const res = await api.get("/workspaces/my/tree");
+        const currentMemberId = memberIdFromAppStore(appStore);
+        if (currentMemberId !== memberId) {
+          return this.workspaces.map((workspace) => ({
+            ...workspace,
+            projects: this.projectsByWorkspace[workspace.id] || [],
+          }));
+        }
+
+        const rows = Array.isArray(res.data) ? res.data : [];
+        const workspaces = [];
+        const tree = rows.map((row) => {
+          const projects = Array.isArray(row.projects) ? row.projects : [];
+          const workspace = { ...row };
+          delete workspace.projects;
+          workspaces.push(workspace);
+          this.workspaceById[workspace.id] = workspace;
+          this.projectsByWorkspace[workspace.id] = projects;
+          projects.forEach((project) => {
+            this.projectById[project.id] = project;
+          });
+          return { ...workspace, projects };
+        });
+
+        this.workspaces = workspaces;
+        this.hasFetchedWorkspaces = true;
+        this.workspacesLoadedForMemberId = memberId;
+        return tree;
+      })();
+
+      try {
+        return await fetchWorkspaceTreeInflight;
+      } finally {
+        if (fetchWorkspaceTreeInflightMemberId === memberId) {
+          fetchWorkspaceTreeInflight = null;
+          fetchWorkspaceTreeInflightMemberId = null;
         }
       }
     },

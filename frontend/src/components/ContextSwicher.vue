@@ -240,19 +240,7 @@ const ensureWorkspaceTree = async ({ force = false } = {}) => {
 
   inflightLoad.value = (async () => {
     try {
-      const workspaces = await workspaceStore.fetchWorkspaces();
-
-      const projectsPerWorkspace = await Promise.all(
-        workspaces.map(async (workspace) => {
-          const projects = await workspaceStore.fetchProjects(workspace.id);
-          return {
-            ...workspace,
-            projects,
-          };
-        })
-      );
-
-      workspaceItems.value = projectsPerWorkspace;
+      workspaceItems.value = await workspaceStore.fetchWorkspaceTree();
       loadedMemberId.value = memberId;
       hasLoadedTree.value = true;
     } catch (error) {
