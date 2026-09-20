@@ -12,7 +12,7 @@
           id="email"
           v-model.trim="email"
           type="email"
-          autocomplete="email"
+          autocomplete="username webauthn"
           placeholder="name@company.com"
         />
         <p v-if="errors.email" class="login__error">{{ errors.email }}</p>
@@ -35,9 +35,33 @@
         <span>{{ t("auth.login.remember") }}</span>
       </label>
 
-      <button type="submit" class="btn" :disabled="loading">
+      <button
+        type="submit"
+        class="btn"
+        :disabled="loading || offerOpen"
+        :aria-busy="loading ? 'true' : 'false'"
+      >
+        <MaterialSymbol
+          v-if="loading"
+          class="login__spinner"
+          name="progress_activity"
+          :size="18"
+          alt=""
+        />
         {{ loading ? t("auth.login.actions.signingIn") : t("auth.login.actions.signIn") }}
       </button>
+
+      <template v-if="passkeyAvailable">
+        <p class="login__divider">{{ t("auth.login.or") }}</p>
+        <button
+          type="button"
+          class="btn btn--secondary"
+          :disabled="loading || offerOpen"
+          @click="onPasskeyLogin"
+        >
+          {{ loading ? t("auth.login.actions.signingIn") : t("auth.login.actions.passkey") }}
+        </button>
+      </template>
 
       <p v-if="errors.form" class="login__error">{{ errors.form }}</p>
     </form>
@@ -46,14 +70,33 @@
       {{ t("auth.login.signupPrompt") }}
       <router-link to="/signup">{{ t("auth.login.signupLink") }}</router-link>
     </p>
+
+    <PasskeyOfferModal
+      :open="offerOpen"
+      :busy="offerBusy"
+      :error="offerError"
+      @skip="skipPasskeyOffer"
+      @accept="acceptPasskeyOffer"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { onMounted, onBeforeUnmount, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
+import MaterialSymbol from "../../components/MaterialSymbol.vue";
+import PasskeyOfferModal from "../../components/modals/PasskeyOfferModal.vue";
 import api from "../../lib/axios";
+import {
+  authenticatePasskey,
+  dismissPasskeyOffer,
+  isPasskeyCanceled,
+  isPasskeyOfferDismissed,
+  registerPasskey,
+  supportsPasskeyAutofill,
+  supportsPasskeys,
+} from "../../lib/passkey";
 import { useAppStore } from "../../stores/appStore";
 import { useWorkspaceStore } from "../../stores/workspaceStore";
 
@@ -67,6 +110,12 @@ const email = ref("");
 const password = ref("");
 const remember = ref(false);
 const loading = ref(false);
+const passkeyAvailable = ref(false);
+const offerOpen = ref(false);
+const offerBusy = ref(false);
+const offerError = ref("");
+let passkeyAutofillActive = false;
+let offerResolve = null;
 const errors = ref({
   email: "",
   password: "",
@@ -95,6 +144,83 @@ const validate = () => {
   return !errors.value.email && !errors.value.password;
 };
 
+const redirectAfterLogin = async () => {
+  const redirect = Array.isArray(route.query.redirect) ? route.query.redirect[0] : route.query.redirect;
+  if (typeof redirect === "string" && redirect.startsWith("/") && !redirect.startsWith("//")) {
+    await router.push(redirect);
+    return;
+  }
+
+  const workspaces = await workspaceStore.fetchWorkspaces({ force: true });
+  if (workspaces.length > 0) {
+    await router.push("/settings/workspaces");
+    return;
+  }
+  await router.push("/");
+};
+
+const finishPasskeyOffer = () => {
+  offerOpen.value = false;
+  offerBusy.value = false;
+  offerError.value = "";
+  offerResolve?.();
+  offerResolve = null;
+};
+
+const maybeOfferPasskey = (userId) => {
+  if (!supportsPasskeys() || isPasskeyOfferDismissed(userId)) {
+    return Promise.resolve();
+  }
+  offerError.value = "";
+  offerBusy.value = false;
+  offerOpen.value = true;
+  return new Promise((resolve) => {
+    offerResolve = resolve;
+  });
+};
+
+const skipPasskeyOffer = () => {
+  if (offerBusy.value) return;
+  dismissPasskeyOffer(appStore.currentUser?.id);
+  finishPasskeyOffer();
+};
+
+const acceptPasskeyOffer = async () => {
+  if (offerBusy.value) return;
+  offerBusy.value = true;
+  offerError.value = "";
+  try {
+    await registerPasskey("");
+    dismissPasskeyOffer(appStore.currentUser?.id);
+    finishPasskeyOffer();
+  } catch (error) {
+    offerBusy.value = false;
+    if (isPasskeyCanceled(error)) {
+      offerError.value = t("auth.login.passkeyOffer.canceled");
+      return;
+    }
+    offerError.value = error?.response?.data?.message || t("auth.login.passkeyOffer.error");
+  }
+};
+
+const afterAuthenticated = async ({ offerPasskey = false } = {}) => {
+  const response = await api.get("/members/me");
+  appStore.setCurrentUser(response.data);
+  loading.value = false;
+  if (offerPasskey) {
+    await maybeOfferPasskey(response.data?.id);
+  }
+  await redirectAfterLogin();
+};
+
+const applyAuthError = (error) => {
+  if (error?.response?.status === 403) {
+    errors.value.form = t("auth.login.errors.approvalPending");
+    return;
+  }
+  errors.value.form = error?.response?.data?.message || t("auth.login.errors.formDefault");
+};
+
 const onSubmit = async () => {
   if (!validate()) {
     return;
@@ -107,34 +233,61 @@ const onSubmit = async () => {
       password: password.value,
       remember: remember.value,
     });
-
-    const response = await api.get("/members/me");
-
-    appStore.setCurrentUser(response.data);
-
-    const redirect = Array.isArray(route.query.redirect) ? route.query.redirect[0] : route.query.redirect;
-    if (typeof redirect === "string" && redirect.startsWith("/") && !redirect.startsWith("//")) {
-      router.push(redirect);
-      return;
-    }
-
-    const workspaces = await workspaceStore.fetchWorkspaces({ force: true });
-    if (workspaces.length > 0) {
-      router.push("/settings/workspaces");
-    } else {
-      router.push("/");
-    }
+    await afterAuthenticated({ offerPasskey: true });
   } catch (error) {
-    if (error?.response?.status === 403) {
-      errors.value.form = t("auth.login.errors.approvalPending");
-      return;
-    }
-
-    errors.value.form = error?.response?.data?.message || t("auth.login.errors.formDefault");
+    applyAuthError(error);
   } finally {
     loading.value = false;
   }
 };
+
+const onPasskeyLogin = async () => {
+  errors.value.form = "";
+  loading.value = true;
+  try {
+    await authenticatePasskey({
+      email: email.value,
+      remember: remember.value,
+    });
+    await afterAuthenticated();
+  } catch (error) {
+    if (isPasskeyCanceled(error)) {
+      errors.value.form = t("auth.login.errors.passkeyCanceled");
+      return;
+    }
+    applyAuthError(error);
+  } finally {
+    loading.value = false;
+  }
+};
+
+onMounted(async () => {
+  passkeyAvailable.value = supportsPasskeys();
+  if (!passkeyAvailable.value) return;
+  if (!(await supportsPasskeyAutofill())) return;
+
+  passkeyAutofillActive = true;
+  try {
+    await authenticatePasskey({
+      email: email.value,
+      remember: remember.value,
+      useBrowserAutofill: true,
+    });
+    if (!passkeyAutofillActive) return;
+    await afterAuthenticated();
+  } catch (error) {
+    if (!passkeyAutofillActive || isPasskeyCanceled(error) || !error?.response) return;
+    applyAuthError(error);
+  }
+});
+
+onBeforeUnmount(() => {
+  passkeyAutofillActive = false;
+  if (offerResolve) {
+    offerResolve();
+    offerResolve = null;
+  }
+});
 </script>
 
 <style scoped>
@@ -235,6 +388,30 @@ const onSubmit = async () => {
   width: 100%;
   min-height: 42px;
   border-radius: 10px;
+}
+
+.login__spinner {
+  flex-shrink: 0;
+  animation: login-spin 0.8s linear infinite;
+}
+
+@keyframes login-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login__spinner {
+    animation: none;
+  }
+}
+
+.login__divider {
+  margin: 0;
+  text-align: center;
+  font-size: 12px;
+  color: var(--color-text-muted);
 }
 
 .login__signup {

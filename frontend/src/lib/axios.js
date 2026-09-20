@@ -13,7 +13,9 @@ api.interceptors.response.use(
     const status = error?.response?.status;
     const requestUrl = String(error?.config?.url || "");
     const isAuthEndpoint =
-      requestUrl.includes("/members/login") || requestUrl.includes("/members/signup");
+      requestUrl.includes("/members/login") ||
+      requestUrl.includes("/members/signup") ||
+      requestUrl.includes("/members/passkeys/login");
     const skipAuthRedirectParam = error?.config?.params?.[AUTH_SKIP_REDIRECT_PARAM];
     const hasSkipAuthRedirect =
       requestUrl.includes(`${AUTH_SKIP_REDIRECT_PARAM}=${AUTH_SKIP_REDIRECT_VALUE}`) ||

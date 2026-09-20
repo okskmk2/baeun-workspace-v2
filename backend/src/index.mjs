@@ -24,6 +24,7 @@ const __dirname = path.dirname(__filename);
 
 // routes
 import memberRouter from "./routes/member.route.mjs";
+import passkeyRouter from "./routes/passkey.route.mjs";
 import workspaceRouter from "./routes/workspace.route.mjs";
 import projectRouter from "./routes/project.route.mjs";
 import pagesRouter from "./routes/pages.route.mjs";
@@ -81,6 +82,7 @@ const sessionParser = session({
 app.use(sessionParser);
 
 // routes
+app.use("/api/members", passkeyRouter);
 app.use("/api/members", memberRouter);
 app.use("/api/workspaces", workspaceRouter);
 app.use("/api/projects", projectRouter);

@@ -9,11 +9,14 @@ import {
   DEFAULT_PROJECT_WIKI_CONTENT,
   DEFAULT_PROJECT_WIKI_TITLE,
 } from "../constants/defaultProjectWiki.mjs";
-import { REMEMBER_SESSION_TTL_MS } from "../config/session.mjs";
+import {
+  assertMemberLoginAllowed,
+  establishMemberSession,
+  toPublicMember,
+} from "../lib/memberAuth.mjs";
 
 const router = express.Router();
 const SALT_ROUNDS = 10; // Hash cost (higher is more secure but slower).
-const MAX_CONCURRENT_SESSIONS = 4;
 const PROFILE_IMAGE_BUCKET = "workspace.baeun.com";
 const PROFILE_IMAGE_MAX_SIZE = 5 * 1024 * 1024;
 const storage = new Storage();
@@ -33,16 +36,6 @@ const MIME_TO_EXTENSION = {
   "image/png": "png",
   "image/webp": "webp",
   "image/gif": "gif",
-};
-
-const normalizeRememberValue = (value) => {
-  if (typeof value === "boolean") return value;
-  if (typeof value === "number") return value === 1;
-  if (typeof value === "string") {
-    const normalized = value.trim().toLowerCase();
-    return normalized === "1" || normalized === "true" || normalized === "on";
-  }
-  return false;
 };
 
 const getOwnedResourceItems = async (client, userId) => {
@@ -149,13 +142,6 @@ const normalizeMemberImageUrl = (memberId, rawImageUrl) => {
   return getProfileImageApiUrl(memberId);
 };
 
-const getMemberApprovalStatusMessage = (approvalStatus) => {
-  const normalized = String(approvalStatus || "").toUpperCase();
-  if (normalized === "PENDING") return "Signup request is pending approval.";
-  if (normalized === "REJECTED") return "Signup request was rejected.";
-  return "Signup approval is required.";
-};
-
 const createApprovedMemberResources = async (client, userId, userName) => {
   const workspaceRes = await client.query(
     `INSERT INTO workspace (name, member_id, is_default)
@@ -217,30 +203,6 @@ const listMemberProfileFiles = async (memberId) => {
   const prefix = `members/${memberId}/profile.`;
   const [files] = await bucket.getFiles({ prefix });
   return files || [];
-};
-
-const enforceSessionLimit = async (userId, currentSid) => {
-  const sessionsResult = await pool.query(
-    `SELECT sid
-     FROM session
-     WHERE sess ->> 'userId' = $1
-     ORDER BY created_at ASC, sid ASC`,
-    [String(userId)]
-  );
-
-  const overflowCount = sessionsResult.rows.length - MAX_CONCURRENT_SESSIONS;
-  if (overflowCount <= 0) return;
-
-  const deleteSids = [];
-  for (const row of sessionsResult.rows) {
-    if (row.sid === currentSid) continue;
-    deleteSids.push(row.sid);
-    if (deleteSids.length === overflowCount) break;
-  }
-
-  if (deleteSids.length === 0) return;
-
-  await pool.query("DELETE FROM session WHERE sid = ANY($1::varchar[])", [deleteSids]);
 };
 
 /**
@@ -422,48 +384,13 @@ router.post("/login", async (req, res) => {
       return res.status(401).json({ name: "Unauthorized", message: "Invalid email or password." });
     }
 
-    const approvalStatus = String(user.approval_status || "").toUpperCase();
-    if (approvalStatus !== "APPROVED") {
-      return res.status(403).json({
-        name: "Forbidden",
-        message: getMemberApprovalStatusMessage(approvalStatus),
-      });
+    const allowed = assertMemberLoginAllowed(user);
+    if (!allowed.ok) {
+      return res.status(allowed.status).json(allowed.body);
     }
 
-    const accountStatus = String(user.account_status || "ACTIVE").toUpperCase();
-    if (accountStatus === "SUSPENDED") {
-      return res.status(403).json({
-        name: "Forbidden",
-        message: "Account is suspended.",
-      });
-    }
-
-    // 3. Set session.
-    req.session.userId = user.id;
-    req.session.userName = user.name;
-    req.session.userRole = user.role_name;
-    if (normalizeRememberValue(remember)) {
-      req.session.cookie.maxAge = REMEMBER_SESSION_TTL_MS;
-    } else {
-      req.session.cookie.expires = false;
-    }
-    await new Promise((resolve, reject) => {
-      req.session.save((err) => {
-        if (err) return reject(err);
-        resolve();
-      });
-    });
-
-    await enforceSessionLimit(user.id, req.sessionID);
-
-    res.json({
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      role_name: user.role_name,
-      approval_status: approvalStatus,
-      account_status: accountStatus,
-    });
+    await establishMemberSession(req, user, { remember });
+    res.json(toPublicMember(user, allowed.approvalStatus, allowed.accountStatus));
   } catch (error) {
     res.status(500).json({ name: "InternalServerError", message: error.message });
   }
@@ -1254,6 +1181,8 @@ router.delete("/me", isAuth, async (req, res) => {
 
     const withdrawnEmail = `withdrawn_${userId}_${Date.now()}@withdrawn.local`;
     const randomPasswordHash = await bcrypt.hash(randomUUID(), SALT_ROUNDS);
+
+    await client.query("DELETE FROM webauthn_credential WHERE member_id = $1", [userId]);
 
     await client.query(
       `UPDATE member
