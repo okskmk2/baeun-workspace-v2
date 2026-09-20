@@ -525,6 +525,21 @@
         "email": "Email",
         "hint": "Change your name and photo in Profile."
       },
+      "passkeys": {
+        "title": "Face ID / Windows Hello",
+        "body": "If sign-in on this account is tangled, you can clear saved device logins. We will ask again the next time you sign in with a password.",
+        "loading": "Checking...",
+        "empty": "No saved device logins.",
+        "count": "{count} saved.",
+        "reset": "Reset",
+        "resetting": "Clearing...",
+        "resetTitle": "Reset device login",
+        "resetMessage": "Clear Face ID / Windows Hello sign-in for this account?",
+        "resetDone": "Cleared. You can set it up again the next time you sign in with a password.",
+        "resetError": "Could not clear it now.",
+        "loadError": "Could not load the current status.",
+        "cancel": "Cancel"
+      },
       "withdraw": {
         "title": "Delete account",
         "body": "Withdrawal deactivates the account and anonymizes personal data.",

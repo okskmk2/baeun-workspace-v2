@@ -88,6 +88,31 @@ router.get("/passkeys", isAuth, async (req, res) => {
 
 /**
  * @swagger
+ * /api/members/passkeys:
+ *   delete:
+ *     summary: Delete all passkeys for the current member
+ *     tags: [Member]
+ */
+router.delete("/passkeys", isAuth, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `DELETE FROM webauthn_credential
+       WHERE member_id = $1
+       RETURNING id`,
+      [req.session.userId]
+    );
+    await clearWebAuthnChallenge(req);
+    res.json({
+      message: "Passkeys reset.",
+      deleted: result.rowCount || 0,
+    });
+  } catch (error) {
+    res.status(500).json({ name: "InternalServerError", message: error.message });
+  }
+});
+
+/**
+ * @swagger
  * /api/members/passkeys/register/options:
  *   post:
  *     summary: Create passkey registration options

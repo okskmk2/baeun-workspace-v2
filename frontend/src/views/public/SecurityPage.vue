@@ -16,6 +16,23 @@
       <p class="status muted">{{ t("settings.security.account.hint") }}</p>
     </section>
 
+    <section class="card">
+      <h2>{{ t("settings.security.passkeys.title") }}</h2>
+      <p class="status muted">{{ t("settings.security.passkeys.body") }}</p>
+      <p v-if="statusError" class="status error">{{ statusError }}</p>
+      <p v-else-if="statusOk" class="status ok">{{ statusOk }}</p>
+      <p v-else-if="isLoading" class="status muted">{{ t("settings.security.passkeys.loading") }}</p>
+      <p v-else class="status muted">{{ passkeyCountLabel }}</p>
+      <button
+        type="button"
+        class="btn btn--secondary"
+        :disabled="isLoading || isResetting || passkeyCount === 0"
+        @click="isResetOpen = true"
+      >
+        {{ t("settings.security.passkeys.reset") }}
+      </button>
+    </section>
+
     <section class="card danger">
       <h2>{{ t("settings.security.withdraw.title") }}</h2>
       <p>{{ t("settings.security.withdraw.body") }}</p>
@@ -25,19 +42,77 @@
     </section>
 
     <WithdrawAccountModal :open="isWithdrawOpen" @close="isWithdrawOpen = false" />
+    <ConfirmDeleteModal
+      :open="isResetOpen"
+      :title="t('settings.security.passkeys.resetTitle')"
+      :message="t('settings.security.passkeys.resetMessage')"
+      :confirm-label="t('settings.security.passkeys.reset')"
+      :deleting-label="t('settings.security.passkeys.resetting')"
+      :cancel-label="t('settings.security.passkeys.cancel')"
+      @close="isResetOpen = false"
+      @confirm="onResetPasskeys"
+    />
   </main>
 </template>
 
 <script setup>
-import { computed, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { useAppStore } from "../../stores/appStore";
+import ConfirmDeleteModal from "../../components/modals/ConfirmDeleteModal.vue";
 import WithdrawAccountModal from "../../components/modals/WithdrawAccountModal.vue";
+import api from "../../lib/axios";
+import { clearPasskeyOfferDismissed } from "../../lib/passkey";
+import { useAppStore } from "../../stores/appStore";
 
 const { t } = useI18n();
 const appStore = useAppStore();
 const isWithdrawOpen = ref(false);
+const isResetOpen = ref(false);
+const isLoading = ref(false);
+const isResetting = ref(false);
+const passkeyCount = ref(0);
+const statusError = ref("");
+const statusOk = ref("");
 const email = computed(() => appStore.currentUser?.email || "");
+
+const passkeyCountLabel = computed(() => {
+  if (passkeyCount.value === 0) return t("settings.security.passkeys.empty");
+  return t("settings.security.passkeys.count", { count: passkeyCount.value });
+});
+
+const loadPasskeys = async () => {
+  isLoading.value = true;
+  statusError.value = "";
+  try {
+    const { data } = await api.get("/members/passkeys");
+    passkeyCount.value = Array.isArray(data?.items) ? data.items.length : 0;
+  } catch (error) {
+    statusError.value = error?.response?.data?.message || t("settings.security.passkeys.loadError");
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+const onResetPasskeys = async () => {
+  if (isResetting.value) return;
+  isResetting.value = true;
+  statusError.value = "";
+  statusOk.value = "";
+  try {
+    await api.delete("/members/passkeys");
+    clearPasskeyOfferDismissed(appStore.currentUser?.id);
+    passkeyCount.value = 0;
+    statusOk.value = t("settings.security.passkeys.resetDone");
+    isResetOpen.value = false;
+  } catch (error) {
+    statusError.value = error?.response?.data?.message || t("settings.security.passkeys.resetError");
+    isResetOpen.value = false;
+  } finally {
+    isResetting.value = false;
+  }
+};
+
+onMounted(loadPasskeys);
 </script>
 
 <style scoped>
@@ -54,6 +129,14 @@ h1 {
 .status {
   margin: 8px 0 0;
   color: var(--color-text-muted);
+}
+
+.status.error {
+  color: var(--color-danger);
+}
+
+.status.ok {
+  color: var(--color-text);
 }
 
 .card {

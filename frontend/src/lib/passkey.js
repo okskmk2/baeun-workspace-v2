@@ -96,6 +96,15 @@ export const dismissPasskeyOffer = (userId) => {
   }
 };
 
+export const clearPasskeyOfferDismissed = (userId) => {
+  if (typeof window === "undefined" || !userId) return;
+  try {
+    window.localStorage.removeItem(passkeyOfferStorageKey(userId));
+  } catch {
+    /* ignore */
+  }
+};
+
 export async function authenticatePasskey({ email, remember, useBrowserAutofill } = {}) {
   if (!useBrowserAutofill) {
     cancelPasskeyCeremony();
