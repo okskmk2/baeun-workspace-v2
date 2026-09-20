@@ -2,149 +2,73 @@
   <div class="login">
     <header class="login__header">
       <h1>{{ t("auth.login.title") }}</h1>
-      <p>
-        {{
-          passkeyButtonVisible
-            ? t("auth.login.subtitlePasskey", { method: passkeyMethod })
-            : t("auth.login.subtitle")
-        }}
-      </p>
+      <p>{{ t("auth.login.subtitle") }}</p>
     </header>
 
-    <div class="login__form">
-      <template v-if="passkeyButtonVisible">
-        <button
-          type="button"
-          class="btn"
-          :disabled="isBusy"
-          :aria-busy="pending === 'passkey' ? 'true' : 'false'"
-          @click="onPasskeyLogin"
-        >
-          <MaterialSymbol
-            v-if="pending === 'passkey'"
-            class="login__spinner"
-            name="progress_activity"
-            :size="18"
-            alt=""
-          />
-          <MaterialSymbol
-            v-else
-            class="login__passkey-icon"
-            :name="passkeyIcon"
-            :size="18"
-            alt=""
-          />
-          {{
-            pending === "passkey"
-              ? t("auth.login.actions.signingIn")
-              : t("auth.login.actions.passkey", { method: passkeyMethod })
-          }}
-        </button>
-        <p class="login__divider">{{ t("auth.login.orPassword") }}</p>
-      </template>
+    <form class="login__form" @submit.prevent="onSubmit">
+      <div class="login__field">
+        <label for="email">{{ t("auth.login.fields.email.label") }}</label>
+        <input
+          id="email"
+          v-model.trim="email"
+          type="email"
+          autocomplete="username"
+          placeholder="name@company.com"
+        />
+        <p v-if="errors.email" class="login__error">{{ errors.email }}</p>
+      </div>
 
-      <form class="login__password" @submit.prevent="onSubmit">
-        <div class="login__field">
-          <label for="email">{{ t("auth.login.fields.email.label") }}</label>
-          <input
-            id="email"
-            v-model.trim="email"
-            type="email"
-            autocomplete="username"
-            placeholder="name@company.com"
-          />
-          <p v-if="errors.email" class="login__error">{{ errors.email }}</p>
-        </div>
+      <div class="login__field">
+        <label for="password">{{ t("auth.login.fields.password.label") }}</label>
+        <input
+          id="password"
+          v-model.trim="password"
+          type="password"
+          autocomplete="current-password"
+          :placeholder="t('auth.login.fields.password.placeholder')"
+        />
+        <p v-if="errors.password" class="login__error">{{ errors.password }}</p>
+      </div>
 
-        <div class="login__field">
-          <label for="password">{{ t("auth.login.fields.password.label") }}</label>
-          <input
-            id="password"
-            ref="passwordInput"
-            v-model.trim="password"
-            type="password"
-            autocomplete="current-password"
-            :placeholder="t('auth.login.fields.password.placeholder')"
-          />
-          <p v-if="errors.password" class="login__error">{{ errors.password }}</p>
-        </div>
+      <label class="login__remember">
+        <input v-model="remember" type="checkbox" />
+        <span>{{ t("auth.login.remember") }}</span>
+      </label>
 
-        <label class="login__remember">
-          <input v-model="remember" type="checkbox" />
-          <span>{{ t("auth.login.remember") }}</span>
-        </label>
-
-        <button
-          type="submit"
-          class="btn"
-          :class="{ 'btn--secondary': passkeyButtonVisible }"
-          :disabled="isBusy"
-          :aria-busy="pending === 'password' ? 'true' : 'false'"
-        >
-          <MaterialSymbol
-            v-if="pending === 'password'"
-            class="login__spinner"
-            name="progress_activity"
-            :size="18"
-            alt=""
-          />
-          {{
-            pending === "password"
-              ? t("auth.login.actions.signingIn")
-              : t("auth.login.actions.signIn")
-          }}
-        </button>
-      </form>
+      <button
+        type="submit"
+        class="btn"
+        :disabled="loading"
+        :aria-busy="loading ? 'true' : 'false'"
+      >
+        <MaterialSymbol
+          v-if="loading"
+          class="login__spinner"
+          name="progress_activity"
+          :size="18"
+          alt=""
+        />
+        {{ loading ? t("auth.login.actions.signingIn") : t("auth.login.actions.signIn") }}
+      </button>
 
       <p v-if="errors.form" class="login__error" role="alert" aria-live="assertive">
         {{ errors.form }}
       </p>
-    </div>
+    </form>
 
     <p class="login__signup">
       {{ t("auth.login.signupPrompt") }}
       <router-link to="/signup">{{ t("auth.login.signupLink") }}</router-link>
     </p>
-
-    <PasskeyOfferModal
-      :open="offerOpen"
-      :busy="offerBusy"
-      :done="offerDone"
-      :error="offerError"
-      :method="passkeyMethod"
-      :icon="passkeyIcon"
-      @skip="skipPasskeyOffer"
-      @accept="acceptPasskeyOffer"
-      @continue="finishPasskeyOffer"
-    />
   </div>
 </template>
 
 <script setup>
-import { computed, nextTick, onMounted, onBeforeUnmount, ref } from "vue";
+import { ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 import MaterialSymbol from "../../components/MaterialSymbol.vue";
-import PasskeyOfferModal from "../../components/modals/PasskeyOfferModal.vue";
 import api from "../../lib/axios";
-import {
-  authenticatePasskey,
-  cancelPasskeyCeremony,
-  clearPasskeyOfferDismissed,
-  hasPasskeyOnThisBrowser,
-  hasPasskeyOnThisDevice,
-  isPasskeyAlreadyRegistered,
-  isPasskeyCanceled,
-  isPasskeyNotDeviceBound,
-  isPasskeyTimeout,
-  markPasskeyOnThisBrowser,
-  passkeyIconName,
-  passkeyMethodKey,
-  recordPasskeyOfferSkip,
-  registerPasskey,
-  shouldOfferPasskeySetup,
-  supportsPasskeys,
-} from "../../lib/passkey";
 import { useAppStore } from "../../stores/appStore";
 import { useWorkspaceStore } from "../../stores/workspaceStore";
 
@@ -157,17 +81,7 @@ const workspaceStore = useWorkspaceStore();
 const email = ref("");
 const password = ref("");
 const remember = ref(false);
-const pending = ref(null);
-const passkeyButtonVisible = ref(false);
-const offerOpen = ref(false);
-const offerBusy = ref(false);
-const offerDone = ref(false);
-const offerError = ref("");
-const passwordInput = ref(null);
-const passkeyMethod = computed(() => t(`auth.login.method.${passkeyMethodKey()}`));
-const passkeyIcon = passkeyIconName();
-const isBusy = computed(() => Boolean(pending.value) || offerOpen.value);
-let offerResolve = null;
+const loading = ref(false);
 const errors = ref({
   email: "",
   password: "",
@@ -175,6 +89,14 @@ const errors = ref({
 });
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const safeRedirect = (value) => {
+  const redirect = Array.isArray(value) ? value[0] : value;
+  if (typeof redirect === "string" && redirect.startsWith("/") && !redirect.startsWith("//")) {
+    return redirect;
+  }
+  return null;
+};
 
 const validate = () => {
   errors.value.email = "";
@@ -196,174 +118,45 @@ const validate = () => {
   return !errors.value.email && !errors.value.password;
 };
 
-const redirectAfterLogin = async () => {
-  const redirect = Array.isArray(route.query.redirect) ? route.query.redirect[0] : route.query.redirect;
-  if (typeof redirect === "string" && redirect.startsWith("/") && !redirect.startsWith("//")) {
-    await router.push(redirect);
-    return;
-  }
-
-  const workspaces = await workspaceStore.fetchWorkspaces({ force: true });
-  if (workspaces.length > 0) {
-    await router.push("/settings/workspaces");
-    return;
-  }
-  await router.push("/");
-};
-
-const finishPasskeyOffer = () => {
-  offerOpen.value = false;
-  offerBusy.value = false;
-  offerDone.value = false;
-  offerError.value = "";
-  offerResolve?.();
-  offerResolve = null;
-};
-
-const maybeOfferPasskey = async (userId) => {
-  if (!supportsPasskeys() || !shouldOfferPasskeySetup(userId) || hasPasskeyOnThisDevice(userId)) {
-    return;
-  }
-  cancelPasskeyCeremony();
-  offerError.value = "";
-  offerBusy.value = false;
-  offerDone.value = false;
-  offerOpen.value = true;
-  await new Promise((resolve) => {
-    offerResolve = resolve;
-  });
-};
-
-const skipPasskeyOffer = () => {
-  if (offerBusy.value || offerDone.value) return;
-  recordPasskeyOfferSkip(appStore.currentUser?.id);
-  finishPasskeyOffer();
-};
-
-const acceptPasskeyOffer = async () => {
-  if (offerBusy.value || offerDone.value) return;
-  offerBusy.value = true;
-  offerError.value = "";
-  try {
-    await registerPasskey(passkeyMethod.value);
-    const userId = appStore.currentUser?.id;
-    clearPasskeyOfferDismissed(userId);
-    markPasskeyOnThisBrowser(userId);
-    passkeyButtonVisible.value = true;
-    offerBusy.value = false;
-    offerDone.value = true;
-  } catch (error) {
-    if (isPasskeyAlreadyRegistered(error)) {
-      const userId = appStore.currentUser?.id;
-      clearPasskeyOfferDismissed(userId);
-      markPasskeyOnThisBrowser(userId);
-      passkeyButtonVisible.value = true;
-      offerBusy.value = false;
-      offerDone.value = true;
-      return;
-    }
-    offerBusy.value = false;
-    if (isPasskeyTimeout(error)) {
-      offerError.value = t("auth.login.passkeyOffer.timeout");
-      return;
-    }
-    if (isPasskeyCanceled(error)) {
-      offerError.value = t("auth.login.passkeyOffer.canceled");
-      return;
-    }
-    if (isPasskeyNotDeviceBound(error)) {
-      offerError.value = t("auth.login.passkeyOffer.notThisDevice");
-      return;
-    }
-    offerError.value = t("auth.login.passkeyOffer.error");
-  }
-};
-
-const focusPassword = async () => {
-  await nextTick();
-  passwordInput.value?.focus?.();
-};
-
-const afterAuthenticated = async ({ offerPasskey = false } = {}) => {
-  const response = await api.get("/members/me");
-  appStore.setCurrentUser(response.data);
-  pending.value = null;
-  if (!offerPasskey) {
-    markPasskeyOnThisBrowser(response.data?.id);
-    passkeyButtonVisible.value = true;
-  }
-  if (offerPasskey) {
-    await maybeOfferPasskey(response.data?.id);
-  }
-  await redirectAfterLogin();
-};
-
-const applyAuthError = (error) => {
-  if (error?.response?.status === 403) {
-    errors.value.form = t("auth.login.errors.approvalPending");
-    return;
-  }
-  errors.value.form = error?.response?.data?.message || t("auth.login.errors.formDefault");
-};
-
 const onSubmit = async () => {
   if (!validate()) {
     return;
   }
 
-  cancelPasskeyCeremony();
-  pending.value = "password";
+  loading.value = true;
   try {
     await api.post("/members/login", {
       email: email.value,
       password: password.value,
       remember: remember.value,
     });
-    await afterAuthenticated({ offerPasskey: true });
-  } catch (error) {
-    applyAuthError(error);
-  } finally {
-    pending.value = null;
-  }
-};
 
-const onPasskeyLogin = async () => {
-  errors.value.form = "";
-  pending.value = "passkey";
-  try {
-    await authenticatePasskey({
-      remember: remember.value,
-    });
-    await afterAuthenticated();
-  } catch (error) {
-    if (isPasskeyTimeout(error)) {
-      errors.value.form = t("auth.login.errors.passkeyTimeout");
-    } else if (isPasskeyCanceled(error) || !error?.response) {
-      errors.value.form = t("auth.login.errors.passkeyCanceled");
-    } else if (error?.response?.status === 403) {
-      errors.value.form = t("auth.login.errors.approvalPending");
-    } else if (isPasskeyNotDeviceBound(error)) {
-      errors.value.form = t("auth.login.errors.passkeyNotThisDevice");
-    } else {
-      errors.value.form = t("auth.login.errors.passkeyUnavailable");
+    const response = await api.get("/members/me");
+    appStore.setCurrentUser(response.data);
+
+    const redirect = safeRedirect(route.query.redirect);
+    if (redirect) {
+      await router.push(redirect);
+      return;
     }
-    await focusPassword();
+
+    const workspaces = await workspaceStore.fetchWorkspaces({ force: true });
+    if (workspaces.length > 0) {
+      await router.push("/settings/workspaces");
+      return;
+    }
+    await router.push("/");
+  } catch (error) {
+    if (error?.response?.status === 403) {
+      errors.value.form = t("auth.login.errors.approvalPending");
+      return;
+    }
+
+    errors.value.form = error?.response?.data?.message || t("auth.login.errors.formDefault");
   } finally {
-    pending.value = null;
+    loading.value = false;
   }
 };
-
-onMounted(() => {
-  passkeyButtonVisible.value = supportsPasskeys() && hasPasskeyOnThisBrowser();
-});
-
-onBeforeUnmount(() => {
-  cancelPasskeyCeremony();
-  if (offerResolve) {
-    offerResolve();
-    offerResolve = null;
-  }
-});
 </script>
 
 <style scoped>
@@ -397,14 +190,10 @@ onBeforeUnmount(() => {
   font-size: 14px;
 }
 
-.login__form,
-.login__password {
-  display: grid;
-  gap: 16px;
-}
-
 .login__form {
   width: min(100%, var(--card-width));
+  display: grid;
+  gap: 16px;
   padding: var(--card-padding);
   background-color: var(--color-page-bg);
   border-radius: 18px;
@@ -470,12 +259,8 @@ onBeforeUnmount(() => {
   border-radius: 10px;
 }
 
-.login__passkey-icon,
 .login__spinner {
   flex-shrink: 0;
-}
-
-.login__spinner {
   animation: login-spin 0.8s linear infinite;
 }
 
@@ -489,14 +274,6 @@ onBeforeUnmount(() => {
   .login__spinner {
     animation: none;
   }
-}
-
-.login__divider {
-  margin: 0;
-  text-align: center;
-  font-size: 12px;
-  color: var(--color-text-muted);
-  line-height: 1.5;
 }
 
 .login__signup {

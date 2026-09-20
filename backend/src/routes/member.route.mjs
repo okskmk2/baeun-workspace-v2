@@ -1182,8 +1182,6 @@ router.delete("/me", isAuth, async (req, res) => {
     const withdrawnEmail = `withdrawn_${userId}_${Date.now()}@withdrawn.local`;
     const randomPasswordHash = await bcrypt.hash(randomUUID(), SALT_ROUNDS);
 
-    await client.query("DELETE FROM webauthn_credential WHERE member_id = $1", [userId]);
-
     await client.query(
       `UPDATE member
        SET name = $1,
