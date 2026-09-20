@@ -217,6 +217,23 @@ export const useWorkspaceStore = defineStore("workspace", {
       }
       return project;
     },
+    async transferProject(projectId, targetWorkspaceId) {
+      if (!projectId || !targetWorkspaceId) return null;
+      const res = await api.post(`/projects/${projectId}/transfer`, {
+        target_workspace_id: targetWorkspaceId,
+      });
+
+      const sourceWorkspaceId = this.projectById[projectId]?.workspace_id;
+      delete this.projectById[projectId];
+      [sourceWorkspaceId, targetWorkspaceId].forEach((id) => {
+        if (!id) return;
+        delete this.projectsByWorkspace[id];
+        delete this.pagedProjectsByWorkspace[id];
+        delete this.projectPaginationByWorkspace[id];
+      });
+
+      return res.data || null;
+    },
     async updateWorkspaceSettings(workspaceId, payload = {}) {
       if (!workspaceId) return null;
       const res = await api.put(`/workspaces/${workspaceId}`, payload);

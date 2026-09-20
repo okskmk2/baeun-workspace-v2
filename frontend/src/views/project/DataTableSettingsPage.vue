@@ -12,7 +12,7 @@
         @click="requestPromotion"
         :disabled="!capabilities.can_request_promotion || isAsset"
       >
-        워크스페이스 자산으로 승격 신청
+        워크스페이스 자산으로 승격
       </button>
       <button type="button" class="btn" @click="createSnapshot" :disabled="!capabilities.can_delete_row">
         Snapshot 생성
@@ -351,9 +351,10 @@ const requestPromotion = async () => {
   errorMessage.value = "";
   try {
     await dataStore.requestPromotion(projectId.value, tableId.value);
-    addToast({ message: "승격 신청이 접수되었습니다.", type: "success" });
+    addToast({ message: "워크스페이스 자산으로 승격했습니다.", type: "success" });
+    await load();
   } catch (error) {
-    errorMessage.value = error?.response?.data?.message || "승격 신청에 실패했습니다.";
+    errorMessage.value = error?.response?.data?.message || "승격에 실패했습니다.";
   }
 };
 

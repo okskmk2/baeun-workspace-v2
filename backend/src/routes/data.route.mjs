@@ -51,14 +51,6 @@ const getProjectContext = async (projectId, memberId) => {
   return row;
 };
 
-const getWorkspaceRole = async (workspaceId, memberId) => {
-  const result = await pool.query(
-    "SELECT role_name FROM workspace_member WHERE workspace_id = $1 AND member_id = $2",
-    [workspaceId, memberId]
-  );
-  return result.rows[0]?.role_name || null;
-};
-
 const getColumnsByTableId = async (tableId) => {
   const result = await pool.query(
     "SELECT * FROM data_column WHERE table_id = $1 ORDER BY sort_order ASC, id ASC",
@@ -119,6 +111,37 @@ const insertAuditLog = async ({
     [tableId, rowId, action, beforeData, afterData, changedBy]
   );
 };
+
+router.get("/workspaces/:workspaceId/assets", isAuth, async (req, res) => {
+  const { workspaceId } = req.params;
+  const userId = req.session.userId;
+
+  try {
+    const memberCheck = await pool.query(
+      "SELECT role_name FROM workspace_member WHERE workspace_id = $1 AND member_id = $2",
+      [workspaceId, userId]
+    );
+    if (!memberCheck.rows[0]) {
+      return res.status(403).json({ name: "Forbidden", message: "워크스페이스 접근 권한이 없습니다." });
+    }
+
+    const tableRes = await pool.query(
+      `SELECT dt.*,
+              (SELECT COUNT(*)::int FROM data_column dc WHERE dc.table_id = dt.id) AS column_count
+         FROM data_table dt
+        WHERE dt.workspace_id = $1
+          AND dt.is_asset = true
+          AND dt.status = 'ACTIVE'
+        ORDER BY dt.updated_at DESC, dt.id DESC`,
+      [workspaceId]
+    );
+
+    res.json(tableRes.rows || []);
+  } catch (error) {
+    logger.error("workspace asset list error", { err: error?.message, stack: error?.stack });
+    res.status(500).json({ name: "InternalServerError", message: error.message });
+  }
+});
 
 router.get("/projects/:projectId/tables", isAuth, async (req, res) => {
   const { projectId } = req.params;
@@ -907,10 +930,12 @@ router.delete("/projects/:projectId/tables/:tableId/rows/:rowId", isAuth, async 
   }
 });
 
+// Promotes a project-local table to a workspace asset immediately, no approval step.
 router.post("/projects/:projectId/tables/:tableId/promotion-requests", isAuth, async (req, res) => {
   const { projectId, tableId } = req.params;
   const userId = req.session.userId;
 
+  const client = await pool.connect();
   try {
     const context = await getTableInProjectContext(projectId, tableId, userId);
     if (context.error) return res.status(context.status).json(context.error);
@@ -921,151 +946,36 @@ router.post("/projects/:projectId/tables/:tableId/promotion-requests", isAuth, a
     }
 
     if (!["OWNER", "ADMIN"].includes(normalizeRole(project.project_role))) {
-      return res.status(403).json({ name: "Forbidden", message: "승격 신청 권한이 없습니다." });
+      return res.status(403).json({ name: "Forbidden", message: "승격 권한이 없습니다." });
     }
 
-    const columns = await getColumnsByTableId(table.id);
-    const schema = {
-      table: {
-        id: table.id,
-        name: table.name,
-        description: table.description,
-        version: table.version,
-      },
-      columns,
-    };
+    await client.query("BEGIN");
 
-    const pendingCheck = await pool.query(
-      "SELECT id FROM data_promotion_request WHERE table_id = $1 AND status = 'PENDING' LIMIT 1",
+    const result = await client.query(
+      `UPDATE data_table
+          SET is_asset = true,
+              project_id = null,
+              version = version + 1,
+              updated_at = CURRENT_TIMESTAMP
+        WHERE id = $1
+      RETURNING *`,
       [table.id]
-    );
-    if (pendingCheck.rows.length > 0) {
-      return res.status(409).json({ name: "Conflict", message: "이미 승인 대기 중인 요청이 있습니다." });
-    }
-
-    const result = await pool.query(
-      `INSERT INTO data_promotion_request (table_id, requester_id, status, schema_json)
-       VALUES ($1, $2, 'PENDING', $3)
-       RETURNING *`,
-      [table.id, userId, JSON.stringify(schema)]
     );
 
     await insertAuditLog({
+      db: client,
       tableId: table.id,
       action: "PROMOTION_REQUEST",
-      beforeData: null,
-      afterData: { request_id: result.rows[0].id, status: "PENDING" },
+      beforeData: { is_asset: false, project_id: Number(projectId) },
+      afterData: { is_asset: true, project_id: null },
       changedBy: userId,
     });
 
-    res.status(201).json(result.rows[0]);
-  } catch (error) {
-    logger.error("create promotion request error", { err: error?.message, stack: error?.stack });
-    res.status(500).json({ name: "InternalServerError", message: error.message });
-  }
-});
-
-router.get("/workspaces/:workspaceId/promotion-requests", isAuth, async (req, res) => {
-  const { workspaceId } = req.params;
-  const userId = req.session.userId;
-
-  try {
-    const role = await getWorkspaceRole(workspaceId, userId);
-    if (!["OWNER", "ADMIN"].includes(normalizeRole(role))) {
-      return res.status(403).json({ name: "Forbidden", message: "승인 목록 접근 권한이 없습니다." });
-    }
-
-    const result = await pool.query(
-      `SELECT pr.*, dt.name AS table_name, p.name AS project_name, m.name AS requester_name
-         FROM data_promotion_request pr
-         JOIN data_table dt ON dt.id = pr.table_id
-         LEFT JOIN project p ON p.id = dt.project_id
-         LEFT JOIN member m ON m.id = pr.requester_id
-        WHERE dt.workspace_id = $1
-        ORDER BY pr.created_at DESC`,
-      [workspaceId]
-    );
-
-    res.json(result.rows);
-  } catch (error) {
-    logger.error("list promotion requests error", { err: error?.message, stack: error?.stack });
-    res.status(500).json({ name: "InternalServerError", message: error.message });
-  }
-});
-
-router.patch("/promotion-requests/:requestId/review", isAuth, async (req, res) => {
-  const { requestId } = req.params;
-  const userId = req.session.userId;
-  const { status, reviewer_comment = null } = req.body || {};
-  const nextStatus = normalizeRole(status);
-
-  if (!["APPROVED", "REJECTED"].includes(nextStatus)) {
-    return res.status(400).json({ name: "BadRequest", message: "status는 APPROVED 또는 REJECTED 여야 합니다." });
-  }
-
-  const client = await pool.connect();
-  try {
-    await client.query("BEGIN");
-
-    const requestRes = await client.query(
-      `SELECT pr.*, dt.workspace_id, dt.name AS table_name, dt.id AS table_id
-         FROM data_promotion_request pr
-         JOIN data_table dt ON dt.id = pr.table_id
-        WHERE pr.id = $1
-        FOR UPDATE`,
-      [requestId]
-    );
-
-    const request = requestRes.rows[0] || null;
-    if (!request) {
-      await client.query("ROLLBACK");
-      return res.status(404).json({ name: "NotFound", message: "요청을 찾을 수 없습니다." });
-    }
-    if (request.status !== "PENDING") {
-      await client.query("ROLLBACK");
-      return res.status(409).json({ name: "Conflict", message: "이미 처리된 요청입니다." });
-    }
-
-    const reviewerRole = await getWorkspaceRole(request.workspace_id, userId);
-    if (!["OWNER", "ADMIN"].includes(normalizeRole(reviewerRole))) {
-      await client.query("ROLLBACK");
-      return res.status(403).json({ name: "Forbidden", message: "요청 승인 권한이 없습니다." });
-    }
-
-    const updateRequest = await client.query(
-      `UPDATE data_promotion_request
-          SET status = $1,
-              reviewer_id = $2,
-              reviewer_comment = $3,
-              reviewed_at = CURRENT_TIMESTAMP
-        WHERE id = $4
-      RETURNING *`,
-      [nextStatus, userId, reviewer_comment, requestId]
-    );
-
-    if (nextStatus === "APPROVED") {
-      await client.query(
-        `UPDATE data_table
-            SET is_asset = true,
-                project_id = null,
-                version = version + 1,
-                updated_at = CURRENT_TIMESTAMP
-          WHERE id = $1`,
-        [request.table_id]
-      );
-    }
-
-    await client.query(
-      `INSERT INTO data_audit_log (table_id, action, after_data, changed_by)
-       VALUES ($1, 'PROMOTION_REQUEST', $2, $3)`,
-      [request.table_id, JSON.stringify({ request_id: requestId, status: nextStatus }), userId]
-    );
-
     await client.query("COMMIT");
-    res.json(updateRequest.rows[0]);
+    res.status(200).json(result.rows[0]);
   } catch (error) {
     await client.query("ROLLBACK");
-    logger.error("review promotion request error", { err: error?.message, stack: error?.stack });
+    logger.error("promote table error", { err: error?.message, stack: error?.stack });
     res.status(500).json({ name: "InternalServerError", message: error.message });
   } finally {
     client.release();

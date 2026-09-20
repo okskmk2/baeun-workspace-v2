@@ -111,6 +111,15 @@
     <template #actions>
       <button
         type="button"
+        class="btn btn--secondary btn--with-icon"
+        :disabled="isDeleting"
+        @click="isTransferModalOpen = true"
+      >
+        <MaterialSymbol name="swap_horiz" :size="16" alt="" />
+        {{ t("settings.home.actions.transfer") }}
+      </button>
+      <button
+        type="button"
         class="btn btn--danger btn--with-icon"
         :disabled="isDeleting"
         @click="openDeleteModal"
@@ -120,6 +129,15 @@
       </button>
     </template>
   </DangerZone>
+
+  <TransferProjectModal
+    :open="isTransferModalOpen"
+    :project-id="projectId"
+    :project-name="form.name"
+    :current-workspace-id="projectWorkspaceId"
+    @close="isTransferModalOpen = false"
+    @transferred="onProjectTransferred"
+  />
 
   <BaseModal
     :open="isDeleteModalOpen"
@@ -174,6 +192,7 @@ import DangerZone from "../../components/DangerZone.vue";
 import MaterialSymbol from "../../components/MaterialSymbol.vue";
 import ToggleSwitch from "../../components/ToggleSwitch.vue";
 import ThemeBuilderModal from "../../components/modals/ThemeBuilderModal.vue";
+import TransferProjectModal from "../../components/modals/TransferProjectModal.vue";
 import { addToast } from "../../lib/toast";
 import { useAppStore } from "../../stores/appStore";
 import { useWorkspaceStore } from "../../stores/workspaceStore";
@@ -191,6 +210,7 @@ const isSaving = ref(false);
 const isDeleting = ref(false);
 const isDeleteModalOpen = ref(false);
 const isThemeBuilderOpen = ref(false);
+const isTransferModalOpen = ref(false);
 const errorMessage = ref("");
 const formError = ref("");
 const projectWorkspaceId = ref(null);
@@ -381,6 +401,12 @@ const onThemeBuilderApply = ({ background, foreground, seedH, seedS, seedL }) =>
 
 const openDeleteModal = () => {
   isDeleteModalOpen.value = true;
+};
+
+const onProjectTransferred = async ({ targetWorkspaceId }) => {
+  isTransferModalOpen.value = false;
+  addToast({ message: t("settings.home.toast.transferred"), type: "success" });
+  await router.push(`/workspace/${targetWorkspaceId}/settings/projects`);
 };
 
 const closeDeleteModal = () => {
