@@ -76,21 +76,31 @@ export async function registerPasskey(nickname) {
   return data;
 }
 
-const passkeyOfferStorageKey = (userId) => `baeun.passkeyOffer.v1:${userId}`;
+const PASSKEY_OFFER_SKIP_LIMIT = 3;
+const passkeyOfferStorageKey = (userId) => `baeun.passkeyOffer.v2:${userId}`;
+const passkeyOfferLegacyKey = (userId) => `baeun.passkeyOffer.v1:${userId}`;
 
-export const isPasskeyOfferDismissed = (userId) => {
-  if (typeof window === "undefined" || !userId) return false;
+const readOfferSkipCount = (userId) => {
+  if (typeof window === "undefined" || !userId) return 0;
   try {
-    return window.localStorage.getItem(passkeyOfferStorageKey(userId)) === "1";
+    if (window.localStorage.getItem(passkeyOfferLegacyKey(userId)) === "1") {
+      return PASSKEY_OFFER_SKIP_LIMIT;
+    }
+    const raw = window.localStorage.getItem(passkeyOfferStorageKey(userId));
+    const count = Number.parseInt(raw || "0", 10);
+    return Number.isFinite(count) && count > 0 ? count : 0;
   } catch {
-    return false;
+    return 0;
   }
 };
 
-export const dismissPasskeyOffer = (userId) => {
+export const shouldOfferPasskeySetup = (userId) =>
+  readOfferSkipCount(userId) < PASSKEY_OFFER_SKIP_LIMIT;
+
+export const recordPasskeyOfferSkip = (userId) => {
   if (typeof window === "undefined" || !userId) return;
   try {
-    window.localStorage.setItem(passkeyOfferStorageKey(userId), "1");
+    window.localStorage.setItem(passkeyOfferStorageKey(userId), String(readOfferSkipCount(userId) + 1));
   } catch {
     /* ignore quota / private mode */
   }
@@ -100,10 +110,16 @@ export const clearPasskeyOfferDismissed = (userId) => {
   if (typeof window === "undefined" || !userId) return;
   try {
     window.localStorage.removeItem(passkeyOfferStorageKey(userId));
+    window.localStorage.removeItem(passkeyOfferLegacyKey(userId));
   } catch {
     /* ignore */
   }
 };
+
+export async function listPasskeys() {
+  const { data } = await api.get("/members/passkeys");
+  return Array.isArray(data?.items) ? data.items : [];
+}
 
 export async function authenticatePasskey({ email, remember, useBrowserAutofill } = {}) {
   if (!useBrowserAutofill) {

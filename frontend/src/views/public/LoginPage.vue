@@ -47,6 +47,7 @@
           <label for="password">{{ t("auth.login.fields.password.label") }}</label>
           <input
             id="password"
+            ref="passwordInput"
             v-model.trim="password"
             type="password"
             autocomplete="current-password"
@@ -101,7 +102,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, onBeforeUnmount, ref } from "vue";
+import { computed, nextTick, onMounted, onBeforeUnmount, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 import MaterialSymbol from "../../components/MaterialSymbol.vue";
@@ -110,11 +111,13 @@ import api from "../../lib/axios";
 import {
   authenticatePasskey,
   cancelPasskeyCeremony,
-  dismissPasskeyOffer,
+  clearPasskeyOfferDismissed,
   isPasskeyCanceled,
-  isPasskeyOfferDismissed,
   isPasskeyTimeout,
+  listPasskeys,
+  recordPasskeyOfferSkip,
   registerPasskey,
+  shouldOfferPasskeySetup,
   supportsPasskeys,
 } from "../../lib/passkey";
 import { useAppStore } from "../../stores/appStore";
@@ -134,6 +137,7 @@ const passkeyAvailable = ref(false);
 const offerOpen = ref(false);
 const offerBusy = ref(false);
 const offerError = ref("");
+const passwordInput = ref(null);
 const isBusy = computed(() => Boolean(pending.value) || offerOpen.value);
 let offerResolve = null;
 const errors = ref({
@@ -187,22 +191,28 @@ const finishPasskeyOffer = () => {
   offerResolve = null;
 };
 
-const maybeOfferPasskey = (userId) => {
-  if (!supportsPasskeys() || isPasskeyOfferDismissed(userId)) {
-    return Promise.resolve();
+const maybeOfferPasskey = async (userId) => {
+  if (!supportsPasskeys() || !shouldOfferPasskeySetup(userId)) {
+    return;
+  }
+  try {
+    const items = await listPasskeys();
+    if (items.length > 0) return;
+  } catch {
+    return;
   }
   cancelPasskeyCeremony();
   offerError.value = "";
   offerBusy.value = false;
   offerOpen.value = true;
-  return new Promise((resolve) => {
+  await new Promise((resolve) => {
     offerResolve = resolve;
   });
 };
 
 const skipPasskeyOffer = () => {
   if (offerBusy.value) return;
-  dismissPasskeyOffer(appStore.currentUser?.id);
+  recordPasskeyOfferSkip(appStore.currentUser?.id);
   finishPasskeyOffer();
 };
 
@@ -212,7 +222,7 @@ const acceptPasskeyOffer = async () => {
   offerError.value = "";
   try {
     await registerPasskey("");
-    dismissPasskeyOffer(appStore.currentUser?.id);
+    clearPasskeyOfferDismissed(appStore.currentUser?.id);
     finishPasskeyOffer();
   } catch (error) {
     offerBusy.value = false;
@@ -224,8 +234,13 @@ const acceptPasskeyOffer = async () => {
       offerError.value = t("auth.login.passkeyOffer.canceled");
       return;
     }
-    offerError.value = error?.response?.data?.message || t("auth.login.passkeyOffer.error");
+    offerError.value = t("auth.login.passkeyOffer.error");
   }
+};
+
+const focusPassword = async () => {
+  await nextTick();
+  passwordInput.value?.focus?.();
 };
 
 const afterAuthenticated = async ({ offerPasskey = false } = {}) => {
@@ -277,11 +292,16 @@ const onPasskeyLogin = async () => {
     });
     await afterAuthenticated();
   } catch (error) {
-    if (isPasskeyCanceled(error)) {
+    if (isPasskeyTimeout(error)) {
+      errors.value.form = t("auth.login.errors.passkeyTimeout");
+    } else if (isPasskeyCanceled(error) || !error?.response) {
       errors.value.form = t("auth.login.errors.passkeyCanceled");
-      return;
+    } else if (error?.response?.status === 403) {
+      errors.value.form = t("auth.login.errors.approvalPending");
+    } else {
+      errors.value.form = t("auth.login.errors.passkeyUnavailable");
     }
-    applyAuthError(error);
+    await focusPassword();
   } finally {
     pending.value = null;
   }
