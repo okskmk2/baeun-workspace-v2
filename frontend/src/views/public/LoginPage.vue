@@ -2,11 +2,17 @@
   <div class="login">
     <header class="login__header">
       <h1>{{ t("auth.login.title") }}</h1>
-      <p>{{ passkeyAvailable ? t("auth.login.subtitlePasskey") : t("auth.login.subtitle") }}</p>
+      <p>
+        {{
+          passkeyButtonVisible
+            ? t("auth.login.subtitlePasskey", { method: passkeyMethod })
+            : t("auth.login.subtitle")
+        }}
+      </p>
     </header>
 
     <div class="login__form">
-      <template v-if="passkeyAvailable">
+      <template v-if="passkeyButtonVisible">
         <button
           type="button"
           class="btn"
@@ -21,10 +27,17 @@
             :size="18"
             alt=""
           />
+          <MaterialSymbol
+            v-else
+            class="login__passkey-icon"
+            :name="passkeyIcon"
+            :size="18"
+            alt=""
+          />
           {{
             pending === "passkey"
               ? t("auth.login.actions.signingIn")
-              : t("auth.login.actions.passkey")
+              : t("auth.login.actions.passkey", { method: passkeyMethod })
           }}
         </button>
         <p class="login__divider">{{ t("auth.login.orPassword") }}</p>
@@ -37,7 +50,7 @@
             id="email"
             v-model.trim="email"
             type="email"
-            autocomplete="username webauthn"
+            autocomplete="username"
             placeholder="name@company.com"
           />
           <p v-if="errors.email" class="login__error">{{ errors.email }}</p>
@@ -64,7 +77,7 @@
         <button
           type="submit"
           class="btn"
-          :class="{ 'btn--secondary': passkeyAvailable }"
+          :class="{ 'btn--secondary': passkeyButtonVisible }"
           :disabled="isBusy"
           :aria-busy="pending === 'password' ? 'true' : 'false'"
         >
@@ -83,7 +96,9 @@
         </button>
       </form>
 
-      <p v-if="errors.form" class="login__error">{{ errors.form }}</p>
+      <p v-if="errors.form" class="login__error" role="alert" aria-live="assertive">
+        {{ errors.form }}
+      </p>
     </div>
 
     <p class="login__signup">
@@ -94,9 +109,13 @@
     <PasskeyOfferModal
       :open="offerOpen"
       :busy="offerBusy"
+      :done="offerDone"
       :error="offerError"
+      :method="passkeyMethod"
+      :icon="passkeyIcon"
       @skip="skipPasskeyOffer"
       @accept="acceptPasskeyOffer"
+      @continue="finishPasskeyOffer"
     />
   </div>
 </template>
@@ -112,9 +131,15 @@ import {
   authenticatePasskey,
   cancelPasskeyCeremony,
   clearPasskeyOfferDismissed,
+  hasPasskeyOnThisBrowser,
+  hasPasskeyOnThisDevice,
+  isPasskeyAlreadyRegistered,
   isPasskeyCanceled,
+  isPasskeyNotDeviceBound,
   isPasskeyTimeout,
-  listPasskeys,
+  markPasskeyOnThisBrowser,
+  passkeyIconName,
+  passkeyMethodKey,
   recordPasskeyOfferSkip,
   registerPasskey,
   shouldOfferPasskeySetup,
@@ -133,11 +158,14 @@ const email = ref("");
 const password = ref("");
 const remember = ref(false);
 const pending = ref(null);
-const passkeyAvailable = ref(false);
+const passkeyButtonVisible = ref(false);
 const offerOpen = ref(false);
 const offerBusy = ref(false);
+const offerDone = ref(false);
 const offerError = ref("");
 const passwordInput = ref(null);
+const passkeyMethod = computed(() => t(`auth.login.method.${passkeyMethodKey()}`));
+const passkeyIcon = passkeyIconName();
 const isBusy = computed(() => Boolean(pending.value) || offerOpen.value);
 let offerResolve = null;
 const errors = ref({
@@ -186,24 +214,20 @@ const redirectAfterLogin = async () => {
 const finishPasskeyOffer = () => {
   offerOpen.value = false;
   offerBusy.value = false;
+  offerDone.value = false;
   offerError.value = "";
   offerResolve?.();
   offerResolve = null;
 };
 
 const maybeOfferPasskey = async (userId) => {
-  if (!supportsPasskeys() || !shouldOfferPasskeySetup(userId)) {
-    return;
-  }
-  try {
-    const items = await listPasskeys();
-    if (items.length > 0) return;
-  } catch {
+  if (!supportsPasskeys() || !shouldOfferPasskeySetup(userId) || hasPasskeyOnThisDevice(userId)) {
     return;
   }
   cancelPasskeyCeremony();
   offerError.value = "";
   offerBusy.value = false;
+  offerDone.value = false;
   offerOpen.value = true;
   await new Promise((resolve) => {
     offerResolve = resolve;
@@ -211,20 +235,33 @@ const maybeOfferPasskey = async (userId) => {
 };
 
 const skipPasskeyOffer = () => {
-  if (offerBusy.value) return;
+  if (offerBusy.value || offerDone.value) return;
   recordPasskeyOfferSkip(appStore.currentUser?.id);
   finishPasskeyOffer();
 };
 
 const acceptPasskeyOffer = async () => {
-  if (offerBusy.value) return;
+  if (offerBusy.value || offerDone.value) return;
   offerBusy.value = true;
   offerError.value = "";
   try {
-    await registerPasskey("");
-    clearPasskeyOfferDismissed(appStore.currentUser?.id);
-    finishPasskeyOffer();
+    await registerPasskey(passkeyMethod.value);
+    const userId = appStore.currentUser?.id;
+    clearPasskeyOfferDismissed(userId);
+    markPasskeyOnThisBrowser(userId);
+    passkeyButtonVisible.value = true;
+    offerBusy.value = false;
+    offerDone.value = true;
   } catch (error) {
+    if (isPasskeyAlreadyRegistered(error)) {
+      const userId = appStore.currentUser?.id;
+      clearPasskeyOfferDismissed(userId);
+      markPasskeyOnThisBrowser(userId);
+      passkeyButtonVisible.value = true;
+      offerBusy.value = false;
+      offerDone.value = true;
+      return;
+    }
     offerBusy.value = false;
     if (isPasskeyTimeout(error)) {
       offerError.value = t("auth.login.passkeyOffer.timeout");
@@ -232,6 +269,10 @@ const acceptPasskeyOffer = async () => {
     }
     if (isPasskeyCanceled(error)) {
       offerError.value = t("auth.login.passkeyOffer.canceled");
+      return;
+    }
+    if (isPasskeyNotDeviceBound(error)) {
+      offerError.value = t("auth.login.passkeyOffer.notThisDevice");
       return;
     }
     offerError.value = t("auth.login.passkeyOffer.error");
@@ -247,6 +288,10 @@ const afterAuthenticated = async ({ offerPasskey = false } = {}) => {
   const response = await api.get("/members/me");
   appStore.setCurrentUser(response.data);
   pending.value = null;
+  if (!offerPasskey) {
+    markPasskeyOnThisBrowser(response.data?.id);
+    passkeyButtonVisible.value = true;
+  }
   if (offerPasskey) {
     await maybeOfferPasskey(response.data?.id);
   }
@@ -287,7 +332,6 @@ const onPasskeyLogin = async () => {
   pending.value = "passkey";
   try {
     await authenticatePasskey({
-      email: email.value,
       remember: remember.value,
     });
     await afterAuthenticated();
@@ -298,6 +342,8 @@ const onPasskeyLogin = async () => {
       errors.value.form = t("auth.login.errors.passkeyCanceled");
     } else if (error?.response?.status === 403) {
       errors.value.form = t("auth.login.errors.approvalPending");
+    } else if (isPasskeyNotDeviceBound(error)) {
+      errors.value.form = t("auth.login.errors.passkeyNotThisDevice");
     } else {
       errors.value.form = t("auth.login.errors.passkeyUnavailable");
     }
@@ -308,7 +354,7 @@ const onPasskeyLogin = async () => {
 };
 
 onMounted(() => {
-  passkeyAvailable.value = supportsPasskeys();
+  passkeyButtonVisible.value = supportsPasskeys() && hasPasskeyOnThisBrowser();
 });
 
 onBeforeUnmount(() => {
@@ -424,8 +470,12 @@ onBeforeUnmount(() => {
   border-radius: 10px;
 }
 
+.login__passkey-icon,
 .login__spinner {
   flex-shrink: 0;
+}
+
+.login__spinner {
   animation: login-spin 0.8s linear infinite;
 }
 

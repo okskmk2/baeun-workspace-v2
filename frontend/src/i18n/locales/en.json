@@ -151,7 +151,14 @@
     "login": {
       "title": "Login",
       "subtitle": "Sign in with your email and password.",
-      "subtitlePasskey": "You can sign in with Face ID or Windows Hello.",
+      "subtitlePasskey": "You can sign in with {method}.",
+      "method": {
+        "faceId": "Face ID",
+        "touchId": "Touch ID",
+        "windowsHello": "Windows Hello",
+        "screenLock": "fingerprint or screen lock",
+        "generic": "this device"
+      },
       "fields": {
         "email": {
           "label": "Email"
@@ -167,7 +174,7 @@
       "actions": {
         "signIn": "Sign in",
         "signingIn": "Signing in...",
-        "passkey": "Sign in with Face ID / Windows Hello"
+        "passkey": "Sign in with {method}"
       },
       "errors": {
         "emailRequired": "Please enter your email.",
@@ -178,19 +185,24 @@
         "approvalPending": "Your signup request is waiting for admin approval. Please try again after approval.",
         "passkeyCanceled": "Canceled, or unavailable on this device. Sign in with your password.",
         "passkeyTimeout": "That took too long. Sign in with your password.",
-        "passkeyUnavailable": "No device login was found. Sign in with your password."
+        "passkeyUnavailable": "No device login was found. Sign in with your password.",
+        "passkeyNotThisDevice": "Cloud-saved sign-in is not allowed. Choose this device, such as Windows Hello, or sign in with your password."
       },
       "signupPrompt": "Don't have an account?",
       "signupLink": "Sign up",
       "passkeyOffer": {
-        "title": "Use this device next time?",
-        "body": "Sign in with Face ID, a fingerprint, or Windows Hello.",
+        "title": "Sign in on this device next time too?",
+        "body": "Sign in with {method} on this device only. Do not save it to a password manager.",
         "accept": "Use it",
         "later": "Not now",
         "saving": "Working...",
+        "doneTitle": "This device can sign you in",
+        "doneBody": "Next time you can sign in with {method}.",
+        "continue": "Continue",
         "canceled": "Canceled, or unavailable on this device.",
         "timeout": "That took too long. Try again.",
-        "error": "Could not save it now. We will ask again later."
+        "error": "Could not save it now. We will ask again later.",
+        "notThisDevice": "Cloud-saved sign-in is not allowed. Choose Windows Hello or this device."
       }
     },
     "signup": {
@@ -521,7 +533,7 @@
     },
     "security": {
       "title": "Security",
-      "subtitle": "Manage the login account and withdrawal.",
+      "subtitle": "Manage the login account and device sign-in.",
       "account": {
         "title": "Login account",
         "email": "Email",
@@ -529,17 +541,20 @@
       },
       "passkeys": {
         "title": "Sign in on this device",
-        "body": "Use Face ID or Windows Hello to open this account.",
+        "body": "Use {method} on this device only. Cloud or password-manager sign-in is not accepted.",
         "loading": "Loading...",
         "empty": "No devices are connected yet.",
         "thisDevice": "This device",
         "otherDevice": "Another device",
+        "synced": "Shared with other devices",
+        "thisDeviceOnly": "This device only",
         "created": "Added {date}",
         "lastUsed": "Last used {date}",
         "add": "Add this device",
         "adding": "Adding...",
         "addDone": "This device is connected.",
         "addError": "Could not add it now.",
+        "notThisDevice": "Cloud-saved sign-in cannot be added. Choose Windows Hello or this device.",
         "canceled": "Canceled, or unavailable on this device.",
         "timeout": "That took too long. Try again.",
         "unsupported": "This browser cannot sign in with this device.",
@@ -547,10 +562,10 @@
         "deleting": "Removing...",
         "deleteTitle": "Remove device login",
         "deleteMessage": "Remove “{name}”?",
-        "deleteDone": "Removed.",
+        "deleteDone": "Removed. Remove leftover items in the browser settings if they remain.",
         "reset": "Remove all",
         "resetTitle": "Remove all device logins",
-        "resetMessage": "Clear Face ID / Windows Hello sign-in for this account?",
+        "resetMessage": "Clear device sign-in for this account?",
         "resetDone": "Cleared. You can set it up again the next time you sign in with a password. Remove leftover items in the browser settings if they remain.",
         "resetError": "Could not clear it now.",
         "loadError": "Could not load the list.",

@@ -59,6 +59,18 @@ const mapCredentialRow = (row) => ({
   last_used_at: row.last_used_at,
 });
 
+const isDeviceBoundCredential = ({ deviceType, backedUp, attachment } = {}) => {
+  if (attachment === "cross-platform") return false;
+  if (deviceType === "multiDevice") return false;
+  if (backedUp) return false;
+  return true;
+};
+
+const DEVICE_BOUND_ERROR = {
+  name: "DeviceBoundRequired",
+  message: "Only this-device login is allowed. Cloud-synced credentials are not accepted.",
+};
+
 const listMemberCredentials = async (memberId) => {
   const result = await pool.query(
     `SELECT id, credential_id, public_key, counter, device_type, backed_up, transports, nickname, created_at, last_used_at
@@ -145,6 +157,7 @@ router.post("/passkeys/register/options", isAuth, async (req, res) => {
       userDisplayName: member.name || member.email,
       userID: new TextEncoder().encode(String(member.id)),
       attestationType: "none",
+      preferredAuthenticatorType: "localDevice",
       excludeCredentials: existing.map((row) => ({
         id: row.credential_id,
         transports: parseTransports(row.transports),
@@ -196,6 +209,18 @@ router.post("/passkeys/register", isAuth, async (req, res) => {
     }
 
     const { credential, credentialDeviceType, credentialBackedUp } = verification.registrationInfo;
+    const attachment = req.body?.credential?.authenticatorAttachment;
+    if (
+      !isDeviceBoundCredential({
+        deviceType: credentialDeviceType,
+        backedUp: credentialBackedUp,
+        attachment,
+      })
+    ) {
+      await clearWebAuthnChallenge(req);
+      return res.status(400).json(DEVICE_BOUND_ERROR);
+    }
+
     const nickname = sanitizeNickname(req.body?.nickname);
 
     const inserted = await pool.query(
@@ -273,10 +298,17 @@ router.post("/passkeys/login/options", async (req, res) => {
       );
       if (memberResult.rows[0]) {
         const rows = await listMemberCredentials(memberResult.rows[0].id);
-        allowCredentials = rows.map((row) => ({
-          id: row.credential_id,
-          transports: parseTransports(row.transports),
-        }));
+        allowCredentials = rows
+          .filter((row) =>
+            isDeviceBoundCredential({
+              deviceType: row.device_type,
+              backedUp: row.backed_up,
+            })
+          )
+          .map((row) => ({
+            id: row.credential_id,
+            transports: ["internal"],
+          }));
       }
     }
 
@@ -286,6 +318,7 @@ router.post("/passkeys/login/options", async (req, res) => {
       allowCredentials,
       userVerification: "preferred",
     });
+    options.hints = ["client-device"];
 
     await setWebAuthnChallenge(req, {
       type: "authentication",
@@ -320,6 +353,7 @@ router.post("/passkeys/login", async (req, res) => {
 
     const credResult = await pool.query(
       `SELECT wc.id, wc.member_id, wc.credential_id, wc.public_key, wc.counter, wc.transports,
+              wc.device_type, wc.backed_up,
               m.id AS user_id, m.name, m.email, m.role_name, m.approval_status,
               COALESCE(m.account_status, 'ACTIVE') AS account_status
        FROM webauthn_credential wc
@@ -331,6 +365,15 @@ router.post("/passkeys/login", async (req, res) => {
     const row = credResult.rows[0];
     if (!row) {
       return res.status(401).json({ name: "Unauthorized", message: "Unknown passkey." });
+    }
+    if (
+      !isDeviceBoundCredential({
+        deviceType: row.device_type,
+        backedUp: row.backed_up,
+        attachment: credentialResponse?.authenticatorAttachment,
+      })
+    ) {
+      return res.status(400).json(DEVICE_BOUND_ERROR);
     }
 
     const allowed = assertMemberLoginAllowed(row);

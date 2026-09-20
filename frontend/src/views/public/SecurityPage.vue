@@ -18,18 +18,18 @@
 
     <section class="card">
       <h2>{{ t("settings.security.passkeys.title") }}</h2>
-      <p class="status muted">{{ t("settings.security.passkeys.body") }}</p>
-      <p v-if="statusError" class="status error">{{ statusError }}</p>
-      <p v-else-if="statusOk" class="status ok">{{ statusOk }}</p>
+      <p class="status muted">{{ t("settings.security.passkeys.body", { method: passkeyMethod }) }}</p>
+      <p v-if="statusError" class="status error" role="alert" aria-live="assertive">{{ statusError }}</p>
+      <p v-else-if="statusOk" class="status ok" role="status" aria-live="polite">{{ statusOk }}</p>
       <p v-else-if="isLoading" class="status muted">{{ t("settings.security.passkeys.loading") }}</p>
       <p v-else-if="passkeys.length === 0" class="status muted">
         {{ t("settings.security.passkeys.empty") }}
       </p>
 
       <ul v-if="passkeys.length > 0" class="passkey-list">
-        <li v-for="item in passkeys" :key="item.id" class="passkey-item">
+        <li v-for="(item, index) in passkeys" :key="item.id" class="passkey-item">
           <div>
-            <p class="passkey-item__name">{{ deviceLabel(item) }}</p>
+            <p class="passkey-item__name">{{ deviceLabel(item, index) }}</p>
             <p class="passkey-item__meta">{{ deviceMeta(item) }}</p>
           </div>
           <button
@@ -50,6 +50,12 @@
           :disabled="isBusy || !canAddOnThisDevice"
           @click="onAddThisDevice"
         >
+          <MaterialSymbol
+            v-if="!isAdding"
+            :name="passkeyIcon"
+            :size="18"
+            alt=""
+          />
           {{
             isAdding ? t("settings.security.passkeys.adding") : t("settings.security.passkeys.add")
           }}
@@ -95,12 +101,20 @@ import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import ConfirmDeleteModal from "../../components/modals/ConfirmDeleteModal.vue";
 import WithdrawAccountModal from "../../components/modals/WithdrawAccountModal.vue";
+import MaterialSymbol from "../../components/MaterialSymbol.vue";
 import api from "../../lib/axios";
 import {
   clearPasskeyOfferDismissed,
+  clearPasskeyOnThisBrowser,
+  isPasskeyAlreadyRegistered,
   isPasskeyCanceled,
+  isPasskeyNotDeviceBound,
   isPasskeyTimeout,
   listPasskeys,
+  markPasskeyOnThisBrowser,
+  numberedPasskeyLabels,
+  passkeyIconName,
+  passkeyMethodKey,
   registerPasskey,
   supportsPasskeys,
 } from "../../lib/passkey";
@@ -119,6 +133,9 @@ const pendingDelete = ref(null);
 const canAddOnThisDevice = ref(false);
 const email = computed(() => appStore.currentUser?.email || "");
 const isBusy = computed(() => isLoading.value || isAdding.value || isDeleting.value);
+const passkeyMethod = computed(() => t(`auth.login.method.${passkeyMethodKey()}`));
+const passkeyIcon = passkeyIconName();
+const passkeyLabels = computed(() => numberedPasskeyLabels(passkeys.value, t));
 
 const deleteTitle = computed(() =>
   pendingDelete.value?.type === "all"
@@ -130,7 +147,7 @@ const deleteMessage = computed(() =>
   pendingDelete.value?.type === "all"
     ? t("settings.security.passkeys.resetMessage")
     : t("settings.security.passkeys.deleteMessage", {
-        name: deviceLabel(pendingDelete.value?.item || {}),
+        name: deviceLabel(pendingDelete.value?.item || {}, pendingDeleteIndex.value),
       }),
 );
 
@@ -153,18 +170,33 @@ const formatDate = (value) => {
   });
 };
 
-const deviceLabel = (item) => {
-  if (item?.nickname) return item.nickname;
-  if (item?.device_type === "multiDevice") return t("settings.security.passkeys.otherDevice");
-  return t("settings.security.passkeys.thisDevice");
+const pendingDeleteIndex = computed(() => {
+  const item = pendingDelete.value?.item;
+  if (!item) return 0;
+  const index = passkeys.value.findIndex((row) => row.id === item.id);
+  return index >= 0 ? index : 0;
+});
+
+const deviceLabel = (item, index = 0) => {
+  if (!item) return "";
+  return passkeyLabels.value[index] || passkeyLabels.value[0] || "";
 };
 
 const deviceMeta = (item) => {
-  const lastUsed = formatDate(item.last_used_at);
-  if (lastUsed) return t("settings.security.passkeys.lastUsed", { date: lastUsed });
-  const created = formatDate(item.created_at);
-  if (created) return t("settings.security.passkeys.created", { date: created });
-  return "";
+  const parts = [];
+  if (item?.backed_up || item?.device_type === "multiDevice") {
+    parts.push(t("settings.security.passkeys.synced"));
+  } else {
+    parts.push(t("settings.security.passkeys.thisDeviceOnly"));
+  }
+  const lastUsed = formatDate(item?.last_used_at);
+  if (lastUsed) {
+    parts.push(t("settings.security.passkeys.lastUsed", { date: lastUsed }));
+  } else {
+    const created = formatDate(item?.created_at);
+    if (created) parts.push(t("settings.security.passkeys.created", { date: created }));
+  }
+  return parts.join(" · ");
 };
 
 const loadPasskeys = async () => {
@@ -185,12 +217,22 @@ const onAddThisDevice = async () => {
   statusError.value = "";
   statusOk.value = "";
   try {
-    await registerPasskey("");
-    clearPasskeyOfferDismissed(appStore.currentUser?.id);
+    await registerPasskey(passkeyMethod.value);
+    const userId = appStore.currentUser?.id;
+    clearPasskeyOfferDismissed(userId);
+    markPasskeyOnThisBrowser(userId);
     statusOk.value = t("settings.security.passkeys.addDone");
     await loadPasskeys();
   } catch (error) {
-    if (isPasskeyTimeout(error)) {
+    if (isPasskeyAlreadyRegistered(error)) {
+      const userId = appStore.currentUser?.id;
+      clearPasskeyOfferDismissed(userId);
+      markPasskeyOnThisBrowser(userId);
+      statusOk.value = t("settings.security.passkeys.addDone");
+      await loadPasskeys();
+    } else if (isPasskeyNotDeviceBound(error)) {
+      statusError.value = t("settings.security.passkeys.notThisDevice");
+    } else if (isPasskeyTimeout(error)) {
       statusError.value = t("settings.security.passkeys.timeout");
     } else if (isPasskeyCanceled(error)) {
       statusError.value = t("settings.security.passkeys.canceled");
@@ -219,13 +261,20 @@ const onConfirmDelete = async () => {
   try {
     if (target.type === "all") {
       await api.delete("/members/passkeys");
-      clearPasskeyOfferDismissed(appStore.currentUser?.id);
+      const userId = appStore.currentUser?.id;
+      clearPasskeyOfferDismissed(userId);
+      clearPasskeyOnThisBrowser(userId);
       passkeys.value = [];
       statusOk.value = t("settings.security.passkeys.resetDone");
     } else {
       await api.delete(`/members/passkeys/${target.item.id}`);
       statusOk.value = t("settings.security.passkeys.deleteDone");
       await loadPasskeys();
+      if (passkeys.value.length === 0) {
+        const userId = appStore.currentUser?.id;
+        clearPasskeyOfferDismissed(userId);
+        clearPasskeyOnThisBrowser(userId);
+      }
     }
     pendingDelete.value = null;
   } catch {

@@ -1,8 +1,18 @@
 <template>
   <div v-if="open" class="modal-backdrop" @click="onBackdropClick">
-    <div class="modal" :style="modalStyle" @click.stop>
+    <div
+      ref="dialogRef"
+      class="modal"
+      role="dialog"
+      aria-modal="true"
+      :aria-labelledby="titleId"
+      :style="modalStyle"
+      tabindex="-1"
+      @click.stop
+      @keydown="onKeydown"
+    >
       <div class="modal-header">
-        <h1>{{ title }}</h1>
+        <h1 :id="titleId">{{ title }}</h1>
         <button
           type="button"
           class="icon-button"
@@ -20,11 +30,25 @@
 </template>
 
 <script setup>
-import { computed } from "vue";
+import { computed, nextTick, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import MaterialSymbol from "./MaterialSymbol.vue";
 
+const FOCUSABLE_SELECTOR = [
+  "a[href]",
+  "button:not([disabled])",
+  "input:not([disabled])",
+  "select:not([disabled])",
+  "textarea:not([disabled])",
+  "[tabindex]:not([tabindex='-1'])",
+].join(",");
+
+let modalSeq = 0;
+
 const { t } = useI18n();
+const titleId = `modal-title-${++modalSeq}`;
+const dialogRef = ref(null);
+let previousFocus = null;
 
 const props = defineProps({
   open: { type: Boolean, default: false },
@@ -39,6 +63,22 @@ const modalStyle = computed(() => ({
 
 const emit = defineEmits(["close"]);
 
+const focusableNodes = () => {
+  const root = dialogRef.value;
+  if (!root) return [];
+  return [...root.querySelectorAll(FOCUSABLE_SELECTOR)].filter(
+    (node) => !node.hasAttribute("disabled") && node.getClientRects().length > 0,
+  );
+};
+
+const focusDialog = async () => {
+  await nextTick();
+  const nodes = focusableNodes();
+  const primary = nodes.find((node) => node.classList.contains("btn") && !node.classList.contains("btn--secondary"));
+  const target = primary || nodes.find((node) => !node.classList.contains("icon-button")) || nodes[0] || dialogRef.value;
+  target?.focus?.();
+};
+
 const onClose = () => {
   emit("close");
 };
@@ -47,6 +87,47 @@ const onBackdropClick = () => {
   if (!props.closeOnBackdrop) return;
   onClose();
 };
+
+const onKeydown = (event) => {
+  if (event.key === "Escape") {
+    if (!props.closeOnBackdrop) return;
+    event.preventDefault();
+    onClose();
+    return;
+  }
+  if (event.key !== "Tab") return;
+  const nodes = focusableNodes();
+  if (nodes.length === 0) {
+    event.preventDefault();
+    dialogRef.value?.focus?.();
+    return;
+  }
+  const first = nodes[0];
+  const last = nodes[nodes.length - 1];
+  if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault();
+    last.focus();
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault();
+    first.focus();
+  }
+};
+
+watch(
+  () => props.open,
+  async (isOpen) => {
+    if (isOpen) {
+      previousFocus = document.activeElement;
+      await focusDialog();
+      return;
+    }
+    if (previousFocus && typeof previousFocus.focus === "function") {
+      previousFocus.focus();
+    }
+    previousFocus = null;
+  },
+  { flush: "post", immediate: true },
+);
 </script>
 
 <style scoped>
@@ -70,6 +151,10 @@ const onBackdropClick = () => {
   max-height: 80%;
   display: flex;
   flex-direction: column;
+}
+
+.modal:focus {
+  outline: none;
 }
 
 .modal-header {
