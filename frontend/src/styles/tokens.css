@@ -10,7 +10,6 @@
 :root {
   --color-accent-contrast: var(--color-text-inverse);
 
-  --font-serif: "Noto Serif KR", "SUIT", serif;
   --font-sans: "SUIT", sans-serif;
 
   --text-hero: clamp(32px, 6vw, 52px);
@@ -74,7 +73,6 @@
   --mock-line: var(--color-border);
   --mock-fill: var(--color-surface-alt);
   --mock-fill-dim: #2a2b28;
-  --font-serif: "Noto Serif KR", "SUIT", serif;
   --font-sans: "SUIT", sans-serif;
   --fs-display: clamp(2.125rem, 4.2vw, 3.5rem);
   --fs-display-sm: clamp(1.875rem, 3.6vw, 3.125rem);

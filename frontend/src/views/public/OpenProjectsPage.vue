@@ -151,7 +151,7 @@ onMounted(() => {
 
 .open-projects-header__title {
   margin: 0;
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-size: var(--text-h1);
   font-weight: 600;
   letter-spacing: -0.01em;

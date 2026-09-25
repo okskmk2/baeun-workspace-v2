@@ -30,7 +30,7 @@ const { copy } = usePricingCopy();
 .pricing-steps__title {
   margin: 0;
   text-align: center;
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-size: var(--text-h1);
   font-weight: 600;
   color: var(--color-text);

@@ -34,7 +34,7 @@ const { copy } = usePricingCopy();
 .pricing-header__headline {
   margin: 0;
   max-width: 880px;
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-weight: 600;
   font-size: var(--text-hero);
   line-height: 1.35;

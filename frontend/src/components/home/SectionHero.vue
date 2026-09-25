@@ -51,7 +51,7 @@ useReveal(rootEl, { once: true, threshold: 0.12 });
 
 .hero__headline {
   margin: 0;
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-size: var(--fs-display);
   font-weight: 600;
   line-height: 1.4;

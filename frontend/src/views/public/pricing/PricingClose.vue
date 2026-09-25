@@ -29,7 +29,7 @@ const { copy } = usePricingCopy();
 .pricing-close__headline {
   margin: 0;
   max-width: 18em;
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-size: var(--text-h1);
   font-weight: 600;
   line-height: 1.4;

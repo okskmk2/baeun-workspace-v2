@@ -49,7 +49,7 @@ useReveal(rootEl, { once: true, threshold: 0.2 });
 
 .closing__headline {
   margin: 0;
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-size: var(--fs-h2);
   font-weight: 600;
   letter-spacing: -0.01em;

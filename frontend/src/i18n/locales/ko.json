@@ -1955,7 +1955,8 @@
       }
     },
     "prototype": {
-      "banner": "프로토타입 · 서버에 저장되지 않습니다"
+      "banner": "프로토타입 · 서버에 저장되지 않습니다",
+      "badge": "프로토타입"
     },
     "home": {
       "header": {
@@ -2191,6 +2192,7 @@
       "title": "뷰",
       "notFound": "뷰를 찾을 수 없습니다.",
       "legacy": "이전 형식 뷰입니다. 다시 만들어 주세요.",
+      "legacyTitle": "이 뷰를 표시할 수 없습니다",
       "kind": {
         "table": "표",
         "view": "뷰"
@@ -2203,6 +2205,17 @@
         "match": "짝을 맞춘 칸",
         "matchValue": "「{left}」 = 「{right}」",
         "columns": "결과 칸",
+        "columnsCount": "결과 칸 {count}개",
+        "columnsEmpty": "출력 칸이 설정되지 않았습니다.",
+        "data": "데이터",
+        "rowsCount": "{count}개 행",
+        "rowsLoading": "결과 데이터를 불러오는 중입니다.",
+        "rowsEmpty": "조건에 맞는 데이터가 없습니다.",
+        "rowsError": "결과 데이터를 불러오지 못했습니다.",
+        "columnName": "표시 이름",
+        "source": "원본",
+        "type": "종류",
+        "relationship": "데이터 결합 관계",
         "description": "설명",
         "openTable": "표 열기",
         "openView": "뷰 열기"

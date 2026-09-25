@@ -1981,7 +1981,8 @@
       }
     },
     "prototype": {
-      "banner": "Prototype · not saved to the server"
+      "banner": "Prototype · not saved to the server",
+      "badge": "Prototype"
     },
     "home": {
       "header": {
@@ -2217,6 +2218,7 @@
       "title": "View",
       "notFound": "View not found.",
       "legacy": "This is an older view format. Please create it again.",
+      "legacyTitle": "This view cannot be displayed",
       "kind": {
         "table": "Sheet",
         "view": "View"
@@ -2229,6 +2231,17 @@
         "match": "Matching fields",
         "matchValue": "“{left}” = “{right}”",
         "columns": "Result fields",
+        "columnsCount": "{count} result fields",
+        "columnsEmpty": "No output fields have been configured.",
+        "data": "Data",
+        "rowsCount": "{count} rows",
+        "rowsLoading": "Loading result data.",
+        "rowsEmpty": "No data matches this view.",
+        "rowsError": "Could not load result data.",
+        "columnName": "Display name",
+        "source": "Source",
+        "type": "Type",
+        "relationship": "Data relationship",
         "description": "Description",
         "openTable": "Open sheet",
         "openView": "Open view"

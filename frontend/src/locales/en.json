@@ -7,9 +7,9 @@
       "pricing": "See pricing"
     },
     "hero": {
-      "headline": "Use documents, tasks, and conversations in one place.",
-      "sub": "Wiki, kanban, channel, and data live together in a project.",
-      "note": "You pay each month only for the seats you open."
+      "headline": "Documents, tasks, and conversations connect as one, so your team decides and moves faster.",
+      "sub": "Wiki, kanban, channel, and data come together in one project.",
+      "note": "You pay each month only for the seats you use."
     },
     "problem": {
       "kicker": "Problem",
@@ -94,7 +94,7 @@
       }
     },
     "closing": {
-      "headline": "Don’t switch tabs. Keep going.",
+      "headline": "One connected flow. Keep going.",
       "body": "You start after your request is approved."
     },
     "mock": {

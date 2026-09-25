@@ -137,7 +137,7 @@ const stableFormattedAmount = computed(() => formatSlotPrice(props.primaryTotal)
 
 .price-summary__free-title {
   margin: 0;
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-size: var(--text-h2);
   font-weight: 700;
   color: var(--color-text);

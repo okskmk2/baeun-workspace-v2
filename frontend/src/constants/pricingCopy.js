@@ -1,6 +1,6 @@
 const ko = {
   header: {
-    headline: "사용한 만큼만 매달 결제합니다.",
+    headline: "쓴 자리만 매달 결제합니다.",
     subLines: [
       "정해진 요금제는 없습니다.",
       "워크스페이스마다 저장 공간 5GB가 포함되며, 초과분은 1GB당 월 $0.10입니다.",
@@ -28,7 +28,7 @@ const ko = {
   },
 
   close: {
-    headline: "필요한 자리만 매달 결제합니다.",
+    headline: "쓴 자리만 매달 결제합니다.",
     cta: "시작하기",
     calculatorCta: "예상 금액 보기",
   },
@@ -134,7 +134,7 @@ const ko = {
 
 const en = {
   header: {
-    headline: "Pay each month only for what you use.",
+    headline: "Pay each month only for the seats you use.",
     subLines: [
       "There is no fixed plan.",
       "Each workspace includes 5 GB. Extra storage is $0.10 per GB each month.",
@@ -162,7 +162,7 @@ const en = {
   },
 
   close: {
-    headline: "Pay each month only for the seats you open.",
+    headline: "Pay each month only for the seats you use.",
     cta: "Get started",
     calculatorCta: "Estimate this month",
   },
