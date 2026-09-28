@@ -72,7 +72,6 @@
       </button>
       <p v-if="archiveError" class="status error">{{ archiveError }}</p>
       <button
-        v-if="!isNoticeChannel"
         type="button"
         class="btn btn--danger"
         :disabled="isDeleting"
@@ -84,7 +83,7 @@
             : t("channel.settings.actions.delete")
         }}
       </button>
-      <p v-if="!isNoticeChannel && deleteError" class="status error">{{ deleteError }}</p>
+      <p v-if="deleteError" class="status error">{{ deleteError }}</p>
     </template>
   </DangerZone>
 </template>
@@ -130,7 +129,6 @@ const form = ref({
 const isArchived = computed(() => String(channelStatus.value || "") === "ARCHIVED");
 const currentUserRole = computed(() => String(channelViewerRole.value || "").toUpperCase());
 const isDmChannel = computed(() => String(channelType.value || "").toUpperCase() === "DM");
-const isNoticeChannel = computed(() => String(channelType.value || "").toUpperCase() === "NOTICE");
 const showDangerZone = computed(() => isDmChannel.value || currentUserRole.value === "OWNER");
 
 const fetchChannelMembers = async () => {

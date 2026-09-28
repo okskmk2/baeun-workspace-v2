@@ -19,12 +19,12 @@
         <MaterialSymbol name="link" :size="16" alt="" />
         {{ t("channel.room.actions.linkedIssue") }}
       </router-link>
-      <button v-if="!isNoticeChannel" type="button" class="btn btn--sm" @click="openInviteModal">
+      <button type="button" class="btn btn--sm" @click="openInviteModal">
         <MaterialSymbol name="person_add" :size="16" alt="" />
         {{ t("channel.room.actions.invite") }}
       </button>
       <button
-        v-if="!isDmChannel && !isNoticeChannel && !isChannelOwner"
+        v-if="!isDmChannel && !isChannelOwner"
         type="button"
         class="btn btn--sm btn--secondary"
         @click="leaveChannel"
@@ -33,7 +33,6 @@
         {{ t("channel.room.actions.leave") }}
       </button>
       <router-link
-        v-if="!isNoticeChannel"
         class="btn btn--icon"
         :aria-label="t('channel.room.actions.settings')"
         :title="t('channel.room.actions.settings')"
@@ -53,7 +52,7 @@
   <AddChannelMemberModal
     :open="isInviteOpen"
     :channel-id="roomId"
-    :project-members="projectMembers"
+    :project-members="inviteCandidates"
     @close="closeInviteModal"
     @invited="onMemberInvited"
   />
@@ -85,17 +84,21 @@ const channelDetail = ref(null);
 const isInviteOpen = ref(false);
 const currentUserId = computed(() => appStore.currentUser?.id);
 const projectMembers = computed(() => projectMemberStore.getProjectMembers(projectId.value));
+const workspaceMembers = ref([]);
+const isWorkspaceChannel = computed(
+  () => String(channelDetail.value?.scope || "").toUpperCase() === "WORKSPACE"
+);
+const inviteCandidates = computed(() =>
+  isWorkspaceChannel.value ? workspaceMembers.value : projectMembers.value || []
+);
 const memberNameById = computed(() => {
   const map = {};
-  (projectMembers.value || []).forEach((member) => {
+  [...(projectMembers.value || []), ...workspaceMembers.value].forEach((member) => {
     map[String(member.id)] = member.name;
   });
   return map;
 });
 const isDmChannel = computed(() => String(channelDetail.value?.type || "").toUpperCase() === "DM");
-const isNoticeChannel = computed(
-  () => String(channelDetail.value?.type || "").toUpperCase() === "NOTICE"
-);
 const isChannelOwner = computed(
   () => String(channelDetail.value?.viewer_role_name || "").toUpperCase() === "OWNER"
 );
@@ -138,9 +141,23 @@ const fetchchannelDetail = async () => {
     const res = await api.get(`/channels/${roomId.value}`);
     channelDetail.value = res.data || null;
     roomTitle.value = res.data?.name || "";
+    await fetchWorkspaceMembers();
   } catch (error) {
     channelDetail.value = null;
     roomTitle.value = "";
+  }
+};
+
+const fetchWorkspaceMembers = async () => {
+  if (!isWorkspaceChannel.value) {
+    workspaceMembers.value = [];
+    return;
+  }
+  try {
+    const res = await api.get(`/channels/${roomId.value}/invite-candidates`);
+    workspaceMembers.value = res.data || [];
+  } catch (error) {
+    workspaceMembers.value = [];
   }
 };
 

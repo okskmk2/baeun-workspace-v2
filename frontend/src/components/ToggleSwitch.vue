@@ -111,8 +111,8 @@ const handleChange = (event) => {
 }
 
 .toggle-switch__track {
-  width: 46px;
-  height: 28px;
+  width: 38px;
+  /* height: 28px; */
   border-radius: 999px;
   background: color-mix(in srgb, var(--color-border) 72%, var(--color-bg) 28%);
   border: 1px solid color-mix(in srgb, var(--color-border) 88%, transparent 12%);

@@ -14,7 +14,6 @@ import {
   registerUserSocket,
   removeSocket,
 } from "./ws.mjs";
-import { createNotifications, NOTIFICATION_TYPES } from "./notification.mjs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { REMEMBER_SESSION_TTL_SECONDS, SESSION_TTL_SECONDS } from "./config/session.mjs";
@@ -214,42 +213,11 @@ wss.on("connection", (ws, request) => {
         if (channelRes.rows.length === 0) return;
 
         const channel = channelRes.rows[0];
-        const channelType = String(channel.type || "").toUpperCase();
-
-        if (channelType === "NOTICE") {
-          const scope = String(channel.scope || "").toUpperCase();
-          const hasWorkspaceId = Boolean(channel.workspace_id);
-          const hasProjectId = Boolean(channel.project_id);
-          const shouldUseWorkspaceRole = scope === "WORKSPACE" || (hasWorkspaceId && !hasProjectId);
-
-          if (shouldUseWorkspaceRole) {
-            const wsRoleRes = await pool.query(
-              "SELECT role_name FROM workspace_member WHERE workspace_id = $1 AND member_id = $2",
-              [channel.workspace_id, userId]
-            );
-            const roleName = String(wsRoleRes.rows[0]?.role_name || "").toUpperCase();
-            if (!["OWNER", "ADMIN"].includes(roleName)) {
-              return;
-            }
-          } else if (hasProjectId) {
-            const projectRoleRes = await pool.query(
-              "SELECT role_name FROM project_member WHERE project_id = $1 AND member_id = $2",
-              [channel.project_id, userId]
-            );
-            const roleName = String(projectRoleRes.rows[0]?.role_name || "").toUpperCase();
-            if (!["OWNER", "ADMIN"].includes(roleName)) {
-              return;
-            }
-          } else {
-            return;
-          }
-        } else {
-          const memberCheck = await pool.query(
-            "SELECT id FROM channel_member WHERE channel_id = $1 AND member_id = $2",
-            [channelId, userId]
-          );
-          if (memberCheck.rows.length === 0) return;
-        }
+        const memberCheck = await pool.query(
+          "SELECT id FROM channel_member WHERE channel_id = $1 AND member_id = $2",
+          [channelId, userId]
+        );
+        if (memberCheck.rows.length === 0) return;
 
         const insertRes = await pool.query(
           "INSERT INTO message (channel_id, content, created_by, type) VALUES ($1, $2, $3, $4) RETURNING id, content, created_at, created_by, type",
@@ -296,116 +264,29 @@ wss.on("connection", (ws, request) => {
           },
         });
 
-        if (channelType !== "NOTICE") {
-          const channelMembersRes = await pool.query(
-            "SELECT member_id FROM channel_member WHERE channel_id = $1",
-            [channelId]
-          );
-          const recipientIds = channelMembersRes.rows
-            .map((row) => Number(row.member_id))
-            .filter((id) => Number.isInteger(id) && id > 0)
-            .filter((id) => String(id) !== String(userId));
+        const channelMembersRes = await pool.query(
+          "SELECT member_id FROM channel_member WHERE channel_id = $1",
+          [channelId]
+        );
+        const recipientIds = channelMembersRes.rows
+          .map((row) => Number(row.member_id))
+          .filter((id) => Number.isInteger(id) && id > 0)
+          .filter((id) => String(id) !== String(userId));
 
-          if (recipientIds.length > 0) {
-            broadcastToUsers(recipientIds, {
-              type: "channel_message",
-              data: {
-                channel_id: Number(channelId),
-                message_id: Number(message.id),
-                project_id: channel.project_id ? Number(channel.project_id) : null,
-                workspace_id: channel.workspace_id ? Number(channel.workspace_id) : null,
-                created_by: Number(userId),
-                creator_name: creatorName,
-                channel_name: String(channel.name || ""),
-                content: String(message.content || ""),
-              },
-            });
-          }
-        }
-
-        if (channelType === "NOTICE") {
-          const scope = String(channel.scope || "").toUpperCase();
-          if (scope === "WORKSPACE" && channel.workspace_id) {
-            const wsMembersRes = await pool.query(
-              "SELECT member_id FROM workspace_member WHERE workspace_id = $1",
-              [channel.workspace_id]
-            );
-            const recipientIds = wsMembersRes.rows
-              .map((row) => Number(row.member_id))
-              .filter((id) => Number.isInteger(id) && id > 0)
-              .filter((id) => String(id) !== String(userId));
-
-            if (recipientIds.length > 0) {
-              broadcastToUsers(recipientIds, {
-                type: "channel_message",
-                data: {
-                  channel_id: Number(channelId),
-                  message_id: Number(message.id),
-                  project_id: channel.project_id ? Number(channel.project_id) : null,
-                  workspace_id: channel.workspace_id ? Number(channel.workspace_id) : null,
-                  created_by: Number(userId),
-                  creator_name: creatorName,
-                  channel_name: String(channel.name || ""),
-                  content: String(message.content || ""),
-                },
-              });
-            }
-
-            await createNotifications({
-              recipientIds,
-              actorId: userId,
-              type: NOTIFICATION_TYPES.CHANNEL_NOTICE_WORKSPACE_NEW_MESSAGE,
-              resourceType: "channel",
-              resourceId: Number(channelId),
-              workspaceId: channel.workspace_id,
-              title: "워크스페이스 공지 새 메시지",
-              body: String(content || "").slice(0, 180),
-              payload: {
-                channel_id: Number(channelId),
-                message_id: message.id,
-              },
-            });
-          } else if (channel.project_id) {
-            const projectMembersRes = await pool.query(
-              "SELECT member_id FROM project_member WHERE project_id = $1",
-              [channel.project_id]
-            );
-            const recipientIds = projectMembersRes.rows
-              .map((row) => Number(row.member_id))
-              .filter((id) => Number.isInteger(id) && id > 0)
-              .filter((id) => String(id) !== String(userId));
-
-            if (recipientIds.length > 0) {
-              broadcastToUsers(recipientIds, {
-                type: "channel_message",
-                data: {
-                  channel_id: Number(channelId),
-                  message_id: Number(message.id),
-                  project_id: channel.project_id ? Number(channel.project_id) : null,
-                  workspace_id: channel.workspace_id ? Number(channel.workspace_id) : null,
-                  created_by: Number(userId),
-                  creator_name: creatorName,
-                  channel_name: String(channel.name || ""),
-                  content: String(message.content || ""),
-                },
-              });
-            }
-
-            await createNotifications({
-              recipientIds,
-              actorId: userId,
-              type: NOTIFICATION_TYPES.CHANNEL_NOTICE_PROJECT_NEW_MESSAGE,
-              resourceType: "channel",
-              resourceId: Number(channelId),
-              projectId: channel.project_id,
-              title: "프로젝트 공지 새 메시지",
-              body: String(content || "").slice(0, 180),
-              payload: {
-                channel_id: Number(channelId),
-                message_id: message.id,
-              },
-            });
-          }
+        if (recipientIds.length > 0) {
+          broadcastToUsers(recipientIds, {
+            type: "channel_message",
+            data: {
+              channel_id: Number(channelId),
+              message_id: Number(message.id),
+              project_id: channel.project_id ? Number(channel.project_id) : null,
+              workspace_id: channel.workspace_id ? Number(channel.workspace_id) : null,
+              created_by: Number(userId),
+              creator_name: creatorName,
+              channel_name: String(channel.name || ""),
+              content: String(message.content || ""),
+            },
+          });
         }
       } catch (error) {
         logger.error("chat websocket error", {

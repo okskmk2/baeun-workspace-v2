@@ -21,14 +21,13 @@ const { t } = useI18n();
 </script>
 
 <style scoped>
-@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap");
 
 .signup-complete {
   min-height: calc(100vh - 80px);
   display: grid;
   place-items: center;
   padding: 32px 16px 48px;
-  font-family: "Manrope", "Noto Sans KR", sans-serif;
+  font-family: var(--font-sans);
   color: var(--color-text);
 }
 

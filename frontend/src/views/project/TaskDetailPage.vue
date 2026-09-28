@@ -153,52 +153,6 @@
         </template>
       </DangerZone>
     </aside>
-    <aside class="task-chat">
-      <header class="task-chat-header">
-        <div class="task-chat-title">
-          <h2>{{ t("task.detail.chat.title") }}</h2>
-          <span
-            v-if="taskChannelId"
-            class="room-status"
-            :class="{ offline: !isChatConnected }"
-            role="status"
-            :aria-label="
-              isChatConnected
-                ? t('channel.room.status.connected')
-                : t('channel.room.status.disconnected')
-            "
-            :title="
-              isChatConnected
-                ? t('channel.room.status.connected')
-                : t('channel.room.status.disconnected')
-            "
-          ></span>
-        </div>
-        <router-link
-          v-if="messengerPath"
-          class="btn btn--icon"
-          :to="messengerPath"
-          :aria-label="t('task.detail.chat.openInMessenger')"
-          :title="t('task.detail.chat.openInMessenger')"
-        >
-          <MaterialSymbol name="open_in_new" :size="16" alt="" />
-        </router-link>
-      </header>
-      <p v-if="isLoadingChat" class="task-chat-status">{{ t("task.detail.chat.loading") }}</p>
-      <div v-else-if="chatError" class="task-chat-status task-chat-error">
-        <p>{{ chatError }}</p>
-        <button type="button" class="btn btn--sm btn--secondary" @click="ensureTaskChannel">
-          {{ t("task.detail.chat.retry") }}
-        </button>
-      </div>
-      <ChannelChatPanel
-        v-else-if="taskChannelId"
-        :key="String(taskChannelId)"
-        :channel-id="taskChannelId"
-        compact
-        @update:connected="isChatConnected = $event"
-      />
-    </aside>
   </section>
 </template>
 
@@ -217,7 +171,6 @@ import RelatedMemberPicker from "../../components/RelatedMemberPicker.vue";
 import BackLinkButton from "../../components/BackLinkButton.vue";
 import DangerZone from "../../components/DangerZone.vue";
 import RichTextEditor from "../../components/RichTextEditor.vue";
-import ChannelChatPanel from "../../components/ChannelChatPanel.vue";
 import { getTaskRoleIconName, getTaskRoleVariant } from "../../lib/roleLabels";
 import { convertSnakeToCamel } from "../../lib/utils";
 
@@ -237,10 +190,6 @@ const errorMessage = ref("");
 const relatedError = ref("");
 const isUpdatingRelated = ref(false);
 const updatingMemberId = ref(null);
-const taskChannelId = ref(null);
-const isLoadingChat = ref(false);
-const chatError = ref("");
-const isChatConnected = ref(false);
 const editForm = ref({
   title: "",
   content: "",
@@ -328,10 +277,6 @@ const userTaskRole = computed(() => {
   return (found?.role_name || "").toUpperCase();
 });
 const canDeleteTask = computed(() => ["REPORTER", "REVIEWER"].includes(userTaskRole.value));
-const messengerPath = computed(() => {
-  if (!projectId.value || !taskChannelId.value) return "";
-  return `/project/${projectId.value}/channel/${taskChannelId.value}`;
-});
 
 const roleMembers = (role) => {
   const key = (role || "").toUpperCase();
@@ -612,33 +557,6 @@ const deleteTask = async () => {
   }
 };
 
-const ensureTaskChannel = async () => {
-  if (!taskId.value || !projectId.value) {
-    taskChannelId.value = null;
-    chatError.value = "";
-    isChatConnected.value = false;
-    return;
-  }
-
-  isLoadingChat.value = true;
-  chatError.value = "";
-  isChatConnected.value = false;
-
-  try {
-    const res = await api.post(`/tasks/${taskId.value}/channel`);
-    const channelId = res.data?.id;
-    if (!channelId) {
-      throw new Error("channel id missing");
-    }
-    taskChannelId.value = channelId;
-  } catch (error) {
-    taskChannelId.value = null;
-    chatError.value = error?.response?.data?.message || t("task.detail.chat.error");
-  } finally {
-    isLoadingChat.value = false;
-  }
-};
-
 const fetchTaskMembers = async (options = {}) => {
   const { silent = false } = options;
   if (!taskId.value || !appStore.currentUser) {
@@ -664,7 +582,6 @@ const fetchTaskMembers = async (options = {}) => {
 };
 
 onMounted(fetchTaskMembers);
-onMounted(ensureTaskChannel);
 onMounted(() => {
   window.addEventListener("keydown", handleKeyboardShortcut);
 });
@@ -672,7 +589,6 @@ onBeforeUnmount(() => {
   window.removeEventListener("keydown", handleKeyboardShortcut);
 });
 watch(taskId, fetchTaskMembers);
-watch(taskId, ensureTaskChannel);
 
 const removeRelatedMember = async (taskMemberId) => {
   const confirmed = window.confirm(t("task.detail.related.confirmRemove"));
@@ -767,73 +683,6 @@ const addRelatedMemberByRole = async (role, memberId) => {
   flex: 0 0 280px;
   min-width: 240px;
   overflow-y: auto;
-}
-
-.task-chat {
-  flex: 0 0 380px;
-  min-width: 320px;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  background-color: var(--color-card-bg);
-  overflow: hidden;
-}
-
-.task-chat-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 10px 12px;
-  border-bottom: 1px solid var(--color-border);
-  flex-shrink: 0;
-}
-
-.task-chat-title {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-}
-
-.task-chat-header h2 {
-  margin: 0;
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.task-chat-status {
-  margin: 0;
-  padding: 16px 12px;
-  font-size: 13px;
-  color: var(--color-text-muted);
-}
-
-.task-chat-error {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 8px;
-}
-
-.task-chat-error p {
-  margin: 0;
-  color: var(--color-danger);
-}
-
-.room-status {
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  border-radius: 999px;
-  background-color: var(--color-success);
-  flex-shrink: 0;
-}
-
-.room-status.offline {
-  background-color: var(--color-danger);
 }
 
 .actions {
@@ -977,11 +826,6 @@ const addRelatedMemberByRole = async (role, memberId) => {
     flex-basis: 240px;
     min-width: 220px;
   }
-
-  .task-chat {
-    flex-basis: 300px;
-    min-width: 260px;
-  }
 }
 
 @media (max-width: 900px) {
@@ -993,16 +837,11 @@ const addRelatedMemberByRole = async (role, memberId) => {
   }
 
   .task-main,
-  .task-meta,
-  .task-chat {
+  .task-meta {
     width: 100%;
     min-width: 0;
     flex: 1 1 auto;
     overflow: visible;
-  }
-
-  .task-chat {
-    min-height: 420px;
   }
 }
 </style>

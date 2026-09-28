@@ -1,6 +1,6 @@
 @font-face {
-  font-family: "SUIT";
-  src: url("/SUIT-Variable.ttf") format("truetype");
+  font-family: "Pretendard GOV Variable";
+  src: url("/PretendardGOVVariable.woff2") format("woff2-variations");
   font-weight: 100 900;
   font-style: normal;
   font-display: swap;
@@ -26,7 +26,7 @@ select,
 input,
 textarea {
   box-sizing: border-box;
-  font-family: "SUIT", "sans-serif";
+  font-family: var(--font-sans);
 }
 
 .tabular-nums {

@@ -123,7 +123,7 @@
         <button
           type="button"
           class="btn btn--icon"
-          :disabled="isSending || !canPostMessage"
+          :disabled="isSending"
           :aria-label="t('channel.room.composer.attach')"
           :title="t('channel.room.composer.attach')"
           @click="triggerFileInput"
@@ -143,7 +143,7 @@
           class="composer-textarea"
           rows="1"
           :placeholder="t('channel.room.composer.placeholder')"
-          :disabled="isSending || !canPostMessage"
+          :disabled="isSending"
           @keydown="onComposerKeydown"
           @input="resizeComposerTextarea"
         ></textarea>
@@ -151,14 +151,11 @@
           type="submit"
           class="btn"
           :class="{ 'btn--sm': compact }"
-          :disabled="isSending || (!draft && !pendingFiles.length) || !canPostMessage"
+          :disabled="isSending || (!draft && !pendingFiles.length)"
         >
           {{ t("channel.room.composer.send") }}
         </button>
       </form>
-      <p v-if="!canPostMessage" class="composer-notice">
-        {{ t("channel.room.status.readOnlyNotice") }}
-      </p>
     </div>
 
     <MessageFeedbackModal
@@ -231,13 +228,6 @@ let unsubscribeClose = null;
 let joinedChannelId = null;
 
 const avatarSize = computed(() => (props.compact ? 28 : 36));
-const isNoticeChannel = computed(
-  () => String(channelDetail.value?.type || "").toUpperCase() === "NOTICE"
-);
-const canPostMessage = computed(() => {
-  if (!isNoticeChannel.value) return true;
-  return Boolean(channelDetail.value?.can_post_message);
-});
 const isIssueChannel = computed(() =>
   Boolean(channelDetail.value?.task_id || channelDetail.value?.issue_id)
 );
@@ -907,12 +897,6 @@ onBeforeUnmount(() => {
 
 .composer-textarea:focus {
   outline: none;
-}
-
-.composer-notice {
-  margin: 6px 0 0;
-  font-size: 12px;
-  color: var(--color-text-muted);
 }
 
 .composer-file-input {

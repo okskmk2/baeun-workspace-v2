@@ -24,12 +24,7 @@ const attachmentUpload = multer({
 
 const getAttachmentApiUrl = (channelId, attachmentId) =>
   `/api/channels/${channelId}/attachments/${attachmentId}`;
-const CHANNEL_TYPES = ["GENERAL", "TASK", "DM", "AGENT", "NOTICE"];
-const NOTICE_SCOPES = ["PROJECT", "WORKSPACE"];
-const NOTICE_WRITER_ROLES = ["OWNER", "ADMIN"];
-
-const isNoticeWriterRole = (roleName) =>
-  NOTICE_WRITER_ROLES.includes(String(roleName || "").toUpperCase());
+const CHANNEL_TYPES = ["GENERAL", "TASK", "DM", "AGENT"];
 
 const isProjectOrWorkspacePublic = async (channel) => {
   if (channel?.project_id) {
@@ -61,23 +56,13 @@ const ensureChannelReadable = async (channelId, userId) => {
   const channel = channelRes.rows[0];
   const channelType = String(channel.type || "").toUpperCase();
 
-  if (channelType === "NOTICE") {
-    const noticeRole = await resolveNoticeMemberRole(channel, userId);
-    if (!noticeRole) {
-      if (await isProjectOrWorkspacePublic(channel)) {
-        return { ok: true, channel, viewerRoleName: "", readOnly: true };
-      }
-      return { ok: false, status: 403, message: "접근 권한이 없습니다." };
-    }
-    return { ok: true, channel, viewerRoleName: noticeRole, readOnly: false };
-  }
-
   const memberCheck = await pool.query(
     "SELECT role_name FROM channel_member WHERE channel_id = $1 AND member_id = $2",
     [channelId, userId]
   );
   if (memberCheck.rows.length === 0) {
-    if (channelType !== "DM" && (await isProjectOrWorkspacePublic(channel))) {
+    const isProjectChannel = String(channel.scope || "PROJECT").toUpperCase() === "PROJECT";
+    if (channelType !== "DM" && isProjectChannel && (await isProjectOrWorkspacePublic(channel))) {
       return { ok: true, channel, viewerRoleName: "", readOnly: true };
     }
     return { ok: false, status: 403, message: "접근 권한이 없습니다." };
@@ -91,6 +76,27 @@ const ensureChannelReadable = async (channelId, userId) => {
   };
 };
 
+
+// 워크스페이스 채널 참여 자격: 해당 워크스페이스의 프로젝트 중 하나 이상에 소속된 멤버
+const WORKSPACE_CHANNEL_ELIGIBLE_MEMBERS_SQL = `
+  SELECT DISTINCT m.id, m.name, m.email, m.img_url
+  FROM project_member pm
+  JOIN project p ON p.id = pm.project_id
+  JOIN member m ON m.id = pm.member_id
+  WHERE p.workspace_id = $1
+`;
+
+const isWorkspaceChannelEligible = async (workspaceId, memberId) => {
+  const res = await pool.query(
+    `SELECT 1
+     FROM project_member pm
+     JOIN project p ON p.id = pm.project_id
+     WHERE p.workspace_id = $1 AND pm.member_id = $2
+     LIMIT 1`,
+    [workspaceId, memberId]
+  );
+  return res.rows.length > 0;
+};
 
 const createDmPairKey = (memberIdA, memberIdB) => {
   const first = Number(memberIdA);
@@ -249,7 +255,13 @@ router.get("/archived", isAuth, async (req, res) => {
       JOIN channel_member cm ON cm.channel_id = c.id AND cm.member_id = $2
       LEFT JOIN task t ON t.id = c.task_id
       LEFT JOIN message m ON m.channel_id = c.id
-      WHERE c.project_id = $1
+      WHERE (
+          c.project_id = $1
+          OR (
+            c.scope = 'WORKSPACE'
+            AND c.workspace_id = (SELECT workspace_id FROM project WHERE id = $1)
+          )
+        )
         AND c.status = 'ARCHIVED'
       GROUP BY c.id, c.name, t.id, t.title, t.kanban_id
       ORDER BY MAX(m.created_at) DESC NULLS LAST, c.created_at DESC`,
@@ -303,9 +315,10 @@ router.get("/archived", isAuth, async (req, res) => {
  *         $ref: "#/components/responses/ErrorResponse"
  */
 router.post("/", isAuth, async (req, res) => {
-  const { name, project_id, type, agent_key: agentKey } = req.body;
+  const { name, project_id, type, scope, agent_key: agentKey } = req.body;
   const userId = req.session.userId;
   const channelType = String(type || "GENERAL").toUpperCase();
+  const channelScope = String(scope || "PROJECT").toUpperCase();
 
   if (!CHANNEL_TYPES.includes(channelType)) {
     return res.status(400).json({ name: "BadRequest", message: "유효하지 않은 channel type 입니다." });
@@ -318,13 +331,6 @@ router.post("/", isAuth, async (req, res) => {
     });
   }
 
-  if (channelType === "NOTICE") {
-    return res.status(400).json({
-      name: "BadRequest",
-      message: "NOTICE 채널은 시스템에서 자동 생성됩니다.",
-    });
-  }
-
   if (channelType === "AGENT" && !agentKey) {
     return res.status(400).json({
       name: "BadRequest",
@@ -332,20 +338,52 @@ router.post("/", isAuth, async (req, res) => {
     });
   }
 
+  if (!["PROJECT", "WORKSPACE"].includes(channelScope)) {
+    return res.status(400).json({ name: "BadRequest", message: "유효하지 않은 channel scope 입니다." });
+  }
+
+  // 워크스페이스 채널: 프로젝트에 속하지 않고 워크스페이스(조직) 전체에서 초대 가능한 일반 채널
+  let workspaceId = null;
+  if (channelScope === "WORKSPACE") {
+    if (channelType !== "GENERAL") {
+      return res.status(400).json({
+        name: "BadRequest",
+        message: "워크스페이스 채널은 GENERAL 타입만 생성할 수 있습니다.",
+      });
+    }
+    if (!project_id) {
+      return res.status(400).json({ name: "BadRequest", message: "project_id is required" });
+    }
+
+    const projectMemberRes = await pool.query(
+      `SELECT p.workspace_id
+       FROM project p
+       JOIN project_member pm ON pm.project_id = p.id AND pm.member_id = $2
+       WHERE p.id = $1`,
+      [project_id, userId]
+    );
+    if (projectMemberRes.rows.length === 0) {
+      return res.status(403).json({ name: "Forbidden", message: "접근 권한이 없습니다." });
+    }
+    workspaceId = projectMemberRes.rows[0].workspace_id;
+  }
+
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
 
     const insertChannel = `
-      INSERT INTO channel (name, project_id, type, agent_key)
-      VALUES ($1, $2, $3, $4)
+      INSERT INTO channel (name, project_id, type, agent_key, scope, workspace_id)
+      VALUES ($1, $2, $3, $4, $5, $6)
       RETURNING *;
     `;
     const chatRes = await client.query(insertChannel, [
       name || null,
-      project_id || null,
+      channelScope === "WORKSPACE" ? null : project_id || null,
       channelType,
       channelType === "AGENT" ? agentKey : null,
+      channelScope,
+      workspaceId,
     ]);
     const newRoom = chatRes.rows[0];
 
@@ -530,12 +568,7 @@ router.get("/:channelId", async (req, res) => {
       return res.status(access.status).json({ name: "Forbidden", message: access.message });
     }
 
-    const channelType = String(channel.type || "").toUpperCase();
-    const canPostMessage = access.readOnly
-      ? false
-      : channelType === "NOTICE"
-        ? isNoticeWriterRole(access.viewerRoleName)
-        : true;
+    const canPostMessage = !access.readOnly;
 
     res.json({
       ...channel,
@@ -983,48 +1016,6 @@ router.get("/:channelId/members", isAuth, async (req, res) => {
       return res.status(404).json({ name: "NotFound", message: "채널을 찾을 수 없습니다." });
     }
 
-    const channel = channelRes.rows[0];
-    const channelType = String(channel.type || "").toUpperCase();
-
-    if (channelType === "NOTICE") {
-      const noticeRole = await resolveNoticeMemberRole(channel, userId);
-      if (!noticeRole) {
-        return res.status(403).json({ name: "Forbidden", message: "접근 권한이 없습니다." });
-      }
-
-      if (String(channel.scope || "").toUpperCase() === "WORKSPACE") {
-        const wsMembersRes = await pool.query(
-          `SELECT
-            m.id,
-            m.name,
-            m.email,
-            m.img_url,
-            wm.role_name
-          FROM workspace_member wm
-          JOIN member m ON wm.member_id = m.id
-          WHERE wm.workspace_id = $1
-          ORDER BY wm.role_name DESC, m.name ASC`,
-          [channel.workspace_id]
-        );
-        return res.json(wsMembersRes.rows);
-      }
-
-      const projectMembersRes = await pool.query(
-        `SELECT
-          m.id,
-          m.name,
-          m.email,
-          m.img_url,
-          pm.role_name
-        FROM project_member pm
-        JOIN member m ON pm.member_id = m.id
-        WHERE pm.project_id = $1
-        ORDER BY pm.role_name DESC, m.name ASC`,
-        [channel.project_id]
-      );
-      return res.json(projectMembersRes.rows);
-    }
-
     const memberCheck = await pool.query(
       "SELECT id FROM channel_member WHERE channel_id = $1 AND member_id = $2",
       [channelId, userId]
@@ -1105,6 +1096,52 @@ router.get("/:channelId/members", isAuth, async (req, res) => {
  *       500:
  *         $ref: "#/components/responses/ErrorResponse"
  */
+router.get("/:channelId/invite-candidates", isAuth, async (req, res) => {
+  const { channelId } = req.params;
+  const userId = req.session.userId;
+
+  try {
+    const channelRes = await pool.query(
+      "SELECT id, scope, project_id, workspace_id FROM channel WHERE id = $1",
+      [channelId]
+    );
+    if (channelRes.rows.length === 0) {
+      return res.status(404).json({ name: "NotFound", message: "채널을 찾을 수 없습니다." });
+    }
+    const channel = channelRes.rows[0];
+
+    const memberCheck = await pool.query(
+      "SELECT id FROM channel_member WHERE channel_id = $1 AND member_id = $2",
+      [channelId, userId]
+    );
+    if (memberCheck.rows.length === 0) {
+      return res.status(403).json({ name: "Forbidden", message: "접근 권한이 없습니다." });
+    }
+
+    const candidatesRes =
+      String(channel.scope || "").toUpperCase() === "WORKSPACE"
+        ? await pool.query(`${WORKSPACE_CHANNEL_ELIGIBLE_MEMBERS_SQL} ORDER BY m.name ASC`, [
+            channel.workspace_id,
+          ])
+        : await pool.query(
+            `SELECT m.id, m.name, m.email, m.img_url
+             FROM project_member pm
+             JOIN member m ON m.id = pm.member_id
+             WHERE pm.project_id = $1
+             ORDER BY m.name ASC`,
+            [channel.project_id]
+          );
+
+    res.json(candidatesRes.rows);
+  } catch (error) {
+    logger.error("channel invite candidates error", {
+      err: error?.message,
+      stack: error?.stack,
+    });
+    res.status(500).json({ name: "InternalServerError", message: error.message });
+  }
+});
+
 router.post("/:channelId/invite", isAuth, async (req, res) => {
   const { channelId } = req.params;
   const { member_id } = req.body;
@@ -1116,7 +1153,7 @@ router.post("/:channelId/invite", isAuth, async (req, res) => {
 
   try {
     const chatRes = await pool.query(
-      "SELECT id, project_id FROM channel WHERE id = $1",
+      "SELECT id, project_id, workspace_id, scope FROM channel WHERE id = $1",
       [channelId]
     );
     if (chatRes.rows.length === 0) {
@@ -1124,6 +1161,8 @@ router.post("/:channelId/invite", isAuth, async (req, res) => {
     }
 
     const projectId = chatRes.rows[0].project_id;
+    const channelWorkspaceId = chatRes.rows[0].workspace_id;
+    const isWorkspaceChannel = String(chatRes.rows[0].scope || "").toUpperCase() === "WORKSPACE";
 
     const memberCheck = await pool.query(
       "SELECT id FROM channel_member WHERE channel_id = $1 AND member_id = $2",
@@ -1133,12 +1172,21 @@ router.post("/:channelId/invite", isAuth, async (req, res) => {
       return res.status(403).json({ name: "Forbidden", message: "접근 권한이 없습니다." });
     }
 
-    const projectMemberCheck = await pool.query(
-      "SELECT id FROM project_member WHERE project_id = $1 AND member_id = $2",
-      [projectId, member_id]
-    );
-    if (projectMemberCheck.rows.length === 0) {
-      return res.status(400).json({ name: "BadRequest", message: "프로젝트 멤버가 아닙니다." });
+    if (isWorkspaceChannel) {
+      if (!(await isWorkspaceChannelEligible(channelWorkspaceId, member_id))) {
+        return res.status(400).json({
+          name: "BadRequest",
+          message: "워크스페이스의 프로젝트에 소속된 멤버만 초대할 수 있습니다.",
+        });
+      }
+    } else {
+      const projectMemberCheck = await pool.query(
+        "SELECT id FROM project_member WHERE project_id = $1 AND member_id = $2",
+        [projectId, member_id]
+      );
+      if (projectMemberCheck.rows.length === 0) {
+        return res.status(400).json({ name: "BadRequest", message: "프로젝트 멤버가 아닙니다." });
+      }
     }
 
     const alreadyMember = await pool.query(
@@ -1188,6 +1236,7 @@ router.post("/:channelId/invite", isAuth, async (req, res) => {
       resourceType: "channel",
       resourceId: Number(channelId),
       projectId,
+      workspaceId: channelWorkspaceId,
       title: "채널에 초대되었습니다.",
       body: `${inviterName}님이 채널에 초대했습니다.`,
       payload: {
@@ -1309,16 +1358,10 @@ router.get("/", async (req, res) => {
           AND c.status = $3
           AND c.type = ANY($4::text[])
           AND (
-            c.type = 'NOTICE'
-            OR cm.member_id IS NOT NULL
-            OR ($6 AND c.type != 'DM')
+            cm.member_id IS NOT NULL
+            OR ($6 AND c.type != 'DM' AND c.scope = 'PROJECT')
           )
         ORDER BY
-          CASE
-            WHEN c.type = 'NOTICE' AND c.scope = 'WORKSPACE' THEN 0
-            WHEN c.type = 'NOTICE' AND c.scope = 'PROJECT' THEN 1
-            ELSE 2
-          END,
           c.sort_order ASC,
           c.created_at ASC
       `,
@@ -1355,24 +1398,14 @@ router.patch("/:channelId/status", isAuth, async (req, res) => {
       return res.status(404).json({ name: "NotFound", message: "채널을 찾을 수 없습니다." });
     }
 
-    const channel = channelRes.rows[0];
-    const channelType = String(channel.type || "").toUpperCase();
+    const authCheck = await pool.query(
+      "SELECT role_name FROM channel_member WHERE channel_id = $1 AND member_id = $2",
+      [channelId, userId]
+    );
 
-    if (channelType === "NOTICE") {
-      const noticeRole = await resolveNoticeMemberRole(channel, userId);
-      if (!isNoticeWriterRole(noticeRole)) {
-        return res.status(403).json({ name: "Forbidden", message: "상태 변경 권한이 없습니다." });
-      }
-    } else {
-      const authCheck = await pool.query(
-        "SELECT role_name FROM channel_member WHERE channel_id = $1 AND member_id = $2",
-        [channelId, userId]
-      );
-
-      const roleName = String(authCheck.rows[0]?.role_name || "").toUpperCase();
-      if (!["OWNER", "ADMIN"].includes(roleName)) {
-        return res.status(403).json({ name: "Forbidden", message: "상태 변경 권한이 없습니다." });
-      }
+    const roleName = String(authCheck.rows[0]?.role_name || "").toUpperCase();
+    if (!["OWNER", "ADMIN"].includes(roleName)) {
+      return res.status(403).json({ name: "Forbidden", message: "상태 변경 권한이 없습니다." });
     }
 
     const updateRes = await pool.query(
@@ -1502,15 +1535,6 @@ router.delete("/:channelId", isAuth, async (req, res) => {
       return res.status(404).json({ name: "NotFound", message: "채널을 찾을 수 없습니다." });
     }
 
-    const channelType = String(channelRes.rows[0].type || "").toUpperCase();
-    if (channelType === "NOTICE") {
-      await client.query("ROLLBACK");
-      return res.status(400).json({
-        name: "BadRequest",
-        message: "공지 채널은 삭제할 수 없습니다.",
-      });
-    }
-
     const authCheck = await client.query(
       "SELECT role_name FROM channel_member WHERE channel_id = $1 AND member_id = $2",
       [channelId, userId]
@@ -1559,22 +1583,12 @@ router.post(
         return res.status(404).json({ name: "NotFound", message: "채널을 찾을 수 없습니다." });
       }
 
-      const channel = channelRes.rows[0];
-      const channelType = String(channel.type || "").toUpperCase();
-
-      if (channelType === "NOTICE") {
-        const noticeRole = await resolveNoticeMemberRole(channel, userId);
-        if (!noticeRole) {
-          return res.status(403).json({ name: "Forbidden", message: "접근 권한이 없습니다." });
-        }
-      } else {
-        const memberCheck = await pool.query(
-          "SELECT id FROM channel_member WHERE channel_id = $1 AND member_id = $2",
-          [channelId, userId]
-        );
-        if (memberCheck.rows.length === 0) {
-          return res.status(403).json({ name: "Forbidden", message: "접근 권한이 없습니다." });
-        }
+      const memberCheck = await pool.query(
+        "SELECT id FROM channel_member WHERE channel_id = $1 AND member_id = $2",
+        [channelId, userId]
+      );
+      if (memberCheck.rows.length === 0) {
+        return res.status(403).json({ name: "Forbidden", message: "접근 권한이 없습니다." });
       }
 
       const uploadedAttachments = await Promise.all(

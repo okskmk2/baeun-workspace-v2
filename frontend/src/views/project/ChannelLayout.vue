@@ -87,7 +87,7 @@ const memberNameById = computed(() => {
 
 const roomSections = computed(() => {
   const mapByType = {
-    NOTICE: [],
+    WORKSPACE: [],
     GENERAL: [],
     TASK: [],
     DM: [],
@@ -95,7 +95,10 @@ const roomSections = computed(() => {
   };
 
   rooms.value.forEach((room) => {
-    const key = String(room.type || "GENERAL").toUpperCase();
+    const type = String(room.type || "GENERAL").toUpperCase();
+    const isWorkspaceChannel =
+      type === "GENERAL" && String(room.scope || "").toUpperCase() === "WORKSPACE";
+    const key = isWorkspaceChannel ? "WORKSPACE" : type;
     if (!mapByType[key]) {
       mapByType.GENERAL.push(room);
       return;
@@ -103,17 +106,8 @@ const roomSections = computed(() => {
     mapByType[key].push(room);
   });
 
-  const noticeItems = [...mapByType.NOTICE].sort((left, right) => {
-    const leftScope = String(left.scope || "").toUpperCase();
-    const rightScope = String(right.scope || "").toUpperCase();
-    if (leftScope === rightScope) return 0;
-    if (leftScope === "WORKSPACE") return -1;
-    if (rightScope === "WORKSPACE") return 1;
-    return 0;
-  });
-
   const sections = [
-    { key: "NOTICE", title: t("channel.layout.sections.notice"), items: noticeItems },
+    { key: "WORKSPACE", title: t("channel.layout.sections.workspace"), items: mapByType.WORKSPACE },
     { key: "GENERAL", title: t("channel.layout.sections.general"), items: mapByType.GENERAL },
     { key: "TASK", title: t("channel.layout.sections.task"), items: mapByType.TASK },
     { key: "DM", title: t("channel.layout.sections.dm"), items: mapByType.DM },

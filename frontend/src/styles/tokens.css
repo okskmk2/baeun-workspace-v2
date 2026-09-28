@@ -10,7 +10,7 @@
 :root {
   --color-accent-contrast: var(--color-text-inverse);
 
-  --font-sans: "SUIT", sans-serif;
+  --font-sans: "Pretendard GOV Variable", -apple-system, BlinkMacSystemFont, system-ui, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
 
   --text-hero: clamp(32px, 6vw, 52px);
   --text-h1: clamp(26px, 4vw, 38px);
@@ -73,7 +73,7 @@
   --mock-line: var(--color-border);
   --mock-fill: var(--color-surface-alt);
   --mock-fill-dim: #2a2b28;
-  --font-sans: "SUIT", sans-serif;
+  --font-sans: "Pretendard GOV Variable", -apple-system, BlinkMacSystemFont, system-ui, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
   --fs-display: clamp(2.125rem, 4.2vw, 3.5rem);
   --fs-display-sm: clamp(1.875rem, 3.6vw, 3.125rem);
   --fs-h2: clamp(1.5rem, 3vw, 2.5rem);

@@ -157,12 +157,6 @@ const createApprovedMemberResources = async (client, userId, userName) => {
     [workspaceId, userId]
   );
 
-  await client.query(
-    `INSERT INTO channel (name, workspace_id, type, scope, status)
-     VALUES ($1, $2, 'NOTICE', 'WORKSPACE', 'ACTIVE')`,
-    ["워크스페이스 공지채널", workspaceId]
-  );
-
   const projectRes = await client.query(
     `INSERT INTO project (name, workspace_id, is_default)
      VALUES ($1, $2, true)
@@ -170,12 +164,6 @@ const createApprovedMemberResources = async (client, userId, userName) => {
     ["First Project", workspaceId]
   );
   const projectId = projectRes.rows[0].id;
-
-  await client.query(
-    `INSERT INTO channel (name, project_id, type, scope, status)
-     VALUES ($1, $2, 'NOTICE', 'PROJECT', 'ACTIVE')`,
-    ["프로젝트 공지채널", projectId]
-  );
 
   await client.query(
     `INSERT INTO project_member (project_id, member_id, role_name)

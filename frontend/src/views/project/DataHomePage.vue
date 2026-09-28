@@ -4,6 +4,17 @@
       <h1>{{ t("data.home.header.title") }}</h1>
       <p class="subtitle">{{ t("data.home.header.subtitle") }}</p>
     </div>
+    <div class="actions">
+      <button
+        type="button"
+        class="btn btn--sm btn--secondary"
+        :disabled="isRefreshing"
+        @click="refreshData"
+      >
+        <MaterialSymbol name="refresh" :size="16" alt="" />
+        {{ t("data.layout.actions.refresh") }}
+      </button>
+    </div>
   </hgroup>
 
   <section class="overview-grid">
@@ -41,10 +52,12 @@
 </template>
 
 <script setup>
-import { computed, onMounted } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 import { storeToRefs } from "pinia";
+import MaterialSymbol from "../../components/MaterialSymbol.vue";
+import { addToast } from "../../lib/toast";
 import { useDataStore } from "../../stores/dataStore";
 
 const { t } = useI18n();
@@ -58,6 +71,19 @@ const views = computed(() => prototypesByProject.value[projectId.value]?.views |
 const charts = computed(() => prototypesByProject.value[projectId.value]?.charts || []);
 const webhooks = computed(() => prototypesByProject.value[projectId.value]?.webhooks || []);
 const quickLinks = computed(() => allTables.value.slice(0, 6));
+const isRefreshing = ref(false);
+
+const refreshData = async () => {
+  if (!projectId.value) return;
+  isRefreshing.value = true;
+  try {
+    dataStore.hydratePrototypes(projectId.value);
+    await dataStore.fetchTables(projectId.value);
+    addToast({ message: t("data.layout.toast.refreshed"), type: "success" });
+  } finally {
+    isRefreshing.value = false;
+  }
+};
 
 onMounted(async () => {
   if (!projectId.value) return;

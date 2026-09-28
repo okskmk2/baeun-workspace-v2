@@ -204,7 +204,7 @@ create table channel (
     name varchar(100),
     project_id integer references project on delete cascade,
     type varchar(30) check (
-        type in ('GENERAL', 'NOTICE', 'DM', 'TASK', 'AGENT')
+        type in ('GENERAL', 'DM', 'TASK', 'AGENT')
     ),
     sort_order integer default 0 not null,
     created_at timestamptz default CURRENT_TIMESTAMP,

@@ -215,12 +215,6 @@ router.post("/", isAuth, async (req, res) => {
     `;
     await client.query(memberQuery, [newProject.id, userId]);
 
-    const projectNoticeQuery = `
-      INSERT INTO channel (name, project_id, type, scope, status)
-      VALUES ($1, $2, 'NOTICE', 'PROJECT', 'ACTIVE');
-    `;
-    await client.query(projectNoticeQuery, ["프로젝트 공지채널", newProject.id]);
-
     // Create a default "Backlog" kanban for the new project
     const backlogKanbanQuery = `
       INSERT INTO kanban (name, project_id, type)

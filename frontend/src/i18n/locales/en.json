@@ -1057,13 +1057,6 @@
       "confirm": {
         "delete": "Delete this issue?"
       },
-      "chat": {
-        "title": "Task chat",
-        "loading": "Loading chat...",
-        "error": "Failed to open chat.",
-        "retry": "Retry",
-        "openInMessenger": "Open in messenger"
-      },
       "related": {
         "errorLoad": "Failed to load related members.",
         "confirmRemove": "Remove this related member?",
@@ -1302,7 +1295,7 @@
       },
       "sections": {
         "rooms": "Channel sections",
-        "notice": "Notices",
+        "workspace": "Workspace Channels",
         "general": "General Channels",
         "task": "Task Channels",
         "dm": "DM",
@@ -1315,6 +1308,7 @@
         "typeLabel": "Channel Type",
         "types": {
           "general": "General Channel",
+          "workspace": "Workspace Channel",
           "dm": "DM",
           "agent": "AI Agent"
         },
@@ -1390,8 +1384,7 @@
         "errorLeave": "Failed to leave channel.",
         "errorInvite": "Invite failed.",
         "errorSend": "Failed to send message.",
-        "left": "You left the channel.",
-        "readOnlyNotice": "Only OWNER/ADMIN can post messages in notice channels."
+        "left": "You left the channel."
       },
       "validation": {
         "memberRequired": "Please select a member to invite."
@@ -1955,6 +1948,7 @@
       },
       "sections": {
         "tables": "Tables",
+        "assetTables": "Asset tables",
         "views": "Views",
         "charts": "Charts",
         "webhooks": "Webhooks"
@@ -1964,7 +1958,8 @@
         "addView": "New view",
         "addChart": "New chart",
         "addWebhook": "New webhook",
-        "refresh": "Refresh"
+        "refresh": "Refresh",
+        "create": "Create"
       },
       "empty": {
         "tables": "No tables yet",

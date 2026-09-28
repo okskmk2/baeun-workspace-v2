@@ -7,8 +7,6 @@ export const NOTIFICATION_TYPES = {
   TASK_WATCHING_STATUS_CHANGED: "task.watching_status_changed",
   TASK_WATCHING_CONTENT_CHANGED: "task.watching_content_changed",
   TASK_ASSIGNEE_REVIEW_TO_DONE: "task.assignee_review_to_done",
-  CHANNEL_NOTICE_PROJECT_NEW_MESSAGE: "channel.notice_project_new_message",
-  CHANNEL_NOTICE_WORKSPACE_NEW_MESSAGE: "channel.notice_workspace_new_message",
   PAGE_PERMISSION_REQUESTED: "page_permission_request",
   PAGE_PERMISSION_RESOLVED: "page_permission_resolved",
   SYSTEM_BROADCAST: "system.broadcast",

@@ -437,7 +437,13 @@ const handleChannelMessageEvent = (payload) => {
   if (!projectId.value) return;
 
   const payloadProjectId = payload?.project_id;
-  if (String(payloadProjectId || "") !== String(projectId.value)) return;
+  const isWorkspaceChannelMessage =
+    !payloadProjectId &&
+    Boolean(payload?.workspace_id) &&
+    String(payload.workspace_id) === String(currentWorkspaceId.value || "");
+  if (String(payloadProjectId || "") !== String(projectId.value) && !isWorkspaceChannelMessage) {
+    return;
+  }
 
   if (String(payload?.created_by || "") === String(currentUserId.value || "")) return;
 

@@ -1057,13 +1057,6 @@
       "confirm": {
         "delete": "이 이슈를 삭제할까요?"
       },
-      "chat": {
-        "title": "작업 채팅",
-        "loading": "채팅방을 불러오는 중...",
-        "error": "채팅방을 열지 못했습니다.",
-        "retry": "다시 시도",
-        "openInMessenger": "메신저에서 열기"
-      },
       "related": {
         "errorLoad": "관련 멤버를 불러오지 못했습니다.",
         "confirmRemove": "관련 멤버를 제거할까요?",
@@ -1300,7 +1293,7 @@
       },
       "sections": {
         "rooms": "채널 구분",
-        "notice": "공지사항",
+        "workspace": "워크스페이스 채널",
         "general": "일반 채널",
         "task": "작업 채널",
         "dm": "DM",
@@ -1313,6 +1306,7 @@
         "typeLabel": "채널 종류",
         "types": {
           "general": "일반 채널",
+          "workspace": "워크스페이스 채널",
           "dm": "DM",
           "agent": "AI Agent"
         },
@@ -1388,8 +1382,7 @@
         "errorLeave": "채널 나가기에 실패했습니다.",
         "errorInvite": "초대에 실패했습니다.",
         "errorSend": "메시지 전송에 실패했습니다.",
-        "left": "채널에서 나갔습니다.",
-        "readOnlyNotice": "공지 채널은 관리자(OWNER/ADMIN)만 메시지를 작성할 수 있습니다."
+        "left": "채널에서 나갔습니다."
       },
       "validation": {
         "memberRequired": "초대할 멤버를 선택해 주세요."
@@ -1929,6 +1922,7 @@
       },
       "sections": {
         "tables": "테이블",
+        "assetTables": "에셋 테이블",
         "views": "뷰",
         "charts": "차트",
         "webhooks": "웹훅"
@@ -1938,7 +1932,8 @@
         "addView": "새 뷰",
         "addChart": "새 차트",
         "addWebhook": "새 웹훅",
-        "refresh": "새로고침"
+        "refresh": "새로고침",
+        "create": "만들기"
       },
       "empty": {
         "tables": "테이블이 없습니다",

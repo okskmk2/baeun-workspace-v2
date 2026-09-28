@@ -131,12 +131,6 @@ router.post("/", isAuth, async (req, res) => {
       return sendSlotExhausted(res, "WORKSPACE_MEMBER", memberSlots, newWorkspace.id);
     }
 
-    const workspaceNoticeQuery = `
-        INSERT INTO channel (name, workspace_id, type, scope, status)
-        VALUES ($1, $2, 'NOTICE', 'WORKSPACE', 'ACTIVE');
-      `;
-    await client.query(workspaceNoticeQuery, ["워크스페이스 공지채널", newWorkspace.id]);
-
     await client.query("COMMIT");
 
     res.status(201).json({

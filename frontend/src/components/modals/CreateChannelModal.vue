@@ -5,6 +5,7 @@
         <label for="channel-type">{{ t("channel.layout.modal.typeLabel") }}</label>
         <select id="channel-type" v-model="form.type">
           <option value="GENERAL">{{ t("channel.layout.modal.types.general") }}</option>
+          <option value="WORKSPACE">{{ t("channel.layout.modal.types.workspace") }}</option>
           <option value="DM">{{ t("channel.layout.modal.types.dm") }}</option>
           <option value="AGENT">{{ t("channel.layout.modal.types.agent") }}</option>
         </select>
@@ -135,6 +136,13 @@ const handleSubmit = async () => {
       res = await api.post("/channels/dm", {
         project_id: props.projectId,
         target_member_id: Number(form.value.targetMemberId),
+      });
+    } else if (form.value.type === "WORKSPACE") {
+      res = await api.post("/channels", {
+        name: form.value.name,
+        project_id: props.projectId,
+        type: "GENERAL",
+        scope: "WORKSPACE",
       });
     } else {
       res = await api.post("/channels", {
