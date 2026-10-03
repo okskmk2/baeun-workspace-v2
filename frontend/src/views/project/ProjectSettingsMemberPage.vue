@@ -18,13 +18,13 @@
       </div>
       <div class="member-actions">
         <select
-          v-if="isOwner"
+          v-if="canManageRoles"
           class="role-select"
           :value="member.role_name"
           :disabled="isRoleChangeDisabled(member)"
           @change="onRoleChange(member, $event.target.value)"
         >
-          <option value="OWNER">{{ getRoleLabel("project_member", "OWNER") }}</option>
+          <option v-if="isOwner" value="OWNER">{{ getRoleLabel("project_member", "OWNER") }}</option>
           <option value="ADMIN">{{ getRoleLabel("project_member", "ADMIN") }}</option>
           <option value="MEMBER">{{ getRoleLabel("project_member", "MEMBER") }}</option>
         </select>
@@ -90,7 +90,13 @@ const currentUserId = computed(() => appStore.currentUser?.id);
 const isOwner = computed(() => {
   if (!currentUserId.value) return false;
   const me = projectMembers.value.find((m) => String(m.id) === String(currentUserId.value));
-  return me?.role_name === "OWNER";
+  return String(me?.role_name || "").toUpperCase() === "OWNER";
+});
+
+const canManageRoles = computed(() => {
+  if (!currentUserId.value) return false;
+  const me = projectMembers.value.find((m) => String(m.id) === String(currentUserId.value));
+  return ["OWNER", "ADMIN"].includes(String(me?.role_name || "").toUpperCase());
 });
 
 const fetchProjectMembers = async () => {
@@ -127,7 +133,8 @@ const isRemoveDisabled = (member) => {
 };
 
 const isRoleChangeDisabled = (member) => {
-  return String(member.id) === String(currentUserId.value);
+  const role = String(member.role_name || "").toUpperCase();
+  return String(member.id) === String(currentUserId.value) || (!isOwner.value && role === "OWNER");
 };
 
 const onRoleChange = async (member, newRole) => {

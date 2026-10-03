@@ -14,25 +14,11 @@ import {
   PolarApiError,
   polar,
 } from "../lib/polar.client.mjs";
-import {
-  parseProductCode,
-  polarUnitPriceCreate,
-  toPolarMinorUnits,
-} from "../lib/polar.catalog.mjs";
+import { parseProductCode } from "../lib/polar.catalog.mjs";
 import { fulfillCheckoutById } from "../lib/polar.fulfillment.mjs";
 
 const router = express.Router();
 const WORKSPACE_BILLING_ROLES = new Set(["OWNER", "ADMIN"]);
-
-const clientIp = (req) => {
-  const forwarded = String(req.headers["x-forwarded-for"] || "")
-    .split(",")[0]
-    .trim();
-  const raw = forwarded || req.ip || req.socket?.remoteAddress || "";
-  const ip = raw.replace(/^::ffff:/, "");
-  if (!ip || ip === "::1" || ip === "127.0.0.1") return null;
-  return ip;
-};
 
 const loadMember = async (memberId) => {
   const result = await pool.query(
@@ -91,10 +77,6 @@ const assertWorkspaceBillingAccess = async (workspaceId, memberId) => {
 };
 
 router.post("/checkout", isAuth, async (req, res) => {
-  if (!isPolarConfigured()) {
-    return res.status(503).json({ name: "ServiceUnavailable", message: "Polar is not configured." });
-  }
-
   const quantity = parsePositiveInt(req.body.quantity) || 1;
   const licenseId = parsePositiveInt(req.body.license_id);
   const workspaceId = parsePositiveInt(req.body.workspace_id);
@@ -118,12 +100,6 @@ router.post("/checkout", isAuth, async (req, res) => {
     if (!license || !license.is_active) {
       return res.status(404).json({ name: "NotFound", message: "License not found or inactive." });
     }
-    if (!license.polar_product_id) {
-      return res.status(409).json({
-        name: "Conflict",
-        message: "This license is not linked to a Polar product.",
-      });
-    }
 
     const resource = String(license.target_resource).toUpperCase();
     let assignedWorkspaceId = null;
@@ -146,24 +122,49 @@ router.post("/checkout", isAuth, async (req, res) => {
       assignedWorkspaceId = workspaceId;
     }
 
-    const unitAmount = toPolarMinorUnits(license.price, license.currency);
-    const estimatedTotal = Number(license.price) * quantity;
     const appUrl = getAppPublicUrl(req);
-    const successUrl = `${appUrl}/settings/billing?checkout=success&checkout_id={CHECKOUT_ID}`;
-    const returnUrl = `${appUrl}/store/cart`;
-
     const client = await pool.connect();
-    let paymentId;
+    let payment;
     try {
       await client.query("BEGIN");
       const paymentRes = await client.query(
         `INSERT INTO payment (
            member_id, total_amount, status, provider, currency
-         ) VALUES ($1, $2, 'PENDING', 'POLAR', $3)
-         RETURNING id`,
-        [member.id, estimatedTotal, String(license.currency || "USD").toUpperCase()]
+         ) VALUES ($1, $2, 'SUCCESS', 'MANUAL', $3)
+         RETURNING *`,
+        [
+          member.id,
+          Number(license.price) * quantity,
+          String(license.currency || "USD").toUpperCase(),
+        ]
       );
-      paymentId = paymentRes.rows[0].id;
+      payment = paymentRes.rows[0];
+
+      await client.query(
+        `UPDATE payment
+         SET pg_transaction_id = $2,
+             updated_at = CURRENT_TIMESTAMP
+         WHERE id = $1`,
+        [payment.id, `TEMP-${payment.id}`]
+      );
+
+      await client.query(
+        `INSERT INTO purchased_license (
+           payment_id,
+           license_id,
+           owner_member_id,
+           target_workspace_id,
+           quantity,
+           status
+         ) VALUES ($1, $2, $3, $4, $5, 'ACTIVE')`,
+        [
+          payment.id,
+          license.id,
+          resource === "WORKSPACE" ? member.id : null,
+          assignedWorkspaceId,
+          quantity,
+        ]
+      );
       await client.query("COMMIT");
     } catch (error) {
       await client.query("ROLLBACK");
@@ -172,60 +173,10 @@ router.post("/checkout", isAuth, async (req, res) => {
       client.release();
     }
 
-    const metadata = {
-      payment_id: String(paymentId),
-      license_id: String(license.id),
-      quantity,
-      member_id: String(member.id),
-    };
-    if (assignedWorkspaceId) metadata.workspace_id = String(assignedWorkspaceId);
-
-    const polarPayload = {
-      products: [license.polar_product_id],
-      units: quantity,
-      prices: {
-        [license.polar_product_id]: [
-          polarUnitPriceCreate(unitAmount, resource, String(license.currency || "USD").toLowerCase()),
-        ],
-      },
-      external_customer_id: String(member.id),
-      customer_email: member.email,
-      locale: String(member.locale || "en").startsWith("ko") ? "ko" : "en",
-      success_url: successUrl,
-      return_url: returnUrl,
-      metadata,
-    };
-    if (member.name) polarPayload.customer_name = member.name;
-    const ip = clientIp(req);
-    if (ip) polarPayload.customer_ip_address = ip;
-
-    let checkout;
-    try {
-      checkout = await polar.checkouts.create(polarPayload);
-    } catch (error) {
-      await pool.query(
-        `UPDATE payment
-         SET status = 'FAILED', updated_at = CURRENT_TIMESTAMP
-         WHERE id = $1`,
-        [paymentId]
-      );
-      throw error;
-    }
-
-    await pool.query(
-      `UPDATE payment
-       SET polar_checkout_id = $2,
-           pg_transaction_id = $2,
-           updated_at = CURRENT_TIMESTAMP
-       WHERE id = $1`,
-      [paymentId, checkout.id]
-    );
-
     return res.status(201).json({
-      url: checkout.url,
-      checkout_id: checkout.id,
-      payment_id: paymentId,
-      expires_at: checkout.expires_at,
+      url: `${appUrl}/settings/billing?checkout=success&payment_id=${payment.id}`,
+      payment_id: payment.id,
+      payment_status: "SUCCESS",
     });
   } catch (error) {
     if (error instanceof PolarApiError) {

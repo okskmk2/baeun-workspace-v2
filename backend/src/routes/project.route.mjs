@@ -247,7 +247,7 @@ router.post("/", isAuth, async (req, res) => {
  * /api/projects/{projectId}/members/{memberId}:
  *   patch:
  *     summary: Update project member role
- *     description: Change a project member's role (OWNER only)
+ *     description: Change a project member's role (OWNER or ADMIN; ownership changes require OWNER)
  *     tags:
  *       - Project
  *     parameters:
@@ -303,7 +303,9 @@ router.patch("/:projectId/members/:memberId", isAuth, async (req, res) => {
       [projectId, actorId]
     );
 
-    if (!actorCheck.rows[0] || actorCheck.rows[0].role_name !== "OWNER") {
+    const actorRole = String(actorCheck.rows[0]?.role_name || "").toUpperCase();
+    const nextRole = String(role_name).toUpperCase();
+    if (!["OWNER", "ADMIN"].includes(actorRole)) {
       return res.status(403).json({ name: "Forbidden", message: "No permission to change member role." });
     }
 
@@ -320,7 +322,12 @@ router.patch("/:projectId/members/:memberId", isAuth, async (req, res) => {
       return res.status(404).json({ name: "NotFound", message: "Member not found in project." });
     }
 
-    if (targetCheck.rows[0].role_name === "OWNER" && String(role_name).toUpperCase() !== "OWNER") {
+    const targetRole = String(targetCheck.rows[0].role_name).toUpperCase();
+    if (actorRole !== "OWNER" && (targetRole === "OWNER" || nextRole === "OWNER")) {
+      return res.status(403).json({ name: "Forbidden", message: "Only an OWNER can change ownership." });
+    }
+
+    if (targetRole === "OWNER" && nextRole !== "OWNER") {
       const ownerCountRes = await pool.query(
         "SELECT COUNT(*)::int AS count FROM project_member WHERE project_id = $1 AND role_name = 'OWNER'",
         [projectId]
@@ -332,7 +339,7 @@ router.patch("/:projectId/members/:memberId", isAuth, async (req, res) => {
 
     await pool.query(
       "UPDATE project_member SET role_name = $1 WHERE project_id = $2 AND member_id = $3",
-      [String(role_name).toUpperCase(), projectId, targetMemberId]
+      [nextRole, projectId, targetMemberId]
     );
 
     res.json({ message: "Member role updated." });
